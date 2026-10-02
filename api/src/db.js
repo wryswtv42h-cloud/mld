@@ -35,7 +35,7 @@ export async function initDB() {
   await query(`
     CREATE TABLE IF NOT EXISTS bots (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+      user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       token TEXT NOT NULL,
       guild_id TEXT,
