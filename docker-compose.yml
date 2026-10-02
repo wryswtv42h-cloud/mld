@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  api:
+    build: ./api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - OWNER_USERNAME=1
+      - OWNER_PASSWORD=Ff@@0501369
+      - OWNER_DISCORD_ID=w4px
+      - WEB_URL=${WEB_URL}
+    restart: unless-stopped
+
+  bot:
+    build: ./bot
+    environment:
+      - NODE_ENV=production
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+      - MONGODB_URI=${MONGODB_URI}
+      - API_URL=${API_URL}
+    restart: unless-stopped
+    depends_on:
+      - api
