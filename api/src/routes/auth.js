@@ -25,7 +25,7 @@ router.post('/login', async (req, res) => {
         owner = result.rows[0];
       }
 
-      const token = jwt.sign({ id: owner.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+      const token = jwt.sign({ id: owner.id }, (process.env.JWT_SECRET || process.env.OWNER_PASSWORD), { expiresIn: '30d' });
       const { password: _, ...user } = owner;
       return res.json({ token, user });
     }
@@ -39,7 +39,7 @@ router.post('/login', async (req, res) => {
 
     await query('UPDATE users SET last_seen = NOW() WHERE id = $1', [user.id]);
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ id: user.id }, (process.env.JWT_SECRET || process.env.OWNER_PASSWORD), { expiresIn: '30d' });
     const { password: _, ...safe } = user;
     res.json({ token, user: safe });
   } catch (err) {
@@ -65,7 +65,7 @@ router.post('/register', async (req, res) => {
     );
     const { password: _, ...user } = rows[0];
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ id: user.id }, (process.env.JWT_SECRET || process.env.OWNER_PASSWORD), { expiresIn: '30d' });
     res.json({ token, user });
   } catch (err) {
     console.error(err);
