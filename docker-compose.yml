@@ -8,11 +8,11 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - MONGODB_URI=${MONGODB_URI}
+      - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
-      - OWNER_USERNAME=1
-      - OWNER_PASSWORD=Ff@@0501369
-      - OWNER_DISCORD_ID=w4px
+      - OWNER_USERNAME=${OWNER_USERNAME}
+      - OWNER_PASSWORD=${OWNER_PASSWORD}
+      - OWNER_DISCORD_ID=${OWNER_DISCORD_ID}
       - WEB_URL=${WEB_URL}
     restart: unless-stopped
 
@@ -23,7 +23,6 @@ services:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
       - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
-      - MONGODB_URI=${MONGODB_URI}
       - API_URL=${API_URL}
     restart: unless-stopped
     depends_on:
