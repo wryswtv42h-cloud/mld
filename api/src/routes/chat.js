@@ -1,63 +1,60 @@
 import express from 'express';
-import Message from '../models/Message.js';
+import { query } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// ===== جلب رسائل غرفة =====
 router.get('/:roomId', requireAuth, async (req, res) => {
   try {
-    const messages = await Message.find({
-      roomId: req.params.roomId,
-      deleted: false,
-      type: { $in: ['public', 'private'] }
-    })
-      .sort({ createdAt: -1 })
-      .limit(100);
+    const result = await query(`select id, room_id, sender_id, sender_name, content, type, anonymous, deleted, created_at
+      from public.messages where room_id = $1 and deleted = false and type in ('public','private')
+      order by created_at desc limit 100`, [req.params.roomId]);
 
-    res.json({ messages: messages.reverse() });
+    const messages = result.rows.reverse().map(row => ({
+      _id: row.id, id: row.id, roomId: row.room_id, sender: row.sender_id,
+      senderName: row.sender_name, content: row.content, type: row.type,
+      anonymous: row.anonymous, deleted: row.deleted, createdAt: row.created_at
+    }));
+    res.json({ messages });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'خطأ في جلب الرسائل' });
   }
 });
 
-// ===== حذف رسالة =====
 router.delete('/message/:id', requireAuth, async (req, res) => {
-  const msg = await Message.findById(req.params.id);
-  if (!msg) return res.status(404).json({ error: 'غير موجودة' });
+  try {
+    const result = await query('select * from public.messages where id = $1 limit 1', [req.params.id]);
+    const msg = result.rows[0];
+    if (!msg) return res.status(404).json({ error: 'غير موجودة' });
 
-  const isOwner = req.user.isOwner;
-  const isSender = msg.sender.toString() === req.user._id.toString();
+    const isSender = String(msg.sender_id) === String(req.user.id);
+    if (!req.user.isOwner && !isSender) return res.status(403).json({ error: 'ما تملك الصلاحية' });
 
-  if (!isOwner && !isSender) {
-    return res.status(403).json({ error: 'ما تملك الصلاحية' });
+    await query('update public.messages set deleted = true where id = $1', [req.params.id]);
+    res.json({ message: 'تم الحذف' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'خطأ في حذف الرسالة' });
   }
-
-  msg.deleted = true;
-  await msg.save();
-  res.json({ message: 'تم الحذف' });
 });
 
-// ===== الزاجل (الرسائل السرية) =====
 router.post('/zajel', requireAuth, async (req, res) => {
-  const { toUsername, content, anonymous } = req.body;
+  try {
+    const { toUsername, content, anonymous } = req.body;
+    if (!content || content.length > 1000) return res.status(400).json({ error: 'محتوى غير صالح' });
 
-  if (!content || content.length > 1000) {
-    return res.status(400).json({ error: 'محتوى غير صالح' });
+    const roomId = `zajel-${toUsername}`;
+    const result = await query(`insert into public.messages
+      (room_id, sender_id, sender_name, content, type, anonymous)
+      values ($1,$2,$3,$4,'secret',$5) returning id`,
+      [roomId, req.user.id, anonymous ? 'مجهول' : req.user.username, content, !!anonymous]);
+
+    res.json({ message: 'تم الإرسال', id: result.rows[0].id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'خطأ في إرسال الرسالة' });
   }
-
-  const roomId = `zajel-${toUsername}`;
-
-  const msg = await Message.create({
-    roomId,
-    sender: req.user._id,
-    senderName: anonymous ? 'مجهول' : req.user.username,
-    content,
-    type: 'secret',
-    anonymous: !!anonymous
-  });
-
-  res.json({ message: 'تم الإرسال', id: msg._id });
 });
 
 export default router;
