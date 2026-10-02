@@ -149,7 +149,7 @@ async function init(){
   loadDiscordSuggestions();
   if(token){try{const d=await api('/api/auth/me');setUser(d.user)}catch{logout(false)}}
   const requested=(location.hash||'#home').slice(1) || 'home';
-  if(requested==='login'){openAuth();showPage('home',true);} else showPage(PUBLIC_PAGES.has(requested)||user ? requested : 'home', true);
+  if(requested==='login'){openAuth();showPage('home',true);} else if(PUBLIC_PAGES.has(requested)||user){showPage(requested);} else {showPage('home',true);}
 }
 document.addEventListener('click',async e=>{
   const t=e.target;
