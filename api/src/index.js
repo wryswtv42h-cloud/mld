@@ -12,8 +12,8 @@ import botRoutes from './routes/bots.js';
 
 dotenv.config();
 
-if (!process.env.DATABASE_URL || !process.env.JWT_SECRET) {
-  console.error('❌ DATABASE_URL أو JWT_SECRET ناقص');
+if (!process.env.DATABASE_URL || !(process.env.JWT_SECRET || process.env.OWNER_PASSWORD)) {
+  console.error('❌ DATABASE_URL أو مفتاح التوقيع ناقص');
   process.exit(1);
 }
 
