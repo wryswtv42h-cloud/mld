@@ -1,0 +1,16 @@
+{
+  "name": "mld-bot",
+  "version": "1.0.0",
+  "description": "MLD Discord Bot",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {"start": "node src/index.js", "dev": "nodemon src/index.js"},
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
+    "axios": "^1.7.2"
+  },
+  "devDependencies": {"nodemon": "^3.1.0"},
+  "author": "فهد المطيري",
+  "license": "MLD"
+}
