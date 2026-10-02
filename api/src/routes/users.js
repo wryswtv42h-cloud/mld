@@ -1,58 +1,58 @@
 import express from 'express';
-import User from '../models/User.js';
+import { query, findUserById, findUserByUsername, updateUser, deleteUser, publicUser } from '../db.js';
 import { requireAuth, requireOwner } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// ===== قائمة الأعضاء =====
 router.get('/', requireAuth, async (req, res) => {
-  const users = await User.find({ banned: false })
-    .select('username avatar bio role lastSeen discordVerified')
-    .sort({ lastSeen: -1 })
-    .limit(100);
-  res.json({ users });
+  try {
+    const result = await query(`select username, avatar, bio, role, last_seen, discord_verified
+      from public.users where banned = false order by last_seen desc limit 100`);
+    res.json({ users: result.rows.map(row => ({
+      username: row.username, avatar: row.avatar, bio: row.bio, role: row.role,
+      lastSeen: row.last_seen, discordVerified: row.discord_verified
+    })) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'خطأ في جلب الأعضاء' });
+  }
 });
 
-// ===== بروفايلي =====
-router.get('/me', requireAuth, (req, res) => {
-  res.json({ user: req.user });
-});
+router.get('/me', requireAuth, (req, res) => res.json({ user: req.user }));
 
-// ===== تعديل بروفايلي =====
 router.patch('/me', requireAuth, async (req, res) => {
-  const { avatar, bio, username } = req.body;
+  try {
+    const { avatar, bio, username } = req.body;
+    const fields = {};
+    if (avatar !== undefined) fields.avatar = avatar;
+    if (bio !== undefined) fields.bio = bio;
 
-  if (avatar !== undefined) req.user.avatar = avatar;
-  if (bio !== undefined) req.user.bio = bio;
-  if (username && username !== req.user.username) {
-    const exists = await User.findOne({ username });
-    if (exists) {
-      return res.status(400).json({ error: 'الاسم مستخدم' });
+    if (username && username !== req.user.username) {
+      const exists = await findUserByUsername(username);
+      if (exists && String(exists.id) !== String(req.user.id)) return res.status(400).json({ error: 'الاسم مستخدم' });
+      fields.username = username;
     }
-    req.user.username = username;
-  }
 
-  await req.user.save();
-  res.json({ user: req.user });
+    const updated = await updateUser(req.user.id, fields);
+    res.json({ user: publicUser(updated) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'خطأ في تعديل الحساب' });
+  }
 });
 
-// ===== حذف حساب (أونر فقط) =====
 router.delete('/:id', requireAuth, requireOwner, async (req, res) => {
-  if (req.params.id === req.user._id.toString()) {
-    return res.status(400).json({ error: 'لا تحذف نفسك' });
-  }
-  await User.findByIdAndDelete(req.params.id);
+  if (String(req.params.id) === String(req.user.id)) return res.status(400).json({ error: 'لا تحذف نفسك' });
+  await deleteUser(req.params.id);
   res.json({ message: 'تم الحذف' });
 });
 
-// ===== حظر / فك حظر (أونر فقط) =====
 router.post('/:id/ban', requireAuth, requireOwner, async (req, res) => {
-  const user = await User.findById(req.params.id);
+  const user = await findUserById(req.params.id);
   if (!user) return res.status(404).json({ error: 'غير موجود' });
-  if (user.isOwner) return res.status(400).json({ error: 'لا تحظر الأونر' });
-  user.banned = !user.banned;
-  await user.save();
-  res.json({ message: user.banned ? 'تم الحظر' : 'تم فك الحظر' });
+  if (user.is_owner) return res.status(400).json({ error: 'لا تحظر الأونر' });
+  const updated = await updateUser(user.id, { banned: !user.banned });
+  res.json({ message: updated.banned ? 'تم الحظر' : 'تم فك الحظر' });
 });
 
 export default router;
