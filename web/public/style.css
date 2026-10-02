@@ -20,3 +20,10 @@
 .landing-hamb{position:fixed;top:18px;right:18px;z-index:210;width:48px;height:48px;border-radius:14px;border:1px solid #ff9cde45;background:#120b1dcc;color:var(--pink);font-size:22px;cursor:pointer;backdrop-filter:blur(18px);box-shadow:0 10px 40px #0007}.landing-hamb:hover{border-color:var(--pink);box-shadow:0 0 30px #ff9cde25}
 .landing-drawer{position:fixed;right:-330px;top:0;width:min(310px,88vw);height:100vh;z-index:220;overflow:auto;padding:12px 10px 30px;background:rgba(13,8,21,.97);border-left:1px solid #ff9cde45;box-shadow:-25px 0 90px #000d;backdrop-filter:blur(28px);transition:right .28s ease}.landing-drawer.open{right:0}.landing-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:10px 10px 18px;margin-bottom:5px;border-bottom:1px solid #ffffff0d;color:var(--pink);font-size:24px}.landing-drawer-head button{width:38px;height:38px;border-radius:12px;border:1px solid #ffffff18;background:#ffffff08;color:var(--text);font-size:22px}.landing-drawer a{display:block;text-decoration:none;color:var(--muted);padding:12px 14px;margin:3px 0;border:1px solid transparent;border-radius:13px;font-weight:800}.landing-drawer a:hover{color:var(--text);border-color:#ff9cde25;background:#ff9cde0d}.landing-drawer-overlay{position:fixed;inset:0;z-index:200;background:#0009;backdrop-filter:blur(7px);display:none}.landing-drawer-overlay.show{display:block}
 @media(max-width:760px){.landing-nav{padding-left:18px;padding-right:78px}.landing-hamb{top:14px;right:14px}}
+
+/* Exact MLD drawer/menu */
+.landing-drawer .nav-section{padding:12px 16px 5px;color:#9876a3;font-size:10px;font-weight:900;letter-spacing:1px}
+.landing-drawer a{display:flex;align-items:center;gap:9px;margin:3px 12px;padding:11px 13px;border:1px solid transparent;border-radius:12px;color:var(--muted);text-decoration:none;font-weight:800}
+.landing-drawer a:hover{color:var(--text);background:#ff9cde10;border-color:#ff9cde2b}
+.landing-drawer{overflow:auto;padding-bottom:25px}
+#discordMembersList,#discordGuildsList{display:none}
