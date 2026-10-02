@@ -6,7 +6,7 @@ export async function requireAuth(req, res, next) {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'غير مصرح' });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, (process.env.JWT_SECRET || process.env.OWNER_PASSWORD));
     const { rows } = await query('SELECT * FROM users WHERE id = $1', [decoded.id]);
     const user = rows[0];
 
