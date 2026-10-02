@@ -1,21 +1,17 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
-import Message from '../models/Message.js';
+import { findUserById, mapUser, query } from '../db.js';
 
 export function setupSocket(io) {
-  // ===== التحقق من التوكن =====
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
       if (!token) return next(new Error('غير مصرح'));
-
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id);
-      if (!user || user.banned) return next(new Error('غير مصرح'));
-
-      socket.user = user;
+      const row = await findUserById(decoded.id);
+      if (!row || row.banned) return next(new Error('غير مصرح'));
+      socket.user = mapUser(row);
       next();
-    } catch (err) {
+    } catch {
       next(new Error('توكن غير صالح'));
     }
   });
@@ -23,57 +19,38 @@ export function setupSocket(io) {
   io.on('connection', (socket) => {
     console.log(`🟢 ${socket.user.username} اتصل`);
 
-    // ===== دخول غرفة =====
     socket.on('room:join', (roomId) => {
       socket.join(roomId);
       socket.emit('room:joined', { roomId });
     });
 
-    // ===== خروج من غرفة =====
-    socket.on('room:leave', (roomId) => {
-      socket.leave(roomId);
-    });
+    socket.on('room:leave', (roomId) => socket.leave(roomId));
 
-    // ===== إرسال رسالة =====
     socket.on('message:send', async (data) => {
       try {
         const { roomId, content, type } = data;
+        if (!roomId || !content || content.trim().length === 0 || content.length > 2000) return;
 
-        if (!content || content.trim().length === 0) return;
-        if (content.length > 2000) return;
+        const result = await query(`insert into public.messages
+          (room_id, sender_id, sender_name, content, type)
+          values ($1,$2,$3,$4,$5)
+          returning id, room_id, sender_id, sender_name, content, type, created_at`,
+          [roomId, socket.user.id, socket.user.username, content.trim(), type || 'public']);
 
-        const msg = await Message.create({
-          roomId,
-          sender: socket.user._id,
-          senderName: socket.user.username,
-          content: content.trim(),
-          type: type || 'public'
-        });
-
+        const msg = result.rows[0];
         io.to(roomId).emit('message:new', {
-          _id: msg._id,
-          roomId,
-          sender: socket.user._id,
-          senderName: socket.user.username,
-          content: msg.content,
-          type: msg.type,
-          createdAt: msg.createdAt
+          _id: msg.id, id: msg.id, roomId: msg.room_id, sender: msg.sender_id,
+          senderName: msg.sender_name, content: msg.content, type: msg.type, createdAt: msg.created_at
         });
       } catch (err) {
         console.error('خطأ إرسال:', err);
       }
     });
 
-    // ===== كتابة الآن =====
     socket.on('typing', ({ roomId }) => {
-      socket.to(roomId).emit('typing', {
-        username: socket.user.username
-      });
+      socket.to(roomId).emit('typing', { username: socket.user.username });
     });
 
-    // ===== خروج =====
-    socket.on('disconnect', () => {
-      console.log(`🔴 ${socket.user.username} انقطع`);
-    });
+    socket.on('disconnect', () => console.log(`🔴 ${socket.user.username} انقطع`));
   });
 }
