@@ -1,0 +1,16 @@
+{
+  "name": "mld-web",
+  "version": "1.0.0",
+  "description": "MLD Web",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "serve public -l $PORT"
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  },
+  "author": "فهد المطيري",
+  "license": "MLD"
+}
