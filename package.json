@@ -1,0 +1,21 @@
+{
+  "name": "mld-malaz",
+  "version": "1.0.0",
+  "description": "MLD Malaz - منصة متكاملة",
+  "private": true,
+  "workspaces": [
+    "web",
+    "api",
+    "bot"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w api\" \"npm run dev -w web\" \"npm run dev -w bot\"",
+    "build": "npm run build -w web && npm run build -w api",
+    "start": "npm run start -w api"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "author": "فهد المطيري",
+  "license": "MLD"
+}
