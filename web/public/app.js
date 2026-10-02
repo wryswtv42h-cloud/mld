@@ -1,5 +1,6 @@
 const API='https://api-production-5bddb.up.railway.app';
 const LOCKED='https://discord.com/users/w4px';
+const DISCORD_API=API+'/api/discord';
 const PUBLIC_PAGES=new Set(['home','members','top','leaders','games','cinema']);
 let token=localStorage.getItem('mld_token')||'';
 let user=JSON.parse(localStorage.getItem('mld_user')||'null');
@@ -46,9 +47,21 @@ function showPage(name,force=false){
   document.querySelectorAll('#sideNav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
   const active=[...document.querySelectorAll('#sideNav button[data-page]')].find(b=>b.dataset.page===name);
   $('pageTitle').textContent=active?.textContent?.trim()||name;
-  closeMenu();loadPage(name).catch(e=>toast(e.message));
+  closeMenu();
+  if(location.hash !== '#'+name) history.replaceState(null,'','#'+name);
+  loadPage(name).catch(e=>toast(e.message));
 }
 function closeMenu(){$('sidebar').classList.remove('open');$('overlay').classList.remove('show')}
+async function loadDiscordSuggestions(){
+  try{
+    const [m,g]=await Promise.all([
+      api('/api/discord/members'),
+      api('/api/discord/guilds')
+    ]);
+    $('discordMembersList').innerHTML=(m.members||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name||x.username)+' · '+esc(x.username)+'</option>').join('');
+    $('discordGuildsList').innerHTML=(g.guilds||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('');
+  }catch{}
+}
 function bindNav(){
   document.querySelectorAll('#sideNav button[data-page]').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>showPage(b.dataset.go));
@@ -66,7 +79,7 @@ async function doAuth(e){
   e.preventDefault();$('authMsg').textContent='جاري...';
   try{
     const d=await api('/api/auth/'+authMode,{method:'POST',body:JSON.stringify({username:$('username').value.trim(),password:$('password').value,discord_id:$('discord_id').value.trim()})});
-    token=d.token;localStorage.setItem('mld_token',token);setUser(d.user);closeAuth();$('authForm').reset();setAuthMode('login');toast('تم تسجيل الدخول ✓');showPage('home',true);
+    token=d.token;localStorage.setItem('mld_token',token);setUser(d.user);loadDiscordSuggestions();closeAuth();$('authForm').reset();setAuthMode('login');toast('تم تسجيل الدخول ✓');showPage('home',true);
   }catch(x){$('authMsg').textContent=x.message}
 }
 async function loadPage(p){
@@ -117,13 +130,14 @@ async function init(){
   bindNav();
   document.querySelectorAll('[data-auth]').forEach(b=>b.onclick=()=>setAuthMode(b.dataset.auth));
   $('authForm').onsubmit=doAuth;$('closeAuth').onclick=closeAuth;
+  window.addEventListener('hashchange',()=>{const p=location.hash.slice(1)||'home'; if(p==='login'){openAuth();return;} showPage(p);});
   $('authModal').onclick=e=>{if(e.target===$('authModal'))closeAuth()};
   $('memberSearch').oninput=e=>members(e.target.value);
   $('userSearch').oninput=()=>users();
   $('sendChat').onclick=()=>{const v=$('chatInput').value.trim();if(!v)return;if(socket?.connected){socket.emit('chat-message',{token,content:v});$('chatInput').value=''}else toast('انتظر اتصال الشات')};
   $('chatInput').onkeydown=e=>{if(e.key==='Enter')$('sendChat').click()};
   $('sendPigeon').onclick=async()=>{try{await api('/api/platform/pigeon',{method:'POST',body:JSON.stringify({recipient_id:$('pigeonRecipient').value,content:$('pigeonText').value,anonymous:$('pigeonAnon').value==='true'})});$('pigeonText').value='';toast('تم إرسال الزاجل ✉️')}catch(e){toast(e.message)}};
-  $('createGame').onclick=async()=>{if(!requireLogin())return;try{await api('/api/platform/games',{method:'POST',body:JSON.stringify({name:$('gameSelect').value,type:'room'})});toast('تم إنشاء الغرفة');games()}catch(e){toast(e.message)}};
+   $('createGame').onclick=async()=>{if(!requireLogin())return;try{await api('/api/platform/games',{method:'POST',body:JSON.stringify({name:$('gameSelect').value,type:'room',visitor_name:$('visitorName').value.trim()||user?.username})});toast('تم إنشاء الغرفة');games()}catch(e){toast(e.message)}};
   $('createCinema').onclick=async()=>{if(!requireLogin())return;try{await api('/api/platform/cinema',{method:'POST',body:JSON.stringify({title:$('cinemaTitle').value,media_url:$('cinemaUrl').value})});toast('تم إنشاء الجلسة');cinema()}catch(e){toast(e.message)}};
   $('createGroup').onclick=async()=>{if(!requireLogin())return;try{await api('/api/platform/groups',{method:'POST',body:JSON.stringify({name:$('groupName').value,description:$('groupDesc').value})});toast('تم إرسال طلب القروب للأونر');groups()}catch(e){toast(e.message)}};
   $('createTicket').onclick=async()=>{if(!requireLogin())return;try{await api('/api/platform/tickets',{method:'POST',body:JSON.stringify({subject:$('ticketSubject').value,content:$('ticketContent').value})});toast('تم فتح التذكرة');$('ticketSubject').value='';$('ticketContent').value='';tickets()}catch(e){toast(e.message)}};
@@ -132,8 +146,10 @@ async function init(){
   $('addBot').onclick=async()=>{if(!requireLogin())return;try{await api('/api/bots',{method:'POST',body:JSON.stringify({name:$('botName').value,token:$('botToken').value,guild_id:$('botGuild').value})});$('botToken').value='';toast('تمت إضافة البوت');bots()}catch(e){toast(e.message)}};
   $('saveProfile').onclick=async()=>{try{const d=await api('/api/users/me',{method:'PATCH',body:JSON.stringify({username:$('profileName').value.trim()})});setUser(d.user);toast('تم الحفظ')}catch(e){toast(e.message)}};
   setAuthMode('login');setUser(user);
+  loadDiscordSuggestions();
   if(token){try{const d=await api('/api/auth/me');setUser(d.user)}catch{logout(false)}}
-  showPage('home',true);
+  const requested=(location.hash||'#home').slice(1) || 'home';
+  if(requested==='login'){openAuth();showPage('home',true);} else showPage(PUBLIC_PAGES.has(requested)||user ? requested : 'home', true);
 }
 document.addEventListener('click',async e=>{
   const t=e.target;
