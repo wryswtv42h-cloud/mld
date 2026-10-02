@@ -1,9 +1,0 @@
-{
-  "name": "mld",
-  "version": "1.0.0",
-  "private": true,
-  "engines": { "node": ">=20.0.0" },
-  "scripts": { "start": "cd api && npm start" },
-  "author": "فهد المطيري",
-  "license": "MLD"
-}
