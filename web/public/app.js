@@ -26,7 +26,7 @@ function setUser(u){
   $('sideRole').textContent=user?(user.is_owner?'الأونر 👑':user.role==='admin'?'إدارة 🛡️':'عضو'):'زائر';
   $('logout').hidden=!user;$('loginMenu').hidden=!!user;
   const canManage=!!user&&(!!user.is_owner||user.role==='admin');
-  $('adminNav').hidden=!canManage;
+  $('adminNav').hidden=false;
   document.querySelectorAll('.admin-only').forEach(e=>e.hidden=!canManage);
   const owner=!!user?.is_owner;
   $('ownerNav').hidden=!owner;
