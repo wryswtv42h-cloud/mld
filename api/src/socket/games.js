@@ -31,13 +31,18 @@ function isHost(session, socket) {
   return runtime.hostSocketId === socket.id || (!!socket.user && String(session.host_id) === String(socket.user.id));
 }
 
-function snapshot(session, runtime) {
-  return {
-    players: runtime.players,
-    spectators: runtime.spectators,
-    state: runtime.state,
-    status: runtime.status
-  };
+function snapshot(session, runtime, socket=null) {
+  const state = runtime.state ? JSON.parse(JSON.stringify(runtime.state)) : null;
+  if(state?.game === 'codenames' && socket){
+    const name = socket.user?.username || 'زائر';
+    const isSpymaster = state.clueGivers?.red === name || state.clueGivers?.blue === name;
+    if(!isSpymaster && Array.isArray(state.words)) state.words = state.words.map(w => ({...w, color: w.revealed ? w.color : null}));
+  }
+  return { players: runtime.players, spectators: runtime.spectators, state, status: runtime.status };
+}
+async function broadcastUpdate(io, sessionId, session, runtime){
+  const sockets = await io.in('game:' + sessionId).fetchSockets();
+  for(const s of sockets) s.emit('game:update', snapshot(session,runtime,s));
 }
 
 async function persistPlayers(sessionId, players) {
@@ -77,7 +82,7 @@ export function setupGameSocket(io, socket) {
       }
 
       socket.join('game:' + sessionId);
-      io.to('game:' + sessionId).emit('game:update', snapshot(session, runtime));
+      await broadcastUpdate(io, sessionId, session, runtime);
     } catch (err) {
       console.error(err);
       socket.emit('game:error', { error: 'خطأ في الانضمام' });
@@ -176,7 +181,9 @@ export function setupGameSocket(io, socket) {
       runtime.spectators = runtime.spectators.filter(p => p.socketId !== socket.id);
       try {
         await persistPlayers(sessionId, runtime.players);
-        io.to('game:' + sessionId).emit('game:update', {
+        await broadcastUpdate(io, sessionId, session, runtime);
+      /* legacy state emission removed */
+      io.to('game:' + sessionId).emit('game:state-internal', {
           players: runtime.players,
           spectators: runtime.spectators,
           state: runtime.state,
