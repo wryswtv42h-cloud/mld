@@ -172,6 +172,7 @@ export function initCodeNames(players) {
     game: 'codenames',
     players,
     teams: { red: teamRed, blue: teamBlue },
+    clueGivers: { red: teamRed[0], blue: teamBlue[0] },
     words,
     currentTeam: 'red',
     currentClue: null,
@@ -185,12 +186,22 @@ export function initCodeNames(players) {
 export function handleCodeNamesAction(state, playerName, action) {
   const s = JSON.parse(JSON.stringify(state));
 
+  const currentTeamPlayers = s.teams?.[s.currentTeam] || [];
+  const clueGiver = s.clueGivers?.[s.currentTeam];
+  const isClueGiver = playerName === clueGiver;
+  const isTeamPlayer = currentTeamPlayers.includes(playerName);
+
   if (action.type === 'clue') {
-    s.currentClue = { word: action.word, number: action.number, team: s.currentTeam };
+    if(!isClueGiver || s.currentClue) return s;
+    const number = Math.max(0, Math.min(9, Number(action.number)||0));
+    const word = String(action.word||'').trim();
+    if(!word || !number) return s;
+    s.currentClue = { word, number, team: s.currentTeam };
     s.log.push(`الفريق ${s.currentTeam}: تلميح "${action.word}" × ${action.number}`);
   }
 
   if (action.type === 'guess') {
+    if(isClueGiver || !isTeamPlayer || !s.currentClue) return s;
     const word = s.words[action.index];
     if (!word || word.revealed) return s;
 
@@ -215,6 +226,7 @@ export function handleCodeNamesAction(state, playerName, action) {
   }
 
   if (action.type === 'end-turn') {
+    if(!isTeamPlayer) return s;
     s.currentTeam = s.currentTeam === 'red' ? 'blue' : 'red';
     s.currentClue = null;
   }
