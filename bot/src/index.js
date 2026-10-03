@@ -1,4 +1,6 @@
 import { Client, GatewayIntentBits, Events, REST, Routes } from 'discord.js';
+import crypto from 'crypto';
+import pg from 'pg';
 import dotenv from 'dotenv';
 import { readdirSync } from 'fs';
 import { join, dirname } from 'path';
