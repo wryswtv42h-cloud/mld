@@ -225,3 +225,28 @@ window.joinGroup=async id=>{const d=await api('/api/community/groups/'+id+'/join
 async function loadPigeon(){const d=await api('/api/community/pigeon');const e=document.getElementById('pigeon-list');if(e)e.innerHTML=(d.messages||[]).map(x=>'<div class="bot-card"><p>'+esc(x.content)+'</p></div>').join('');}
 async function loadCinema(){const d=await fetch('/api/community/cinema').then(r=>r.json());const e=document.getElementById('cinema-list');if(e)e.innerHTML=(d.rooms||[]).map(x=>'<div class="bot-card"><b>'+esc(x.title)+'</b><p>'+esc(x.status)+'</p><a class="primary" href="'+esc(x.media_url)+'" target="_blank">فتح العرض</a></div>').join('')||'<p>لا توجد غرف.</p>';}
 document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>{a.addEventListener('click',e=>{const p=a.dataset.page;if(featurePages.includes(p)){e.preventDefault();renderFeature(p);}});});
+
+/* ===== Discord autocomplete suggestions ===== */
+(function bindDiscordSuggestions(){
+  function setup(inputId, type, listId){
+    const input=document.getElementById(inputId);
+    if(!input)return;
+    let list=document.getElementById(listId);
+    if(!list){list=document.createElement('datalist');list.id=listId;document.body.appendChild(list);}
+    input.setAttribute('list',listId);
+    let timer;
+    input.addEventListener('input',()=>{
+      clearTimeout(timer);
+      const q=input.value.trim();
+      if(q.length<1){list.innerHTML='';return;}
+      timer=setTimeout(async()=>{
+        try{
+          const d=await fetch('/api/public/suggestions?type='+encodeURIComponent(type)+'&q='+encodeURIComponent(q)).then(r=>r.json());
+          list.innerHTML=(d.suggestions||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name||x.username||'')+'</option>').join('');
+        }catch(e){}
+      },180);
+    });
+  }
+  setup('discord_id','members','discord-members-suggestions');
+  setup('botGuild','servers','discord-server-suggestions');
+})();
