@@ -285,7 +285,18 @@ async function loadApps(){const d=await api('/api/community/applications');const
 async function loadGroups(){const d=await fetch(API + '/api/community/groups').then(r=>r.json());const e=document.getElementById('groups-list');if(e)e.innerHTML=(d.groups||[]).map(x=>'<div class="bot-card"><b>'+esc(x.name)+'</b><p>'+esc(x.description||'')+'</p><button class="btn-primary" onclick="joinGroup('+x.id+')">انضمام</button></div>').join('')||'<p>لا توجد قروبات.</p>';}
 window.joinGroup=async id=>{if(!requireFeatureAuth())return;const d=await api('/api/community/groups/'+id+'/join',{method:'POST'});toast(d.error||d.message);};
 async function loadPigeon(){const d=await api('/api/community/pigeon');const e=document.getElementById('pigeon-list');if(e)e.innerHTML=(d.messages||[]).map(x=>'<div class="bot-card"><p>'+esc(x.content)+'</p></div>').join('');}
-async function loadCinema(){const d=await fetch(API + '/api/community/cinema').then(r=>r.json());const e=document.getElementById('cinema-list');if(e)e.innerHTML=(d.rooms||[]).map(x=>'<div class="bot-card"><b>'+esc(x.title)+'</b><p>'+esc(x.status)+'</p><a class="primary" href="'+esc(x.media_url)+'" target="_blank">فتح العرض</a></div>').join('')||'<p>لا توجد غرف.</p>';}
+async function loadCinema(){
+  const d=await fetch(API + '/api/community/cinema').then(r=>r.json()); const e=document.getElementById('cinema-list'); if(!e)return;
+  e.innerHTML=(d.rooms||[]).map(x=>`<div class="bot-card"><b>${esc(x.title)}</b><p>${esc(x.status)}</p><video id="cinema-video-${x.id}" controls playsinline style="width:100%;max-height:420px;border-radius:14px;background:#000" src="${esc(x.media_url)}"></video><div style="display:flex;gap:8px;margin-top:10px"><button class="btn-primary" onclick="joinCinema(${x.id})">🎬 دخول ومزامنة</button></div></div>`).join('')||'<p>لا توجد غرف.</p>';
+}
+window.joinCinema=(id)=>{
+  const v=document.getElementById('cinema-video-'+id); if(!v || !window.io)return toast('تعذر تشغيل السينما');
+  const s=window.__cinemaSocket || (window.__cinemaSocket=io(API,{auth:{token}})); s.emit('cinema:join',{roomId:id});
+  s.off('cinema:state'); s.on('cinema:state',data=>{ if(data.roomId!==id)return; if(Math.abs(v.currentTime-data.playbackTime)>1)v.currentTime=data.playbackTime; if(data.isPlaying && v.paused)v.play().catch(()=>{}); if(!data.isPlaying&&!v.paused)v.pause(); });
+  v.onplay=()=>s.emit('cinema:sync',{roomId:id,type:'play',time:v.currentTime});
+  v.onpause=()=>s.emit('cinema:sync',{roomId:id,type:'pause',time:v.currentTime});
+  v.onseeked=()=>s.emit('cinema:sync',{roomId:id,type:'seek',time:v.currentTime});
+};
 
 
 /* ===== Discord autocomplete suggestions ===== */
