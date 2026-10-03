@@ -56,7 +56,7 @@ router.post('/:id/admin', requireAuth, requireOwner, async (req,res)=>{
   res.json({message:action==='add'?'تمت إضافة الإدارة':'تمت إزالة الإدارة'});
 });
 
-router.post('/:id/ban', requireAuth, requireOwner, async (req, res) =>
+router.post('/:id/ban', requireAuth, requireOwner, async (req, res) => {
   const { rows } = await query('SELECT * FROM users WHERE id = $1', [req.params.id]);
   const user = rows[0];
   if (!user) return res.status(404).json({ error: 'غير موجود' });
