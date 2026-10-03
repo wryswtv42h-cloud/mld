@@ -4,6 +4,14 @@ import bcrypt from 'bcryptjs';
 import { query } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 
+async function discordMemberExists(discordId) {
+  const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
+  const guildId = process.env.DISCORD_GUILD_ID;
+  if (!token || !guildId) throw new Error('إعدادات ديسكورد ناقصة');
+  const r = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${encodeURIComponent(discordId)}`, { headers: { Authorization: `Bot ${token}` } });
+  return r.ok;
+}
+
 const router = express.Router();
 
 // ===== تسجيل الدخول =====
@@ -20,7 +28,14 @@ router.post('/login', async (req, res) => {
       let owner = rows[0];
 
       if (!owner) {
-        const hash = await bcrypt.hash(password, 10);
+        let verified = false;
+    try { verified = await discordMemberExists(discord_id); } catch (e) { return res.status(503).json({ error: e.message }); }
+    if (!verified) return res.status(400).json({ error: 'حساب ديسكورد غير موجود في سيرفر MLD، لا يمكن إنشاء الحساب' });
+
+    const linked = await query('SELECT id FROM users WHERE discord_id = $1', [discord_id]);
+    if (linked.rows[0]) return res.status(400).json({ error: 'حساب ديسكورد هذا مرتبط بحساب موقع آخر' });
+
+    const hash = await bcrypt.hash(password, 10);
         const result = await query(
           `INSERT INTO users (username, password, discord_id, discord_verified, role, is_owner)
            VALUES ($1, $2, $3, TRUE, 'owner', TRUE) RETURNING *`,
@@ -38,6 +53,8 @@ router.post('/login', async (req, res) => {
     const { rows } = await query('SELECT * FROM users WHERE username = $1', [username]);
     const user = rows[0];
     if (!user) return res.status(401).json({ error: 'بيانات غير صحيحة' });
+
+    if (!user.discord_verified) return res.status(403).json({ error: 'الحساب غير موثّق في ديسكورد' });
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'بيانات غير صحيحة' });
@@ -57,7 +74,7 @@ router.post('/login', async (req, res) => {
 router.post('/register', async (req, res) => {
   try {
     const { username, password, discord_id } = req.body;
-    if (!username || !password) return res.status(400).json({ error: 'أدخل البيانات' });
+    if (!username || !password || !discord_id) return res.status(400).json({ error: 'التسجيل يتطلب يوزر الموقع + الباسورد + التحقق من حساب ديسكورد' });
     if (username.length < 2 || password.length < 6) {
       return res.status(400).json({ error: 'الاسم قصير أو الباسورد أقل من 6 أحرف' });
     }
@@ -67,9 +84,9 @@ router.post('/register', async (req, res) => {
 
     const hash = await bcrypt.hash(password, 10);
     const { rows } = await query(
-      `INSERT INTO users (username, password, discord_id)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [username, hash, discord_id || null]
+      `INSERT INTO users (username, password, discord_id, discord_verified)
+       VALUES ($1, $2, $3, TRUE) RETURNING *`,
+      [username, hash, discord_id]
     );
     const { password: _, ...user } = rows[0];
 
