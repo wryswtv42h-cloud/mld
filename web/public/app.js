@@ -85,8 +85,27 @@ async function api(path, opts = {}) {
 }
 
 async function initApp() {
-  if (!token || !user) return;
+  const loginBtn = document.getElementById('loginBtn');
+  const topLoginBtn = document.getElementById('topLoginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const authScreen = document.getElementById('authScreen');
+  const openLogin = () => authScreen?.classList.add('show');
+  loginBtn?.addEventListener('click', openLogin);
+  topLoginBtn?.addEventListener('click', openLogin);
+  if (!token || !user) {
+    document.body.classList.remove('logged');
+    if (loginBtn) loginBtn.style.display = 'flex';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (topLoginBtn) topLoginBtn.style.display = 'block';
+    document.getElementById('myName').textContent = 'زائر';
+    document.getElementById('myRole').textContent = 'تصفح عام';
+    document.getElementById('myAvatar').textContent = 'ز';
+    return;
+  }
   document.body.classList.add('logged');
+  if (loginBtn) loginBtn.style.display = 'none';
+  if (logoutBtn) logoutBtn.style.display = 'flex';
+  if (topLoginBtn) topLoginBtn.style.display = 'none';
 
   document.getElementById('myName').textContent = user.username;
   document.getElementById('myRole').textContent = user.is_owner ? 'الأونر 👑' : 'عضو';
@@ -106,7 +125,7 @@ async function initApp() {
 document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
   a.onclick = (e) => {
     const page = a.dataset.page;
-    const protectedPages = ['chat','pigeon','tickets','applications','bots','add-bot'];
+    const protectedPages = ['chat','pigeon','tickets','applications','bots','addbot','add-bot'];
     if (protectedPages.includes(page) && (!token || !user)) {
       e.preventDefault();
       toast('سجّل دخول أولاً');
@@ -118,7 +137,7 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
       renderFeature(page);
       return;
     }
-    if (page === 'bots' || page === 'add-bot') {
+    if (page === 'bots' || page === 'addbot' || page === 'add-bot') {
       e.preventDefault();
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.sidebar .nav a').forEach(x => x.classList.remove('active'));
@@ -126,7 +145,7 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
       document.getElementById('page-' + page)?.classList.add('active');
       document.getElementById('pageTitle').textContent = a.textContent.trim();
       document.getElementById('sidebar')?.classList.remove('open');
-      loadBots();
+      if (page === 'bots' || page === 'addbot' || page === 'add-bot') loadBots();
       return;
     }
     if (page === 'admin') {
