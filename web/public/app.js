@@ -19,12 +19,27 @@ function esc(s) {
 
 function initials(n) { return (n || '?').slice(0, 2).toUpperCase(); }
 
+document.getElementById('verifyDiscordBtn')?.addEventListener('click', async () => {
+  const id = document.getElementById('discord_id').value.trim();
+  const msg = document.getElementById('authMsg');
+  if (!id) { msg.className='msg show error'; msg.textContent='اكتب Discord ID أولاً'; return; }
+  msg.className='msg show'; msg.textContent='جاري إرسال كود التحقق...';
+  try {
+    const r=await fetch('/api/auth/verify-discord',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({discord_id:id})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'تعذر التحقق');
+    document.getElementById('verification_code').style.display='block';
+    msg.className='msg show success'; msg.textContent='تم إرسال الكود لخاصك في ديسكورد ✓';
+  } catch(e) { msg.className='msg show error'; msg.textContent=e.message; }
+});
+
 document.querySelectorAll('.tabs button').forEach(b => {
   b.onclick = () => {
     document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
     mode = b.dataset.tab;
     document.getElementById('discordField').style.display = mode === 'register' ? 'block' : 'none';
+    if (mode === 'login') { const code=document.getElementById('verification_code'); if(code) code.style.display='none'; }
     document.getElementById('submitBtn').textContent = mode === 'register' ? 'تسجيل' : 'دخول';
   };
 });
@@ -35,6 +50,7 @@ document.getElementById('authForm').onsubmit = async (e) => {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
   const discord_id = document.getElementById('discord_id').value.trim();
+  const verification_code = document.getElementById('verification_code')?.value.trim() || '';
   msg.className = 'msg show';
   msg.textContent = 'جاري...';
 
@@ -42,7 +58,7 @@ document.getElementById('authForm').onsubmit = async (e) => {
     const r = await fetch('/api/auth/' + mode, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, discord_id })
+      body: JSON.stringify({ username, password, discord_id, verification_code })
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'خطأ');
