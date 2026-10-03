@@ -35,7 +35,7 @@ async function init() {
     const r = await fetch(API_BASE + '/api/games/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ game_type: gameType, guest_name: playerName, max_players: 6 })
+      body: JSON.stringify({ game_type: gameType, guest_name: playerName })
     });
     const d = await r.json();
     session = d.session;
