@@ -110,9 +110,11 @@ router.get('/suggestions', async (req, res) => {
     const type = String(req.query.type || 'members');
     const q = String(req.query.q || '').trim().toLowerCase();
     if (type === 'servers') {
-      const guilds = await discord('/users/@me/guilds');
-      const out = guilds.filter(g => !q || String(g.name + ' ' + g.id).toLowerCase().includes(q))
-        .slice(0, 20).map(g => ({ id: g.id, name: g.name, icon: g.icon }));
+      const g = await getGuild();
+      const haystack = String((g.name || '') + ' ' + (g.id || '')).toLowerCase();
+      const out = (!q || haystack.includes(q))
+        ? [{ id: g.id, name: g.name, icon: g.icon }]
+        : [];
       return res.json({ suggestions: out });
     }
     const members = (await getMembers()).map(normalizeMember);
