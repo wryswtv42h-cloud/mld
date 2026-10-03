@@ -61,9 +61,9 @@ router.post('/applications/:id/status',requireAuth,requireOwner,async(req,res)=>
   res.json({message:'تم التحديث'});
 });
 
-router.get('/groups',async(req,res)=>{const {rows}=await query('SELECT * FROM groups WHERE status IS DISTINCT FROM \'deleted\' ORDER BY created_at DESC');res.json({groups:rows});});
+router.get('/groups',async(req,res)=>{const {rows}=await query("SELECT * FROM groups WHERE status='approved' ORDER BY created_at DESC");res.json({groups:rows});});
 router.post('/groups',requireAuth,async(req,res)=>{const name=String(req.body.name||'').trim();if(!name)return res.status(400).json({error:'اكتب اسم القروب'});const {rows}=await query("INSERT INTO groups(owner_id,name,description,status) VALUES($1,$2,$3,'pending') RETURNING *",[req.user.id,String(name),String(req.body.description||'')]);res.json({group:rows[0],message:'تم إنشاء طلب القروب'});});
-router.post('/groups/:id/join',requireAuth,async(req,res)=>{const g=await query('SELECT * FROM groups WHERE id=$1',[req.params.id]);if(!g.rows[0])return res.status(404).json({error:'القروب غير موجود'});const {rows}=await query("INSERT INTO group_members(group_id,user_id,status) VALUES($1,$2,'pending') ON CONFLICT DO NOTHING RETURNING *",[req.params.id,req.user.id]);res.json({member:rows[0]||null,message:'تم إرسال طلب الانضمام'});});
+router.post('/groups/:id/join',requireAuth,async(req,res)=>{const g=await query("SELECT * FROM groups WHERE id=$1 AND status='approved'",[req.params.id]);if(!g.rows[0])return res.status(404).json({error:'القروب غير موجود'});const {rows}=await query("INSERT INTO group_members(group_id,user_id,status) VALUES($1,$2,'pending') ON CONFLICT DO NOTHING RETURNING *",[req.params.id,req.user.id]);res.json({member:rows[0]||null,message:'تم إرسال طلب الانضمام'});});
 router.post('/groups/:id/status',requireAuth,requireOwner,async(req,res)=>{
   const status=String(req.body.status||'pending'); if(!['pending','approved','rejected','deleted'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});
   const gq=await query('SELECT * FROM groups WHERE id=$1',[req.params.id]); const g=gq.rows[0]; if(!g)return res.status(404).json({error:'القروب غير موجود'});
