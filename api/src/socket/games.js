@@ -58,7 +58,14 @@ export function setupGameSocket(io, socket) {
 
       if (asSpectator) {
         if (!runtime.spectators.some(p => p.socketId === socket.id)) runtime.spectators.push(player);
-      } else if (!runtime.players.some(p => p.socketId === socket.id)) {
+      } else if (!runtime.players.some(p => p.socketId === socket.id || (socket.user?.id && String(p.userId) === String(socket.user.id)))) {
+        if (socket.user?.id) {
+          const active = await query(
+            "SELECT id FROM games WHERE status IN ('waiting','playing') AND id<>$1 AND EXISTS (SELECT 1 FROM jsonb_array_elements(players) p WHERE p->>'userId'=$2) LIMIT 1",
+            [sessionId, String(socket.user.id)]
+          );
+          if (active.rows[0]) return socket.emit('game:error', { error: 'لديك جلسة ألعاب نشطة بالفعل' });
+        }
         const maxPlayers = Number(session.max_players || DEFAULT_MAX_PLAYERS);
         if (runtime.players.length >= maxPlayers) {
           runtime.spectators.push(player);
