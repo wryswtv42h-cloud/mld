@@ -72,10 +72,11 @@ router.post('/groups/:id/status',requireAuth,requireOwner,async(req,res)=>{
     const textCh=await discordApi('/guilds/'+guildId()+'/channels',{method:'POST',body:JSON.stringify({name:'chat',type:0,parent_id:cat.id})});
     const voice=await discordApi('/guilds/'+guildId()+'/channels',{method:'POST',body:JSON.stringify({name:'Voice',type:2,parent_id:cat.id})});
     const role=await discordApi('/guilds/'+guildId()+'/roles',{method:'POST',body:JSON.stringify({name:g.name,reason:'MLD group '+g.id})});
-    await query('UPDATE groups SET status=$1 WHERE id=$2',[status,g.id]);
+    await query('UPDATE groups SET status=$1,discord_category_id=$2,discord_text_channel_id=$3,discord_voice_channel_id=$4,discord_role_id=$5 WHERE id=$6',[status,cat.id,textCh.id,voice.id,role.id,g.id]);
     await query('UPDATE group_members SET status=\'approved\' WHERE group_id=$1 AND user_id=$2',[g.id,g.owner_id]);
     const owner=await query('SELECT discord_id FROM users WHERE id=$1',[g.owner_id]);
     if(owner.rows[0]?.discord_id && /^\d+$/.test(String(owner.rows[0].discord_id))) await discordApi('/guilds/'+guildId()+'/members/'+owner.rows[0].discord_id+'/roles/'+role.id,{method:'PUT',body:'{}'});
+    if(owner.rows[0]?.discord_id) await dmDiscord(owner.rows[0].discord_id,'✅ تمت الموافقة على قروبك «'+g.name+'»\\nتم إنشاء الرتبة والقنوات الخاصة به.');
     await audit(req.user,'group_approved',String(g.id),{category:cat.id,text:textCh.id,voice:voice.id,role:role.id});
   } else { await query('UPDATE groups SET status=$1 WHERE id=$2',[status,g.id]); await audit(req.user,'group_'+status,String(g.id)); }
   res.json({message:'تم تحديث القروب'});
@@ -84,6 +85,9 @@ router.post('/groups/:id/members/:memberId/status',requireAuth,requireOwner,asyn
   const status=String(req.body.status||'approved'); const g=await query('SELECT * FROM groups WHERE id=$1',[req.params.id]); if(!g.rows[0])return res.status(404).json({error:'القروب غير موجود'});
   if(status!=='approved'&&status!=='rejected')return res.status(400).json({error:'حالة غير صحيحة'});
   const gm=await query('UPDATE group_members SET status=$1 WHERE group_id=$2 AND user_id=$3 RETURNING *',[status,req.params.id,req.params.memberId]); if(!gm.rows[0])return res.status(404).json({error:'طلب الانضمام غير موجود'});
+  if(status==='approved' && g.rows[0].discord_role_id){ const u=await query('SELECT discord_id FROM users WHERE id=$1',[req.params.memberId]); if(u.rows[0]?.discord_id && /^\d+$/.test(String(u.rows[0].discord_id))) await discordApi('/guilds/'+guildId()+'/members/'+u.rows[0].discord_id+'/roles/'+g.rows[0].discord_role_id,{method:'PUT',body:'{}'}); }
+  const applicant=await query('SELECT discord_id FROM users WHERE id=$1',[req.params.memberId]); if(applicant.rows[0]?.discord_id) await dmDiscord(applicant.rows[0].discord_id,status==='approved'?'✅ تمت الموافقة على انضمامك إلى قروب «'+g.rows[0].name+'».':'❌ تم رفض طلب انضمامك إلى قروب «'+g.rows[0].name+'».');
+  await audit(req.user,'group_member_'+status,req.params.id+':'+req.params.memberId);
   res.json({member:gm.rows[0]});
 });
 
