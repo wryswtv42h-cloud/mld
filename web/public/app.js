@@ -209,7 +209,7 @@ initApp();
 /* ===== MLD community feature bridge ===== */
 const featurePages = ['members','top','leaders','chat','pigeon','games','cinema','groups','tickets','applications','reviews'];
 const pageTitles = {members:'👥 الأعضاء',top:'🏆 التوب',leaders:'👑 الرتب القيادية',chat:'💬 الشات العام',pigeon:'✉️ الزاجل',games:'🎮 الألعاب',cinema:'🎬 السينما',groups:'👨‍👩‍👧 القروبات',tickets:'🎫 التذاكر',applications:'📝 التقديم',reviews:'⭐ الآراء'};
-function featureProtected(p){ return ['chat','tickets','applications','bots','add-bot'].includes(p); }
+function featureProtected(p){ return ['chat','pigeon','cinema','tickets','applications','bots','add-bot'].includes(p); }
 function requireFeatureAuth(){ if(!token||!user){ toast('سجّل دخول أولاً'); return false; } return true; }
 function pageBox(p,body){ const el=document.getElementById('page-'+p); if(el) el.innerHTML='<div class="card">'+body+'</div>'; }
 async function renderFeature(p){
