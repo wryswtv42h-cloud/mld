@@ -60,6 +60,19 @@ router.post('/verify-discord', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error:'تعذر تنفيذ التحقق' }); }
 });
 
+// ===== تأكيد كود Discord من البوت =====
+router.post('/confirm-discord', async (req,res)=>{
+  try{
+    const discordId=String(req.body.discord_id||req.body.discordId||'').trim();
+    const code=String(req.body.verification_code||req.body.code||'').trim();
+    if(!discordId||!code)return res.status(400).json({error:'بيانات التحقق ناقصة'});
+    const resolved=await resolveDiscordId(discordId);
+    const pending=resolved ? verificationCodes.get(String(resolved)) : null;
+    if(!resolved||!pending||pending.expires<Date.now()||pending.code!==code)return res.status(400).json({error:'كود التحقق غير صحيح أو منتهي'});
+    return res.json({verified:true,discord_id:resolved});
+  }catch(e){console.error(e);res.status(500).json({error:'تعذر تأكيد التحقق'});}
+});
+
 // ===== تسجيل الدخول =====
 router.post('/login', async (req, res) => {
   try {
