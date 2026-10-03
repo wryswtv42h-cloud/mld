@@ -555,3 +555,31 @@ body.modal-open { overflow: hidden; }
   .stats { grid-template-columns: repeat(2, 1fr); }
   .session-item { flex-direction: column; align-items: stretch; }
 }
+
+/* ===== MLD full mobile menu ===== */
+.mobile-menu{
+  position:fixed;
+  top:0;
+  right:0;
+  width:min(390px,92vw);
+  height:100dvh;
+  overflow:auto;
+  z-index:100;
+  display:block;
+  padding:18px;
+  background:rgba(13,8,21,.98);
+  border-left:1px solid #fbcff355;
+  box-shadow:-25px 0 80px #000b;
+  transform:translateX(110%);
+  transition:transform .25s ease;
+}
+.mobile-menu.open{display:block;transform:translateX(0)}
+.mobile-head{display:flex;align-items:center;justify-content:space-between;padding:8px 4px 18px;border-bottom:1px solid #fbcff322;margin-bottom:12px}
+.mobile-head strong{color:var(--pink);letter-spacing:1px}
+.mobile-head button{border:0;background:transparent;color:var(--text);font-size:32px;cursor:pointer}
+.menu-section{padding:13px 0;border-bottom:1px solid #fbcff21f}
+.menu-section>b{display:block;color:var(--pink);font-size:11px;margin-bottom:8px}
+.menu-section a{display:block;padding:11px 12px;margin:4px 0;border-radius:12px;color:var(--text);text-decoration:none;font-weight:800;background:#ffffff08}
+.menu-section a:hover{background:#ff9cdc18;border-color:var(--pink)}
+.menu-login{display:block;text-align:center;margin-top:16px;padding:14px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#e5a8d6);color:#241329;text-decoration:none;font-weight:900}
+@media(min-width:821px){.mobile-menu{display:none!important}}
