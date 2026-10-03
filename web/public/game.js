@@ -1,3 +1,4 @@
+const API_BASE='https://api-production-5bddb.up.railway.app';
 "use strict";
 
 const params = new URLSearchParams(location.search);
@@ -21,7 +22,7 @@ function setStatus(t) { $('#tableStatus').textContent = t; }
 async function init() {
   if (sessionId) {
     // الانضمام لجلسة موجودة
-    const r = await fetch('/api/games/sessions/' + sessionId);
+    const r = await fetch(API_BASE + '/api/games/sessions/' + sessionId);
     const d = await r.json();
     if (!d.session) {
       alert('الجلسة غير موجودة');
@@ -31,7 +32,7 @@ async function init() {
     session = d.session;
   } else if (gameType) {
     // إنشاء جلسة جديدة
-    const r = await fetch('/api/games/sessions', {
+    const r = await fetch(API_BASE + '/api/games/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ game_type: gameType, guest_name: playerName, max_players: 6 })
@@ -64,7 +65,7 @@ function gameTypeToName(t) {
 
 // ===== Socket =====
 function connectSocket() {
-  socket = io({ auth: { token } });
+  socket = io(API_BASE, { auth: { token } });
 
   socket.on('connect', () => {
     socket.emit('game:join', { sessionId: session.id, asSpectator: false });
