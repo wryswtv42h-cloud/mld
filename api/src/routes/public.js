@@ -81,10 +81,11 @@ router.get('/server', async (req, res) => {
   try {
     touchVisit(req);
     const g = await getGuild();
-    let ownerId = process.env.OWNER_DISCORD_ID || null;
+    let ownerId = /^\d{17,20}$/.test(String(process.env.OWNER_DISCORD_ID || '')) ? String(process.env.OWNER_DISCORD_ID) : null;
     if (!ownerId) {
       const members = await getMembers();
-      const owner = members.find(m => String(m.user?.username || '').toLowerCase() === 'w4px');
+      const wanted = String(process.env.OWNER_DISCORD_ID || 'w4px').toLowerCase();
+      const owner = members.find(m => String(m.user?.username || '').toLowerCase() === wanted || String(m.user?.global_name || '').toLowerCase() === wanted);
       ownerId = owner?.user?.id || null;
     }
     res.json({
@@ -273,7 +274,14 @@ router.post('/message', async (req, res) => {
     const members = await getMembers();
     const m = members.find(x => x.user.id === String(memberId));
     if (!m) return res.status(404).json({ error: 'العضو غير موجود' });
-    return res.status(501).json({ error: 'ميزة الرسائل الخاصة ستبقى عبر البوت بعد ربط الخدمة' });
+    const t = token();
+    if (!t) return res.status(503).json({ error: 'بوت ديسكورد غير متصل' });
+    const dm = await fetch('https://discord.com/api/v10/users/@me/channels', { method:'POST', headers:{Authorization:'Bot '+t,'Content-Type':'application/json'}, body:JSON.stringify({recipient_id:String(memberId)}) });
+    if (!dm.ok) return res.status(502).json({ error: 'تعذر فتح الخاص مع العضو' });
+    const channel = await dm.json();
+    const sent = await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, { method:'POST', headers:{Authorization:'Bot '+t,'Content-Type':'application/json'}, body:JSON.stringify({embeds:[{title:title||'رسالة من إدارة MLD',description:String(message).slice(0,4000),color:0xff9cde,footer:{text:'MLD Community · فهد المطيري'}}]}) });
+    if (!sent.ok) return res.status(502).json({ error: 'تعذر إرسال الرسالة' });
+    res.json({ ok:true, message:'تم الإرسال بنجاح' });
   } catch (e) {
     res.status(500).json({ error: 'تعذر الإرسال' });
   }
