@@ -13,5 +13,6 @@
     "http-proxy": "^1.18.1"
   },
   "author": "فهد المطيري",
-  "license": "MLD"
+  "license": "MLD",
+  "type": "module"
 }
