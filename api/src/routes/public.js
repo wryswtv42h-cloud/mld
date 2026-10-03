@@ -95,6 +95,24 @@ router.get('/server', async (req, res) => {
   }
 });
 
+router.get('/suggestions', async (req, res) => {
+  try {
+    const type = String(req.query.type || 'members');
+    const q = String(req.query.q || '').trim().toLowerCase();
+    if (type === 'servers') {
+      const guilds = await discord('/users/@me/guilds');
+      const out = guilds.filter(g => !q || String(g.name + ' ' + g.id).toLowerCase().includes(q))
+        .slice(0, 20).map(g => ({ id: g.id, name: g.name, icon: g.icon }));
+      return res.json({ suggestions: out });
+    }
+    const members = (await getMembers()).map(normalizeMember);
+    const out = members.filter(m => !q || String(m.name + ' ' + m.username + ' ' + m.id).toLowerCase().includes(q)).slice(0, 20);
+    res.json({ suggestions: out });
+  } catch (e) {
+    res.status(503).json({ error: 'تعذر جلب الاقتراحات', suggestions: [] });
+  }
+});
+
 router.get('/members', async (req, res) => {
   try {
     const members = (await getMembers()).map(normalizeMember);
