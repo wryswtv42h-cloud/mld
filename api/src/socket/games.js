@@ -179,10 +179,19 @@ export function setupGameSocket(io, socket) {
       if (!removed) continue;
       runtime.players = runtime.players.filter(p => p.socketId !== socket.id);
       runtime.spectators = runtime.spectators.filter(p => p.socketId !== socket.id);
+      runtime.lastActivity = Date.now();
       try {
+        const q = await query('SELECT * FROM games WHERE id=$1',[sessionId]);
+        const session = q.rows[0];
+        if (!session) { activeSessions.delete(String(sessionId)); continue; }
         await persistPlayers(sessionId, runtime.players);
-        await broadcastUpdate(io, sessionId, session, runtime);
-      } catch {}
+        if (runtime.players.length === 0) {
+          await query("DELETE FROM games WHERE id=$1 AND status='waiting'",[sessionId]);
+          activeSessions.delete(String(sessionId));
+        } else {
+          await broadcastUpdate(io, sessionId, session, runtime);
+        }
+      } catch (e) { console.error('game disconnect:',e.message); }
     }
   });
 }
