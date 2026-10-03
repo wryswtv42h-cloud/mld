@@ -46,7 +46,17 @@ router.patch('/me', requireAuth, async (req, res) => {
 });
 
 // ===== حظر / فك حظر (أونر فقط) =====
-router.post('/:id/ban', requireAuth, requireOwner, async (req, res) => {
+router.post('/:id/admin', requireAuth, requireOwner, async (req,res)=>{
+  const action=String(req.body.action||'add');
+  if(!['add','remove'].includes(action))return res.status(400).json({error:'إجراء غير صحيح'});
+  const q=await query('SELECT * FROM users WHERE id=$1',[req.params.id]); const u=q.rows[0];
+  if(!u || u.is_owner)return res.status(400).json({error:'الحساب غير متاح'});
+  await query("UPDATE users SET role=$1 WHERE id=$2",[action==='add'?'admin':'member',u.id]);
+  await query('INSERT INTO audit_logs(actor_id,actor_name,action,target,meta) VALUES($1,$2,$3,$4,$5)',[req.user.id,req.user.username,'admin_'+action,String(u.id),JSON.stringify({username:u.username})]);
+  res.json({message:action==='add'?'تمت إضافة الإدارة':'تمت إزالة الإدارة'});
+});
+
+router.post('/:id/ban', requireAuth, requireOwner, async (req, res) =>
   const { rows } = await query('SELECT * FROM users WHERE id = $1', [req.params.id]);
   const user = rows[0];
   if (!user) return res.status(404).json({ error: 'غير موجود' });
