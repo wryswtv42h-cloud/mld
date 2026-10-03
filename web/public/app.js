@@ -104,16 +104,42 @@ async function initApp() {
 }
 
 document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
-  a.onclick = () => {
+  a.onclick = (e) => {
     const page = a.dataset.page;
-    document.querySelectorAll('.sidebar .nav a').forEach(x => x.classList.remove('active'));
-    a.classList.add('active');
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
-    document.getElementById('pageTitle').textContent = a.textContent.trim();
-    document.getElementById('sidebar').classList.remove('open');
-    if (page === 'bots') loadBots();
-    if (page === 'admin') loadAdmin();
+    const protectedPages = ['chat','pigeon','tickets','applications','bots','add-bot'];
+    if (protectedPages.includes(page) && (!token || !user)) {
+      e.preventDefault();
+      toast('سجّل دخول أولاً');
+      document.getElementById('sidebar')?.classList.remove('open');
+      return;
+    }
+    if (featurePages.includes(page)) {
+      e.preventDefault();
+      renderFeature(page);
+      return;
+    }
+    if (page === 'bots' || page === 'add-bot') {
+      e.preventDefault();
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.sidebar .nav a').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+      document.getElementById('page-' + page)?.classList.add('active');
+      document.getElementById('pageTitle').textContent = a.textContent.trim();
+      document.getElementById('sidebar')?.classList.remove('open');
+      loadBots();
+      return;
+    }
+    if (page === 'admin') {
+      e.preventDefault();
+      if (!user?.is_owner) { toast('هذه الصفحة للأونر فقط'); return; }
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.sidebar .nav a').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+      document.getElementById('page-admin')?.classList.add('active');
+      document.getElementById('pageTitle').textContent = a.textContent.trim();
+      document.getElementById('sidebar')?.classList.remove('open');
+      loadAdmin();
+    }
   };
 });
 
@@ -209,7 +235,7 @@ initApp();
 /* ===== MLD community feature bridge ===== */
 const featurePages = ['members','top','leaders','chat','pigeon','games','cinema','groups','tickets','applications','reviews'];
 const pageTitles = {members:'👥 الأعضاء',top:'🏆 التوب',leaders:'👑 الرتب القيادية',chat:'💬 الشات العام',pigeon:'✉️ الزاجل',games:'🎮 الألعاب',cinema:'🎬 السينما',groups:'👨‍👩‍👧 القروبات',tickets:'🎫 التذاكر',applications:'📝 التقديم',reviews:'⭐ الآراء'};
-function featureProtected(p){ return ['chat','tickets','applications','bots','add-bot'].includes(p); }
+function featureProtected(p){ return ['chat','pigeon','tickets','applications','bots','add-bot'].includes(p); }
 function requireFeatureAuth(){ if(!token||!user){ toast('سجّل دخول أولاً'); return false; } return true; }
 function pageBox(p,body){ const el=document.getElementById('page-'+p); if(el) el.innerHTML='<div class="card">'+body+'</div>'; }
 async function renderFeature(p){
@@ -228,7 +254,7 @@ async function renderFeature(p){
   if(p==='reviews'){pageBox(p,'<h3>⭐ الآراء</h3><div id="reviews-list">جاري التحميل...</div><textarea id="review-input" class="full" placeholder="اكتب رأيك"></textarea><button class="btn-primary" id="review-send">إضافة رأي</button>'); loadReviews(); return;}
   if(p==='tickets'){pageBox(p,'<h3>🎫 التذاكر</h3><input id="ticket-subject" class="full" placeholder="عنوان التذكرة"><textarea id="ticket-content" class="full" placeholder="اشرح مشكلتك"></textarea><button class="btn-primary" id="ticket-send">فتح تذكرة</button><div id="tickets-list"></div>'); document.getElementById('ticket-send').onclick=async()=>{const d=await api('/api/community/tickets',{method:'POST',body:JSON.stringify({subject:document.getElementById('ticket-subject').value,content:document.getElementById('ticket-content').value})});toast(d.error||'تم فتح التذكرة ✓');loadTickets();};loadTickets();return;}
   if(p==='applications'){pageBox(p,'<h3>📝 التقديم</h3><input id="app-discord" class="full" placeholder="Discord ID"><textarea id="app-answers" class="full" placeholder="اكتب إجاباتك"></textarea><button class="btn-primary" id="app-send">إرسال التقديم</button><div id="apps-list"></div>');document.getElementById('app-send').onclick=async()=>{const d=await api('/api/community/applications',{method:'POST',body:JSON.stringify({discord_id:document.getElementById('app-discord').value,answers:{text:document.getElementById('app-answers').value}})});toast(d.error||'تم إرسال التقديم ✓');loadApps();};loadApps();return;}
-  if(p==='groups'){pageBox(p,'<h3>👨‍👩‍👧 القروبات</h3><div id="groups-list">جاري...</div><input id="group-name" class="full" placeholder="اسم القروب"><textarea id="group-desc" class="full" placeholder="الوصف"></textarea><button class="btn-primary" id="group-send">إنشاء قروب</button>');loadGroups();document.getElementById('group-send').onclick=async()=>{const d=await api('/api/community/groups',{method:'POST',body:JSON.stringify({name:document.getElementById('group-name').value,description:document.getElementById('group-desc').value})});toast(d.error||'تم إرسال طلب القروب ✓');loadGroups();};return;}
+  if(p==='groups'){pageBox(p,'<h3>👨‍👩‍👧 القروبات</h3><div id="groups-list">جاري...</div><input id="group-name" class="full" placeholder="اسم القروب"><textarea id="group-desc" class="full" placeholder="الوصف"></textarea><button class="btn-primary" id="group-send">إنشاء قروب</button>');loadGroups();document.getElementById('group-send').onclick=async()=>{if(!requireFeatureAuth())return;const d=await api('/api/community/groups',{method:'POST',body:JSON.stringify({name:document.getElementById('group-name').value,description:document.getElementById('group-desc').value})});toast(d.error||'تم إرسال طلب القروب ✓');loadGroups();};return;}
   if(p==='pigeon'){pageBox(p,'<h3>✉️ الزاجل</h3><input id="pigeon-recipient" class="full" placeholder="ID المستلم"><textarea id="pigeon-text" class="full" placeholder="الرسالة"></textarea><button class="btn-primary" id="pigeon-send">إرسال</button><div id="pigeon-list"></div>');document.getElementById('pigeon-send').onclick=async()=>{const d=await api('/api/community/pigeon',{method:'POST',body:JSON.stringify({recipient_id:document.getElementById('pigeon-recipient').value,content:document.getElementById('pigeon-text').value})});toast(d.error||'تم الإرسال ✓');loadPigeon();};loadPigeon();return;}
   if(p==='cinema'){pageBox(p,'<h3>🎬 السينما</h3><div id="cinema-list">جاري...</div><input id="cinema-title" class="full" placeholder="اسم العرض"><input id="cinema-url" class="full" placeholder="رابط المحتوى المصرح لك باستخدامه"><button class="btn-primary" id="cinema-send">إنشاء غرفة</button>');loadCinema();document.getElementById('cinema-send').onclick=async()=>{if(!requireFeatureAuth())return;const d=await api('/api/community/cinema',{method:'POST',body:JSON.stringify({title:document.getElementById('cinema-title').value,media_url:document.getElementById('cinema-url').value})});toast(d.error||'تم إنشاء الغرفة ✓');loadCinema();};return;}
 }
@@ -237,10 +263,10 @@ async function loadReviews(){const d=await fetch('/api/community/reviews').then(
 async function loadTickets(){const d=await api('/api/community/tickets');const e=document.getElementById('tickets-list');if(e)e.innerHTML=(d.tickets||[]).map(x=>'<div class="bot-card"><b>#'+x.id+' '+esc(x.subject)+'</b><p>'+esc(x.status)+'</p></div>').join('');}
 async function loadApps(){const d=await api('/api/community/applications');const e=document.getElementById('apps-list');if(e)e.innerHTML=(d.applications||[]).map(x=>'<div class="bot-card"><b>#'+x.id+'</b><p>'+esc(x.status)+'</p></div>').join('');}
 async function loadGroups(){const d=await fetch('/api/community/groups').then(r=>r.json());const e=document.getElementById('groups-list');if(e)e.innerHTML=(d.groups||[]).map(x=>'<div class="bot-card"><b>'+esc(x.name)+'</b><p>'+esc(x.description||'')+'</p><button class="btn-primary" onclick="joinGroup('+x.id+')">انضمام</button></div>').join('')||'<p>لا توجد قروبات.</p>';}
-window.joinGroup=async id=>{const d=await api('/api/community/groups/'+id+'/join',{method:'POST'});toast(d.error||d.message);};
+window.joinGroup=async id=>{if(!requireFeatureAuth())return;const d=await api('/api/community/groups/'+id+'/join',{method:'POST'});toast(d.error||d.message);};
 async function loadPigeon(){const d=await api('/api/community/pigeon');const e=document.getElementById('pigeon-list');if(e)e.innerHTML=(d.messages||[]).map(x=>'<div class="bot-card"><p>'+esc(x.content)+'</p></div>').join('');}
 async function loadCinema(){const d=await fetch('/api/community/cinema').then(r=>r.json());const e=document.getElementById('cinema-list');if(e)e.innerHTML=(d.rooms||[]).map(x=>'<div class="bot-card"><b>'+esc(x.title)+'</b><p>'+esc(x.status)+'</p><a class="primary" href="'+esc(x.media_url)+'" target="_blank">فتح العرض</a></div>').join('')||'<p>لا توجد غرف.</p>';}
-document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>{a.addEventListener('click',e=>{const p=a.dataset.page;if(featurePages.includes(p)){e.preventDefault();renderFeature(p);}});});
+
 
 /* ===== Discord autocomplete suggestions ===== */
 (function bindDiscordSuggestions(){
