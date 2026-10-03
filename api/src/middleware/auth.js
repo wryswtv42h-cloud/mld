@@ -52,3 +52,11 @@ export function optionalAuth(req, res, next) {
     next();
   }
 }
+
+
+export async function requireAdmin(req, res, next) {
+  if (!req.user || (!req.user.is_owner && !['admin','owner'].includes(String(req.user.role || '').toLowerCase()))) {
+    return res.status(403).json({ error: 'هذي الصلاحية للإدارة فقط' });
+  }
+  next();
+}
