@@ -190,7 +190,9 @@ function renderState() {
 
   // معلومات إضافية
   const info = $('#gameInfo');
-  if (state.round) info.textContent = 'الجولة: ' + state.round;
+  if (session.game_type === 'codenames') {
+    // تم رسم لوحة كود نيمز أعلاه.
+  } else if (state.round) info.textContent = 'الجولة: ' + state.round;
   else info.textContent = '';
 }
 
