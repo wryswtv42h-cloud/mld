@@ -50,7 +50,7 @@ router.post('/sessions', optionalAuth, async (req, res) => {
 
     const { rows } = await query(
       `INSERT INTO games (name, type, status, host_id, players)
-       VALUES ($1, $2, 'open', $3, $4)
+       VALUES ($1, $2, 'waiting', $3, $4)
        RETURNING *`,
       [name, game_type, hostId, players]
     );
