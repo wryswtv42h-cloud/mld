@@ -1,8 +1,11 @@
+import crypto from 'crypto';
 import express from 'express';
 import { query } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
+const KEY = crypto.createHash('sha256').update(process.env.JWT_SECRET || 'mld').digest();
+function encryptToken(value){const iv=crypto.randomBytes(12);const c=crypto.createCipheriv('aes-256-gcm',KEY,iv);const enc=Buffer.concat([c.update(value,'utf8'),c.final()]);return 'enc:'+iv.toString('base64url')+':'+c.getAuthTag().toString('base64url')+':'+enc.toString('base64url');}
 
 // ===== قائمة بوتاتي =====
 router.get('/', requireAuth, async (req, res) => {
@@ -25,7 +28,7 @@ router.post('/', requireAuth, async (req, res) => {
     const { rows } = await query(
       `INSERT INTO bots (user_id, name, token, guild_id, watching, site_url, locked)
        VALUES ($1, $2, $3, $4, $5, $6, TRUE) RETURNING *`,
-      [req.user.id, name, token, guild_id || null, 'MLD | فهد المطيري', '']
+      [req.user.id, name, encryptToken(token), guild_id || null, 'MLD | فهد المطيري', '']
     );
 
     const { token: _, ...bot } = rows[0];
