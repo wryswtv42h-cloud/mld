@@ -252,7 +252,7 @@ router.get('/member/:id', async (req, res) => {
     const m = members.find(x => x.user.id === req.params.id);
     if (!m) return res.status(404).json({ error: 'Member not found' });
     const n = normalizeMember(m);
-    const ds = await statsForMember(id);
+    const ds = await statsForMember(req.params.id);
     res.json({ ...n, rank: 'عضو', stats: {
       messages: Number(ds.messages || 0),
       mentionsReceived: Number(ds.mentions_received || 0),
