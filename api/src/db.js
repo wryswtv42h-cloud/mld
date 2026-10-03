@@ -1,12 +1,13 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 const { Pool } = pg;
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: process.env.DATABASE_URL?.includes('supabase') ? { rejectUnauthorized: false } : false,
   family: 4,
   max: 10
 });
@@ -16,12 +17,26 @@ export async function query(text, params) {
 }
 
 export async function initDB() {
-  // قاعدة البيانات الحالية في Supabase تحتوي الجداول الأساسية بالفعل.
-  // لا ننشئ جداول جديدة هنا حتى لا نغيّر أنواع المفاتيح أو العلاقات الموجودة.
-  await query(`SELECT 1 FROM users LIMIT 1`);
-  await query(`SELECT 1 FROM bots LIMIT 1`);
-  await query(`SELECT 1 FROM messages LIMIT 1`);
-  await query(`SELECT 1 FROM games LIMIT 1`);
+  try {
+    const requiredTables = ['users', 'bots', 'messages', 'games', 'reviews', 'discord_stats'];
+    const { rows } = await query(
+      `SELECT table_name
+       FROM information_schema.tables
+       WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+      [requiredTables]
+    );
 
-  console.log('✅ تم الاتصال بقاعدة MLD والتحقق من الجداول الحالية');
+    const found = new Set(rows.map((row) => row.table_name));
+    const missing = requiredTables.filter((name) => !found.has(name));
+
+    if (missing.length) {
+      console.warn(`⚠️ الجداول التالية غير موجودة في قاعدة البيانات: ${missing.join(', ')}`);
+    }
+
+    await query('SELECT 1');
+    console.log('✅ تم الاتصال بقاعدة MLD والتحقق من الجداول الحالية');
+  } catch (error) {
+    console.error('❌ فشل توصيل قاعدة البيانات:', error.message);
+    throw error;
+  }
 }
