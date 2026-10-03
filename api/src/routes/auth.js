@@ -13,6 +13,25 @@ async function discordMemberExists(discordId) {
 }
 
 const router = express.Router();
+const verificationCodes = new Map();
+
+// ===== تحقق Discord عبر رسالة خاصة من البوت =====
+router.post('/verify-discord', async (req, res) => {
+  try {
+    const { discord_id } = req.body;
+    if (!discord_id) return res.status(400).json({ error: 'أدخل Discord ID' });
+    if (!(await discordMemberExists(discord_id))) return res.status(400).json({ error: 'هذا الحساب ليس عضوًا في سيرفر MLD' });
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
+    const dm = await fetch('https://discord.com/api/v10/users/@me/channels', { method:'POST', headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({recipient_id:String(discord_id)}) });
+    if (!dm.ok) return res.status(502).json({ error: 'تعذر فتح الخاص مع حسابك في ديسكورد' });
+    const channel = await dm.json();
+    const sent = await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, { method:'POST', headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({content:`🔐 كود التحقق الخاص بـ MLD Community: **${code}**\\nلا تشارك هذا الكود مع أي شخص.`}) });
+    if (!sent.ok) return res.status(502).json({ error: 'تعذر إرسال كود التحقق' });
+    verificationCodes.set(String(discord_id), { code, expires: Date.now() + 10 * 60 * 1000 });
+    return res.json({ verified: false, message: 'تم إرسال كود التحقق إلى الخاص في ديسكورد' });
+  } catch (e) { console.error(e); res.status(500).json({ error:'تعذر تنفيذ التحقق' }); }
+});
 
 // ===== تسجيل الدخول =====
 router.post('/login', async (req, res) => {
@@ -28,9 +47,11 @@ router.post('/login', async (req, res) => {
       let owner = rows[0];
 
       if (!owner) {
-        let verified = false;
+        const pending = verificationCodes.get(String(discord_id));
+    if (!pending || pending.expires < Date.now() || pending.code !== String(verification_code || '')) return res.status(400).json({ error: 'تحقق من ديسكورد أولاً وأدخل الكود المرسل لك' });
+    let verified = false;
     try { verified = await discordMemberExists(discord_id); } catch (e) { return res.status(503).json({ error: e.message }); }
-    if (!verified) return res.status(400).json({ error: 'حساب ديسكورد غير موجود في سيرفر MLD، لا يمكن إنشاء الحساب' });
+    if (!verified) return res.status(400).json({ error: 'حساب ديسكورد لم يعد عضوًا في سيرفر MLD' });
 
     const linked = await query('SELECT id FROM users WHERE discord_id = $1', [discord_id]);
     if (linked.rows[0]) return res.status(400).json({ error: 'حساب ديسكورد هذا مرتبط بحساب موقع آخر' });
@@ -73,7 +94,7 @@ router.post('/login', async (req, res) => {
 // ===== تسجيل جديد =====
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, discord_id } = req.body;
+    const { username, password, discord_id, verification_code } = req.body;
     if (!username || !password || !discord_id) return res.status(400).json({ error: 'التسجيل يتطلب يوزر الموقع + الباسورد + التحقق من حساب ديسكورد' });
     if (username.length < 2 || password.length < 6) {
       return res.status(400).json({ error: 'الاسم قصير أو الباسورد أقل من 6 أحرف' });
@@ -88,6 +109,7 @@ router.post('/register', async (req, res) => {
        VALUES ($1, $2, $3, TRUE) RETURNING *`,
       [username, hash, discord_id]
     );
+    verificationCodes.delete(String(discord_id));
     const { password: _, ...user } = rows[0];
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
