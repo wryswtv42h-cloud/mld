@@ -47,7 +47,10 @@ router.post('/sessions', optionalAuth, async (req, res) => {
     const requestedMax = Number(max_players || maxAllowed);
     if (!Number.isInteger(requestedMax) || requestedMax < minPlayers || requestedMax > maxAllowed) return res.status(400).json({ error: `عدد اللاعبين يجب أن يكون بين ${minPlayers} و${maxAllowed}` });
     if (req.user) {
-      const active = await query("SELECT id FROM games WHERE host_id=$1 AND status IN ('waiting','playing') LIMIT 1", [req.user.id]);
+      const active = await query(
+        "SELECT id FROM games WHERE status IN ('waiting','playing') AND (host_id=$1 OR EXISTS (SELECT 1 FROM jsonb_array_elements(players) p WHERE p->>'userId'=$2)) LIMIT 1",
+        [req.user.id, String(req.user.id)]
+      );
       if (active.rows[0]) return res.status(409).json({ error:'لديك جلسة نشطة بالفعل' });
     }
 
