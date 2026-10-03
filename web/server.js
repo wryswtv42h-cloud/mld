@@ -29,7 +29,7 @@ const server=http.createServer((req,res)=>{
   if(!file.startsWith(publicDir)) return res.writeHead(403).end();
   fs.readFile(file,(err,data)=>{
     if(err) return res.writeHead(404,{'content-type':'text/plain; charset=utf-8'}).end('Not found');
-    res.writeHead(200,{'content-type':contentType(file),'cache-control':'no-cache');
+    res.writeHead(200,{'content-type':contentType(file),'cache-control':'no-cache'});
     res.end(data);
   });
 });
