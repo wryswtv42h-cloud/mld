@@ -165,7 +165,6 @@ router.post('/message', async (req, res) => {
     const members = await getMembers();
     const m = members.find(x => x.user.id === String(memberId));
     if (!m) return res.status(404).json({ error: 'العضو غير موجود' });
-    const user = await (await import('discord.js')).Client;
     return res.status(501).json({ error: 'ميزة الرسائل الخاصة ستبقى عبر البوت بعد ربط الخدمة' });
   } catch (e) {
     res.status(500).json({ error: 'تعذر الإرسال' });
