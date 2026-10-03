@@ -36,7 +36,8 @@ mobile?.querySelectorAll("a").forEach(a=>a.addEventListener("click",closeMenu));
 $("#close")?.addEventListener("click",closeModal);
 modal?.addEventListener("click",e=>{if(e.target===modal)closeModal()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeMenu()}});
-$("#year")?.textContent=new Date().getFullYear();
+const yearEl=$("#year");
+if(yearEl) yearEl.textContent=new Date().getFullYear();
 refresh();
 refreshTimer=setInterval(()=>{if(!content)return;if(modal&&!modal.classList.contains("hidden")||view==="message")return;refresh()},15000);
 /* ===== Homepage live dashboard override ===== */
