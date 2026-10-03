@@ -1,8 +1,21 @@
 import express from 'express';
 import { query } from '../db.js';
-import { requireAuth, requireOwner } from '../middleware/auth.js';
+import { requireAuth, requireOwner, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
+const discordToken = () => process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
+const guildId = () => process.env.DISCORD_GUILD_ID;
+async function discordApi(path, options={}) {
+  const r = await fetch('https://discord.com/api/v10'+path,{...options,headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json',...(options.headers||{})}});
+  const text = await r.text();
+  let data; try { data=JSON.parse(text); } catch { data={}; }
+  if(!r.ok) throw new Error(data.message || 'Discord API '+r.status);
+  return data;
+}
+async function audit(actor, action, target, meta={}) {
+  await query('INSERT INTO audit_logs(actor_id,actor_name,action,target,meta) VALUES($1,$2,$3,$4,$5)',[actor.id,actor.username,action,target,JSON.stringify(meta)]);
+}
+
 
 router.get('/chat', requireAuth, async (req,res)=>{ const {rows}=await query('SELECT * FROM chat_messages ORDER BY created_at DESC LIMIT 100'); res.json({messages:rows.reverse()}); });
 router.post('/chat', requireAuth, async (req,res)=>{ const content=String(req.body.content||'').trim(); if(!content)return res.status(400).json({error:'اكتب رسالة'}); const {rows}=await query('INSERT INTO chat_messages(user_id,sender_name,sender_avatar,content) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,req.user.username,req.user.avatar||'',content]); res.json({message:rows[0]}); });
@@ -15,15 +28,51 @@ router.get('/tickets', requireAuth, async(req,res)=>{ const {rows}=await query('
 router.post('/tickets', requireAuth, async(req,res)=>{const subject=String(req.body.subject||'').trim(),content=String(req.body.content||'').trim();if(!subject||!content)return res.status(400).json({error:'أكمل بيانات التذكرة'});const {rows}=await query('INSERT INTO tickets(user_id,subject,content,status) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,subject,content,'open']);res.json({ticket:rows[0]});});
 router.get('/tickets/:id',requireAuth,async(req,res)=>{const t=await query('SELECT * FROM tickets WHERE id=$1 AND (user_id=$2 OR $3=true)',[req.params.id,req.user.id,!!req.user.is_owner]);if(!t.rows[0])return res.status(404).json({error:'التذكرة غير موجودة'});const m=await query('SELECT * FROM ticket_messages WHERE ticket_id=$1 ORDER BY created_at',[req.params.id]);res.json({ticket:t.rows[0],messages:m.rows});});
 router.post('/tickets/:id/messages',requireAuth,async(req,res)=>{const c=String(req.body.content||'').trim();if(!c)return res.status(400).json({error:'اكتب رد'});const t=await query('SELECT * FROM tickets WHERE id=$1 AND (user_id=$2 OR $3=true)',[req.params.id,req.user.id,!!req.user.is_owner]);if(!t.rows[0])return res.status(403).json({error:'غير مصرح'});const {rows}=await query('INSERT INTO ticket_messages(ticket_id,user_id,sender_name,content) VALUES($1,$2,$3,$4) RETURNING *',[req.params.id,req.user.id,req.user.username,c]);res.json({message:rows[0]});});
+router.post('/tickets/:id/claim',requireAuth,requireAdmin,async(req,res)=>{const {rows}=await query('UPDATE tickets SET claimed_by=$1 WHERE id=$2 AND status <> \'closed\' RETURNING *',[req.user.id,req.params.id]);if(!rows[0])return res.status(404).json({error:'التذكرة غير متاحة'});await audit(req.user,'ticket_claim',String(req.params.id));res.json({ticket:rows[0]});});
 router.post('/tickets/:id/close',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM tickets WHERE id=$1 AND (user_id=$2 OR $3=true)',[req.params.id,req.user.id,!!req.user.is_owner]);if(!rows[0])return res.status(404).json({error:'غير موجود'});await query("UPDATE tickets SET status='closed',closed_at=NOW() WHERE id=$1",[req.params.id]);res.json({message:'تم إغلاق التذكرة'});});
 
 router.get('/applications',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM applications WHERE user_id=$1 OR $2=true ORDER BY created_at DESC',[req.user.id,!!req.user.is_owner]);res.json({applications:rows});});
 router.post('/applications',requireAuth,async(req,res)=>{const discord_id=String(req.body.discord_id||req.user.discord_id||'').trim();if(!discord_id)return res.status(400).json({error:'أدخل Discord ID'});const answers=req.body.answers||{};const {rows}=await query("INSERT INTO applications(user_id,discord_id,answers,status) VALUES($1,$2,$3,'pending') RETURNING *",[req.user.id,discord_id,JSON.stringify(answers)]);res.json({application:rows[0]});});
-router.post('/applications/:id/status',requireAuth,requireOwner,async(req,res)=>{const status=String(req.body.status||'pending');if(!['pending','accepted','rejected'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});await query('UPDATE applications SET status=$1 WHERE id=$2',[status,req.params.id]);res.json({message:'تم التحديث'});});
+router.post('/applications/:id/status',requireAuth,requireOwner,async(req,res)=>{
+  const status=String(req.body.status||'pending'); if(!['pending','accepted','rejected'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});
+  const {rows}=await query('SELECT * FROM applications WHERE id=$1',[req.params.id]); if(!rows[0])return res.status(404).json({error:'التقديم غير موجود'});
+  await query('UPDATE applications SET status=$1 WHERE id=$2',[status,req.params.id]);
+  if(status==='accepted'){
+    const roles=await discordApi('/guilds/'+guildId()+'/roles');
+    const adminRoles=roles.filter(r=>!r.managed && r.name.toLowerCase().includes('admin')).sort((a,b)=>(a.position||0)-(b.position||0));
+    const role=adminRoles[0];
+    if(role && /^\d+$/.test(String(rows[0].discord_id))) await discordApi('/guilds/'+guildId()+'/members/'+rows[0].discord_id+'/roles/'+role.id,{method:'PUT',body:'{}'});
+    await query("UPDATE users SET role='admin' WHERE id=$1",[rows[0].user_id]);
+  }
+  await audit(req.user,'application_'+status,String(req.params.id));
+  res.json({message:'تم التحديث'});
+});
 
 router.get('/groups',async(req,res)=>{const {rows}=await query('SELECT * FROM groups WHERE status IS DISTINCT FROM \'deleted\' ORDER BY created_at DESC');res.json({groups:rows});});
 router.post('/groups',requireAuth,async(req,res)=>{const name=String(req.body.name||'').trim();if(!name)return res.status(400).json({error:'اكتب اسم القروب'});const {rows}=await query("INSERT INTO groups(owner_id,name,description,status) VALUES($1,$2,$3,'pending') RETURNING *",[req.user.id,String(name),String(req.body.description||'')]);res.json({group:rows[0],message:'تم إنشاء طلب القروب'});});
-router.post('/groups/:id/join',requireAuth,async(req,res)=>{const {rows}=await query("INSERT INTO group_members(group_id,user_id,status) VALUES($1,$2,'pending') ON CONFLICT DO NOTHING RETURNING *",[req.params.id,req.user.id]);res.json({member:rows[0]||null,message:'تم إرسال طلب الانضمام'});});
+router.post('/groups/:id/join',requireAuth,async(req,res)=>{const g=await query('SELECT * FROM groups WHERE id=$1',[req.params.id]);if(!g.rows[0])return res.status(404).json({error:'القروب غير موجود'});const {rows}=await query("INSERT INTO group_members(group_id,user_id,status) VALUES($1,$2,'pending') ON CONFLICT DO NOTHING RETURNING *",[req.params.id,req.user.id]);res.json({member:rows[0]||null,message:'تم إرسال طلب الانضمام'});});
+router.post('/groups/:id/status',requireAuth,requireOwner,async(req,res)=>{
+  const status=String(req.body.status||'pending'); if(!['pending','approved','rejected','deleted'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});
+  const gq=await query('SELECT * FROM groups WHERE id=$1',[req.params.id]); const g=gq.rows[0]; if(!g)return res.status(404).json({error:'القروب غير موجود'});
+  if(status==='approved' && g.status!=='approved'){
+    const cat=await discordApi('/guilds/'+guildId()+'/channels',{method:'POST',body:JSON.stringify({name:g.name,type:4})});
+    const textCh=await discordApi('/guilds/'+guildId()+'/channels',{method:'POST',body:JSON.stringify({name:'chat',type:0,parent_id:cat.id})});
+    const voice=await discordApi('/guilds/'+guildId()+'/channels',{method:'POST',body:JSON.stringify({name:'Voice',type:2,parent_id:cat.id})});
+    const role=await discordApi('/guilds/'+guildId()+'/roles',{method:'POST',body:JSON.stringify({name:g.name,reason:'MLD group '+g.id})});
+    await query('UPDATE groups SET status=$1 WHERE id=$2',[status,g.id]);
+    await query('UPDATE group_members SET status=\'approved\' WHERE group_id=$1 AND user_id=$2',[g.id,g.owner_id]);
+    const owner=await query('SELECT discord_id FROM users WHERE id=$1',[g.owner_id]);
+    if(owner.rows[0]?.discord_id && /^\d+$/.test(String(owner.rows[0].discord_id))) await discordApi('/guilds/'+guildId()+'/members/'+owner.rows[0].discord_id+'/roles/'+role.id,{method:'PUT',body:'{}'});
+    await audit(req.user,'group_approved',String(g.id),{category:cat.id,text:textCh.id,voice:voice.id,role:role.id});
+  } else { await query('UPDATE groups SET status=$1 WHERE id=$2',[status,g.id]); await audit(req.user,'group_'+status,String(g.id)); }
+  res.json({message:'تم تحديث القروب'});
+});
+router.post('/groups/:id/members/:memberId/status',requireAuth,requireOwner,async(req,res)=>{
+  const status=String(req.body.status||'approved'); const g=await query('SELECT * FROM groups WHERE id=$1',[req.params.id]); if(!g.rows[0])return res.status(404).json({error:'القروب غير موجود'});
+  if(status!=='approved'&&status!=='rejected')return res.status(400).json({error:'حالة غير صحيحة'});
+  const gm=await query('UPDATE group_members SET status=$1 WHERE group_id=$2 AND user_id=$3 RETURNING *',[status,req.params.id,req.params.memberId]); if(!gm.rows[0])return res.status(404).json({error:'طلب الانضمام غير موجود'});
+  res.json({member:gm.rows[0]});
+});
 
 router.get('/pigeon',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM pigeon_messages WHERE sender_id=$1 OR recipient_id=$1 ORDER BY created_at DESC LIMIT 100',[req.user.id]);res.json({messages:rows.reverse()});});
 router.post('/pigeon',requireAuth,async(req,res)=>{const recipient=String(req.body.recipient_id||'').trim(),content=String(req.body.content||'').trim();if(!recipient||!content)return res.status(400).json({error:'أكمل الرسالة'});const {rows}=await query('INSERT INTO pigeon_messages(sender_id,recipient_id,content,anonymous) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,recipient,content,!!req.body.anonymous]);res.json({message:rows[0]});});
