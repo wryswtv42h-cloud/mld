@@ -5,6 +5,23 @@ import { requireAuth, requireOwner, requireAdmin } from '../middleware/auth.js';
 const router = express.Router();
 const discordToken = () => process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
 const guildId = () => process.env.DISCORD_GUILD_ID;
+async function resolveDiscordId(value){
+  const input=String(value||'').trim();
+  if(/^\d{17,20}$/.test(input)) return input;
+  const token=discordToken(), guild=guildId();
+  if(!token||!guild) return null;
+  const found=await discordApi('/guilds/'+guild+'/members/search?query='+encodeURIComponent(input)+'&limit=10');
+  const exact=(found||[]).find(m=>String(m.user?.username||'').toLowerCase()===input.toLowerCase()||String(m.user?.global_name||'').toLowerCase()===input.toLowerCase());
+  return exact?.user?.id||null;
+}
+async function dmDiscord(discordId,content){
+  if(!discordId||!discordToken()) return false;
+  const ch=await fetch('https://discord.com/api/v10/users/@me/channels',{method:'POST',headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json'},body:JSON.stringify({recipient_id:String(discordId)})});
+  if(!ch.ok) return false;
+  const channel=await ch.json();
+  const msg=await fetch('https://discord.com/api/v10/channels/'+channel.id+'/messages',{method:'POST',headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json'},body:JSON.stringify({content})});
+  return msg.ok;
+}
 async function discordApi(path, options={}) {
   const r = await fetch('https://discord.com/api/v10'+path,{...options,headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json',...(options.headers||{})}});
   const text = await r.text();
@@ -42,10 +59,10 @@ router.post('/tickets', requireAuth, async(req,res)=>{const subject=String(req.b
 router.get('/tickets/:id',requireAuth,async(req,res)=>{const admin=!!req.user.is_owner || ['admin','owner'].includes(String(req.user.role||'').toLowerCase()); const t=await query('SELECT * FROM tickets WHERE id=$1 AND (user_id=$2 OR $3=true)',[req.params.id,req.user.id,admin]);if(!t.rows[0])return res.status(404).json({error:'التذكرة غير موجودة'});const m=await query('SELECT * FROM ticket_messages WHERE ticket_id=$1 ORDER BY created_at',[req.params.id]);res.json({ticket:t.rows[0],messages:m.rows});});
 router.post('/tickets/:id/messages',requireAuth,async(req,res)=>{const admin=!!req.user.is_owner || ['admin','owner'].includes(String(req.user.role||'').toLowerCase()); const c=String(req.body.content||'').trim();if(!c)return res.status(400).json({error:'اكتب رد'});const t=await query('SELECT * FROM tickets WHERE id=$1 AND (user_id=$2 OR $3=true)',[req.params.id,req.user.id,admin]);if(!t.rows[0])return res.status(403).json({error:'غير مصرح'});const {rows}=await query('INSERT INTO ticket_messages(ticket_id,user_id,sender_name,content) VALUES($1,$2,$3,$4) RETURNING *',[req.params.id,req.user.id,req.user.username,c]);res.json({message:rows[0]});});
 router.post('/tickets/:id/claim',requireAuth,requireAdmin,async(req,res)=>{const {rows}=await query('UPDATE tickets SET claimed_by=$1 WHERE id=$2 AND status <> \'closed\' RETURNING *',[req.user.id,req.params.id]);if(!rows[0])return res.status(404).json({error:'التذكرة غير متاحة'});await audit(req.user,'ticket_claim',String(req.params.id));res.json({ticket:rows[0]});});
-router.post('/tickets/:id/close',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM tickets WHERE id=$1 AND (user_id=$2 OR $3=true)',[req.params.id,req.user.id,!!req.user.is_owner]);if(!rows[0])return res.status(404).json({error:'غير موجود'});await query("UPDATE tickets SET status='closed',closed_at=NOW() WHERE id=$1",[req.params.id]);res.json({message:'تم إغلاق التذكرة'});});
+router.post('/tickets/:id/close',requireAuth,requireAdmin,async(req,res)=>{const {rows}=await query('SELECT * FROM tickets WHERE id=$1',[req.params.id]);if(!rows[0])return res.status(404).json({error:'غير موجود'});await query("UPDATE tickets SET status='closed',closed_at=NOW() WHERE id=$1",[req.params.id]);res.json({message:'تم إغلاق التذكرة'});});
 
 router.get('/applications',requireAuth,async(req,res)=>{const owner=!!req.user.is_owner; const {rows}=await query('SELECT * FROM applications WHERE user_id=$1 OR $2=true ORDER BY created_at DESC',[req.user.id,owner]);res.json({applications:rows});});
-router.post('/applications',requireAuth,async(req,res)=>{const discord_id=String(req.body.discord_id||req.user.discord_id||'').trim();if(!discord_id)return res.status(400).json({error:'أدخل Discord ID'});const answers=req.body.answers||{};const {rows}=await query("INSERT INTO applications(user_id,discord_id,answers,status) VALUES($1,$2,$3,'pending') RETURNING *",[req.user.id,discord_id,JSON.stringify(answers)]);res.json({application:rows[0]});});
+router.post('/applications',requireAuth,async(req,res)=>{const discord_id=String(req.body.discord_id||req.user.discord_id||'').trim();if(!discord_id)return res.status(400).json({error:'أدخل Discord ID'});const resolved=await resolveDiscordId(discord_id);if(!resolved||String(resolved)!==String(req.user.discord_id))return res.status(400).json({error:'يجب استخدام حساب ديسكورد الموثق المرتبط بحسابك'});const answers=req.body.answers||{};const {rows}=await query("INSERT INTO applications(user_id,discord_id,answers,status) VALUES($1,$2,$3,'pending') RETURNING *",[req.user.id,resolved,JSON.stringify(answers)]);res.json({application:rows[0]});});
 router.post('/applications/:id/status',requireAuth,requireOwner,async(req,res)=>{
   const status=String(req.body.status||'pending'); if(!['pending','accepted','rejected'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});
   const {rows}=await query('SELECT * FROM applications WHERE id=$1',[req.params.id]); if(!rows[0])return res.status(404).json({error:'التقديم غير موجود'});
@@ -62,7 +79,7 @@ router.post('/applications/:id/status',requireAuth,requireOwner,async(req,res)=>
 });
 
 router.get('/groups',async(req,res)=>{const {rows}=await query("SELECT * FROM groups WHERE status='approved' ORDER BY created_at DESC");res.json({groups:rows});});
-router.post('/groups',requireAuth,async(req,res)=>{const name=String(req.body.name||'').trim();if(!name)return res.status(400).json({error:'اكتب اسم القروب'});const {rows}=await query("INSERT INTO groups(owner_id,name,description,status) VALUES($1,$2,$3,'pending') RETURNING *",[req.user.id,String(name),String(req.body.description||'')]);res.json({group:rows[0],message:'تم إنشاء طلب القروب'});});
+router.post('/groups',requireAuth,async(req,res)=>{const name=String(req.body.name||'').trim();if(!name)return res.status(400).json({error:'اكتب اسم القروب'});const {rows}=await query("INSERT INTO groups(owner_id,name,description,status) VALUES($1,$2,$3,'pending') RETURNING *",[req.user.id,String(name),String(req.body.description||'')]);try{const ownerId=await resolveDiscordId(process.env.OWNER_DISCORD_ID||'w4px');if(ownerId)await dmDiscord(ownerId,'📥 طلب قروب جديد في MLD\\nالاسم: '+name+'\\nالمقدم: '+req.user.username+'\\nرقم الطلب: '+rows[0].id);}catch(e){console.error('group owner DM:',e.message);}await audit(req.user,'group_created',String(rows[0].id));res.json({group:rows[0],message:'تم إنشاء طلب القروب'});});
 router.post('/groups/:id/join',requireAuth,async(req,res)=>{const g=await query("SELECT * FROM groups WHERE id=$1 AND status='approved'",[req.params.id]);if(!g.rows[0])return res.status(404).json({error:'القروب غير موجود'});const {rows}=await query("INSERT INTO group_members(group_id,user_id,status) VALUES($1,$2,'pending') ON CONFLICT DO NOTHING RETURNING *",[req.params.id,req.user.id]);res.json({member:rows[0]||null,message:'تم إرسال طلب الانضمام'});});
 router.post('/groups/:id/status',requireAuth,requireOwner,async(req,res)=>{
   const status=String(req.body.status||'pending'); if(!['pending','approved','rejected','deleted'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});
