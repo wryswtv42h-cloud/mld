@@ -4,32 +4,152 @@ import { requireAuth, requireOwner } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/chat', requireAuth, async (req,res)=>{ const {rows}=await query('SELECT * FROM chat_messages ORDER BY created_at DESC LIMIT 100'); res.json({messages:rows.reverse()}); });
-router.post('/chat', requireAuth, async (req,res)=>{ const content=String(req.body.content||'').trim(); if(!content)return res.status(400).json({error:'اكتب رسالة'}); const {rows}=await query('INSERT INTO chat_messages(user_id,sender_name,sender_avatar,content) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,req.user.username,req.user.avatar||'',content]); res.json({message:rows[0]}); });
+router.get('/chat', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await query('SELECT * FROM chat_messages ORDER BY created_at DESC LIMIT 100');
+    res.json({ messages: (rows || []).reverse() });
+  } catch (e) {
+    res.status(503).json({ error: 'تعذر جلب الرسائل', messages: [] });
+  }
+});
 
-router.get('/reviews', async (req,res)=>{ const {rows}=await query('SELECT * FROM reviews ORDER BY created_at DESC LIMIT 100'); res.json({reviews:rows}); });
-router.post('/reviews', requireAuth, async (req,res)=>{ const content=String(req.body.content||'').trim(); const rating=Math.max(1,Math.min(5,Number(req.body.rating)||5)); if(!content)return res.status(400).json({error:'اكتب رأيك'}); const {rows}=await query('INSERT INTO reviews(user_id,username,content,rating) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,req.user.username,content,rating]); res.json({review:rows[0]}); });
-router.delete('/reviews/:id', requireAuth, requireOwner, async(req,res)=>{await query('DELETE FROM reviews WHERE id=$1',[req.params.id]);res.json({message:'تم الحذف'});});
+router.post('/chat', requireAuth, async (req, res) => {
+  try {
+    const content = String(req.body?.content || '').trim();
+    if (!content) return res.status(400).json({ error: 'اكتب رسالة' });
+    
+    const { rows } = await query(
+      `INSERT INTO chat_messages (user_id, username, content, created_at)
+       VALUES ($1, $2, $3, NOW())
+       RETURNING *`,
+      [req.user.id, req.user.username, content]
+    );
+    res.json({ message: rows[0] });
+  } catch (e) {
+    res.status(500).json({ error: 'تعذر حفظ الرسالة' });
+  }
+});
 
-router.get('/tickets', requireAuth, async(req,res)=>{ const {rows}=await query('SELECT * FROM tickets WHERE user_id=$1 OR $2=true ORDER BY created_at DESC',[req.user.id,!!req.user.is_owner]); res.json({tickets:rows}); });
-router.post('/tickets', requireAuth, async(req,res)=>{const subject=String(req.body.subject||'').trim(),content=String(req.body.content||'').trim();if(!subject||!content)return res.status(400).json({error:'أكمل بيانات التذكرة'});const {rows}=await query('INSERT INTO tickets(user_id,subject,content,status) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,subject,content,'open']);res.json({ticket:rows[0]});});
-router.get('/tickets/:id',requireAuth,async(req,res)=>{const t=await query('SELECT * FROM tickets WHERE id=$1 AND (user_id=$2 OR $3=true)',[req.params.id,req.user.id,!!req.user.is_owner]);if(!t.rows[0])return res.status(404).json({error:'التذكرة غير موجودة'});const m=await query('SELECT * FROM ticket_messages WHERE ticket_id=$1 ORDER BY created_at',[req.params.id]);res.json({ticket:t.rows[0],messages:m.rows});});
-router.post('/tickets/:id/messages',requireAuth,async(req,res)=>{const c=String(req.body.content||'').trim();if(!c)return res.status(400).json({error:'اكتب رد'});const t=await query('SELECT * FROM tickets WHERE id=$1 AND (user_id=$2 OR $3=true)',[req.params.id,req.user.id,!!req.user.is_owner]);if(!t.rows[0])return res.status(403).json({error:'غير مصرح'});const {rows}=await query('INSERT INTO ticket_messages(ticket_id,user_id,sender_name,content) VALUES($1,$2,$3,$4) RETURNING *',[req.params.id,req.user.id,req.user.username,c]);res.json({message:rows[0]});});
-router.post('/tickets/:id/close',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM tickets WHERE id=$1 AND (user_id=$2 OR $3=true)',[req.params.id,req.user.id,!!req.user.is_owner]);if(!rows[0])return res.status(404).json({error:'غير موجود'});await query("UPDATE tickets SET status='closed',closed_at=NOW() WHERE id=$1",[req.params.id]);res.json({message:'تم إغلاق التذكرة'});});
+router.get('/reviews', async (req, res) => {
+  try {
+    const { rows } = await query('SELECT * FROM reviews ORDER BY created_at DESC LIMIT 100');
+    res.json({ reviews: rows || [] });
+  } catch (e) {
+    res.status(503).json({ error: 'تعذر جلب الآراء', reviews: [] });
+  }
+});
 
-router.get('/applications',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM applications WHERE user_id=$1 OR $2=true ORDER BY created_at DESC',[req.user.id,!!req.user.is_owner]);res.json({applications:rows});});
-router.post('/applications',requireAuth,async(req,res)=>{const discord_id=String(req.body.discord_id||req.user.discord_id||'').trim();if(!discord_id)return res.status(400).json({error:'أدخل Discord ID'});const answers=req.body.answers||{};const {rows}=await query("INSERT INTO applications(user_id,discord_id,answers,status) VALUES($1,$2,$3,'pending') RETURNING *",[req.user.id,discord_id,JSON.stringify(answers)]);res.json({application:rows[0]});});
-router.post('/applications/:id/status',requireAuth,requireOwner,async(req,res)=>{const status=String(req.body.status||'pending');if(!['pending','accepted','rejected'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});await query('UPDATE applications SET status=$1 WHERE id=$2',[status,req.params.id]);res.json({message:'تم التحديث'});});
+router.post('/reviews', requireAuth, async (req, res) => {
+  try {
+    const content = String(req.body?.content || '').trim();
+    const rating = Math.max(1, Math.min(5, Number(req.body?.rating) || 5));
+    if (!content) return res.status(400).json({ error: 'اكتب رأيك' });
+    
+    const { rows } = await query(
+      `INSERT INTO reviews (user_id, username, content, rating, created_at)
+       VALUES ($1, $2, $3, $4, NOW())
+       RETURNING *`,
+      [req.user.id, req.user.username, content, rating]
+    );
+    res.json({ review: rows[0] });
+  } catch (e) {
+    res.status(500).json({ error: 'تعذر حفظ الرأي' });
+  }
+});
 
-router.get('/groups',async(req,res)=>{const {rows}=await query('SELECT * FROM groups WHERE status IS DISTINCT FROM \'deleted\' ORDER BY created_at DESC');res.json({groups:rows});});
-router.post('/groups',requireAuth,async(req,res)=>{const name=String(req.body.name||'').trim();if(!name)return res.status(400).json({error:'اكتب اسم القروب'});const {rows}=await query("INSERT INTO groups(owner_id,name,description,status) VALUES($1,$2,$3,'pending') RETURNING *",[req.user.id,String(name),String(req.body.description||'')]);res.json({group:rows[0],message:'تم إنشاء طلب القروب'});});
-router.post('/groups/:id/join',requireAuth,async(req,res)=>{const {rows}=await query("INSERT INTO group_members(group_id,user_id,status) VALUES($1,$2,'pending') ON CONFLICT DO NOTHING RETURNING *",[req.params.id,req.user.id]);res.json({member:rows[0]||null,message:'تم إرسال طلب الانضمام'});});
+router.delete('/reviews/:id', requireAuth, requireOwner, async (req, res) => {
+  try {
+    await query('DELETE FROM reviews WHERE id = $1', [req.params.id]);
+    res.json({ message: 'تم الحذف' });
+  } catch (e) {
+    res.status(500).json({ error: 'تعذر الحذف' });
+  }
+});
 
-router.get('/pigeon',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM pigeon_messages WHERE sender_id=$1 OR recipient_id=$1 ORDER BY created_at DESC LIMIT 100',[req.user.id]);res.json({messages:rows.reverse()});});
-router.post('/pigeon',requireAuth,async(req,res)=>{const recipient=String(req.body.recipient_id||'').trim(),content=String(req.body.content||'').trim();if(!recipient||!content)return res.status(400).json({error:'أكمل الرسالة'});const {rows}=await query('INSERT INTO pigeon_messages(sender_id,recipient_id,content,anonymous) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,recipient,content,!!req.body.anonymous]);res.json({message:rows[0]});});
+router.get('/tickets', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await query(
+      'SELECT * FROM tickets WHERE user_id = $1 OR $2 = true ORDER BY created_at DESC',
+      [req.user.id, req.user.is_owner]
+    );
+    res.json({ tickets: rows || [] });
+  } catch (e) {
+    res.status(503).json({ error: 'تعذر جلب التذاكر', tickets: [] });
+  }
+});
 
-router.get('/cinema',async(req,res)=>{const {rows}=await query("SELECT * FROM cinema_rooms WHERE status IS DISTINCT FROM 'closed' ORDER BY created_at DESC");res.json({rooms:rows});});
-router.post('/cinema',requireAuth,async(req,res)=>{const title=String(req.body.title||'').trim(),media_url=String(req.body.media_url||'').trim();if(!title||!media_url)return res.status(400).json({error:'أدخل العنوان والرابط'});const {rows}=await query("INSERT INTO cinema_rooms(owner_id,title,media_url,status) VALUES($1,$2,$3,'open') RETURNING *",[req.user.id,title,media_url]);res.json({room:rows[0]});});
-router.post('/cinema/:id/close',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM cinema_rooms WHERE id=$1',[req.params.id]);if(!rows[0])return res.status(404).json({error:'الغرفة غير موجودة'});if(String(rows[0].owner_id)!==String(req.user.id)&&!req.user.is_owner)return res.status(403).json({error:'غير مصرح'});await query("UPDATE cinema_rooms SET status='closed' WHERE id=$1",[req.params.id]);res.json({message:'تم الإغلاق'});});
+router.post('/tickets', requireAuth, async (req, res) => {
+  try {
+    const subject = String(req.body?.subject || '').trim();
+    const content = String(req.body?.content || '').trim();
+    if (!subject || !content) return res.status(400).json({ error: 'املأ الحقول المطلوبة' });
+    
+    const { rows } = await query(
+      `INSERT INTO tickets (user_id, username, subject, content, status, created_at)
+       VALUES ($1, $2, $3, $4, 'open', NOW())
+       RETURNING *`,
+      [req.user.id, req.user.username, subject, content]
+    );
+    res.json({ ticket: rows[0] });
+  } catch (e) {
+    res.status(500).json({ error: 'تعذر إنشاء التذكرة' });
+  }
+});
+
+router.get('/groups', async (req, res) => {
+  try {
+    const { rows } = await query('SELECT * FROM groups WHERE status IS DISTINCT FROM \'deleted\' ORDER BY created_at DESC');
+    res.json({ groups: rows || [] });
+  } catch (e) {
+    res.status(503).json({ error: 'تعذر جلب القروبات', groups: [] });
+  }
+});
+
+router.post('/groups', requireAuth, async (req, res) => {
+  try {
+    const name = String(req.body?.name || '').trim();
+    if (!name) return res.status(400).json({ error: 'اكتب اسم القروب' });
+    
+    const { rows } = await query(
+      `INSERT INTO groups (creator_id, creator_name, name, description, status, created_at)
+       VALUES ($1, $2, $3, $4, 'active', NOW())
+       RETURNING *`,
+      [req.user.id, req.user.username, name, req.body?.description || '']
+    );
+    res.json({ group: rows[0] });
+  } catch (e) {
+    res.status(500).json({ error: 'تعذر إنشاء القروب' });
+  }
+});
+
+router.get('/pigeon', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await query(
+      'SELECT * FROM pigeon_messages WHERE sender_id = $1 OR recipient_id = $1 ORDER BY created_at DESC LIMIT 100',
+      [req.user.id]
+    );
+    res.json({ messages: rows || [] });
+  } catch (e) {
+    res.status(503).json({ error: 'تعذر جلب الرسائل', messages: [] });
+  }
+});
+
+router.post('/pigeon', requireAuth, async (req, res) => {
+  try {
+    const recipient = String(req.body?.recipient_id || '').trim();
+    const content = String(req.body?.content || '').trim();
+    if (!recipient || !content) return res.status(400).json({ error: 'املأ البيانات' });
+    
+    const { rows } = await query(
+      `INSERT INTO pigeon_messages (sender_id, sender_name, recipient_id, content, created_at)
+       VALUES ($1, $2, $3, $4, NOW())
+       RETURNING *`,
+      [req.user.id, req.user.username, recipient, content]
+    );
+    res.json({ message: rows[0] });
+  } catch (e) {
+    res.status(500).json({ error: 'تعذر إرسال الرسالة' });
+  }
+});
 
 export default router;

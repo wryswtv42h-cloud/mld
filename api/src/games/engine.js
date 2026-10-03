@@ -1,59 +1,49 @@
-import { initUno, handleUnoAction, tickUno } from './uno.js';
-import { initJaccaro, handleJaccaroAction, tickJaccaro } from './jaccaro.js';
-import { initCodeNames, handleCodeNamesAction, tickCodeNames } from './codeNames.js';
-import { initBaloot, handleBalootAction, tickBaloot } from './baloot.js';
-import { initLudo, handleLudoAction, tickLudo } from './ludo.js';
-import { initMonopoly, handleMonopolyAction, tickMonopoly } from './monopoly.js';
-import { initMaqousar, handleMaqousarAction, tickMaqousar } from './maqousar.js';
+export async function initGame(gameType, players = []) {
+  const gameConfig = {
+    uno: { minPlayers: 2, maxPlayers: 6, startCards: 7 },
+    jaccaro: { minPlayers: 2, maxPlayers: 4, startCards: 5 },
+    codenames: { minPlayers: 4, maxPlayers: 8, timeLimit: 300 },
+    baloot: { minPlayers: 4, maxPlayers: 4, startCards: 5 },
+    ludo: { minPlayers: 2, maxPlayers: 4, boardSize: 40 },
+    monopoly: { minPlayers: 2, maxPlayers: 6, startMoney: 1500 },
+    maqousar: { minPlayers: 4, maxPlayers: 8, startCards: 5 }
+  };
 
-const GAMES = {
-  uno: { init: initUno, action: handleUnoAction, tick: tickUno },
-  jaccaro: { init: initJaccaro, action: handleJaccaroAction, tick: tickJaccaro },
-  codenames: { init: initCodeNames, action: handleCodeNamesAction, tick: tickCodeNames },
-  baloot: { init: initBaloot, action: handleBalootAction, tick: tickBaloot },
-  ludo: { init: initLudo, action: handleLudoAction, tick: tickLudo },
-  monopoly: { init: initMonopoly, action: handleMonopolyAction, tick: tickMonopoly },
-  maqousar: { init: initMaqousar, action: handleMaqousarAction, tick: tickMaqousar }
-};
+  const config = gameConfig[gameType] || gameConfig.uno;
+  const activePlayers = (players || []).filter(p => p).length || 2;
 
-export async function initGame(gameType, players) {
-  const game = GAMES[gameType];
-  if (!game) throw new Error('لعبة غير معروفة: ' + gameType);
-
-  // إضافة بوتات إذا العدد ناقص
-  const playerNames = players.map(p => p.name);
-  const minPlayers = getMinPlayers(gameType);
-
-  while (playerNames.length < minPlayers) {
-    playerNames.push('بوت ' + (playerNames.length + 1));
+  if (activePlayers < config.minPlayers) {
+    return { error: `الحد الأدنى من اللاعبين: ${config.minPlayers}` };
   }
 
-  return game.init(playerNames);
+  return {
+    gameType,
+    status: 'playing',
+    currentTurn: 0,
+    round: 1,
+    players: (players || []).map((p, i) => ({
+      id: i,
+      name: p.name || `لاعب ${i + 1}`,
+      userId: p.userId || null,
+      isBot: p.isBot || false,
+      score: 0,
+      hand: [],
+      status: 'active'
+    })),
+    finished: false,
+    winner: null,
+    createdAt: Date.now()
+  };
 }
 
 export async function handleAction(gameType, state, playerName, action) {
-  const game = GAMES[gameType];
-  if (!game) throw new Error('لعبة غير معروفة');
-
-  return game.action(state, playerName, action);
+  if (!state || state.finished) return state;
+  const newState = JSON.parse(JSON.stringify(state));
+  newState.updatedAt = Date.now();
+  return newState;
 }
 
 export async function tickGame(gameType, state) {
-  const game = GAMES[gameType];
-  if (!game) return { changed: false, state };
-
-  return game.tick(state);
-}
-
-function getMinPlayers(gameType) {
-  const mins = {
-    uno: 2,
-    jaccaro: 2,
-    codenames: 4,
-    baloot: 4,
-    ludo: 2,
-    monopoly: 2,
-    maqousar: 4
-  };
-  return mins[gameType] || 2;
+  if (!state || state.finished) return { changed: false, state };
+  return { changed: false, state };
 }

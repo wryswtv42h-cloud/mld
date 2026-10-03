@@ -1,268 +1,342 @@
-const API = location.origin;
+// MLD Dashboard - تطبيق لوحة التحكم
+const API = 'http://localhost:3000/api';
+let token = localStorage.getItem('mld_token');
+let user = null;
+let socket = null;
 
-let token = localStorage.getItem('token');
-let user = JSON.parse(localStorage.getItem('user') || 'null');
-let mode = 'login';
-
-function toast(t) {
-  const el = document.getElementById('toast');
-  el.textContent = t;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+function showError(msg) {
+  alert(msg);
 }
 
-function esc(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
+function showSuccess(msg) {
+  console.log('✅', msg);
 }
 
-function initials(n) { return (n || '?').slice(0, 2).toUpperCase(); }
-
-document.getElementById('verifyDiscordBtn')?.addEventListener('click', async () => {
-  const id = document.getElementById('discord_id').value.trim();
-  const msg = document.getElementById('authMsg');
-  if (!id) { msg.className='msg show error'; msg.textContent='اكتب Discord ID أولاً'; return; }
-  msg.className='msg show'; msg.textContent='جاري إرسال كود التحقق...';
-  try {
-    const r=await fetch('/api/auth/verify-discord',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({discord_id:id})});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.error||'تعذر التحقق');
-    document.getElementById('verification_code').style.display='block';
-    msg.className='msg show success'; msg.textContent='تم إرسال الكود لخاصك في ديسكورد ✓';
-  } catch(e) { msg.className='msg show error'; msg.textContent=e.message; }
-});
-
-document.querySelectorAll('.tabs button').forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    mode = b.dataset.tab;
-    document.getElementById('discordField').style.display = mode === 'register' ? 'block' : 'none';
-    if (mode === 'login') { const code=document.getElementById('verification_code'); if(code) code.style.display='none'; }
-    document.getElementById('submitBtn').textContent = mode === 'register' ? 'تسجيل' : 'دخول';
+async function fetchAPI(endpoint, options = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...options.headers
   };
-});
 
-document.getElementById('authForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const msg = document.getElementById('authMsg');
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value;
-  const discord_id = document.getElementById('discord_id').value.trim();
-  const verification_code = document.getElementById('verification_code')?.value.trim() || '';
-  msg.className = 'msg show';
-  msg.textContent = 'جاري...';
+  const response = await fetch(`${API}${endpoint}`, {
+    ...options,
+    headers
+  });
 
-  try {
-    const r = await fetch('/api/auth/' + mode, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, discord_id, verification_code })
-    });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error || 'خطأ');
-
-    localStorage.setItem('token', d.token);
-    localStorage.setItem('user', JSON.stringify(d.user));
-    location.reload();
-  } catch (err) {
-    msg.className = 'msg show error';
-    msg.textContent = err.message;
+  if (response.status === 401) {
+    localStorage.removeItem('mld_token');
+    window.location.href = 'index.html';
+    return null;
   }
-};
 
-async function api(path, opts = {}) {
-  const r = await fetch(path, {
-    ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token,
-      ...(opts.headers || {})
+  return response.json();
+}
+
+async function init() {
+  if (!token) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  const me = await fetchAPI('/auth/me');
+  if (!me || !me.user) {
+    localStorage.removeItem('mld_token');
+    window.location.href = 'index.html';
+    return;
+  }
+
+  user = me.user;
+  renderUI();
+  connectSocket();
+}
+
+function connectSocket() {
+  socket = io(window.location.origin, {
+    auth: { token }
+  });
+
+  socket.on('connect', () => {
+    console.log('✅ متصل بـ Socket.IO');
+  });
+
+  socket.on('disconnect', () => {
+    console.log('❌ قطع الاتصال');
+  });
+}
+
+function renderUI() {
+  const content = document.getElementById('content');
+  if (!content) return;
+
+  content.innerHTML = `
+    <section class="dashboard-hero">
+      <h1>مرحبًا يا ${user.username}</h1>
+      <p>أهلًا بك في لوحة تحكم MLD</p>
+    </section>
+
+    <div class="dashboard-grid">
+      <div class="card clickable" onclick="goToSection('profile')">
+        <h3>👤 بروفايلي</h3>
+        <p>عدّل بيانات ملفك الشخصي</p>
+      </div>
+      <div class="card clickable" onclick="goToSection('bots')">
+        <h3>🤖 البوتات</h3>
+        <p>إدارة بوتاتك الخاصة</p>
+      </div>
+      <div class="card clickable" onclick="goToSection('games')">
+        <h3>🎮 الألعاب</h3>
+        <p>اجلس مع أصدقائك والعب</p>
+      </div>
+      <div class="card clickable" onclick="goToSection('chat')">
+        <h3>💬 الشات</h3>
+        <p>الدردشة مع المجتمع</p>
+      </div>
+    </div>
+  `;
+}
+
+function goToSection(section) {
+  const content = document.getElementById('content');
+  if (!content) return;
+
+  if (section === 'profile') {
+    renderProfile();
+  } else if (section === 'bots') {
+    renderBots();
+  } else if (section === 'games') {
+    renderGames();
+  } else if (section === 'chat') {
+    renderChat();
+  }
+}
+
+async function renderProfile() {
+  const content = document.getElementById('content');
+  if (!content) return;
+
+  content.innerHTML = `
+    <section class="profile-section">
+      <h2>🔧 تحرير بروفايلك</h2>
+      <form id="profile-form">
+        <div class="form-group">
+          <label>اسم المستخدم</label>
+          <input type="text" id="username" value="${user.username}" required>
+        </div>
+        <div class="form-group">
+          <label>النبذة</label>
+          <textarea id="bio">${user.bio || ''}</textarea>
+        </div>
+        <button type="submit" class="primary-btn">حفظ</button>
+      </form>
+    </section>
+  `;
+
+  document.getElementById('profile-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const result = await fetchAPI('/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        username: document.getElementById('username').value,
+        bio: document.getElementById('bio').value
+      })
+    });
+    if (result?.user) {
+      user = result.user;
+      showSuccess('تم حفظ البيانات');
+      renderUI();
+    } else {
+      showError('فشل حفظ البيانات');
     }
-  });
-  return r.json();
-}
-
-async function initApp() {
-  if (!token || !user) return;
-  document.body.classList.add('logged');
-
-  document.getElementById('myName').textContent = user.username;
-  document.getElementById('myRole').textContent = user.is_owner ? 'الأونر 👑' : 'عضو';
-
-  const av = document.getElementById('myAvatar');
-  if (user.avatar) av.innerHTML = `<img src="${esc(user.avatar)}">`;
-  else av.textContent = initials(user.username);
-
-  if (user.is_owner) document.getElementById('adminLink').style.display = 'flex';
-
-  document.getElementById('profileName').value = user.username || '';
-  document.getElementById('profileBio').value = user.bio || '';
-
-  loadBots();
-}
-
-document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
-  a.onclick = () => {
-    const page = a.dataset.page;
-    document.querySelectorAll('.sidebar .nav a').forEach(x => x.classList.remove('active'));
-    a.classList.add('active');
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
-    document.getElementById('pageTitle').textContent = a.textContent.trim();
-    document.getElementById('sidebar').classList.remove('open');
-    if (page === 'bots') loadBots();
-    if (page === 'admin') loadAdmin();
   };
-});
-
-document.getElementById('menuBtn').onclick = () => document.getElementById('sidebar').classList.toggle('open');
-document.getElementById('logoutBtn').onclick = () => { localStorage.clear(); location.reload(); };
-
-async function loadBots() {
-  const d = await api('/api/bots');
-  const list = document.getElementById('botsList');
-  if (!d.bots || !d.bots.length) {
-    list.innerHTML = '<p style="color:var(--muted)">ما عندك بوتات بعد.</p>';
-    return;
-  }
-  list.innerHTML = d.bots.map(b => `
-    <div class="bot-card">
-      <h4>🤖 ${esc(b.name)}</h4>
-      <p>السيرفر: ${esc(b.guild_id || '—')}</p>
-      <p>الحالة: ${b.active ? '<span style="color:#70f5b1">● نشط</span>' : '<span style="color:#ff8a8d">● متوقف</span>'}</p>
-      <button onclick="toggleBot('${b.id}')" style="padding:8px 14px;border:0;border-radius:10px;background:var(--accent);color:#241329;font-weight:700;cursor:pointer;margin-top:8px">
-        ${b.active ? 'إيقاف' : 'تشغيل'}
-      </button>
-    </div>
-  `).join('');
 }
 
-document.getElementById('createBotBtn').onclick = async () => {
-  const msg = document.getElementById('botMsg');
-  const name = document.getElementById('botName').value.trim();
-  const token_ = document.getElementById('botToken').value.trim();
-  const guild_id = document.getElementById('botGuild').value.trim();
+async function renderBots() {
+  const content = document.getElementById('content');
+  if (!content) return;
 
-  msg.className = 'msg show';
-  msg.textContent = 'جاري...';
+  const result = await fetchAPI('/bots');
+  const bots = result?.bots || [];
 
-  const d = await api('/api/bots', {
-    method: 'POST',
-    body: JSON.stringify({ name, token: token_, guild_id })
-  });
-
-  if (d.error) {
-    msg.className = 'msg show error';
-    msg.textContent = d.error;
-    return;
-  }
-  msg.className = 'msg show success';
-  msg.textContent = 'تم ✓';
-  document.getElementById('botName').value = '';
-  document.getElementById('botToken').value = '';
-  document.getElementById('botGuild').value = '';
-  setTimeout(() => loadBots(), 500);
-};
-
-document.getElementById('saveProfileBtn').onclick = async () => {
-  const username = document.getElementById('profileName').value.trim();
-  const bio = document.getElementById('profileBio').value.trim();
-  const d = await api('/api/users/me', {
-    method: 'PATCH',
-    body: JSON.stringify({ username, bio })
-  });
-  if (d.error) return toast(d.error);
-  localStorage.setItem('user', JSON.stringify(d.user));
-  user = d.user;
-  toast('تم الحفظ ✓');
-};
-
-async function loadAdmin() {
-  const d = await api('/api/users');
-  const list = document.getElementById('ownerUsers');
-  if (!d.users) return;
-  list.innerHTML = d.users.map(u => `
-    <div class="bot-card">
-      <h4>${esc(u.username)}</h4>
-      <p>${u.is_owner ? '👑 أونر' : 'عضو'}</p>
-      ${!u.is_owner ? `<button onclick="banUser('${u.id}')" style="padding:8px 14px;border:0;border-radius:10px;background:#ed4245;color:#fff;font-weight:700;cursor:pointer;margin-top:8px">حظر/فك</button>` : ''}
-    </div>
-  `).join('');
+  content.innerHTML = `
+    <section class="bots-section">
+      <h2>🤖 بوتاتي</h2>
+      <button class="primary-btn" onclick="showAddBotForm()">+ إضافة بوت جديد</button>
+      <div id="bots-list" class="grid">
+        ${bots.map(bot => `
+          <div class="card">
+            <h3>${bot.name}</h3>
+            <p>السيرفر: ${bot.guild_id || 'غير محدد'}</p>
+            <button onclick="deleteBotDialog('${bot.id}')">حذف</button>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+  `;
 }
 
-window.banUser = async (id) => {
-  const d = await api('/api/users/' + id + '/ban', { method: 'POST' });
-  toast(d.message || d.error);
-  loadAdmin();
-};
+function showAddBotForm() {
+  const modal = document.getElementById('modal');
+  const content = document.getElementById('modal-content');
+  
+  content.innerHTML = `
+    <h2>➕ إضافة بوت جديد</h2>
+    <form id="add-bot-form">
+      <div class="form-group">
+        <label>اسم البوت</label>
+        <input type="text" id="bot-name" required>
+      </div>
+      <div class="form-group">
+        <label>توكن البوت</label>
+        <input type="password" id="bot-token" required>
+      </div>
+      <div class="form-group">
+        <label>معرف السيرفر (اختياري)</label>
+        <input type="text" id="bot-guild">
+      </div>
+      <button type="submit" class="primary-btn">إضافة</button>
+    </form>
+  `;
 
-window.toggleBot = async (id) => {
-  const d = await api('/api/bots/' + id + '/toggle', { method: 'POST' });
-  toast(d.message || d.error);
-  loadBots();
-};
-
-initApp();
-
-/* ===== MLD community feature bridge ===== */
-const featurePages = ['members','top','leaders','chat','pigeon','games','cinema','groups','tickets','applications','reviews'];
-const pageTitles = {members:'👥 الأعضاء',top:'🏆 التوب',leaders:'👑 الرتب القيادية',chat:'💬 الشات العام',pigeon:'✉️ الزاجل',games:'🎮 الألعاب',cinema:'🎬 السينما',groups:'👨‍👩‍👧 القروبات',tickets:'🎫 التذاكر',applications:'📝 التقديم',reviews:'⭐ الآراء'};
-function featureProtected(p){ return ['chat','pigeon','cinema','tickets','applications','bots','add-bot'].includes(p); }
-function requireFeatureAuth(){ if(!token||!user){ toast('سجّل دخول أولاً'); return false; } return true; }
-function pageBox(p,body){ const el=document.getElementById('page-'+p); if(el) el.innerHTML='<div class="card">'+body+'</div>'; }
-async function renderFeature(p){
-  if(featureProtected(p)&&!requireFeatureAuth()) return;
-  const page=document.getElementById('page-'+p); if(!page)return;
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active')); page.classList.add('active');
-  document.querySelectorAll('.sidebar .nav a').forEach(x=>x.classList.toggle('active',x.dataset.page===p));
-  document.getElementById('pageTitle').textContent=pageTitles[p]||p;
-  document.getElementById('sidebar').classList.remove('open');
-  if(p==='games'){ location.href='/game.html'; return; }
-  if(p==='members'||p==='top'||p==='leaders'){
-    const endpoint=p==='members'?'/api/public/members':p==='top'?'/api/public/top':'/api/public/roles';
-    try{const d=await fetch(endpoint).then(r=>r.json()); pageBox(p,p==='members'?'<h3>👥 الأعضاء</h3><div class="grid">'+(d.members||[]).map(m=>'<div class="bot-card"><h4>'+esc(m.name)+'</h4><p>@'+esc(m.username||'')+'</p></div>').join('')+'</div>':p==='top'?'<h3>🏆 التوب</h3><pre style="white-space:pre-wrap;color:var(--muted)">'+esc(JSON.stringify(d,null,2))+'</pre>':'<h3>👑 الرتب القيادية</h3><div class="grid">'+(d.roles||[]).map(r=>'<div class="bot-card"><h4>'+esc(r.name)+'</h4><p>'+esc(r.membersCount)+' عضو</p></div>').join('')+'</div>');}catch(e){pageBox(p,'<h3>تعذر تحميل البيانات</h3>');} return;
-  }
-  if(p==='chat'){pageBox(p,'<h3>💬 الشات العام</h3><div id="feature-chat"></div><input id="chat-input" class="full" placeholder="اكتب رسالتك..."><button class="btn-primary" id="chat-send">إرسال</button>'); loadFeatureChat(); return;}
-  if(p==='reviews'){pageBox(p,'<h3>⭐ الآراء</h3><div id="reviews-list">جاري التحميل...</div><textarea id="review-input" class="full" placeholder="اكتب رأيك"></textarea><button class="btn-primary" id="review-send">إضافة رأي</button>'); loadReviews(); return;}
-  if(p==='tickets'){pageBox(p,'<h3>🎫 التذاكر</h3><input id="ticket-subject" class="full" placeholder="عنوان التذكرة"><textarea id="ticket-content" class="full" placeholder="اشرح مشكلتك"></textarea><button class="btn-primary" id="ticket-send">فتح تذكرة</button><div id="tickets-list"></div>'); document.getElementById('ticket-send').onclick=async()=>{const d=await api('/api/community/tickets',{method:'POST',body:JSON.stringify({subject:document.getElementById('ticket-subject').value,content:document.getElementById('ticket-content').value})});toast(d.error||'تم فتح التذكرة ✓');loadTickets();};loadTickets();return;}
-  if(p==='applications'){pageBox(p,'<h3>📝 التقديم</h3><input id="app-discord" class="full" placeholder="Discord ID"><textarea id="app-answers" class="full" placeholder="اكتب إجاباتك"></textarea><button class="btn-primary" id="app-send">إرسال التقديم</button><div id="apps-list"></div>');document.getElementById('app-send').onclick=async()=>{const d=await api('/api/community/applications',{method:'POST',body:JSON.stringify({discord_id:document.getElementById('app-discord').value,answers:{text:document.getElementById('app-answers').value}})});toast(d.error||'تم إرسال التقديم ✓');loadApps();};loadApps();return;}
-  if(p==='groups'){pageBox(p,'<h3>👨‍👩‍👧 القروبات</h3><div id="groups-list">جاري...</div><input id="group-name" class="full" placeholder="اسم القروب"><textarea id="group-desc" class="full" placeholder="الوصف"></textarea><button class="btn-primary" id="group-send">إنشاء قروب</button>');loadGroups();document.getElementById('group-send').onclick=async()=>{const d=await api('/api/community/groups',{method:'POST',body:JSON.stringify({name:document.getElementById('group-name').value,description:document.getElementById('group-desc').value})});toast(d.error||'تم إرسال طلب القروب ✓');loadGroups();};return;}
-  if(p==='pigeon'){pageBox(p,'<h3>✉️ الزاجل</h3><input id="pigeon-recipient" class="full" placeholder="ID المستلم"><textarea id="pigeon-text" class="full" placeholder="الرسالة"></textarea><button class="btn-primary" id="pigeon-send">إرسال</button><div id="pigeon-list"></div>');document.getElementById('pigeon-send').onclick=async()=>{const d=await api('/api/community/pigeon',{method:'POST',body:JSON.stringify({recipient_id:document.getElementById('pigeon-recipient').value,content:document.getElementById('pigeon-text').value})});toast(d.error||'تم الإرسال ✓');loadPigeon();};loadPigeon();return;}
-  if(p==='cinema'){pageBox(p,'<h3>🎬 السينما</h3><div id="cinema-list">جاري...</div><input id="cinema-title" class="full" placeholder="اسم العرض"><input id="cinema-url" class="full" placeholder="رابط المحتوى المصرح لك باستخدامه"><button class="btn-primary" id="cinema-send">إنشاء غرفة</button>');loadCinema();document.getElementById('cinema-send').onclick=async()=>{if(!requireFeatureAuth())return;const d=await api('/api/community/cinema',{method:'POST',body:JSON.stringify({title:document.getElementById('cinema-title').value,media_url:document.getElementById('cinema-url').value})});toast(d.error||'تم إنشاء الغرفة ✓');loadCinema();};return;}
-}
-async function loadFeatureChat(){const d=await api('/api/community/chat');const e=document.getElementById('feature-chat');if(e)e.innerHTML=(d.messages||[]).map(m=>'<div class="bot-card"><b>'+esc(m.sender_name)+'</b><p>'+esc(m.content)+'</p></div>').join('')||'<p>لا توجد رسائل.</p>';const b=document.getElementById('chat-send');if(b)b.onclick=async()=>{const i=document.getElementById('chat-input');const d=await api('/api/community/chat',{method:'POST',body:JSON.stringify({content:i.value})});if(d.error)return toast(d.error);i.value='';loadFeatureChat();};}
-async function loadReviews(){const d=await fetch('/api/community/reviews').then(r=>r.json());const e=document.getElementById('reviews-list');if(e)e.innerHTML=(d.reviews||[]).map(x=>'<div class="bot-card"><b>'+esc(x.username)+'</b><p>'+esc(x.content)+'</p><small>★ '+x.rating+'</small></div>').join('')||'<p>لا توجد آراء.</p>';const b=document.getElementById('review-send');if(b)b.onclick=async()=>{const i=document.getElementById('review-input');const d=await api('/api/community/reviews',{method:'POST',body:JSON.stringify({content:i.value,rating:5})});toast(d.error||'تمت الإضافة ✓');i.value='';loadReviews();};}
-async function loadTickets(){const d=await api('/api/community/tickets');const e=document.getElementById('tickets-list');if(e)e.innerHTML=(d.tickets||[]).map(x=>'<div class="bot-card"><b>#'+x.id+' '+esc(x.subject)+'</b><p>'+esc(x.status)+'</p></div>').join('');}
-async function loadApps(){const d=await api('/api/community/applications');const e=document.getElementById('apps-list');if(e)e.innerHTML=(d.applications||[]).map(x=>'<div class="bot-card"><b>#'+x.id+'</b><p>'+esc(x.status)+'</p></div>').join('');}
-async function loadGroups(){const d=await fetch('/api/community/groups').then(r=>r.json());const e=document.getElementById('groups-list');if(e)e.innerHTML=(d.groups||[]).map(x=>'<div class="bot-card"><b>'+esc(x.name)+'</b><p>'+esc(x.description||'')+'</p><button class="btn-primary" onclick="joinGroup('+x.id+')">انضمام</button></div>').join('')||'<p>لا توجد قروبات.</p>';}
-window.joinGroup=async id=>{const d=await api('/api/community/groups/'+id+'/join',{method:'POST'});toast(d.error||d.message);};
-async function loadPigeon(){const d=await api('/api/community/pigeon');const e=document.getElementById('pigeon-list');if(e)e.innerHTML=(d.messages||[]).map(x=>'<div class="bot-card"><p>'+esc(x.content)+'</p></div>').join('');}
-async function loadCinema(){const d=await fetch('/api/community/cinema').then(r=>r.json());const e=document.getElementById('cinema-list');if(e)e.innerHTML=(d.rooms||[]).map(x=>'<div class="bot-card"><b>'+esc(x.title)+'</b><p>'+esc(x.status)+'</p><a class="primary" href="'+esc(x.media_url)+'" target="_blank">فتح العرض</a></div>').join('')||'<p>لا توجد غرف.</p>';}
-document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>{a.addEventListener('click',e=>{const p=a.dataset.page;if(featurePages.includes(p)){e.preventDefault();renderFeature(p);}});});
-
-/* ===== Discord autocomplete suggestions ===== */
-(function bindDiscordSuggestions(){
-  function setup(inputId, type, listId){
-    const input=document.getElementById(inputId);
-    if(!input)return;
-    let list=document.getElementById(listId);
-    if(!list){list=document.createElement('datalist');list.id=listId;document.body.appendChild(list);}
-    input.setAttribute('list',listId);
-    let timer;
-    input.addEventListener('input',()=>{
-      clearTimeout(timer);
-      const q=input.value.trim();
-      if(q.length<1){list.innerHTML='';return;}
-      timer=setTimeout(async()=>{
-        try{
-          const d=await fetch('/api/public/suggestions?type='+encodeURIComponent(type)+'&q='+encodeURIComponent(q)).then(r=>r.json());
-          list.innerHTML=(d.suggestions||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name||x.username||'')+'</option>').join('');
-        }catch(e){}
-      },180);
+  document.getElementById('add-bot-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const result = await fetchAPI('/bots', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: document.getElementById('bot-name').value,
+        token: document.getElementById('bot-token').value,
+        guild_id: document.getElementById('bot-guild').value || null
+      })
     });
+    if (result?.bot) {
+      showSuccess('تم إضافة البوت');
+      modal.classList.add('hidden');
+      renderBots();
+    } else {
+      showError('فشل إضافة البوت');
+    }
+  };
+
+  modal.classList.remove('hidden');
+}
+
+async function deleteBotDialog(botId) {
+  if (confirm('هل تريد حذف هذا البوت؟')) {
+    await fetchAPI(`/bots/${botId}`, { method: 'DELETE' });
+    showSuccess('تم الحذف');
+    renderBots();
   }
-  setup('discord_id','members','discord-members-suggestions');
-  setup('botGuild','servers','discord-server-suggestions');
-})();
+}
+
+async function renderGames() {
+  const content = document.getElementById('content');
+  if (!content) return;
+
+  const result = await fetchAPI('/games/sessions');
+  const sessions = result?.sessions || [];
+
+  content.innerHTML = `
+    <section class="games-section">
+      <h2>🎮 الألعاب</h2>
+      <button class="primary-btn" onclick="showCreateGameForm()">+ جلسة جديدة</button>
+      <div id="games-list" class="grid">
+        ${sessions.map(session => `
+          <div class="card">
+            <h3>${session.name}</h3>
+            <p>النوع: ${session.game_type}</p>
+            <p>الحالة: ${session.status}</p>
+            <button onclick="joinGame('${session.id}')">انضم</button>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function showCreateGameForm() {
+  const modal = document.getElementById('modal');
+  const content = document.getElementById('modal-content');
+  const games = ['uno', 'baloot', 'ludo', 'monopoly', 'jaccaro', 'codenames', 'maqousar'];
+  
+  content.innerHTML = `
+    <h2>🎮 إنشاء جلسة لعبة</h2>
+    <form id="create-game-form">
+      <div class="form-group">
+        <label>نوع اللعبة</label>
+        <select id="game-type">
+          ${games.map(g => `<option value="${g}">${g}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>اسم الجلسة (اختياري)</label>
+        <input type="text" id="session-name">
+      </div>
+      <button type="submit" class="primary-btn">إنشاء</button>
+    </form>
+  `;
+
+  document.getElementById('create-game-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const result = await fetchAPI('/games/sessions', {
+      method: 'POST',
+      body: JSON.stringify({
+        game_type: document.getElementById('game-type').value,
+        name: document.getElementById('session-name').value || 'جلسة لعبة'
+      })
+    });
+    if (result?.session) {
+      showSuccess('تم إنشاء الجلسة');
+      modal.classList.add('hidden');
+      renderGames();
+    }
+  };
+
+  modal.classList.remove('hidden');
+}
+
+async function joinGame(sessionId) {
+  if (socket) {
+    socket.emit('game:join', { sessionId, asSpectator: false });
+    showSuccess('انضممت للجلسة');
+  }
+}
+
+async function renderChat() {
+  const content = document.getElementById('content');
+  if (!content) return;
+
+  const result = await fetchAPI('/community/chat');
+  const messages = result?.messages || [];
+
+  content.innerHTML = `
+    <section class="chat-section">
+      <h2>💬 الشات العام</h2>
+      <div id="chat-messages" class="chat-box">
+        ${messages.map(msg => `
+          <div class="chat-message">
+            <strong>${msg.username}:</strong> ${msg.content}
+          </div>
+        `).join('')}
+      </div>
+      <form id="chat-form">
+        <input type="text" id="chat-input" placeholder="اكتب رسالتك..." required>
+        <button type="submit" class="primary-btn">إرسال</button>
+      </form>
+    </section>
+  `;
+
+  document.getElementById('chat-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const message = document.getElementById('chat-input').value.trim();
+    if (message) {
+      await fetchAPI('/community/chat', {
+        method: 'POST',
+        body: JSON.stringify({ content: message })
+      });
+      document.getElementById('chat-input').value = '';
+      renderChat();
+    }
+  };
+}
+
+document.addEventListener('DOMContentLoaded', init);
