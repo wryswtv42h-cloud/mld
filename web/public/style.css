@@ -615,6 +615,8 @@ body.menu-open{overflow:hidden}
 @keyframes reviewFloat{0%{transform:translateX(0)}100%{transform:translateX(-18px)}}
 .social-links{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding:8px 0 22px}
 .social-links a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:.2s}
+.social-circle svg{width:27px;height:27px;display:block}
+.discord-float svg{width:31px;height:31px;display:block}
 .social-circle{width:52px;height:52px;border-radius:50%;border:1px solid #f1bce477;background:linear-gradient(145deg,#25152f,#120c19);color:var(--pink);font-size:27px;font-weight:900;box-shadow:0 8px 28px #0007}
 .social-circle:hover{transform:translateY(-3px) scale(1.06);border-color:var(--pink);box-shadow:0 12px 35px #ff9cdc44}
 .social-circle.tiktok{color:#fff8ff}
