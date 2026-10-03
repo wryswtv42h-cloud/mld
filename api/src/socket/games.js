@@ -101,7 +101,7 @@ export function setupGameSocket(io, socket) {
       runtime.spectators = runtime.spectators.filter(p => p.socketId !== socket.id);
       await persistPlayers(sessionId, runtime.players);
       socket.leave('game:' + sessionId);
-      io.to('game:' + sessionId).emit('game:update', snapshot(session, runtime));
+      await broadcastUpdate(io, sessionId, session, runtime);
     } catch (err) {
       console.error(err);
     }
@@ -125,7 +125,7 @@ export function setupGameSocket(io, socket) {
       await query('UPDATE games SET status = $1 WHERE id = $2', ['playing', sessionId]);
 
       io.to('game:' + sessionId).emit('game:started', { state: runtime.state });
-      io.to('game:' + sessionId).emit('game:update', snapshot(session, runtime));
+      await broadcastUpdate(io, sessionId, session, runtime);
       startBotLoop(io, sessionId);
     } catch (err) {
       console.error(err);
@@ -144,7 +144,7 @@ export function setupGameSocket(io, socket) {
 
       const playerName = socket.user?.username || 'زائر';
       runtime.state = await handleAction(session.type, runtime.state, playerName, action);
-      io.to('game:' + sessionId).emit('game:update', snapshot(session, runtime));
+      await broadcastUpdate(io, sessionId, session, runtime);
 
       if (runtime.state.finished) {
         runtime.status = 'finished';
@@ -182,13 +182,6 @@ export function setupGameSocket(io, socket) {
       try {
         await persistPlayers(sessionId, runtime.players);
         await broadcastUpdate(io, sessionId, session, runtime);
-      /* legacy state emission removed */
-      io.to('game:' + sessionId).emit('game:state-internal', {
-          players: runtime.players,
-          spectators: runtime.spectators,
-          state: runtime.state,
-          status: runtime.status
-        });
       } catch {}
     }
   });
@@ -217,12 +210,7 @@ function startBotLoop(io, sessionId) {
       const result = await tickGame(session.type, runtime.state);
       if (result.changed) {
         runtime.state = result.state;
-        io.to('game:' + sessionId).emit('game:update', {
-          players: runtime.players,
-          spectators: runtime.spectators,
-          state: runtime.state,
-          status: runtime.status
-        });
+        await broadcastUpdate(io, sessionId, {}, runtime);
       }
     } catch (err) {
       console.error(err);
