@@ -2,7 +2,7 @@ import { query } from '../db.js';
 import { initGame, handleAction, tickGame } from '../games/engine.js';
 
 const activeSessions = new Map();
-const MAX_PLAYERS = 4;
+const DEFAULT_MAX_PLAYERS = 4;
 
 function parsePlayers(value) {
   if (Array.isArray(value)) return value;
@@ -17,7 +17,9 @@ function getRuntime(session) {
       spectators: [],
       state: null,
       gameType: session.type,
-      status: session.status
+      status: session.status,
+      hostSocketId: null,
+      lastActivity: Date.now()
     };
     activeSessions.set(String(session.id), runtime);
   }
@@ -25,7 +27,8 @@ function getRuntime(session) {
 }
 
 function isHost(session, socket) {
-  return !!socket.user && String(session.host_id) === String(socket.user.id);
+  const runtime = getRuntime(session);
+  return runtime.hostSocketId === socket.id || (!!socket.user && String(session.host_id) === String(socket.user.id));
 }
 
 function snapshot(session, runtime) {
@@ -49,16 +52,19 @@ export function setupGameSocket(io, socket) {
       if (!session) return socket.emit('game:error', { error: 'الجلسة غير موجودة' });
 
       const runtime = getRuntime(session);
+      runtime.lastActivity = Date.now();
       const name = socket.user?.username || 'زائر';
       const player = { name, userId: socket.user?.id || null, isBot: false, socketId: socket.id };
 
       if (asSpectator) {
         if (!runtime.spectators.some(p => p.socketId === socket.id)) runtime.spectators.push(player);
       } else if (!runtime.players.some(p => p.socketId === socket.id)) {
-        if (runtime.players.length >= MAX_PLAYERS) {
+        const maxPlayers = Number(session.max_players || DEFAULT_MAX_PLAYERS);
+        if (runtime.players.length >= maxPlayers) {
           runtime.spectators.push(player);
         } else {
           runtime.players.push(player);
+          if (!runtime.hostSocketId) runtime.hostSocketId = socket.id;
           await persistPlayers(sessionId, runtime.players);
         }
       }
@@ -77,7 +83,9 @@ export function setupGameSocket(io, socket) {
       const session = rows[0];
       if (!session) return;
       const runtime = getRuntime(session);
+      runtime.lastActivity = Date.now();
       runtime.players = runtime.players.filter(p => p.socketId !== socket.id);
+      if (runtime.hostSocketId === socket.id) runtime.hostSocketId = runtime.players[0]?.socketId || null;
       runtime.spectators = runtime.spectators.filter(p => p.socketId !== socket.id);
       await persistPlayers(sessionId, runtime.players);
       socket.leave('game:' + sessionId);
@@ -97,6 +105,9 @@ export function setupGameSocket(io, socket) {
       }
 
       const runtime = getRuntime(session);
+      runtime.lastActivity = Date.now();
+      const minPlayers = Number(session.min_players || 2);
+      if (runtime.players.filter(p=>!p.isBot).length < minPlayers) return socket.emit('game:error', { error: `تحتاج إلى ${minPlayers} لاعبين على الأقل` });
       runtime.state = await initGame(session.type, runtime.players);
       runtime.status = 'playing';
       await query('UPDATE games SET status = $1 WHERE id = $2', ['playing', sessionId]);
@@ -116,6 +127,7 @@ export function setupGameSocket(io, socket) {
       const session = rows[0];
       if (!session) return;
       const runtime = getRuntime(session);
+      runtime.lastActivity = Date.now();
       if (!runtime.state) return socket.emit('game:error', { error: 'اللعبة لم تبدأ بعد' });
 
       const playerName = socket.user?.username || 'زائر';
@@ -174,7 +186,16 @@ function startBotLoop(io, sessionId) {
       const { rows } = await query('SELECT * FROM games WHERE id = $1', [sessionId]);
       const session = rows[0];
       const runtime = activeSessions.get(String(sessionId));
-      if (!session || !runtime || runtime.status !== 'playing' || !runtime.state) {
+      if (!session || !runtime || Date.now()-runtime.lastActivity > 5*60*1000) {
+        if (session && Date.now()-runtime.lastActivity > 5*60*1000) {
+          await query('DELETE FROM games WHERE id=$1',[sessionId]);
+          io.to('game:' + sessionId).emit('game:ended');
+          activeSessions.delete(String(sessionId));
+        }
+        clearInterval(interval);
+        return;
+      }
+      if (runtime.status !== 'playing' || !runtime.state) {
         clearInterval(interval);
         return;
       }
