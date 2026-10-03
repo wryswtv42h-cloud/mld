@@ -1,6 +1,14 @@
 import jwt from 'jsonwebtoken';
 import { query } from '../db.js';
 
+async function isCurrentMember(discordId) {
+  const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
+  const guildId = process.env.DISCORD_GUILD_ID;
+  if (!token || !guildId || !discordId) return false;
+  const r = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${encodeURIComponent(discordId)}`, { headers: { Authorization: `Bot ${token}` } });
+  return r.ok;
+}
+
 export async function requireAuth(req, res, next) {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
@@ -10,10 +18,10 @@ export async function requireAuth(req, res, next) {
     const { rows } = await query('SELECT * FROM users WHERE id = $1', [decoded.id]);
     const user = rows[0];
 
-    if (!user || user.banned) {
-      return res.status(401).json({ error: 'الحساب غير متاح' });
+    if (!user || user.banned) return res.status(401).json({ error: 'الحساب غير متاح' });
+    if (user.discord_verified && !(await isCurrentMember(user.discord_id))) {
+      return res.status(403).json({ error: 'لم تعد عضوًا في سيرفر MLD' });
     }
-
     req.user = user;
     next();
   } catch (err) {
