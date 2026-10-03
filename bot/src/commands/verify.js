@@ -19,12 +19,12 @@ export async function execute(interaction) {
 
   // هنا يتم إرسال الكود للـ API للتحقق
   try {
-    const res = await fetch(process.env.API_URL + '/api/auth/verify-discord', {
+    const res = await fetch(process.env.API_URL + '/api/auth/confirm-discord', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        discordId: interaction.user.id,
-        code
+        discord_id: interaction.user.id,
+        verification_code: code
       })
     });
     const data = await res.json();
