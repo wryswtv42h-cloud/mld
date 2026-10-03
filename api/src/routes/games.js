@@ -1,17 +1,35 @@
 import express from 'express';
 import { query } from '../db.js';
-import { requireAuth, optionalAuth } from '../middleware/auth.js';
+import { optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
+function normalizeGame(row) {
+  return {
+    ...row,
+    game_type: row.type,
+    host_name: row.host_name || null,
+    spectators: [],
+    max_players: row.max_players || 4
+  };
+}
+
 // ===== قائمة الجلسات المتاحة =====
 router.get('/sessions', optionalAuth, async (req, res) => {
-  const { rows } = await query(
-    `SELECT id, game_type, host_name, status, players, spectators, max_players, created_at
-     FROM game_sessions WHERE status IN ('waiting', 'playing')
-     ORDER BY created_at DESC LIMIT 50`
-  );
-  res.json({ sessions: rows });
+  try {
+    const { rows } = await query(
+      `SELECT g.id, g.name, g.type, g.status, g.host_id, g.players, g.created_at,
+              u.username AS host_name
+       FROM games g
+       LEFT JOIN users u ON u.id = g.host_id
+       WHERE g.status IN ('open', 'waiting', 'playing')
+       ORDER BY g.created_at DESC LIMIT 50`
+    );
+    res.json({ sessions: rows.map(normalizeGame) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'خطأ في السيرفر' });
+  }
 });
 
 // ===== إنشاء جلسة جديدة =====
@@ -20,21 +38,31 @@ router.post('/sessions', optionalAuth, async (req, res) => {
     const { game_type, max_players, guest_name } = req.body;
     if (!game_type) return res.status(400).json({ error: 'حدد نوع اللعبة' });
 
+    const hostId = req.user?.id || null;
     const hostName = req.user?.username || guest_name || 'زائر';
+    const name = req.body.name || game_type;
+    const players = JSON.stringify([{
+      name: hostName,
+      userId: hostId,
+      isBot: false,
+      isHost: true
+    }]);
 
     const { rows } = await query(
-      `INSERT INTO game_sessions (game_type, host_id, host_name, max_players, players, status)
-       VALUES ($1, $2, $3, $4, $5, 'waiting') RETURNING *`,
-      [
-        game_type,
-        req.user?.id || null,
-        hostName,
-        max_players || 4,
-        JSON.stringify([{ name: hostName, userId: req.user?.id || null, isBot: false, isHost: true }])
-      ]
+      `INSERT INTO games (name, type, status, host_id, players)
+       VALUES ($1, $2, 'open', $3, $4)
+       RETURNING *`,
+      [name, game_type, hostId, players]
     );
 
-    res.json({ session: rows[0] });
+    const { rows: enriched } = await query(
+      `SELECT g.*, u.username AS host_name
+       FROM games g LEFT JOIN users u ON u.id = g.host_id
+       WHERE g.id = $1`,
+      [rows[0].id]
+    );
+
+    res.json({ session: normalizeGame(enriched[0]) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'خطأ في السيرفر' });
@@ -43,25 +71,30 @@ router.post('/sessions', optionalAuth, async (req, res) => {
 
 // ===== تفاصيل جلسة =====
 router.get('/sessions/:id', optionalAuth, async (req, res) => {
-  const { rows } = await query('SELECT * FROM game_sessions WHERE id = $1', [req.params.id]);
+  const { rows } = await query(
+    `SELECT g.*, u.username AS host_name
+     FROM games g LEFT JOIN users u ON u.id = g.host_id
+     WHERE g.id = $1`,
+    [req.params.id]
+  );
   if (!rows[0]) return res.status(404).json({ error: 'الجلسة غير موجودة' });
-  res.json({ session: rows[0] });
+  res.json({ session: normalizeGame(rows[0]) });
 });
 
-// ===== حذف جلسة (صاحبها أو الأونر فقط) =====
+// ===== حذف جلسة =====
 router.delete('/sessions/:id', optionalAuth, async (req, res) => {
-  const { rows } = await query('SELECT * FROM game_sessions WHERE id = $1', [req.params.id]);
+  const { rows } = await query('SELECT * FROM games WHERE id = $1', [req.params.id]);
   const session = rows[0];
   if (!session) return res.status(404).json({ error: 'غير موجودة' });
 
-  const isHost = req.user && session.host_id === req.user.id;
+  const isHost = req.user && String(session.host_id) === String(req.user.id);
   const isOwner = req.user?.is_owner;
 
   if (!isHost && !isOwner) {
     return res.status(403).json({ error: 'مالك الجلسة أو الأونر فقط' });
   }
 
-  await query('DELETE FROM game_sessions WHERE id = $1', [req.params.id]);
+  await query('DELETE FROM games WHERE id = $1', [req.params.id]);
   res.json({ message: 'تم إنهاء الجلسة' });
 });
 
