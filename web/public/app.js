@@ -73,7 +73,8 @@ document.getElementById('authForm').onsubmit = async (e) => {
 };
 
 async function api(path, opts = {}) {
-  const r = await fetch(path, {
+  const url = /^https?:\/\//.test(path) ? path : API + (path.startsWith('/') ? path : '/' + path);
+  const r = await fetch(url, {
     ...opts,
     headers: {
       'Content-Type': 'application/json',
@@ -267,7 +268,7 @@ async function renderFeature(p){
   if(p==='games'){ location.href='/game.html'; return; }
   if(p==='members'||p==='top'||p==='leaders'){
     const endpoint=p==='members'?'/api/public/members':p==='top'?'/api/public/top':'/api/public/roles';
-    try{const d=await fetch(endpoint).then(r=>r.json()); pageBox(p,p==='members'?'<h3>👥 الأعضاء</h3><div class="grid">'+(d.members||[]).map(m=>'<div class="bot-card"><h4>'+esc(m.name)+'</h4><p>@'+esc(m.username||'')+'</p></div>').join('')+'</div>':p==='top'?'<h3>🏆 التوب</h3><pre style="white-space:pre-wrap;color:var(--muted)">'+esc(JSON.stringify(d,null,2))+'</pre>':'<h3>👑 الرتب القيادية</h3><div class="grid">'+(d.roles||[]).map(r=>'<div class="bot-card"><h4>'+esc(r.name)+'</h4><p>'+esc(r.membersCount)+' عضو</p></div>').join('')+'</div>');}catch(e){pageBox(p,'<h3>تعذر تحميل البيانات</h3>');} return;
+    try{const d=await fetch(API + endpoint).then(r=>r.json()); pageBox(p,p==='members'?'<h3>👥 الأعضاء</h3><div class="grid">'+(d.members||[]).map(m=>'<div class="bot-card"><h4>'+esc(m.name)+'</h4><p>@'+esc(m.username||'')+'</p></div>').join('')+'</div>':p==='top'?'<h3>🏆 التوب</h3><pre style="white-space:pre-wrap;color:var(--muted)">'+esc(JSON.stringify(d,null,2))+'</pre>':'<h3>👑 الرتب القيادية</h3><div class="grid">'+(d.roles||[]).map(r=>'<div class="bot-card"><h4>'+esc(r.name)+'</h4><p>'+esc(r.membersCount)+' عضو</p></div>').join('')+'</div>');}catch(e){pageBox(p,'<h3>تعذر تحميل البيانات</h3>');} return;
   }
   if(p==='chat'){pageBox(p,'<h3>💬 الشات العام</h3><div id="feature-chat"></div><input id="chat-input" class="full" placeholder="اكتب رسالتك..."><button class="btn-primary" id="chat-send">إرسال</button>'); loadFeatureChat(); return;}
   if(p==='reviews'){pageBox(p,'<h3>⭐ الآراء</h3><div id="reviews-list">جاري التحميل...</div><textarea id="review-input" class="full" placeholder="اكتب رأيك"></textarea><button class="btn-primary" id="review-send">إضافة رأي</button>'); loadReviews(); return;}
