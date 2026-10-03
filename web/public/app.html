@@ -71,7 +71,7 @@ body.logged .auth-screen{display:none}
     </div>
     <form id="authForm">
       <div class="field"><label>اسم المستخدم</label><input id="username" required></div>
-      <div class="field" id="discordField" style="display:none"><label>ايدي ديسكورد (اختياري)</label><input id="discord_id"></div>
+      <div class="field" id="discordField" style="display:none"><label>حساب ديسكورد <span style="color:var(--pink)">مطلوب للتحقق</span></label><input id="discord_id" placeholder="Discord ID أو اختر من الاقتراحات" autocomplete="off"><button type="button" class="btn-primary" id="verifyDiscordBtn" style="margin-top:8px">🔐 إرسال كود التحقق لديسكورد</button><input id="verification_code" placeholder="أدخل الكود الذي وصلك في الخاص" inputmode="numeric" maxlength="6" style="display:none;margin-top:8px"></div>
       <div class="field"><label>كلمة المرور</label><input type="password" id="password" required></div>
       <button type="submit" class="btn-primary" id="submitBtn">دخول</button>
       <div class="msg" id="authMsg"></div>
