@@ -57,6 +57,8 @@ refreshTimer=setInterval(()=>{if(!content)return;if(modal&&!modal.classList.cont
       if(count) count.textContent=num(d.memberCount);
       if(online) online.textContent=num(d.onlineCount);
       if(visits) visits.textContent=num(d.visits);
+      const discordFloat=document.getElementById('discord-float');
+      if(discordFloat && d.invite) discordFloat.href=d.invite;
       if(statusEl) statusEl.textContent='● متصل';
       if(statusEl) statusEl.className='online';
     }catch(e){
