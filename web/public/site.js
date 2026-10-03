@@ -39,3 +39,49 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeM
 $("#year").textContent=new Date().getFullYear();
 refresh();
 refreshTimer=setInterval(()=>{if(!modal.classList.contains("hidden")||view==="message")return;refresh()},15000);
+/* ===== Homepage live dashboard override ===== */
+(async function initHomeDashboard(){
+  const serverName=document.getElementById('server-name');
+  const count=document.getElementById('server-count');
+  const online=document.getElementById('server-online');
+  const visits=document.getElementById('server-visits');
+  const statusEl=document.getElementById('server-status');
+  const track=document.getElementById('home-reviews');
+  if(!track)return;
+
+  async function loadServer(){
+    try{
+      const r=await fetch('/api/public/server',{cache:'no-store'});
+      const d=await r.json();
+      serverName.textContent=d.name||'MLD';
+      count.textContent=num(d.memberCount);
+      online.textContent=num(d.onlineCount);
+      visits.textContent=num(d.visits);
+      statusEl.textContent='● متصل';
+      statusEl.className='online';
+    }catch(e){
+      statusEl.textContent='● غير متاح';
+      statusEl.className='';
+    }
+  }
+
+  async function loadReviews(){
+    try{
+      const r=await fetch('/api/community/reviews',{cache:'no-store'});
+      const d=await r.json();
+      const list=d.reviews||[];
+      if(!list.length){
+        track.innerHTML='<div class="review-card"><div class="review-stars">★★★★★</div><h3>كن أول من يترك رأيه</h3><p>شاركنا تجربتك في MLD وسيظهر رأيك هنا بشكل جميل.</p><div class="review-meta"><span>MLD Community</span><span>♡</span></div></div>';
+        return;
+      }
+      const cards=list.map(x=>`<article class="review-card"><div class="review-stars">${'★'.repeat(Math.max(1,Math.min(5,Number(x.rating)||5)))}</div><h3>${esc(x.username||'عضو MLD')}</h3><p>${esc(x.content||'')}</p><div class="review-meta"><span>عضو في MLD</span><span>رأي موثّق</span></div></article>`).join('');
+      track.innerHTML=cards+cards;
+    }catch(e){
+      track.innerHTML='<div class="review-card"><h3>آراء الناس عنّا</h3><p>تعذر تحميل الآراء الآن، جرّب تحديث الصفحة.</p></div>';
+    }
+  }
+
+  await Promise.all([loadServer(),loadReviews()]);
+  setInterval(loadServer,15000);
+  setInterval(loadReviews,30000);
+})();
