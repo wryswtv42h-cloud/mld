@@ -9,7 +9,8 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "serve": "^14.2.1"
+    "serve": "^14.2.1",
+    "http-proxy": "^1.18.1"
   },
   "author": "فهد المطيري",
   "license": "MLD"
