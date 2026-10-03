@@ -24,7 +24,7 @@ function normalizeGame(row) {
 router.get('/sessions', optionalAuth, async (req, res) => {
   try {
     const { rows } = await query(
-      `SELECT g.id, g.name, g.type, g.status, g.host_id, g.players, g.created_at,
+      `SELECT g.id, g.name, g.type, g.status, g.host_id, g.players, g.min_players, g.max_players, g.created_at,
               u.username AS host_name
        FROM games g
        LEFT JOIN users u ON u.id = g.host_id
