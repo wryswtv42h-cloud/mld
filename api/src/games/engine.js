@@ -20,15 +20,10 @@ export async function initGame(gameType, players) {
   const game = GAMES[gameType];
   if (!game) throw new Error('لعبة غير معروفة: ' + gameType);
 
-  // إضافة بوتات إذا العدد ناقص
-  const playerNames = players.map(p => p.name);
   const minPlayers = getMinPlayers(gameType);
-
-  while (playerNames.length < minPlayers) {
-    playerNames.push('بوت ' + (playerNames.length + 1));
-  }
-
-  return game.init(playerNames);
+  const realPlayers = players.filter(p => !p.isBot);
+  if (realPlayers.length < minPlayers) throw new Error(`تحتاج إلى ${minPlayers} لاعبين حقيقيين لبدء اللعبة`);
+  return game.init(realPlayers.map(p => p.name));
 }
 
 export async function handleAction(gameType, state, playerName, action) {
