@@ -7,6 +7,38 @@ import { fileURLToPath, pathToFileURL } from 'url';
 dotenv.config();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const { Pool } = pg;
+const pool = process.env.DATABASE_URL ? new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false},max:3}) : null;
+const userBotClients = new Map();
+const botKey = crypto.createHash('sha256').update(process.env.JWT_SECRET || 'mld').digest();
+function decryptToken(value){
+  if(!String(value).startsWith('enc:')) return value;
+  const [,iv,tag,data]=String(value).split(':');
+  const d=crypto.createDecipheriv('aes-256-gcm',botKey,Buffer.from(iv,'base64url'));
+  d.setAuthTag(Buffer.from(tag,'base64url'));
+  return Buffer.concat([d.update(Buffer.from(data,'base64url')),d.final()]).toString('utf8');
+}
+async function syncUserBots(){
+  if(!pool) return;
+  try{
+    const {rows}=await pool.query('SELECT id,name,token,active FROM bots WHERE active=true AND locked=true');
+    const wanted=new Set(rows.map(x=>String(x.id)));
+    for(const [id,client] of userBotClients){
+      if(!wanted.has(id)){try{client.destroy();}catch{} userBotClients.delete(id);}
+    }
+    for(const bot of rows){
+      const id=String(bot.id);
+      if(userBotClients.has(id)) continue;
+      const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.DirectMessages]});
+      c.once(Events.ClientReady,()=>console.log(`🤖 User bot online: ${bot.name}`));
+      c.on('error',e=>console.error(`User bot ${bot.name}:`,e.message));
+      try{await c.login(decryptToken(bot.token));userBotClients.set(id,c);}
+      catch(e){console.error(`❌ User bot ${bot.name} failed:`,e.message);try{c.destroy();}catch{}}
+    }
+  }catch(e){console.error('User bot sync:',e.message);}
+}
+
 const API_URL = String(process.env.API_URL || '').replace(/\/$/, '');
 const voiceStarted = new Map();
 
@@ -124,6 +156,7 @@ async function start() {
     setupStatsTracking(client);
     await loadHandlers();
     await client.login(process.env.DISCORD_TOKEN);
+    if (pool) { await syncUserBots(); setInterval(syncUserBots, 30000); }
     client.once(Events.ClientReady, async () => await registerCommands());
   } catch (err) {
     console.error('❌ فشل تشغيل البوت:', err.message);
