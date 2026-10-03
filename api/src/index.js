@@ -35,6 +35,10 @@ const io = new Server(httpServer, {
 });
 setupSocket(io);
 
+app.get('/health', (req, res) => {
+  res.json({ ok: true, service: 'mld-api', status: 'online', time: new Date().toISOString() });
+});
+
 app.get('/', (req, res) => {
   res.json({
     name: 'MLD API',
