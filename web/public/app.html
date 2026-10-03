@@ -112,7 +112,8 @@ body.logged .auth-screen{display:none}
 
       <div class="section-title">شخصي</div>
       <a data-page="profile">👤 بروفايلي</a>
-      <a id="logoutBtn">🚪 تسجيل الخروج</a>
+      <a id="loginBtn">🔐 تسجيل الدخول</a>
+      <a id="logoutBtn" style="display:none">🚪 تسجيل الخروج</a>
 
       <div class="section-title" id="ownerSection" style="display:none">الأونر</div>
       <a data-page="admin" id="adminLink" style="display:none">👑 لوحة الأونر</a>
@@ -127,6 +128,7 @@ body.logged .auth-screen{display:none}
       <div style="display:flex;align-items:center;gap:15px">
         <button class="menu-btn" id="menuBtn">☰</button>
         <div class="page-title" id="pageTitle">الرئيسية</div>
+        <button id="topLoginBtn" class="btn-primary" style="width:auto;padding:8px 14px;display:block">🔐 دخول</button>
       </div>
       <div class="user-chip">
         <div class="avatar" id="myAvatar">?</div>
