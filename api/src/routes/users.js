@@ -6,11 +6,15 @@ const router = express.Router();
 
 // ===== قائمة الأعضاء =====
 router.get('/', requireAuth, async (req, res) => {
-  const { rows } = await query(
-    `SELECT id, username, avatar, bio, role, is_owner, discord_verified, last_seen
-     FROM users ORDER BY last_seen DESC LIMIT 100`
-  );
-  res.json({ users: rows });
+  try {
+    const { rows } = await query(
+      `SELECT id, username, avatar, bio, role, is_owner, discord_verified, last_seen
+       FROM users ORDER BY last_seen DESC LIMIT 100`
+    );
+    res.json({ users: rows || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'خطأ في السيرفر' });
+  }
 });
 
 // ===== بروفايلي =====
@@ -22,7 +26,7 @@ router.get('/me', requireAuth, (req, res) => {
 // ===== تعديل بروفايلي =====
 router.patch('/me', requireAuth, async (req, res) => {
   try {
-    const { avatar, bio, username } = req.body;
+    const { avatar, bio, username } = req.body || {};
 
     if (username && username !== req.user.username) {
       const exists = await query('SELECT id FROM users WHERE username = $1', [username]);
@@ -37,7 +41,7 @@ router.patch('/me', requireAuth, async (req, res) => {
     }
 
     const { rows } = await query('SELECT * FROM users WHERE id = $1', [req.user.id]);
-    const { password, ...user } = rows[0];
+    const { password: _, ...user } = rows[0];
     res.json({ user });
   } catch (err) {
     console.error(err);
@@ -45,24 +49,32 @@ router.patch('/me', requireAuth, async (req, res) => {
   }
 });
 
-// ===== حظر / فك حظر (أونر فقط) =====
+// ===== حظر / فك حظر =====
 router.post('/:id/ban', requireAuth, requireOwner, async (req, res) => {
-  const { rows } = await query('SELECT * FROM users WHERE id = $1', [req.params.id]);
-  const user = rows[0];
-  if (!user) return res.status(404).json({ error: 'غير موجود' });
-  if (user.is_owner) return res.status(400).json({ error: 'لا تحظر الأونر' });
+  try {
+    const { rows } = await query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+    const user = rows[0];
+    if (!user) return res.status(404).json({ error: 'غير موجود' });
+    if (user.is_owner) return res.status(400).json({ error: 'لا تحظر الأونر' });
 
-  await query('UPDATE users SET banned = NOT banned WHERE id = $1', [user.id]);
-  res.json({ message: user.banned ? 'تم فك الحظر' : 'تم الحظر' });
+    await query('UPDATE users SET banned = NOT banned WHERE id = $1', [user.id]);
+    res.json({ message: user.banned ? 'تم فك الحظر' : 'تم الحظر' });
+  } catch (err) {
+    res.status(500).json({ error: 'خطأ في السيرفر' });
+  }
 });
 
-// ===== حذف حساب (أونر فقط) =====
+// ===== حذف حساب =====
 router.delete('/:id', requireAuth, requireOwner, async (req, res) => {
-  if (req.params.id === req.user.id) {
-    return res.status(400).json({ error: 'لا تحذف نفسك' });
+  try {
+    if (req.params.id === String(req.user.id)) {
+      return res.status(400).json({ error: 'لا تحذف نفسك' });
+    }
+    await query('DELETE FROM users WHERE id = $1', [req.params.id]);
+    res.json({ message: 'تم الحذف' });
+  } catch (err) {
+    res.status(500).json({ error: 'خطأ في السيرفر' });
   }
-  await query('DELETE FROM users WHERE id = $1', [req.params.id]);
-  res.json({ message: 'تم الحذف' });
 });
 
 export default router;

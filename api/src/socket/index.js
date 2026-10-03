@@ -3,7 +3,7 @@ import { query } from '../db.js';
 import { setupGameSocket } from './games.js';
 
 export function setupSocket(io) {
-  // ===== التحقق =====
+  // ===== التحقق من الاتصال =====
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
@@ -11,7 +11,7 @@ export function setupSocket(io) {
         socket.user = null;
         return next();
       }
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret');
       const { rows } = await query('SELECT * FROM users WHERE id = $1', [decoded.id]);
       socket.user = rows[0] || null;
       next();
@@ -44,8 +44,8 @@ export function setupSocket(io) {
         if (content.length > 2000) return;
 
         const { rows } = await query(
-          `INSERT INTO messages (room_id, sender_id, sender_name, content, type)
-           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          `INSERT INTO messages (room_id, sender_id, sender_name, content, type, created_at)
+           VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *`,
           [roomId, socket.user.id, socket.user.username, content.trim(), type || 'public']
         );
 
