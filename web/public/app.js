@@ -155,7 +155,7 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
     }
     if (page === 'admin') {
       e.preventDefault();
-      if (!user?.is_owner) { toast('هذه الصفحة للأونر فقط'); return; }
+      if (!user?.is_owner && !['admin','owner'].includes(String(user?.role||'').toLowerCase())) { toast('هذه الصفحة للإدارة فقط'); return; }
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.sidebar .nav a').forEach(x => x.classList.remove('active'));
       a.classList.add('active');
