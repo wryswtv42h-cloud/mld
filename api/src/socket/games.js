@@ -64,7 +64,12 @@ export function setupGameSocket(io, socket) {
       if (asSpectator) {
         if (!runtime.spectators.some(p => p.socketId === socket.id)) runtime.spectators.push(player);
       } else if (!runtime.players.some(p => p.socketId === socket.id || (socket.user?.id && String(p.userId) === String(socket.user.id)))) {
-        if (socket.user?.id) {
+        const guestHost = !socket.user?.id && runtime.players.find(p => !p.socketId && !p.userId && String(p.name) === String(name) && p.isHost);
+        if (guestHost) {
+          guestHost.socketId = socket.id;
+          runtime.hostSocketId = socket.id;
+          await persistPlayers(sessionId, runtime.players);
+        } else if (socket.user?.id) {
           const active = await query(
             "SELECT id FROM games WHERE status IN ('waiting','playing') AND id<>$1 AND EXISTS (SELECT 1 FROM jsonb_array_elements(players) p WHERE p->>'userId'=$2) LIMIT 1",
             [sessionId, String(socket.user.id)]
