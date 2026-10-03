@@ -43,16 +43,19 @@ const verificationCodes = new Map();
 router.post('/verify-discord', async (req, res) => {
   try {
     const { discord_id } = req.body;
-    if (!discord_id) return res.status(400).json({ error: 'أدخل Discord ID' });
-    if (!(await discordMemberExists(discord_id))) return res.status(400).json({ error: 'هذا الحساب ليس عضوًا في سيرفر MLD' });
+    if (!discord_id) return res.status(400).json({ error: 'أدخل Discord ID أو اسم المستخدم' });
+    const resolvedId = await resolveDiscordId(discord_id);
+    if (!resolvedId || !(await discordMemberExists(resolvedId))) return res.status(400).json({ error: 'هذا الحساب ليس عضوًا في سيرفر MLD' });
+    const linked = await query('SELECT id FROM users WHERE discord_id=$1 LIMIT 1',[resolvedId]);
+    if (linked.rows[0]) return res.status(400).json({ error: 'حساب ديسكورد هذا مرتبط بحساب موقع آخر' });
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
-    const dm = await fetch('https://discord.com/api/v10/users/@me/channels', { method:'POST', headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({recipient_id:String(discord_id)}) });
+    const dm = await fetch('https://discord.com/api/v10/users/@me/channels', { method:'POST', headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({recipient_id:String(resolvedId)}) });
     if (!dm.ok) return res.status(502).json({ error: 'تعذر فتح الخاص مع حسابك في ديسكورد' });
     const channel = await dm.json();
     const sent = await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, { method:'POST', headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({content:`🔐 كود التحقق الخاص بـ MLD Community: **${code}**\\nلا تشارك هذا الكود مع أي شخص.`}) });
     if (!sent.ok) return res.status(502).json({ error: 'تعذر إرسال كود التحقق' });
-    verificationCodes.set(String(discord_id), { code, expires: Date.now() + 10 * 60 * 1000 });
+    verificationCodes.set(String(resolvedId), { code, expires: Date.now() + 10 * 60 * 1000 });
     return res.json({ verified: false, message: 'تم إرسال كود التحقق إلى الخاص في ديسكورد' });
   } catch (e) { console.error(e); res.status(500).json({ error:'تعذر تنفيذ التحقق' }); }
 });
