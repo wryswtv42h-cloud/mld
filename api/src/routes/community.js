@@ -17,6 +17,19 @@ async function audit(actor, action, target, meta={}) {
 }
 
 
+router.get('/settings/:key',requireAuth,async(req,res)=>{
+  if(!['application_questions','ticket_questions'].includes(req.params.key))return res.status(404).json({error:'الإعداد غير موجود'});
+  const q=await query('SELECT value FROM site_settings WHERE key=$1',[req.params.key]); res.json({value:q.rows[0]?.value||[]});
+});
+router.patch('/settings/:key',requireAuth,requireOwner,async(req,res)=>{
+  if(!['application_questions','ticket_questions'].includes(req.params.key))return res.status(404).json({error:'الإعداد غير موجود'});
+  if(!Array.isArray(req.body.value))return res.status(400).json({error:'القيمة يجب أن تكون قائمة'});
+  await query('INSERT INTO site_settings(key,value,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()',[req.params.key,JSON.stringify(req.body.value)]);
+  await audit(req.user,'settings_update',req.params.key,{});
+  res.json({message:'تم الحفظ'});
+});
+router.get('/audit',requireAuth,requireOwner,async(req,res)=>{const {rows}=await query('SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 200');res.json({logs:rows});});
+
 router.get('/chat', requireAuth, async (req,res)=>{ const {rows}=await query('SELECT * FROM chat_messages ORDER BY created_at DESC LIMIT 100'); res.json({messages:rows.reverse()}); });
 router.post('/chat', requireAuth, async (req,res)=>{ const content=String(req.body.content||'').trim(); if(!content)return res.status(400).json({error:'اكتب رسالة'}); const {rows}=await query('INSERT INTO chat_messages(user_id,sender_name,sender_avatar,content) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,req.user.username,req.user.avatar||'',content]); res.json({message:rows[0]}); });
 
