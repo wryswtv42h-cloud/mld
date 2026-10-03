@@ -86,15 +86,39 @@ body.logged .auth-screen{display:none}
       <h2>MLD</h2>
     </div>
     <nav class="nav">
+      <div class="section-title">رئيسي</div>
       <a data-page="home" class="active">🏠 الرئيسية</a>
-      <a data-page="bots">🤖 بوتاتي</a>
-      <a data-page="addbot">➕ إضافة بوت</a>
-      <a data-page="profile">👤 بروفايلي</a>
+      <a data-page="members">👥 الأعضاء</a>
+      <a data-page="top">🏆 التوب</a>
+      <a data-page="leaders">👑 الرتب القيادية</a>
+
+      <div class="section-title">التواصل</div>
+      <a data-page="chat">💬 الشات العام</a>
+      <a data-page="pigeon">✉️ الزاجل</a>
+
+      <div class="section-title">الترفيه</div>
+      <a data-page="games">🎮 الألعاب</a>
+      <a data-page="cinema">🎬 السينما</a>
+      <a data-page="groups">👨‍👩‍👧 القروبات</a>
+
       <div class="section-title">الإدارة</div>
+      <a data-page="tickets">🎫 التذاكر</a>
+      <a data-page="applications">📝 التقديم</a>
+      <a data-page="reviews">⭐ الآراء</a>
+
+      <div class="section-title">البوتات</div>
+      <a data-page="bots">🤖 منصة البوتات</a>
+      <a data-page="addbot">➕ إضافة بوت</a>
+
+      <div class="section-title">شخصي</div>
+      <a data-page="profile">👤 بروفايلي</a>
+      <a id="logoutBtn">🚪 تسجيل الخروج</a>
+
+      <div class="section-title" id="ownerSection" style="display:none">الأونر</div>
       <a data-page="admin" id="adminLink" style="display:none">👑 لوحة الأونر</a>
-      <div class="section-title">—</div>
+
+      <div class="section-title">روابط</div>
       <a href="/">🌐 الموقع</a>
-      <a id="logoutBtn">🚪 خروج</a>
     </nav>
   </aside>
 
@@ -120,6 +144,18 @@ body.logged .auth-screen{display:none}
           <p style="color:var(--muted);line-height:1.8">أنشئ بوتك الخاص، أضفه لسيرفرك، وتحكم فيه من هنا.</p>
         </div>
       </div>
+
+      <div class="page" id="page-members"><div class="card"><h3>👥 الأعضاء</h3><p style="color:var(--muted)">استعراض أعضاء مجتمع MLD والبحث عنهم.</p></div></div>
+      <div class="page" id="page-top"><div class="card"><h3>🏆 التوب</h3><p style="color:var(--muted)">قوائم التوب والإحصائيات.</p></div></div>
+      <div class="page" id="page-leaders"><div class="card"><h3>👑 الرتب القيادية</h3><p style="color:var(--muted)">الرتب القيادية وأعضاء كل رتبة.</p></div></div>
+      <div class="page" id="page-chat"><div class="card"><h3>💬 الشات العام</h3><p style="color:var(--muted)">منطقة الشات العام.</p></div></div>
+      <div class="page" id="page-pigeon"><div class="card"><h3>✉️ الزاجل</h3><p style="color:var(--muted)">الرسائل الخاصة والمحادثات.</p></div></div>
+      <div class="page" id="page-games"><div class="card"><h3>🎮 الألعاب</h3><p style="color:var(--muted)">جلسات الألعاب والمشاركة والمتفرجين.</p></div></div>
+      <div class="page" id="page-cinema"><div class="card"><h3>🎬 السينما</h3><p style="color:var(--muted)">غرف المشاهدة الجماعية.</p></div></div>
+      <div class="page" id="page-groups"><div class="card"><h3>👨‍👩‍👧 القروبات</h3><p style="color:var(--muted)">إنشاء وإدارة القروبات المرتبطة بديسكورد.</p></div></div>
+      <div class="page" id="page-tickets"><div class="card"><h3>🎫 التذاكر</h3><p style="color:var(--muted)">فتح ومتابعة التذاكر.</p></div></div>
+      <div class="page" id="page-applications"><div class="card"><h3>📝 التقديم</h3><p style="color:var(--muted)">طلبات التقديم وإدارتها حسب الصلاحيات.</p></div></div>
+      <div class="page" id="page-reviews"><div class="card"><h3>⭐ الآراء</h3><p style="color:var(--muted)">آراء وتقييمات مجتمع MLD.</p></div></div>
 
       <div class="page" id="page-bots">
         <div class="card"><h3>🤖 بوتاتي</h3><div class="grid" id="botsList"></div></div>
