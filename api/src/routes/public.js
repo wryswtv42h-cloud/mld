@@ -14,7 +14,7 @@ const VISITOR_TTL = 60 * 60 * 1000;
 const CACHE_TTL = 15000;
 
 const guildId = () => process.env.DISCORD_GUILD_ID;
-const token = () => process.env.DISCORD_TOKEN;
+const token = () => process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
 
 async function discord(path) {
   const r = await fetch('https://discord.com/api/v10' + path, {
@@ -80,14 +80,22 @@ router.get('/server', async (req, res) => {
   try {
     touchVisit(req);
     const g = await getGuild();
+    let ownerId = process.env.OWNER_DISCORD_ID || null;
+    if (!ownerId) {
+      const members = await getMembers();
+      const owner = members.find(m => String(m.user?.username || '').toLowerCase() === 'w4px');
+      ownerId = owner?.user?.id || null;
+    }
     res.json({
       id: g.id,
       name: g.name || 'MLD',
       memberCount: g.approximate_member_count ?? g.member_count ?? 0,
       onlineCount: g.approximate_presence_count ?? 0,
       ownerName: 'فهد المطيري',
+      ownerUsername: 'w4px',
+      ownerId,
       visits,
-      invite: 'https://discord.com/users/w4px',
+      invite: ownerId ? `https://discord.com/users/${ownerId}` : null,
       icon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=256` : '/logo.svg'
     });
   } catch (e) {
