@@ -1,4 +1,4 @@
-const API = location.origin;
+const API = 'https://api-production-5bddb.up.railway.app';
 
 let token = localStorage.getItem('token');
 let user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -25,7 +25,7 @@ document.getElementById('verifyDiscordBtn')?.addEventListener('click', async () 
   if (!id) { msg.className='msg show error'; msg.textContent='اكتب Discord ID أولاً'; return; }
   msg.className='msg show'; msg.textContent='جاري إرسال كود التحقق...';
   try {
-    const r=await fetch('/api/auth/verify-discord',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({discord_id:id})});
+    const r=await fetch(API + '/api/auth/verify-discord',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({discord_id:id})});
     const d=await r.json();
     if(!r.ok) throw new Error(d.error||'تعذر التحقق');
     document.getElementById('verification_code').style.display='block';
@@ -55,7 +55,7 @@ document.getElementById('authForm').onsubmit = async (e) => {
   msg.textContent = 'جاري...';
 
   try {
-    const r = await fetch('/api/auth/' + mode, {
+    const r = await fetch(API + '/api/auth/' + mode, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password, discord_id, verification_code })
@@ -278,13 +278,13 @@ async function renderFeature(p){
   if(p==='cinema'){pageBox(p,'<h3>🎬 السينما</h3><div id="cinema-list">جاري...</div><input id="cinema-title" class="full" placeholder="اسم العرض"><input id="cinema-url" class="full" placeholder="رابط المحتوى المصرح لك باستخدامه"><button class="btn-primary" id="cinema-send">إنشاء غرفة</button>');loadCinema();document.getElementById('cinema-send').onclick=async()=>{if(!requireFeatureAuth())return;const d=await api('/api/community/cinema',{method:'POST',body:JSON.stringify({title:document.getElementById('cinema-title').value,media_url:document.getElementById('cinema-url').value})});toast(d.error||'تم إنشاء الغرفة ✓');loadCinema();};return;}
 }
 async function loadFeatureChat(){const d=await api('/api/community/chat');const e=document.getElementById('feature-chat');if(e)e.innerHTML=(d.messages||[]).map(m=>'<div class="bot-card"><b>'+esc(m.sender_name)+'</b><p>'+esc(m.content)+'</p></div>').join('')||'<p>لا توجد رسائل.</p>';const b=document.getElementById('chat-send');if(b)b.onclick=async()=>{const i=document.getElementById('chat-input');const d=await api('/api/community/chat',{method:'POST',body:JSON.stringify({content:i.value})});if(d.error)return toast(d.error);i.value='';loadFeatureChat();};}
-async function loadReviews(){const d=await fetch('/api/community/reviews').then(r=>r.json());const e=document.getElementById('reviews-list');if(e)e.innerHTML=(d.reviews||[]).map(x=>'<div class="bot-card"><b>'+esc(x.username)+'</b><p>'+esc(x.content)+'</p><small>★ '+x.rating+'</small></div>').join('')||'<p>لا توجد آراء.</p>';const b=document.getElementById('review-send');if(b)b.onclick=async()=>{const i=document.getElementById('review-input');const d=await api('/api/community/reviews',{method:'POST',body:JSON.stringify({content:i.value,rating:5})});toast(d.error||'تمت الإضافة ✓');i.value='';loadReviews();};}
+async function loadReviews(){const d=await fetch(API + '/api/community/reviews').then(r=>r.json());const e=document.getElementById('reviews-list');if(e)e.innerHTML=(d.reviews||[]).map(x=>'<div class="bot-card"><b>'+esc(x.username)+'</b><p>'+esc(x.content)+'</p><small>★ '+x.rating+'</small></div>').join('')||'<p>لا توجد آراء.</p>';const b=document.getElementById('review-send');if(b)b.onclick=async()=>{const i=document.getElementById('review-input');const d=await api('/api/community/reviews',{method:'POST',body:JSON.stringify({content:i.value,rating:5})});toast(d.error||'تمت الإضافة ✓');i.value='';loadReviews();};}
 async function loadTickets(){const d=await api('/api/community/tickets');const e=document.getElementById('tickets-list');if(e)e.innerHTML=(d.tickets||[]).map(x=>'<div class="bot-card"><b>#'+x.id+' '+esc(x.subject)+'</b><p>'+esc(x.status)+'</p></div>').join('');}
 async function loadApps(){const d=await api('/api/community/applications');const e=document.getElementById('apps-list');if(e)e.innerHTML=(d.applications||[]).map(x=>'<div class="bot-card"><b>#'+x.id+'</b><p>'+esc(x.status)+'</p></div>').join('');}
-async function loadGroups(){const d=await fetch('/api/community/groups').then(r=>r.json());const e=document.getElementById('groups-list');if(e)e.innerHTML=(d.groups||[]).map(x=>'<div class="bot-card"><b>'+esc(x.name)+'</b><p>'+esc(x.description||'')+'</p><button class="btn-primary" onclick="joinGroup('+x.id+')">انضمام</button></div>').join('')||'<p>لا توجد قروبات.</p>';}
+async function loadGroups(){const d=await fetch(API + '/api/community/groups').then(r=>r.json());const e=document.getElementById('groups-list');if(e)e.innerHTML=(d.groups||[]).map(x=>'<div class="bot-card"><b>'+esc(x.name)+'</b><p>'+esc(x.description||'')+'</p><button class="btn-primary" onclick="joinGroup('+x.id+')">انضمام</button></div>').join('')||'<p>لا توجد قروبات.</p>';}
 window.joinGroup=async id=>{if(!requireFeatureAuth())return;const d=await api('/api/community/groups/'+id+'/join',{method:'POST'});toast(d.error||d.message);};
 async function loadPigeon(){const d=await api('/api/community/pigeon');const e=document.getElementById('pigeon-list');if(e)e.innerHTML=(d.messages||[]).map(x=>'<div class="bot-card"><p>'+esc(x.content)+'</p></div>').join('');}
-async function loadCinema(){const d=await fetch('/api/community/cinema').then(r=>r.json());const e=document.getElementById('cinema-list');if(e)e.innerHTML=(d.rooms||[]).map(x=>'<div class="bot-card"><b>'+esc(x.title)+'</b><p>'+esc(x.status)+'</p><a class="primary" href="'+esc(x.media_url)+'" target="_blank">فتح العرض</a></div>').join('')||'<p>لا توجد غرف.</p>';}
+async function loadCinema(){const d=await fetch(API + '/api/community/cinema').then(r=>r.json());const e=document.getElementById('cinema-list');if(e)e.innerHTML=(d.rooms||[]).map(x=>'<div class="bot-card"><b>'+esc(x.title)+'</b><p>'+esc(x.status)+'</p><a class="primary" href="'+esc(x.media_url)+'" target="_blank">فتح العرض</a></div>').join('')||'<p>لا توجد غرف.</p>';}
 
 
 /* ===== Discord autocomplete suggestions ===== */
@@ -302,7 +302,7 @@ async function loadCinema(){const d=await fetch('/api/community/cinema').then(r=
       if(q.length<1){list.innerHTML='';return;}
       timer=setTimeout(async()=>{
         try{
-          const d=await fetch('/api/public/suggestions?type='+encodeURIComponent(type)+'&q='+encodeURIComponent(q)).then(r=>r.json());
+          const d=await fetch(API + '/api/public/suggestions?type='+encodeURIComponent(type)+'&q='+encodeURIComponent(q)).then(r=>r.json());
           list.innerHTML=(d.suggestions||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name||x.username||'')+'</option>').join('');
         }catch(e){}
       },180);
