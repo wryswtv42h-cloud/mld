@@ -115,7 +115,11 @@ async function initApp() {
   if (user.avatar) av.innerHTML = `<img src="${esc(user.avatar)}">`;
   else av.textContent = initials(user.username);
 
-  if (user.is_owner) document.getElementById('adminLink').style.display = 'flex';
+  if (user.is_owner || ['admin','owner'].includes(String(user.role||'').toLowerCase())) {
+    document.getElementById('adminLink').style.display = 'flex';
+    document.getElementById('ownerSection').style.display = 'block';
+  }
+
 
   document.getElementById('profileName').value = user.username || '';
   document.getElementById('profileBio').value = user.bio || '';
@@ -228,15 +232,46 @@ document.getElementById('saveProfileBtn').onclick = async () => {
 async function loadAdmin() {
   const d = await api('/api/users');
   const list = document.getElementById('ownerUsers');
-  if (!d.users) return;
-  list.innerHTML = d.users.map(u => `
-    <div class="bot-card">
-      <h4>${esc(u.username)}</h4>
-      <p>${u.is_owner ? '👑 أونر' : 'عضو'}</p>
-      ${!u.is_owner ? `<button onclick="banUser('${u.id}')" style="padding:8px 14px;border:0;border-radius:10px;background:#ed4245;color:#fff;font-weight:700;cursor:pointer;margin-top:8px">حظر/فك</button>` : ''}
-    </div>
-  `).join('');
+  if (list && d.users) {
+    list.innerHTML = d.users.map(u => `
+      <div class="bot-card"><h4>${esc(u.username)}</h4><p>${u.is_owner ? '👑 أونر' : (u.role === 'admin' ? '🛡️ إدارة' : 'عضو')}</p>
+      ${user?.is_owner && !u.is_owner ? `<button onclick="setAdmin('${u.id}','${u.role==='admin'?'remove':'add'}')" class="btn-primary">${u.role==='admin'?'إزالة الإدارة':'إضافة للإدارة'}</button>` : ''}</div>`).join('');
+  }
+
+  const adminTickets=document.getElementById('adminTickets');
+  if(adminTickets){
+    const td=await api('/api/community/tickets');
+    adminTickets.innerHTML='<h3>🎫 التذاكر</h3>'+(td.tickets||[]).map(t=>`
+      <div class="bot-card"><b>#${t.id} · ${esc(t.subject)}</b><p>${esc(t.status)} · claimed: ${esc(t.claimed_by||'—')}</p>
+      <button class="btn-primary" onclick="claimTicket('${t.id}')">استلام</button>
+      ${t.status!=='closed'?'<button class="btn-primary" onclick="closeTicket(\''+t.id+'\')">إغلاق</button>':''}</div>`).join('')||'<p>لا توجد تذاكر.</p>';
+  }
+
+  if(user?.is_owner){
+    const [ad,gd]=await Promise.all([api('/api/community/applications'),api('/api/community/groups')]);
+    const apps=document.getElementById('ownerApplications');
+    if(apps) apps.innerHTML='<h3>📝 التقديم</h3>'+(ad.applications||[]).map(a=>`
+      <div class="bot-card"><b>#${a.id}</b><p>${esc(a.status)} · Discord: ${esc(a.discord_id||'—')}</p>
+      <button class="btn-primary" onclick="applicationStatus('${a.id}','accepted')">قبول</button>
+      <button class="btn-primary" onclick="applicationStatus('${a.id}','rejected')">رفض</button></div>`).join('')||'<p>لا توجد طلبات.</p>';
+    const allGroups=await api('/api/community/groups?all=1');
+    const groups=allGroups.groups||gd.groups||[];
+    const ge=document.getElementById('ownerGroups');
+    if(ge) ge.innerHTML='<h3>👨‍👩‍👧 القروبات</h3>'+(groups||[]).map(g=>`
+      <div class="bot-card"><b>#${g.id} · ${esc(g.name)}</b><p>${esc(g.status)}</p>
+      ${g.status==='pending'?'<button class="btn-primary" onclick="groupStatus(\''+g.id+'\',\'approved\')">اعتماد</button>':''}</div>`).join('')||'<p>لا توجد طلبات قروبات.</p>';
+    const al=await api('/api/community/audit');
+    const ae=document.getElementById('ownerAudit');
+    if(ae) ae.innerHTML='<h3>📋 السجل</h3>'+(al.logs||[]).map(x=>`<div class="bot-card"><b>${esc(x.action)}</b><p>${esc(x.actor_name||'')} · ${esc(x.target||'')}</p></div>`).join('')||'<p>لا يوجد سجل.</p>';
+  }
 }
+
+
+window.setAdmin = async (id, action) => { const d=await api('/api/users/'+id+'/admin',{method:'POST',body:JSON.stringify({action})}); toast(d.message||d.error); loadAdmin(); };
+window.claimTicket = async id => { const d=await api('/api/community/tickets/'+id+'/claim',{method:'POST'}); toast(d.error||'تم استلام التذكرة'); loadAdmin(); };
+window.closeTicket = async id => { const d=await api('/api/community/tickets/'+id+'/close',{method:'POST'}); toast(d.error||'تم إغلاق التذكرة'); loadAdmin(); };
+window.applicationStatus = async (id,status) => { const d=await api('/api/community/applications/'+id+'/status',{method:'POST',body:JSON.stringify({status})}); toast(d.error||'تم التحديث'); loadAdmin(); };
+window.groupStatus = async (id,status) => { const d=await api('/api/community/groups/'+id+'/status',{method:'POST',body:JSON.stringify({status})}); toast(d.error||'تم التحديث'); loadAdmin(); };
 
 window.banUser = async (id) => {
   const d = await api('/api/users/' + id + '/ban', { method: 'POST' });
