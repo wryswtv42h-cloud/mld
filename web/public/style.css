@@ -603,3 +603,21 @@ body.menu-open{overflow:hidden}
 @media(min-width:821px){
   .menu,.mobile-menu,.menu-backdrop{display:none!important}
 }
+
+/* ===== MLD homepage upgrade ===== */
+.server-strip{grid-template-columns:repeat(6,1fr)}
+.reviews-panel{margin:0 0 42px;border:1px solid var(--line);border-radius:30px;padding:34px;background:linear-gradient(145deg,#25152fdd,#120c19ee);box-shadow:0 25px 100px #0009;overflow:hidden}
+.reviews-track{display:flex;gap:16px;overflow:hidden;margin-top:24px;padding:8px 2px 18px;mask-image:linear-gradient(to right,transparent,#000 4%,#000 96%,transparent)}
+.review-card{flex:0 0 min(360px,82vw);border:1px solid #f1bce466;border-radius:22px;padding:22px;background:linear-gradient(145deg,#372047,#17101f);box-shadow:0 12px 35px #0006;animation:reviewFloat 28s linear infinite}
+.review-card:hover{animation-play-state:paused;border-color:var(--pink);transform:translateY(-4px)}
+.review-stars{color:var(--pink);letter-spacing:3px;font-size:14px}
+.review-card h3{margin:12px 0 5px}.review-card p{margin:0;color:var(--muted);line-height:1.9;min-height:76px}.review-meta{display:flex;justify-content:space-between;margin-top:16px;color:#dcb9d9;font-size:12px}
+@keyframes reviewFloat{0%{transform:translateX(0)}100%{transform:translateX(-18px)}}
+.social-links{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding:8px 0 22px}
+.social-links a{display:inline-flex;gap:8px;align-items:center;border:1px solid #f1bce455;border-radius:15px;padding:12px 18px;color:var(--text);background:#ffffff0b;text-decoration:none;transition:.2s}
+.social-links a:hover{border-color:var(--pink);background:#ff9cdc15;transform:translateY(-2px)}
+.social-links b{color:var(--pink)}
+.discord-float{position:fixed;right:22px;bottom:22px;z-index:60;width:58px;height:58px;display:grid;place-items:center;border:1px solid #ffd0f488;border-radius:50%;color:#241329;background:linear-gradient(135deg,var(--accent),var(--purple));box-shadow:0 10px 40px #a86fdf77,0 0 0 6px #ff9cdc10;font-size:29px;text-decoration:none;transition:.2s}
+.discord-float:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 15px 50px #ff9cdc77}
+@media(max-width:1050px){.server-strip{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:620px){.server-strip{grid-template-columns:repeat(2,1fr)}.reviews-panel{padding:22px 15px}.discord-float{right:15px;bottom:15px}.review-card{flex-basis:82vw}}
