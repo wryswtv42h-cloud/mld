@@ -64,6 +64,28 @@ export function setupSocket(io) {
       console.log(`🔴 قطع: ${socket.user?.username || 'زائر'}`);
     });
 
+
+    // ===== السينما المشتركة =====
+    socket.on('cinema:join', async ({roomId}) => {
+      try {
+        const {rows}=await query('SELECT * FROM cinema_rooms WHERE id=$1 AND status<>\'closed\'',[roomId]);
+        if(!rows[0]) return socket.emit('cinema:error',{error:'الغرفة غير موجودة'});
+        socket.join('cinema:'+roomId);
+        socket.emit('cinema:state',{roomId,playbackTime:Number(rows[0].playback_time||0),isPlaying:!!rows[0].is_playing});
+      } catch { socket.emit('cinema:error',{error:'تعذر الانضمام'}); }
+    });
+    socket.on('cinema:sync', async ({roomId,type,time}) => {
+      if(!socket.user) return;
+      try {
+        const room=(await query('SELECT * FROM cinema_rooms WHERE id=$1',[roomId])).rows[0];
+        if(!room || (String(room.owner_id)!==String(socket.user.id) && !socket.user.is_owner)) return;
+        const nextTime=Math.max(0,Number(time)||0);
+        const playing=type==='play' ? true : type==='pause' ? false : !!room.is_playing;
+        await query('UPDATE cinema_rooms SET playback_time=$1,is_playing=$2,updated_at=NOW() WHERE id=$3',[nextTime,playing,roomId]);
+        io.to('cinema:'+roomId).emit('cinema:state',{roomId,playbackTime:nextTime,isPlaying:playing});
+      } catch(e){ socket.emit('cinema:error',{error:'تعذر مزامنة العرض'}); }
+    });
+
     // ===== الألعاب =====
     setupGameSocket(io, socket);
   });
