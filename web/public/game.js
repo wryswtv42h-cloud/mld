@@ -164,10 +164,19 @@ function renderState() {
   } else if (session.game_type === 'monopoly') {
     html = `<button class="action-btn" onclick="gameAction({type:'roll'})" ${isMyTurn ? '' : 'disabled'}>ارمِ النرد</button>`;
   } else if (session.game_type === 'codenames') {
+    const clueGiver = state.clueGivers?.red === playerName || state.clueGivers?.blue === playerName;
+    const team = state.clueGivers?.red === playerName ? 'red' : state.clueGivers?.blue === playerName ? 'blue' : (state.teams?.red?.includes(playerName) ? 'red' : 'blue');
+    const myTeam = state.teams?.[team]?.includes(playerName);
     html = `
-      <button class="action-btn" onclick="promptClue()">تلميح</button>
-      <button class="action-btn secondary" onclick="gameAction({type:'end-turn'})">إنهاء الدور</button>
+      <button class="action-btn" onclick="promptClue()" ${clueGiver && !state.currentClue ? '' : 'disabled'}>🎯 تلميح</button>
+      <button class="action-btn secondary" onclick="gameAction({type:'end-turn'})" ${myTeam ? '' : 'disabled'}>إنهاء الدور</button>
     `;
+    const board = (state.words||[]).map((w,i) => {
+      const tone = w.revealed ? (w.color||'neutral') : 'hidden';
+      const canGuess = myTeam && !clueGiver && !!state.currentClue && !w.revealed && state.currentTeam===team;
+      return `<button class="codenames-word ${tone}" onclick="gameAction({type:'guess',index:${i}})" ${canGuess?'':'disabled'}>${esc(w.word)}</button>`;
+    }).join('');
+    document.getElementById('gameInfo').innerHTML = `<div class="codenames-board">${board}</div><div>الفريق الحالي: <b>${esc(state.currentTeam||'')}</b> ${state.currentClue ? '· التلميح: <b>'+esc(state.currentClue.word)+' × '+state.currentClue.number+'</b>' : ''}</div>`;
   } else if (session.game_type === 'maqousar') {
     html = `
       <button class="action-btn" onclick="gameAction({type:'draw'})" ${isMyTurn ? '' : 'disabled'}>اسحب</button>
