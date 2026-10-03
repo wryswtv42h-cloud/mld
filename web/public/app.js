@@ -254,7 +254,7 @@ async function loadAdmin() {
       <div class="bot-card"><b>#${a.id}</b><p>${esc(a.status)} · Discord: ${esc(a.discord_id||'—')}</p>
       <button class="btn-primary" onclick="applicationStatus('${a.id}','accepted')">قبول</button>
       <button class="btn-primary" onclick="applicationStatus('${a.id}','rejected')">رفض</button></div>`).join('')||'<p>لا توجد طلبات.</p>';
-    const allGroups=await api('/api/community/groups?all=1');
+    const allGroups=await api('/api/community/groups/all');
     const groups=allGroups.groups||gd.groups||[];
     const ge=document.getElementById('ownerGroups');
     if(ge) ge.innerHTML='<h3>👨‍👩‍👧 القروبات</h3>'+(groups||[]).map(g=>`
