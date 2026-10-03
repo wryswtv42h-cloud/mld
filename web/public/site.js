@@ -294,3 +294,17 @@ refreshTimer = setInterval(() => {
   if (!modal.classList.contains("hidden") || view === "message") return;
   refresh();
 }, 15000);
+
+const menuButton = document.getElementById("menu");
+const menuPanel = document.getElementById("mobile-menu");
+const menuClose = document.getElementById("menu-close");
+function toggleMenu(open){
+  if(!menuPanel || !menuButton) return;
+  menuPanel.classList.toggle("open", open);
+  menuPanel.setAttribute("aria-hidden", String(!open));
+  menuButton.setAttribute("aria-expanded", String(open));
+  document.body.classList.toggle("menu-open", open);
+}
+if(menuButton) menuButton.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); toggleMenu(!menuPanel.classList.contains("open")); });
+if(menuClose) menuClose.addEventListener("click", () => toggleMenu(false));
+if(menuPanel) menuPanel.querySelectorAll("a").forEach(a => a.addEventListener("click", () => toggleMenu(false)));
