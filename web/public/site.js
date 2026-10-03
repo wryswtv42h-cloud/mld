@@ -1,5 +1,7 @@
 "use strict";
 
+const API_BASE = 'https://api-production-5bddb.up.railway.app';
+
 const $=s=>document.querySelector(s);
 const content=$("#content"),status=$("#status"),search=$("#search"),searchWrap=$("#search-wrap"),modal=$("#modal"),box=$("#modal-content"),title=$("#view-title"),subtitle=$("#subtitle"),mobile=$("#mobile-menu"),backdrop=$("#menu-backdrop");
 let view="members",all=[],roles=[],timer,refreshTimer,selected=null;
@@ -52,7 +54,7 @@ refreshTimer=setInterval(()=>{if(!content)return;if(modal&&!modal.classList.cont
 
   async function loadServer(){
     try{
-      const r=await fetch('/api/public/server',{cache:'no-store'});
+      const r=await fetch(API_BASE + '/api/public/server',{cache:'no-store'});
       const d=await r.json();
       if(serverName) serverName.textContent=d.name||'MLD';
       if(count) count.textContent=num(d.memberCount);
@@ -70,7 +72,7 @@ refreshTimer=setInterval(()=>{if(!content)return;if(modal&&!modal.classList.cont
 
   async function loadReviews(){
     try{
-      const r=await fetch('/api/community/reviews',{cache:'no-store'});
+      const r=await fetch(API_BASE + '/api/community/reviews',{cache:'no-store'});
       const d=await r.json();
       const list=d.reviews||[];
       if(!list.length){
