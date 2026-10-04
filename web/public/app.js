@@ -497,3 +497,24 @@ wireNav();syncPrivilegedMenu();
   if(back){const fresh=back.cloneNode(true);back.replaceWith(fresh);fresh.addEventListener('click',()=>{document.getElementById('sidebar')?.classList.remove('open');fresh.classList.remove('show');document.body.classList.remove('app-menu-open');document.getElementById('menuBtn')?.setAttribute('aria-expanded','false');});}
   window.addEventListener('hashchange',()=>{const p=(location.hash||'#home').slice(1);if(p&&p!=='home')renderPage(p);});
 })();
+
+/* ===== MLD FINAL RESPONSIVE APP PATCH ===== */
+(function(){
+  const protectedPages=['chat','pigeon','tickets','applications','bots','addbot','profile'];
+  function syncFinalAccess(){
+    const owner=!!user?.is_owner;
+    const admin=owner||['admin','owner'].includes(String(user?.role||'').toLowerCase());
+    const adminLink=document.getElementById('adminLink'), adminSection=document.getElementById('adminSection');
+    const ownerLink=document.getElementById('ownerLink'), ownerSection=document.getElementById('ownerSection');
+    const appLink=document.getElementById('applicationsLink');
+    if(adminLink)adminLink.style.display=admin?'flex':'none';
+    if(adminSection)adminSection.style.display=admin?'block':'none';
+    if(ownerLink)ownerLink.style.display=owner?'flex':'none';
+    if(ownerSection)ownerSection.style.display=owner?'block':'none';
+    if(appLink)appLink.style.display=owner?'flex':'none';
+  }
+  window.__mldSyncAccess=syncFinalAccess;
+  setTimeout(syncFinalAccess,50);
+  setTimeout(syncFinalAccess,700);
+  document.addEventListener('visibilitychange',syncFinalAccess);
+})();
