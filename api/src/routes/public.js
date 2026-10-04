@@ -12,6 +12,19 @@ const cache = {
 let visits = 0;
 const visitorSeen = new Map();
 const VISITOR_TTL = 60 * 60 * 1000;
+let visitStoreReady = null;
+async function ensureVisitStore() {
+  if (visitStoreReady) return visitStoreReady;
+  visitStoreReady = (async () => {
+    try {
+      await query("CREATE TABLE IF NOT EXISTS site_metrics (key text PRIMARY KEY, value bigint NOT NULL DEFAULT 0, updated_at timestamptz NOT NULL DEFAULT NOW())");
+      const { rows } = await query("SELECT value FROM site_metrics WHERE key = 'visits' LIMIT 1");
+      visits = Number(rows[0]?.value || 0);
+      if (!rows.length) await query("INSERT INTO site_metrics (key, value) VALUES ('visits', 0) ON CONFLICT (key) DO NOTHING");
+    } catch (e) { console.error('visit store:', e); }
+  })();
+  return visitStoreReady;
+}
 const CACHE_TTL = 15000;
 
 const guildId = () => process.env.DISCORD_GUILD_ID;
@@ -67,19 +80,22 @@ function normalizeMember(m) {
   };
 }
 
-function touchVisit(req) {
+async function touchVisit(req) {
+  await ensureVisitStore();
   const key = String(req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
   const now = Date.now();
   const last = visitorSeen.get(key) || 0;
   if (now - last > VISITOR_TTL) {
     visits++;
     visitorSeen.set(key, now);
+    try { await query("INSERT INTO site_metrics (key, value) VALUES ('visits', 1) ON CONFLICT (key) DO UPDATE SET value = site_metrics.value + 1, updated_at = NOW()"); }
+    catch (e) { console.error('visit increment:', e); }
   }
 }
 
 router.get('/server', async (req, res) => {
   try {
-    touchVisit(req);
+    await touchVisit(req);
     const g = await getGuild();
     let ownerId = /^\d{17,20}$/.test(String(process.env.OWNER_DISCORD_ID || '')) ? String(process.env.OWNER_DISCORD_ID) : null;
     if (!ownerId) {
@@ -101,7 +117,7 @@ router.get('/server', async (req, res) => {
       icon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=256` : '/logo.svg'
     });
   } catch (e) {
-    res.status(503).json({ error: 'تعذر جلب بيانات ديسكورد', name: 'MLD', memberCount: 0, onlineCount: 0, visits });
+    res.status(503).json({ error: 'تعذر جلب بيانات ديسكورد', name: 'MLD', memberCount: null, onlineCount: null, visits });
   }
 });
 
