@@ -448,3 +448,28 @@ if(p==='owner'){const [a,g,l]=await Promise.all([api('/api/community/application
 function wireNav(){document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>{a.onclick=e=>{e.preventDefault();renderPage(a.dataset.page);}});document.getElementById('menuBtn')?.addEventListener('click',openAppMenu);document.getElementById('appMenuBackdrop')?.addEventListener('click',closeAppMenu);document.getElementById('logoutBtn')?.addEventListener('click',()=>{localStorage.clear();location.reload()});document.getElementById('loginBtn')?.addEventListener('click',()=>document.getElementById('authScreen')?.classList.add('show'));document.getElementById('topLoginBtn')?.addEventListener('click',()=>document.getElementById('authScreen')?.classList.add('show'));}
 function syncPrivilegedMenu(){const owner=isOwner(),admin=isAdmin();const al=document.getElementById('adminLink'),ol=document.getElementById('ownerLink'),as=document.getElementById('adminSection'),os=document.getElementById('ownerSection');if(al)al.style.display=admin?'flex':'none';if(as)as.style.display=admin?'block':'none';if(ol)ol.style.display=owner?'flex':'none';if(os)os.style.display=owner?'block':'none';const app=document.getElementById('applicationsLink');if(app)app.style.display=owner?'flex':'none';}
 wireNav();syncPrivilegedMenu();
+
+/* ===== MLD FINAL STABILITY PATCH ===== */
+(function(){
+  const protectedPages=['chat','pigeon','tickets','applications','bots','addbot','profile'];
+  const canAdmin=()=>!!user?.is_owner||['admin','owner'].includes(String(user?.role||'').toLowerCase());
+  const canOwner=()=>!!user?.is_owner;
+  function syncAccess(){
+    const admin=canAdmin(),owner=canOwner();
+    for(const [id,show] of [['adminLink',admin],['adminSection',admin],['ownerLink',owner],['ownerSection',owner],['applicationsLink',owner]]){
+      const e=document.getElementById(id);if(e)e.style.display=show?(id.endsWith('Section')?'block':'flex'):'none';
+    }
+  }
+  function closeMenu(){document.getElementById('sidebar')?.classList.remove('open');document.getElementById('app-menu-backdrop')?.classList.remove('show');document.body.classList.remove('app-menu-open');document.getElementById('menuBtn')?.setAttribute('aria-expanded','false')}
+  function toggleMenu(e){e?.preventDefault();e?.stopPropagation();const s=document.getElementById('sidebar');if(!s)return;const open=!s.classList.contains('open');s.classList.toggle('open',open);document.getElementById('app-menu-backdrop')?.classList.toggle('show',open);document.body.classList.toggle('app-menu-open',open);document.getElementById('menuBtn')?.setAttribute('aria-expanded',String(open))}
+  document.getElementById('menuBtn')?.addEventListener('click',toggleMenu,{capture:true});
+  document.getElementById('app-menu-backdrop')?.addEventListener('click',closeMenu);
+  document.querySelectorAll('.sidebar a[data-page]').forEach(a=>a.addEventListener('click',e=>{
+    const p=a.dataset.page;
+    if(!p)return;
+    if(protectedPages.includes(p)&&!token){e.preventDefault();closeMenu();document.getElementById('authScreen')?.classList.add('show');toast('هذه الصفحة تتطلب تسجيل الدخول');return}
+    if(p==='admin'||p==='owner'||p==='owner-admin'){e.preventDefault();if(p==='admin'&&!canAdmin())return toast('لوحة الإدارة للإدارة فقط');if((p==='owner'||p==='owner-admin')&&!canOwner())return toast('لوحة الأونر للأونر فقط');closeMenu();if(typeof finalRender==='function')finalRender(p);return}
+    closeMenu();
+  }));
+  syncAccess();window.addEventListener('load',syncAccess);
+})();
