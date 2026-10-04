@@ -133,7 +133,7 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
     if (protectedPages.includes(page) && (!token || !user)) {
       e.preventDefault();
       toast('سجّل دخول أولاً');
-      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('sidebar')?.classList.remove('open'); document.body.classList.remove('app-menu-open');
       return;
     }
     if (featurePages.includes(page)) {
@@ -375,3 +375,17 @@ window.joinCinema=(id)=>{
   setup('discord_id','members','discord-members-suggestions');
   setup('botGuild','servers','discord-server-suggestions');
 })();
+
+/* MLD responsive navigation safety */
+document.getElementById('menuBtn')?.setAttribute('aria-label','فتح القائمة');
+document.getElementById('menuBtn')?.addEventListener('click',()=>document.body.classList.toggle('app-menu-open'));
+window.addEventListener('resize',()=>{if(innerWidth>820){document.getElementById('sidebar')?.classList.remove('open');document.body.classList.remove('app-menu-open')}});
+/* Explicit owner/admin visibility */
+function syncPrivilegedMenu(){
+ const owner=!!user?.is_owner;
+ const admin=owner||['admin','owner'].includes(String(user?.role||'').toLowerCase());
+ const al=document.getElementById('adminLink'), ol=document.getElementById('ownerLink'), as=document.getElementById('adminSection'), os=document.getElementById('ownerSection');
+ if(al) al.style.display=admin?'flex':'none'; if(as) as.style.display=admin?'block':'none';
+ if(ol) ol.style.display=owner?'flex':'none'; if(os) os.style.display=owner?'block':'none';
+}
+setTimeout(syncPrivilegedMenu,0);
