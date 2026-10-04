@@ -584,3 +584,18 @@ window.openMLDGame=(type)=>{
  document.getElementById('mldGameFrame').src='/game.html?type='+encodeURIComponent(type)+'&embed=1';
 };
 window.closeMLDGame=()=>{const h=document.getElementById('embeddedGame'),c=document.getElementById('gameCatalog');if(h){h.style.display='none';h.innerHTML='';}if(c)c.style.display='grid';};
+
+/* MLD FINAL OVERRIDE - single mobile navigation controller */
+(()=>{
+ const init=()=>{
+  const s=document.getElementById('sidebar'),b=document.getElementById('menuBtn'),back=document.getElementById('appMenuBackdrop'); if(!s||!b)return;
+  const close=()=>{s.classList.remove('open');back?.classList.remove('show');document.body.classList.remove('app-menu-open');b.setAttribute('aria-expanded','false')};
+  const open=()=>{s.classList.add('open');back?.classList.add('show');document.body.classList.add('app-menu-open');b.setAttribute('aria-expanded','true')};
+  b.onclick=e=>{e.preventDefault();e.stopPropagation();s.classList.contains('open')?close():open()};
+  back?.addEventListener('click',close);s.querySelectorAll('a').forEach(a=>a.addEventListener('click',close));
+  document.addEventListener('keydown',e=>e.key==='Escape'&&close());window.addEventListener('resize',()=>innerWidth>900&&close());
+  window.__mldCloseMenu=close;
+  window.__mldSyncPrivileged?.();
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
