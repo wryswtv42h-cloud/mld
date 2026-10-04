@@ -300,13 +300,15 @@ window.toggleBot = async (id) => {
   loadBots();
 };
 
-initApp();
+function openRequestedHash(){ const p=(location.hash||'#home').slice(1).trim(); if(!p||p==='home') return; const protectedPages=['chat','pigeon','tickets','applications','bots','addbot','add-bot','profile']; if(protectedPages.includes(p)&&(!token||!user)){ document.getElementById('authScreen')?.classList.add('show'); toast('هذه الصفحة تتطلب تسجيل الدخول'); return; } const link=document.querySelector('.sidebar .nav a[data-page="'+p+'"]'); if(link) link.click(); }
+window.addEventListener('hashchange',openRequestedHash);
+initApp().then(()=>setTimeout(openRequestedHash,0));
 
 /* ===== MLD community feature bridge ===== */
-const featurePages = ['members','top','leaders','chat','pigeon','games','cinema','groups','tickets','applications','reviews'];
+const featurePages = ['members','top','leaders','chat','pigeon','games','cinema','groups','tickets','applications','reviews','profile'];
 const pageTitles = {members:'👥 الأعضاء',top:'🏆 التوب',leaders:'👑 الرتب القيادية',chat:'💬 الشات العام',pigeon:'✉️ الزاجل',games:'🎮 الألعاب',cinema:'🎬 السينما',groups:'👨‍👩‍👧 القروبات',tickets:'🎫 التذاكر',applications:'📝 التقديم',reviews:'⭐ الآراء'};
-function featureProtected(p){ return ['chat','pigeon','tickets','applications','bots','add-bot'].includes(p); }
-function requireFeatureAuth(){ if(!token||!user){ toast('سجّل دخول أولاً'); return false; } return true; }
+function featureProtected(p){ return ['chat','pigeon','tickets','applications','bots','addbot','add-bot','profile'].includes(p); }
+function requireFeatureAuth(){ if(!token||!user){ toast('سجّل دخول أولاً'); document.getElementById('authScreen')?.classList.add('show'); return false; } return true; }
 function pageBox(p,body){ const el=document.getElementById('page-'+p); if(el) el.innerHTML='<div class="card">'+body+'</div>'; }
 async function renderFeature(p){
   if(featureProtected(p)&&!requireFeatureAuth()) return;
