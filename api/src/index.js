@@ -76,6 +76,10 @@ httpServer.listen(PORT, '0.0.0.0', async () => {
   } catch (err) {
     console.error('❌ فشل اتصال قاعدة البيانات:', err.message);
   }
+  // Railway health probing can use the conventional 8080 port even when the public service port is configured separately.
+  if (Number(PORT) !== 8080) {
+    app.listen(8080, '0.0.0.0', () => console.log('🩺 MLD API health على 8080'));
+  }
 });
 
 app.use('/api/', (req, res, next) => {
