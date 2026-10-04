@@ -133,6 +133,7 @@ async function initApp() {
   document.getElementById('profileName').value = user.username || '';
   document.getElementById('profileBio').value = user.bio || '';
 
+  syncPrivilegedMenu();
   loadBots();
 }
 
@@ -177,23 +178,30 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
   };
 });
 
-function toggleSidebar(e) {
+function closeSidebar(){
+  const sidebar=document.getElementById('sidebar');
+  const back=document.getElementById('appMenuBackdrop');
+  sidebar?.classList.remove('open');
+  back?.classList.remove('show');
+  document.body.classList.remove('app-menu-open');
+  document.getElementById('menuBtn')?.setAttribute('aria-expanded','false');
+}
+function toggleSidebar(e){
   e?.preventDefault(); e?.stopPropagation();
-  const sidebar=document.getElementById('sidebar'), button=document.getElementById('menuBtn'), backdrop=document.getElementById('appMenuBackdrop');
-  if(!sidebar) return;
-  const open=sidebar.classList.toggle('open');
-  button?.setAttribute('aria-expanded',String(open));
+  const sidebar=document.getElementById('sidebar');
+  const back=document.getElementById('appMenuBackdrop');
+  if(!sidebar)return;
+  const open=!sidebar.classList.contains('open');
+  sidebar.classList.toggle('open',open);
+  back?.classList.toggle('show',open);
   document.body.classList.toggle('app-menu-open',open);
-  backdrop?.classList.toggle('show',open);
+  document.getElementById('menuBtn')?.setAttribute('aria-expanded',String(open));
 }
 document.getElementById('menuBtn')?.addEventListener('click',toggleSidebar);
-document.getElementById('appMenuBackdrop')?.addEventListener('click',()=>toggleSidebar());
-document.addEventListener('click',e=>{
-  const sidebar=document.getElementById('sidebar'),button=document.getElementById('menuBtn');
-  if(!sidebar?.classList.contains('open')||!button)return;
-  if(!sidebar.contains(e.target)&&e.target!==button)toggleSidebar();
-});
-document.getElementById('logoutBtn')?.addEventListener('click', () => { localStorage.clear(); location.reload(); });
+document.getElementById('appMenuBackdrop')?.addEventListener('click',closeSidebar);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSidebar();});
+window.addEventListener('resize',()=>{if(innerWidth>900)closeSidebar();});
+document.getElementById('logoutBtn')?.addEventListener('click',e=>{e.preventDefault();localStorage.removeItem('token');localStorage.removeItem('user');token=null;user=null;location.hash='home';location.reload();});
 
 async function loadBots() {
   const d = await api('/api/bots');
@@ -400,7 +408,7 @@ function syncPrivilegedMenu(){
  const admin=owner||String(user?.role||'').toLowerCase()==='admin';
  const al=document.getElementById('adminLink'), ol=document.getElementById('ownerLink'), as=document.getElementById('adminSection'), os=document.getElementById('ownerSection'), apl=document.getElementById('applicationsLink');
  if(al) al.style.display=admin?'flex':'none'; if(as) as.style.display=admin?'block':'none';
- if(ol) ol.style.display=owner?'flex':'none'; if(os) os.style.display=owner?'block':'none'; if(apl) apl.style.display=owner?'flex':'none';
+ if(ol) ol.style.display=owner?'flex':'none'; if(os) os.style.display=owner?'block':'none'; if(login) login.style.display=token?'none':'flex'; if(logout) logout.style.display=token?'flex':'none'; if(profile) profile.style.display=token?'flex':'none'; if(apl) apl.style.display=owner?'flex':'none';
  document.body.classList.toggle('is-owner',owner); document.body.classList.toggle('is-admin',admin);
 }
 setTimeout(syncPrivilegedMenu,0);
@@ -552,3 +560,11 @@ wireNav();syncPrivilegedMenu();
   };
   window.__mldSyncPrivileged();setTimeout(window.__mldSyncPrivileged,500);setTimeout(window.__mldSyncPrivileged,1500);
 })();
+
+document.getElementById('changePasswordBtn')?.addEventListener('click',async()=>{
+ const msg=document.getElementById('passwordMsg'), cur=document.getElementById('currentPassword')?.value||'', n=document.getElementById('newPassword')?.value||'', n2=document.getElementById('newPassword2')?.value||'';
+ if(n!==n2){msg.className='msg show error';msg.textContent='كلمتا المرور غير متطابقتين';return;}
+ const d=await api('/api/auth/change-password',{method:'POST',body:JSON.stringify({current_password:cur,new_password:n})});
+ msg.className='msg show '+(d.error?'error':'success');msg.textContent=d.error||d.message||'تم';
+ if(!d.error){document.getElementById('currentPassword').value='';document.getElementById('newPassword').value='';document.getElementById('newPassword2').value='';}
+});
