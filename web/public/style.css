@@ -635,3 +635,26 @@ body.menu-open{overflow:hidden}
 .mld-rankbox,.mld-panel,.mld-role-card,.mld-game,.mld-room{border:1px solid #9b66a955;border-radius:22px;padding:20px;background:linear-gradient(145deg,#30203d,#17101f);margin-bottom:16px}.mld-rankbox h3,.mld-panel h3{margin:0 0 14px;color:var(--accent)}.mld-rank{display:grid;grid-template-columns:34px 45px 1fr auto;align-items:center;gap:10px;border-top:1px solid #ffffff0b;padding:10px 0}.mld-rank i{color:var(--pink);font-style:normal}.mld-rank img{width:45px;height:45px;border-radius:14px}.mld-rank small{display:block;color:var(--muted)}.mld-rank strong{color:var(--accent)}
 .mld-role-card h3,.mld-game h3,.mld-room h3{margin:18px 0 8px;color:var(--accent);font-size:22px}.mld-role-card p,.mld-game p,.mld-room p{color:var(--muted);line-height:1.8}.mld-game{text-align:center}.mld-game>span,.mld-room>span{font-size:55px;display:block}.mld-game .primary,.mld-room .primary,.mld-role-card .primary{width:100%;margin-top:10px}.mld-room video{width:100%;max-height:300px;border-radius:15px;background:#000;margin:12px 0}.mld-create{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:20px}.mld-form-grid{display:grid;gap:12px;max-width:760px}.mld-feed{display:grid;gap:10px}.mld-composer{display:grid;grid-template-columns:1fr auto;gap:10px}.mld-admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.mld-empty{min-height:180px;border:1px dashed #c98fbe55;border-radius:20px;display:grid;place-items:center;text-align:center;padding:30px;color:var(--muted)}.mld-empty strong{color:var(--text);font-size:18px}.mld-empty span{display:block;margin-top:6px}
 @media(max-width:820px){.mld-page-shell{padding:16px;min-height:calc(100dvh - 95px)}.mld-page-head{grid-template-columns:1fr}.mld-page-head h1{font-size:29px}.mld-member-grid,.mld-role-grid,.mld-game-grid,.mld-room-grid,.mld-admin-grid{grid-template-columns:1fr}.mld-toolbar,.mld-create,.mld-composer{grid-template-columns:1fr}}
+
+/* ===== FINAL MLD responsive shell / mobile UX ===== */
+html,body{max-width:100%;overflow-x:hidden}
+button,a,input,textarea,select{touch-action:manipulation}
+.app{min-height:100dvh}
+.sidebar{overflow-y:auto;overscroll-behavior:contain}
+.main{min-width:0}
+.content{min-width:0}
+@media(max-width:820px){
+  .topbar-app{position:sticky;top:0}
+  .content{padding:10px!important}
+  .page{min-height:calc(100dvh - 82px)}
+  .mld-page-shell{border-radius:20px}
+  .mld-page-body{padding-top:16px}
+  .mld-member{min-width:0}
+  .mld-member span{min-width:0;overflow:hidden}
+  .mld-member b,.mld-member small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mld-rank{grid-template-columns:28px 42px minmax(0,1fr) auto}
+  .mld-rank span{min-width:0}
+  .mld-rank b,.mld-rank small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mld-admin-grid{grid-template-columns:1fr}
+  .user-chip{max-width:calc(100vw - 95px)}
+}
