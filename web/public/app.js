@@ -116,8 +116,7 @@ async function initApp() {
   else av.textContent = initials(user.username);
 
   if (user.is_owner || ['admin','owner'].includes(String(user.role||'').toLowerCase())) {
-    document.getElementById('adminLink').style.display = 'flex';
-    document.getElementById('ownerSection').style.display = 'block';
+    document.getElementById('adminLink').style.display = 'flex'; document.getElementById('adminSection').style.display = 'block'; document.getElementById('ownerSection').style.display = user.is_owner ? 'block' : 'none'; if(user.is_owner){ document.getElementById('ownerLink').style.display='flex'; }
   }
 
 
@@ -130,7 +129,7 @@ async function initApp() {
 document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
   a.onclick = (e) => {
     const page = a.dataset.page;
-    const protectedPages = ['chat','pigeon','tickets','applications','bots','addbot','add-bot'];
+    const protectedPages = ['chat','pigeon','tickets','applications','bots','addbot','add-bot','profile'];
     if (protectedPages.includes(page) && (!token || !user)) {
       e.preventDefault();
       toast('سجّل دخول أولاً');
@@ -153,8 +152,9 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
       if (page === 'bots' || page === 'addbot' || page === 'add-bot') loadBots();
       return;
     }
-    if (page === 'admin') {
+    if (page === 'admin' || page === 'owner-admin') {
       e.preventDefault();
+      if (page === 'owner-admin' && !user?.is_owner) { toast('هذه الصفحة للأونر فقط'); return; }
       if (!user?.is_owner && !['admin','owner'].includes(String(user?.role||'').toLowerCase())) { toast('هذه الصفحة للإدارة فقط'); return; }
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.sidebar .nav a').forEach(x => x.classList.remove('active'));

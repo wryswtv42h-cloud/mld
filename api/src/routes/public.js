@@ -80,7 +80,7 @@ function normalizeMember(m) {
   };
 }
 
-async function touchVisit(req) {
+async async function touchVisit(req) {
   await ensureVisitStore();
   const key = String(req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
   const now = Date.now();
