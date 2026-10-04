@@ -133,7 +133,7 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
     if (protectedPages.includes(page) && (!token || !user)) {
       e.preventDefault();
       toast('سجّل دخول أولاً');
-      document.getElementById('sidebar')?.classList.remove('open'); document.body.classList.remove('app-menu-open');
+      document.getElementById('sidebar')?.classList.remove('open'); document.body.classList.remove('app-menu-open'); document.getElementById('appMenuBackdrop')?.classList.remove('show');
       return;
     }
     if (featurePages.includes(page)) {
@@ -379,20 +379,22 @@ window.joinCinema=(id)=>{
 /* MLD responsive navigation safety */
 document.getElementById('menuBtn')?.setAttribute('aria-label','فتح القائمة');
 document.getElementById('menuBtn')?.addEventListener('click',()=>{
-  const s=document.getElementById('sidebar');
-  if(s) s.classList.toggle('open');
-  document.body.classList.toggle('app-menu-open');
+  const s=document.getElementById('sidebar'), b=document.getElementById('appMenuBackdrop');
+  const open=!!s?.classList.toggle('open');
+  document.body.classList.toggle('app-menu-open',open); b?.classList.toggle('show',open);
 });
 window.addEventListener('resize',()=>{if(innerWidth>820){document.getElementById('sidebar')?.classList.remove('open');document.body.classList.remove('app-menu-open')}});
 /* Explicit owner/admin visibility */
 function syncPrivilegedMenu(){
  const owner=!!user?.is_owner;
- const admin=owner||['admin','owner'].includes(String(user?.role||'').toLowerCase());
+ const admin=owner||String(user?.role||'').toLowerCase()==='admin';
  const al=document.getElementById('adminLink'), ol=document.getElementById('ownerLink'), as=document.getElementById('adminSection'), os=document.getElementById('ownerSection');
  if(al) al.style.display=admin?'flex':'none'; if(as) as.style.display=admin?'block':'none';
  if(ol) ol.style.display=owner?'flex':'none'; if(os) os.style.display=owner?'block':'none';
+ document.body.classList.toggle('is-owner',owner); document.body.classList.toggle('is-admin',admin);
 }
 setTimeout(syncPrivilegedMenu,0);
+window.addEventListener('storage',syncPrivilegedMenu);
 
 /* ===== FINAL MLD PAGE UI ===== */
 const FINAL_META={members:['👥','الأعضاء','دليل مجتمع MLD والبحث المباشر'],top:['🏆','التوب','ترتيب النشاط داخل المجتمع'],leaders:['👑','الرتب القيادية','الرتب المهمة وأعضاءها'],chat:['💬','الشات العام','محادثة المجتمع'],pigeon:['✉️','الزاجل','رسائلك الخاصة'],games:['🎮','الألعاب','جلسات اللعب والمتفرجين'],cinema:['🎬','السينما','غرف المشاهدة الجماعية'],groups:['👨‍👩‍👧','القروبات','مجتمعات صغيرة مرتبطة بـ MLD'],tickets:['🎫','التذاكر','الدعم والمتابعة'],applications:['📝','التقديم','طلبات الإدارة الرسمية'],reviews:['⭐','الآراء','تجارب أعضاء المجتمع'],bots:['🤖','منصة البوتات','إدارة بوتاتك'],addbot:['➕','إضافة بوت','ربط بوت جديد'],profile:['👤','بروفايلي','إدارة بيانات حسابك'],admin:['🛡️','لوحة الإدارة','التذاكر والحسابات المسموح بها'], 'owner-admin':['👑','لوحة الأونر','التحكم الكامل بالأونر']};
