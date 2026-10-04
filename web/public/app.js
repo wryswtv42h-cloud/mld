@@ -86,6 +86,14 @@ async function api(path, opts = {}) {
 }
 
 async function initApp() {
+  // Always refresh the account from the API so owner/admin permissions are never stale.
+  if (token) {
+    try {
+      const me = await fetch(API + '/api/auth/me', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+      if (me.ok) { const md = await me.json(); if (md.user) { user = md.user; localStorage.setItem('user', JSON.stringify(user)); } }
+      else { localStorage.removeItem('token'); localStorage.removeItem('user'); token = null; user = null; }
+    } catch (_) {}
+  }
   const loginBtn = document.getElementById('loginBtn');
   const topLoginBtn = document.getElementById('topLoginBtn');
   const logoutBtn = document.getElementById('logoutBtn');
@@ -109,7 +117,7 @@ async function initApp() {
   if (topLoginBtn) topLoginBtn.style.display = 'none';
 
   document.getElementById('myName').textContent = user.username;
-  document.getElementById('myRole').textContent = user.is_owner ? 'الأونر 👑' : 'عضو';
+  document.getElementById('myRole').textContent = user.is_owner ? 'الأونر 👑' : (String(user.role||'').toLowerCase()==='admin' ? 'إدارة 🛡️' : 'عضو');
 
   const av = document.getElementById('myAvatar');
   if (user.avatar) av.innerHTML = `<img src="${esc(user.avatar)}">`;
@@ -133,10 +141,10 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
     if (protectedPages.includes(page) && (!token || !user)) {
       e.preventDefault();
       toast('سجّل دخول أولاً');
-      document.getElementById('sidebar')?.classList.remove('open'); document.body.classList.remove('app-menu-open'); document.getElementById('appMenuBackdrop')?.classList.remove('show');
+      document.getElementById('sidebar')?.classList.remove('open'); document.getElementById('appMenuBackdrop')?.classList.remove('show'); document.body.classList.remove('app-menu-open'); document.body.classList.remove('app-menu-open'); document.getElementById('appMenuBackdrop')?.classList.remove('show');
       return;
     }
-    if (featurePages.includes(page)) {
+    if (featurePages.includes(page) || page==='admin' || page==='owner-admin') {
       e.preventDefault();
       renderFeature(page);
       return;
