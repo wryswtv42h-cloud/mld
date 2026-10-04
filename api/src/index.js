@@ -62,18 +62,23 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
+let dbReady = false;
 
-async function start() {
+httpServer.listen(PORT, '0.0.0.0', async () => {
+  console.log(`🚀 MLD API على ${PORT}`);
+  console.log(`👑 MLD | فهد المطيري`);
   try {
     await initDB();
-    httpServer.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 MLD API على ${PORT}`);
-      console.log(`👑 MLD | فهد المطيري`);
-    });
+    dbReady = true;
+    console.log('✅ قاعدة البيانات جاهزة');
   } catch (err) {
-    console.error('❌ فشل:', err.message);
-    process.exit(1);
+    console.error('❌ فشل اتصال قاعدة البيانات:', err.message);
   }
-}
+});
 
-start();
+app.use('/api/', (req, res, next) => {
+  if (!dbReady && req.path !== '/public/server' && req.path !== '/public/members' && req.path !== '/public/roles') {
+    return res.status(503).json({ error: 'الخدمة ما زالت تجهز قاعدة البيانات، حاول بعد لحظات' });
+  }
+  next();
+});
