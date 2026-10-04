@@ -814,3 +814,28 @@ body.menu-open{overflow:hidden}
   .menu-backdrop{display:none}
   .mobile-menu{display:none}
 }
+
+
+/* MLD CLEAN APP OVERRIDES */
+.app-topbar{position:sticky!important;top:0!important;z-index:7000!important}
+.app-nav{position:relative;min-height:68px!important}
+.app-menu-btn{display:none!important;position:relative!important;z-index:7100!important;flex:0 0 46px!important;width:46px!important;height:46px!important;padding:0!important;align-items:center!important;justify-content:center!important}
+.app-menu-btn span{display:block!important;width:19px!important;height:2px!important;margin:3px 0!important;border-radius:4px;background:#fff}
+.sidebar{direction:rtl}
+.sidebar .nav{display:grid!important;gap:5px!important}
+.sidebar .nav-section{display:block!important;width:100%!important}
+.sidebar .nav a{display:flex!important;width:100%!important;min-height:46px!important;box-sizing:border-box!important}
+.sidebar .nav-section>label{display:block!important}
+@media(max-width:900px){
+  .app-menu-btn{display:flex!important}
+  .app-shell{display:block!important;width:100%!important;margin:0!important}
+  .app-main{width:100%!important;padding:16px 12px 80px!important}
+  .sidebar{position:fixed!important;top:0!important;right:0!important;left:auto!important;bottom:0!important;width:min(340px,90vw)!important;height:100dvh!important;max-height:100dvh!important;transform:translateX(110%)!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:8000!important;border-radius:24px 0 0 24px!important;border-left:1px solid rgba(255,255,255,.1)!important;border-right:0!important;padding:18px!important;padding-top:82px!important;overflow-y:auto!important;background:rgba(14,9,21,.98)!important}
+  .sidebar.open{transform:translateX(0)!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+  #appMenuBackdrop{display:block!important;position:fixed!important;inset:0!important;z-index:7900!important;background:rgba(0,0,0,.62)!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+  #appMenuBackdrop.show{opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+  .page-titlebar{margin-bottom:12px!important}
+  .mld-page-shell{min-height:auto!important;border-radius:20px!important}
+  .mld-page-head{display:block!important}
+}
+@media(min-width:901px){#appMenuBackdrop{display:none!important}}
