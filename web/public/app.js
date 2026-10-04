@@ -168,20 +168,20 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
 });
 
 function toggleSidebar(e) {
-  e?.preventDefault();
-  e?.stopPropagation();
-  const sidebar = document.getElementById('sidebar');
-  const button = document.getElementById('menuBtn');
-  if (!sidebar) return;
-  const open = sidebar.classList.toggle('open');
-  button?.setAttribute('aria-expanded', String(open));
+  e?.preventDefault(); e?.stopPropagation();
+  const sidebar=document.getElementById('sidebar'), button=document.getElementById('menuBtn'), backdrop=document.getElementById('appMenuBackdrop');
+  if(!sidebar) return;
+  const open=sidebar.classList.toggle('open');
+  button?.setAttribute('aria-expanded',String(open));
+  document.body.classList.toggle('app-menu-open',open);
+  backdrop?.classList.toggle('show',open);
 }
-document.getElementById('menuBtn')?.addEventListener('click', toggleSidebar);
-document.addEventListener('click', e => {
-  const sidebar = document.getElementById('sidebar');
-  const button = document.getElementById('menuBtn');
-  if (!sidebar?.classList.contains('open') || !button) return;
-  if (!sidebar.contains(e.target) && e.target !== button) sidebar.classList.remove('open');
+document.getElementById('menuBtn')?.addEventListener('click',toggleSidebar);
+document.getElementById('appMenuBackdrop')?.addEventListener('click',()=>toggleSidebar());
+document.addEventListener('click',e=>{
+  const sidebar=document.getElementById('sidebar'),button=document.getElementById('menuBtn');
+  if(!sidebar?.classList.contains('open')||!button)return;
+  if(!sidebar.contains(e.target)&&e.target!==button)toggleSidebar();
 });
 document.getElementById('logoutBtn')?.addEventListener('click', () => { localStorage.clear(); location.reload(); });
 
@@ -377,13 +377,13 @@ window.joinCinema=(id)=>{
 })();
 
 /* MLD responsive navigation safety */
-document.getElementById('menuBtn')?.setAttribute('aria-label','فتح القائمة');
-document.getElementById('menuBtn')?.addEventListener('click',()=>{
-  const s=document.getElementById('sidebar'), b=document.getElementById('appMenuBackdrop');
-  const open=!!s?.classList.toggle('open');
-  document.body.classList.toggle('app-menu-open',open); b?.classList.toggle('show',open);
+window.addEventListener('resize',()=>{
+  if(innerWidth>820){
+    document.getElementById('sidebar')?.classList.remove('open');
+    document.body.classList.remove('app-menu-open');
+    document.getElementById('appMenuBackdrop')?.classList.remove('show');
+  }
 });
-window.addEventListener('resize',()=>{if(innerWidth>820){document.getElementById('sidebar')?.classList.remove('open');document.body.classList.remove('app-menu-open')}});
 /* Explicit owner/admin visibility */
 function syncPrivilegedMenu(){
  const owner=!!user?.is_owner;
