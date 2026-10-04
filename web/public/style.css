@@ -689,3 +689,24 @@ button,a,input,textarea,select{touch-action:manipulation}
 @media (min-width:821px){
   .app-menu-backdrop{display:none!important}
 }
+
+/* ===== FINAL RESPONSIVE APP LAYOUT ===== */
+html,body{min-height:100%;overflow-x:hidden}
+.app{min-height:100dvh;width:100%;display:flex}
+.main{min-width:0;min-height:100dvh}
+.content{min-width:0}
+@media(max-width:820px){
+  .app{display:block}
+  .sidebar{width:min(320px,88vw)!important;right:0!important;left:auto!important;transform:translateX(105%)!important;z-index:2000!important}
+  .sidebar.open{transform:translateX(0)!important}
+  .main{width:100%!important}
+  .topbar-app{position:sticky!important;top:0;z-index:1900!important}
+  .content{padding:12px!important}
+  .grid,.mld-member-grid,.mld-role-grid,.mld-game-grid,.mld-room-grid{grid-template-columns:1fr!important}
+  .mld-page-head{margin-bottom:12px!important}
+  .mld-page-head h1{font-size:28px!important}
+  .mld-toolbar{gap:8px!important}
+  .user-chip>div:last-child{display:none}
+  .page-title{max-width:50vw!important}
+}
+@media(min-width:821px){.sidebar{position:relative!important;transform:none!important}.menu-btn{display:none!important}}
