@@ -174,4 +174,43 @@ router.post('/logout', requireAuth, (req, res) => {
   res.json({ message: 'تم تسجيل الخروج' });
 });
 
+
+// ===== تغيير كلمة المرور =====
+router.post('/change-password', requireAuth, async (req,res)=>{
+  try{
+    const current=String(req.body.current_password||'');
+    const next=String(req.body.new_password||'');
+    if(next.length<6) return res.status(400).json({error:'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل'});
+    const row=(await query('SELECT id,password FROM users WHERE id=$1 LIMIT 1',[req.user.id])).rows[0];
+    if(!row || !(await bcrypt.compare(current,row.password))) return res.status(401).json({error:'كلمة المرور الحالية غير صحيحة'});
+    const hash=await bcrypt.hash(next,12);
+    await query('UPDATE users SET password=$1, updated_at=NOW() WHERE id=$2',[hash,req.user.id]);
+    return res.json({message:'تم تغيير كلمة المرور بنجاح'});
+  }catch(e){ console.error(e); res.status(500).json({error:'تعذر تغيير كلمة المرور'}); }
+});
+
+// ===== نسيت كلمة المرور: تحقق من حساب الموقع + Discord ثم أرسل مؤقتًا للخاص =====
+router.post('/forgot-password', async (req,res)=>{
+  try{
+    const username=String(req.body.username||'').trim();
+    const discordInput=String(req.body.discord_id||'').trim();
+    if(!username||!discordInput) return res.status(400).json({error:'أدخل اسم المستخدم وDiscord ID أو اسم المستخدم في ديسكورد'});
+    const row=(await query('SELECT * FROM users WHERE username=$1 LIMIT 1',[username])).rows[0];
+    if(!row) return res.status(404).json({error:'الحساب غير موجود'});
+    const resolved=await resolveDiscordId(discordInput);
+    if(!resolved || String(resolved)!==String(row.discord_id)) return res.status(403).json({error:'بيانات Discord لا تطابق الحساب'});
+    if(!(await discordMemberExists(resolved))) return res.status(403).json({error:'حساب Discord غير موجود في سيرفر MLD'});
+    const temp=Array.from({length:10},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'[Math.floor(Math.random()*56)]).join('');
+    const hash=await bcrypt.hash(temp,12);
+    await query('UPDATE users SET password=$1, updated_at=NOW() WHERE id=$2',[hash,row.id]);
+    const botToken=process.env.DISCORD_TOKEN||process.env.DISCORD_BOT_TOKEN;
+    const dm=await fetch('https://discord.com/api/v10/users/@me/channels',{method:'POST',headers:{Authorization:`Bot ${botToken}`,'Content-Type':'application/json'},body:JSON.stringify({recipient_id:String(resolved)})});
+    if(!dm.ok) return res.status(502).json({error:'تعذر فتح الخاص في ديسكورد'});
+    const channel=await dm.json();
+    const sent=await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`,{method:'POST',headers:{Authorization:`Bot ${botToken}`,'Content-Type':'application/json'},body:JSON.stringify({content:`🔐 إعادة تعيين كلمة مرور MLD\\nاسم الحساب: **${username}**\\nكلمة المرور المؤقتة: **${temp}**\\nبعد الدخول غيّرها من صفحة بروفايلك فورًا.`})});
+    if(!sent.ok) return res.status(502).json({error:'تعذر إرسال كلمة المرور المؤقتة إلى Discord'});
+    return res.json({message:'تم إرسال كلمة المرور المؤقتة إلى الخاص في ديسكورد'});
+  }catch(e){ console.error(e); res.status(500).json({error:'تعذر تنفيذ استعادة كلمة المرور'}); }
+});
+
 export default router;
