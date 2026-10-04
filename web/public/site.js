@@ -12,6 +12,7 @@ const avatar=m=>m?.avatar||fallback;
 function setStatus(x){if(status) status.textContent=x}
 function openModal(){if(!modal||!box)return;modal.classList.remove("hidden");document.body.classList.add("modal-open")}
 function closeModal(){if(!modal)return;modal.classList.add("hidden");document.body.classList.remove("modal-open")}
+window.toggleMLDMenu=function(e){e?.preventDefault();e?.stopPropagation();const m=document.getElementById("mobile-menu");if(m?.classList.contains("open"))closeMenu();else openMenu();};
 function closeMenu(){if(!mobile)return;mobile.classList.remove("open");backdrop?.classList.remove("open");mobile.setAttribute("aria-hidden","true");$("#menu")?.setAttribute("aria-expanded","false");document.body.classList.remove("menu-open")}
 function openMenu(){if(!mobile)return;mobile.classList.add("open");backdrop?.classList.add("open");mobile.setAttribute("aria-hidden","false");$("#menu")?.setAttribute("aria-expanded","true");document.body.classList.add("menu-open")}
 function bind(){document.querySelectorAll("[data-member]").forEach(x=>x.onclick=()=>openMember(x.dataset.member));document.querySelectorAll("[data-role]").forEach(x=>x.onclick=()=>openRole(x.dataset.role))}
@@ -31,7 +32,7 @@ async function searchMembers(){if(!search)return;clearTimeout(timer);const q=sea
 async function change(v){if(!content||!title||!subtitle||!searchWrap)return;view=v;closeMenu();if(v==="message")return messageView();if(v==="games")return gamesView();searchWrap.style.display=v==="members"?"flex":"none";title.textContent=v==="members"?"أعضاء المجتمع":v==="roles"?"الرتب القيادية":"لوحة TOP";if(v==="members"||v==="roles")return refresh();renderTop(await fetch(API_BASE + '/api/public/top').then(r=>r.json()));setStatus("تحديث مباشر للنشاط")}
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>change(b.dataset.view));
 if(search) search.oninput=()=>{if(view!=="members")change("members");searchMembers()};
-$("#menu")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();mobile?.classList.contains("open")?closeMenu():openMenu()});
+$("#menu")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();window.toggleMLDMenu(e)});
 $("#menu-close")?.addEventListener("click",closeMenu);
 backdrop?.addEventListener("click",closeMenu);
 mobile?.querySelectorAll("a").forEach(a=>a.addEventListener("click",closeMenu));
