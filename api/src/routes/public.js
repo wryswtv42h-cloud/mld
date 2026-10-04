@@ -117,6 +117,7 @@ router.get('/server', async (req, res) => {
       icon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=256` : '/logo.svg'
     });
   } catch (e) {
+    console.error('PUBLIC_SERVER_ERROR', e.message);
     res.status(503).json({ error: 'تعذر جلب بيانات ديسكورد', name: 'MLD', memberCount: null, onlineCount: null, visits });
   }
 });
