@@ -64,7 +64,7 @@
 <div class="app-layout">
 <header class="app-topbar">
  <div class="app-nav">
-  <a class="app-brand" href="index.html#top"><img src="logo.svg.JPG" onerror="this.src='/logo.svg'"><span><b>MLD</b><small>COMMUNITY</small></span></a>
+  <a class="app-brand" href="app.html#home"><img src="logo.svg.JPG" onerror="this.src='/logo.svg'"><span><b>MLD</b><small>COMMUNITY</small></span></a>
   <div style="margin-inline-start:auto;color:#9f98aa;font-size:13px" id="topLoginBtn"></div>
   <button id="menuBtn" class="menu app-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false"><span></span><span></span><span></span></button>
  </div>
@@ -107,6 +107,7 @@
  <section id="page-owner-admin" class="page"><div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">👑 MLD OWNER</span><h1>لوحة الأونر</h1><p>التحكم الكامل بالمجتمع.</p></div><div class="mld-page-body"><div id="ownerApplications" class="panel"></div><div id="ownerGroups" class="panel" style="margin-top:16px"></div><div id="ownerAudit" class="panel" style="margin-top:16px"></div></div></div></section>
 </main></div></div>
 <div id="toast" class="toast"></div>
+<div id="forgotScreen" class="auth-screen"><div class="auth-card"><button type="button" onclick="document.getElementById('forgotScreen').classList.remove('show')" style="float:left;background:none;border:0;color:#fff;font-size:24px">×</button><h2>استعادة كلمة المرور</h2><p class="muted">سيتم إرسال كلمة مرور مؤقتة إلى الخاص في Discord المرتبط بحسابك.</p><input id="forgotUsername" class="full" placeholder="اسم المستخدم"><input id="forgotDiscord" class="full" placeholder="Discord ID أو اسم المستخدم"><button id="forgotBtn" class="btn-primary full">إرسال كلمة المرور المؤقتة</button><div id="forgotMsg" class="msg"></div></div></div>
 <div id="authScreen" class="auth-screen">
  <div class="auth-card">
   <button type="button" onclick="document.getElementById('authScreen').classList.remove('show')" style="float:left;background:none;border:0;color:#fff;font-size:24px">×</button>
@@ -114,10 +115,10 @@
   <div class="tabs"><button type="button" data-tab="login" class="active">دخول</button><button type="button" data-tab="register">تسجيل</button></div>
   <form id="authForm"><input id="username" class="full" placeholder="اسم المستخدم" required><input id="password" class="full" type="password" placeholder="كلمة المرور" required>
    <div id="discordField" style="display:none"><input id="discord_id" class="full" placeholder="Discord ID"><button id="verifyDiscordBtn" type="button" class="btn-primary">إرسال كود التحقق</button><input id="verification_code" class="full" placeholder="كود التحقق" style="display:none"></div>
-   <button id="submitBtn" class="btn-primary full" type="submit">دخول</button><div id="authMsg" class="msg"></div>
+   <button id="submitBtn" class="btn-primary full" type="submit">دخول</button><button id="forgotOpenBtn" type="button" class="btn-secondary full">نسيت كلمة المرور؟</button><div id="authMsg" class="msg"></div>
   </form>
  </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
-<script src="/app.js?v=20261005-2"></script>
+<script src="/app.js?v=20261005-6"></script>
 </body></html>
