@@ -167,8 +167,24 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
   };
 });
 
-document.getElementById('menuBtn').onclick = () => document.getElementById('sidebar').classList.toggle('open');
-document.getElementById('logoutBtn').onclick = () => { localStorage.clear(); location.reload(); };
+function toggleSidebar(e) {
+  e?.preventDefault();
+  e?.stopPropagation();
+  const sidebar = document.getElementById('sidebar');
+  const button = document.getElementById('menuBtn');
+  if (!sidebar) return;
+  const open = sidebar.classList.toggle('open');
+  button?.setAttribute('aria-expanded', String(open));
+}
+document.getElementById('menuBtn')?.addEventListener('click', toggleSidebar);
+document.getElementById('menuBtn')?.addEventListener('touchend', toggleSidebar, {passive:false});
+document.addEventListener('click', e => {
+  const sidebar = document.getElementById('sidebar');
+  const button = document.getElementById('menuBtn');
+  if (!sidebar?.classList.contains('open') || !button) return;
+  if (!sidebar.contains(e.target) && e.target !== button) sidebar.classList.remove('open');
+});
+document.getElementById('logoutBtn')?.addEventListener('click', () => { localStorage.clear(); location.reload(); });
 
 async function loadBots() {
   const d = await api('/api/bots');
