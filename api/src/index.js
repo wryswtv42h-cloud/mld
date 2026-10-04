@@ -23,6 +23,8 @@ if (!process.env.DATABASE_URL || !process.env.JWT_SECRET) {
 }
 
 const app = express();
+// Railway sits behind a trusted reverse proxy; allow Express rate-limit to use X-Forwarded-For safely.
+app.set('trust proxy', 1);
 const httpServer = createServer(app);
 
 app.use(helmet({ contentSecurityPolicy: false }));
