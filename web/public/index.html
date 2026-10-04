@@ -6,7 +6,20 @@
 <meta name="theme-color" content="#08060d">
 <title>MLD · Community</title>
 <link rel="icon" href="logo.svg.JPG">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261004-3">
+<script>
+window.toggleMLDMenu=function(e){
+  if(e){e.preventDefault();e.stopPropagation();}
+  var m=document.getElementById('mobile-menu'), b=document.getElementById('menu-backdrop'), x=document.getElementById('menu');
+  if(!m)return;
+  var open=!m.classList.contains('open');
+  m.classList.toggle('open',open);
+  if(b)b.classList.toggle('open',open);
+  m.setAttribute('aria-hidden',String(!open));
+  if(x)x.setAttribute('aria-expanded',String(open));
+  document.body.classList.toggle('menu-open',open);
+};
+</script>
 </head>
 <body>
 <div class="glow g1"></div><div class="glow g2"></div>
