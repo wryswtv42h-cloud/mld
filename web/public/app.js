@@ -103,6 +103,7 @@ async function initApp() {
   topLoginBtn?.addEventListener('click', openLogin);
   if (!token || !user) {
     document.body.classList.remove('logged');
+    document.body.classList.add('guest');
     if (loginBtn) loginBtn.style.display = 'flex';
     if (logoutBtn) logoutBtn.style.display = 'none';
     if (topLoginBtn) topLoginBtn.style.display = 'block';
@@ -112,6 +113,7 @@ async function initApp() {
     return;
   }
   document.body.classList.add('logged');
+  document.body.classList.remove('guest');
   if (loginBtn) loginBtn.style.display = 'none';
   if (logoutBtn) logoutBtn.style.display = 'flex';
   if (topLoginBtn) topLoginBtn.style.display = 'none';
@@ -141,7 +143,7 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
     if (protectedPages.includes(page) && (!token || !user)) {
       e.preventDefault();
       toast('سجّل دخول أولاً');
-      document.getElementById('sidebar')?.classList.remove('open'); document.getElementById('appMenuBackdrop')?.classList.remove('show'); document.body.classList.remove('app-menu-open'); document.body.classList.remove('app-menu-open'); document.getElementById('appMenuBackdrop')?.classList.remove('show');
+      document.getElementById('sidebar')?.classList.remove('open'); document.getElementById('appMenuBackdrop')?.classList.remove('show'); document.body.classList.remove('app-menu-open'); document.getElementById('appMenuBackdrop')?.classList.remove('show'); document.body.classList.remove('app-menu-open'); document.body.classList.remove('app-menu-open'); document.getElementById('appMenuBackdrop')?.classList.remove('show');
       return;
     }
     if (featurePages.includes(page) || page==='admin' || page==='owner-admin') {
@@ -308,14 +310,14 @@ window.toggleBot = async (id) => {
   loadBots();
 };
 
-function openRequestedHash(){ const p=(location.hash||'#home').slice(1).trim(); if(!p||p==='home') return; const protectedPages=['chat','pigeon','tickets','applications','bots','addbot','add-bot','profile']; if(protectedPages.includes(p)&&(!token||!user)){ document.getElementById('authScreen')?.classList.add('show'); toast('هذه الصفحة تتطلب تسجيل الدخول'); return; } const link=document.querySelector('.sidebar .nav a[data-page="'+p+'"]'); if(link) link.click(); }
+function openRequestedHash(){ const p=(location.hash||'#home').slice(1).trim(); if(!p||p==='home') return; const protectedPages=['chat','pigeon','tickets','bots','addbot','add-bot','profile']; if(protectedPages.includes(p)&&(!token||!user)){ document.getElementById('authScreen')?.classList.add('show'); toast('هذه الصفحة تتطلب تسجيل الدخول'); return; } const link=document.querySelector('.sidebar .nav a[data-page="'+p+'"]'); if(link) link.click(); }
 window.addEventListener('hashchange',openRequestedHash);
 initApp().then(()=>setTimeout(openRequestedHash,0));
 
 /* ===== MLD community feature bridge ===== */
 const featurePages = ['members','top','leaders','chat','pigeon','games','cinema','groups','tickets','applications','reviews','profile'];
 const pageTitles = {members:'👥 الأعضاء',top:'🏆 التوب',leaders:'👑 الرتب القيادية',chat:'💬 الشات العام',pigeon:'✉️ الزاجل',games:'🎮 الألعاب',cinema:'🎬 السينما',groups:'👨‍👩‍👧 القروبات',tickets:'🎫 التذاكر',applications:'📝 التقديم',reviews:'⭐ الآراء'};
-function featureProtected(p){ return ['chat','pigeon','tickets','applications','bots','addbot','add-bot','profile'].includes(p); }
+function featureProtected(p){ return ['chat','pigeon','tickets','bots','addbot','add-bot','profile'].includes(p); }
 function requireFeatureAuth(){ if(!token||!user){ toast('سجّل دخول أولاً'); document.getElementById('authScreen')?.classList.add('show'); return false; } return true; }
 function pageBox(p,body){ const el=document.getElementById('page-'+p); if(el) el.innerHTML='<div class="card">'+body+'</div>'; }
 async function renderFeature(p){
@@ -396,9 +398,9 @@ window.addEventListener('resize',()=>{
 function syncPrivilegedMenu(){
  const owner=!!user?.is_owner;
  const admin=owner||String(user?.role||'').toLowerCase()==='admin';
- const al=document.getElementById('adminLink'), ol=document.getElementById('ownerLink'), as=document.getElementById('adminSection'), os=document.getElementById('ownerSection');
+ const al=document.getElementById('adminLink'), ol=document.getElementById('ownerLink'), as=document.getElementById('adminSection'), os=document.getElementById('ownerSection'), apl=document.getElementById('applicationsLink');
  if(al) al.style.display=admin?'flex':'none'; if(as) as.style.display=admin?'block':'none';
- if(ol) ol.style.display=owner?'flex':'none'; if(os) os.style.display=owner?'block':'none';
+ if(ol) ol.style.display=owner?'flex':'none'; if(os) os.style.display=owner?'block':'none'; if(apl) apl.style.display=owner?'flex':'none';
  document.body.classList.toggle('is-owner',owner); document.body.classList.toggle('is-admin',admin);
 }
 setTimeout(syncPrivilegedMenu,0);
@@ -410,6 +412,7 @@ function finalShell(p,body){const m=FINAL_META[p]||['✦',p,''];return '<section
 async function finalRender(p){
  if(['chat','pigeon','tickets','applications','bots','addbot','profile','admin','owner-admin'].includes(p)&&!token){toast('سجّل دخول أولاً');document.getElementById('authScreen')?.classList.add('show');return}
  if(p==='owner-admin'&&!user?.is_owner){toast('لوحة الأونر للأونر فقط');return}
+ if(p==='applications'&&!user?.is_owner){toast('التقديم للأونر فقط');return}
  if(p==='admin'&&!user?.is_owner&&!['admin','owner'].includes(String(user?.role||'').toLowerCase())){toast('لوحة الإدارة للإدارة فقط');return}
  const page=document.getElementById('page-'+p);if(!page)return;
  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));page.classList.add('active');
