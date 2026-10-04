@@ -77,55 +77,61 @@ router.post('/confirm-discord', async (req,res)=>{
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ error: 'أدخل اليوزر والباسورد' });
-    }
+    if (!username || !password) return res.status(400).json({ error: 'أدخل اليوزر والباسورد' });
 
-    // حساب الأونر
-    if (username === process.env.OWNER_USERNAME && password === process.env.OWNER_PASSWORD) {
-      let { rows } = await query('SELECT * FROM users WHERE username = $1 LIMIT 1', [username]);
-      let owner = rows[0];
-      const ownerDiscordId = await resolveDiscordId(process.env.OWNER_DISCORD_ID || 'w4px');
-      if (!ownerDiscordId) return res.status(503).json({ error: 'تعذر العثور على حساب الأونر في ديسكورد' });
-      if (!(await discordMemberExists(ownerDiscordId))) return res.status(403).json({ error: 'حساب الأونر غير موجود في سيرفر MLD' });
-      if (!owner) {
-        const hash = await bcrypt.hash(password, 12);
-        const result = await query(
-          `INSERT INTO users (username, password, discord_id, discord_verified, role, is_owner)
-           VALUES ($1, $2, $3, TRUE, 'owner', TRUE) RETURNING *`,
-          [username, hash, ownerDiscordId]
-        );
-        owner = result.rows[0];
+    const { rows } = await query('SELECT * FROM users WHERE username = $1 LIMIT 1', [username]);
+    let dbUser = rows[0];
+
+    // حساب الأونر: كلمة البيئة تعمل كدخول تأسيسي فقط، وبعد إنشاء حساب الأونر تصبح كلمة DB هي الأساسية.
+    if (dbUser?.is_owner) {
+      const dbValid = dbUser.password ? await bcrypt.compare(password, dbUser.password) : false;
+      const envValid = username === process.env.OWNER_USERNAME && password === process.env.OWNER_PASSWORD;
+      if (!dbValid && !envValid) return res.status(401).json({ error: 'بيانات غير صحيحة' });
+
+      const ownerDiscordId = await resolveDiscordId(dbUser.discord_id || process.env.OWNER_DISCORD_ID || 'w4px');
+      if (!ownerDiscordId || !(await discordMemberExists(ownerDiscordId))) return res.status(403).json({ error: 'حساب الأونر غير موجود في سيرفر MLD' });
+      if (String(dbUser.discord_id) !== String(ownerDiscordId) || !dbUser.discord_verified) {
+        await query('UPDATE users SET discord_id=$1, discord_verified=TRUE, role=$2, is_owner=TRUE, last_seen=NOW() WHERE id=$3',[''+ownerDiscordId,'owner',dbUser.id]);
+        dbUser=(await query('SELECT * FROM users WHERE id=$1',[dbUser.id])).rows[0];
       } else {
-        await query('UPDATE users SET is_owner=TRUE, role=$1, discord_id=$2, discord_verified=TRUE WHERE id=$3', ['owner', ownerDiscordId, owner.id]);
-        owner = (await query('SELECT * FROM users WHERE id=$1',[owner.id])).rows[0];
+        await query('UPDATE users SET last_seen=NOW(), role=$1, is_owner=TRUE WHERE id=$2',['owner',dbUser.id]);
       }
-      const token = jwt.sign({ id: owner.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
-      const { password: _, ...user } = owner;
-      return res.json({ token, user });
+      const jwtToken=jwt.sign({id:dbUser.id},process.env.JWT_SECRET,{expiresIn:'30d'});
+      const {password:_,...safeOwner}=dbUser;
+      return res.json({token:jwtToken,user:safeOwner});
     }
 
-    // الأعضاء
-    const { rows } = await query('SELECT * FROM users WHERE username = $1', [username]);
-    const user = rows[0];
-    if (!user) return res.status(401).json({ error: 'بيانات غير صحيحة' });
+    // دخول تأسيسي للأونر إذا لم يوجد سجل في DB بعد.
+    if (username === process.env.OWNER_USERNAME && password === process.env.OWNER_PASSWORD) {
+      const ownerDiscordId = await resolveDiscordId(process.env.OWNER_DISCORD_ID || 'w4px');
+      if (!ownerDiscordId || !(await discordMemberExists(ownerDiscordId))) return res.status(403).json({ error: 'حساب الأونر غير موجود في سيرفر MLD' });
+      const hash=await bcrypt.hash(password,12);
+      const result=await query(
+        `INSERT INTO users (username,password,discord_id,discord_verified,role,is_owner)
+         VALUES ($1,$2,$3,TRUE,'owner',TRUE) RETURNING *`,
+        [username,hash,ownerDiscordId]
+      );
+      const owner=result.rows[0];
+      const jwtToken=jwt.sign({id:owner.id},process.env.JWT_SECRET,{expiresIn:'30d'});
+      const {password:_,...safe}=owner;
+      return res.json({token:jwtToken,user:safe});
+    }
 
+    const user = dbUser;
+    if (!user) return res.status(401).json({ error: 'بيانات غير صحيحة' });
     if (!user.discord_verified) return res.status(403).json({ error: 'الحساب غير موثّق في ديسكورد' });
     let currentDiscordId;
     try { currentDiscordId = await resolveDiscordId(user.discord_id); } catch (e) { return res.status(503).json({ error: e.message }); }
     if (!currentDiscordId || !(await discordMemberExists(currentDiscordId))) return res.status(403).json({ error: 'لم تعد عضوًا في سيرفر MLD' });
-
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'بيانات غير صحيحة' });
-
-    await query('UPDATE users SET last_seen = NOW() WHERE id = $1', [user.id]);
-
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
-    const { password: _, ...safe } = user;
-    res.json({ token, user: safe });
-  } catch (err) {
+    await query('UPDATE users SET last_seen=NOW() WHERE id=$1',[user.id]);
+    const jwtToken=jwt.sign({id:user.id},process.env.JWT_SECRET,{expiresIn:'30d'});
+    const {password:_,...safe}=user;
+    return res.json({token:jwtToken,user:safe});
+  } catch(err) {
     console.error(err);
-    res.status(500).json({ error: 'خطأ في السيرفر' });
+    res.status(500).json({error:'خطأ في السيرفر'});
   }
 });
 
