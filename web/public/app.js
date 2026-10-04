@@ -408,7 +408,7 @@ window.addEventListener('storage',syncPrivilegedMenu);
 
 
 /* ===== MLD FINAL PAGE SYSTEM v20261004 ===== */
-const PAGE_META={home:['🏠','الرئيسية','لوحة مجتمع MLD'],members:['👥','الأعضاء','أعضاء مجتمع MLD والبحث المباشر'],top:['🏆','التوب','ترتيب النشاط والإحصائيات'],leaders:['👑','الرتب القيادية','الرتب المهمة وأعضاؤها'],chat:['💬','الشات العام','محادثة مجتمع MLD'],pigeon:['✉️','الزاجل','رسائلك الخاصة'],games:['🎮','الألعاب','جلسات اللعب والمتفرجين'],cinema:['🎬','السينما','غرف المشاهدة الجماعية'],groups:['👨‍👩‍👧','القروبات','مجتمعات MLD الصغيرة'],tickets:['🎫','التذاكر','الدعم والمتابعة'],applications:['📝','التقديم','طلبات الإدارة'],reviews:['⭐','الآراء','آراء أعضاء المجتمع'],bots:['🤖','منصة البوتات','إدارة بوتاتك'],addbot:['➕','إضافة بوت','ربط وإدارة بوت جديد'],profile:['👤','بروفايلي','بيانات حسابك'],admin:['🛡️','لوحة الإدارة','إدارة التذاكر والحسابات'],owner:['👑','لوحة الأونر','التحكم الكامل بالمنصة']};
+const PAGE_META={home:['🏠','الرئيسية','لوحة مجتمع MLD'],members:['👥','الأعضاء','أعضاء مجتمع MLD والبحث المباشر'],top:['🏆','التوب','ترتيب النشاط والإحصائيات'],leaders:['👑','الرتب القيادية','الرتب المهمة وأعضاؤها'],chat:['💬','الشات العام','محادثة مجتمع MLD'],pigeon:['✉️','الزاجل','رسائلك الخاصة'],games:['🎮','الألعاب','جلسات اللعب والمتفرجين'],cinema:['🎬','السينما','غرف المشاهدة الجماعية'],groups:['👨‍👩‍👧','القروبات','مجتمعات MLD الصغيرة'],tickets:['🎫','التذاكر','الدعم والمتابعة'],applications:['📝','التقديم','طلبات الإدارة'],reviews:['⭐','الآراء','آراء أعضاء المجتمع'],bots:['🤖','منصة البوتات','إدارة بوتاتك'],addbot:['➕','إضافة بوت','ربط وإدارة بوت جديد'],profile:['👤','بروفايلي','بيانات حسابك'],admin:['🛡️','لوحة الإدارة','إدارة التذاكر والحسابات'],owner:['👑','لوحة الأونر','التحكم الكامل بالمنصة'],'owner-admin':['👑','لوحة الأونر','التحكم الكامل بالمنصة']};
 const PROTECTED=['chat','pigeon','tickets','applications','bots','addbot','profile','admin','owner','owner-admin'];
 const isAdmin=()=>!!user&&(!!user.is_owner||['admin','owner'].includes(String(user.role||'').toLowerCase()));
 const isOwner=()=>!!user?.is_owner;
@@ -517,4 +517,38 @@ wireNav();syncPrivilegedMenu();
   setTimeout(syncFinalAccess,50);
   setTimeout(syncFinalAccess,700);
   document.addEventListener('visibilitychange',syncFinalAccess);
+})();
+
+
+/* ===== MLD ONE NAV CONTROLLER v20261005 ===== */
+(function(){
+  const $=s=>document.querySelector(s);
+  const sidebar=$('#sidebar'), back=$('#appMenuBackdrop'), btn=$('#menuBtn');
+  if(!sidebar||!btn)return;
+  function close(){sidebar.classList.remove('open');back?.classList.remove('show');document.body.classList.remove('app-menu-open');btn.setAttribute('aria-expanded','false');}
+  function toggle(e){e?.preventDefault();e?.stopPropagation();const open=!sidebar.classList.contains('open');sidebar.classList.toggle('open',open);back?.classList.toggle('show',open);document.body.classList.toggle('app-menu-open',open);btn.setAttribute('aria-expanded',String(open));}
+  const freshBtn=btn.cloneNode(true);btn.replaceWith(freshBtn);freshBtn.addEventListener('click',toggle,{passive:false});
+  const freshSide=sidebar.cloneNode(true);sidebar.replaceWith(freshSide);
+  freshSide.addEventListener('click',e=>{
+    const a=e.target.closest('a[data-page]');if(!a)return;e.preventDefault();
+    const p=a.dataset.page;
+    if(p==='logout'){localStorage.clear();location.href='app.html#home';location.reload();return;}
+    if(p==='login'){close();$('#authScreen')?.classList.add('show');return;}
+    renderPage(p);close();
+  });
+  const freshBack=back?.cloneNode(true);if(back&&freshBack){back.replaceWith(freshBack);freshBack.addEventListener('click',close);}
+  window.addEventListener('resize',()=>{if(innerWidth>900)close();});
+  window.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+})();
+
+/* Keep owner/admin visibility correct after /api/auth/me refresh. */
+(function(){
+  window.__mldSyncPrivileged=function(){
+    const owner=!!user?.is_owner;
+    const admin=owner||['admin','owner'].includes(String(user?.role||'').toLowerCase());
+    const set=(id,show,display='flex')=>{const e=document.getElementById(id);if(e)e.style.display=show?display:'none';};
+    set('adminSection',admin,'block');set('adminLink',admin);set('ownerSection',owner,'block');set('ownerLink',owner);set('applicationsLink',owner);
+    const n=document.getElementById('myRole');if(n)n.textContent=owner?'الأونر 👑':admin?'إدارة 🛡️':'عضو';
+  };
+  window.__mldSyncPrivileged();setTimeout(window.__mldSyncPrivileged,500);setTimeout(window.__mldSyncPrivileged,1500);
 })();
