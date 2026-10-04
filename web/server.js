@@ -19,6 +19,7 @@ function contentType(file) {
   return ({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp'})[ext] || 'application/octet-stream';
 }
 const server=http.createServer((req,res)=>{
+  if(req.url==='/health'){res.writeHead(200,{'content-type':'application/json'});return res.end(JSON.stringify({ok:true,service:'mld-web'}));}
   if(req.url.startsWith('/api/') || req.url.startsWith('/socket.io/')){
     proxy.web(req,res,{target:API});
     return;
