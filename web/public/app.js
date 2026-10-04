@@ -19,6 +19,13 @@ function esc(s) {
 
 function initials(n) { return (n || '?').slice(0, 2).toUpperCase(); }
 
+document.getElementById('forgotOpenBtn')?.addEventListener('click',()=>{document.getElementById('authScreen')?.classList.remove('show');document.getElementById('forgotScreen')?.classList.add('show');});
+document.getElementById('forgotBtn')?.addEventListener('click',async()=>{
+ const msg=document.getElementById('forgotMsg'), username=document.getElementById('forgotUsername')?.value.trim(), discord_id=document.getElementById('forgotDiscord')?.value.trim();
+ msg.className='msg show';msg.textContent='جاري التحقق...';
+ try{const r=await fetch(API+'/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,discord_id})});const d=await r.json();if(!r.ok)throw new Error(d.error||'تعذر الاسترجاع');msg.className='msg show success';msg.textContent=d.message||'تم الإرسال ✓';}
+ catch(e){msg.className='msg show error';msg.textContent=e.message;}
+});
 document.getElementById('verifyDiscordBtn')?.addEventListener('click', async () => {
   const id = document.getElementById('discord_id').value.trim();
   const msg = document.getElementById('authMsg');
@@ -141,6 +148,7 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
   a.onclick = (e) => {
     const page = a.dataset.page;
     const protectedPages = ['chat','pigeon','tickets','applications','bots','addbot','add-bot','profile'];
+    if(page==='applications' && !user?.is_owner){ e.preventDefault(); toast('التقديم وإدارته للأونر فقط'); closeSidebar(); return; }
     if (protectedPages.includes(page) && (!token || !user)) {
       e.preventDefault();
       toast('سجّل دخول أولاً');
@@ -335,7 +343,7 @@ async function renderFeature(p){
   document.querySelectorAll('.sidebar .nav a').forEach(x=>x.classList.toggle('active',x.dataset.page===p));
   document.getElementById('pageTitle').textContent=pageTitles[p]||p;
   document.getElementById('sidebar').classList.remove('open');
-  if(p==='games'){ location.href='/game.html'; return; }
+  if(p==='games'){ pageBox(p,'<div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">🎮 MLD GAMES</span><h1>الألعاب</h1><p>اختر اللعبة وابدأ الجلسة بدون مغادرة منصة MLD.</p></div><div class="mld-page-body"><div id="gameCatalog" class="page-grid three"><div class="panel"><h3>🎴 أونو</h3><p class="muted">لعبة جماعية.</p><button class="btn-primary" onclick="openMLDGame(\'uno\')">ابدأ</button></div><div class="panel"><h3>🎯 لودو</h3><p class="muted">جلسة لودو.</p><button class="btn-primary" onclick="openMLDGame(\'ludo\')">ابدأ</button></div><div class="panel"><h3>🕵️ كود نيمز</h3><p class="muted">تحدي الفرق.</p><button class="btn-primary" onclick="openMLDGame(\'codenames\')">ابدأ</button></div><div class="panel"><h3>🎲 جاكارو</h3><p class="muted">لعبة جماعية.</p><button class="btn-primary" onclick="openMLDGame(\'jaccaro\')">ابدأ</button></div><div class="panel"><h3>♠️ بلوت</h3><p class="muted">جلسة بلوت.</p><button class="btn-primary" onclick="openMLDGame(\'baloot\')">ابدأ</button></div><div class="panel"><h3>🏠 مونوبولي</h3><p class="muted">جلسة مونوبولي.</p><button class="btn-primary" onclick="openMLDGame(\'monopoly\')">ابدأ</button></div></div><div id="embeddedGame" style="display:none;margin-top:18px"></div></div></div>'); return; }
   if(p==='members'||p==='top'||p==='leaders'){
     const endpoint=p==='members'?'/api/public/members':p==='top'?'/api/public/top':'/api/public/roles';
     try{const d=await fetch(API + endpoint).then(r=>r.json()); pageBox(p,p==='members'?'<h3>👥 الأعضاء</h3><div class="grid">'+(d.members||[]).map(m=>'<div class="bot-card"><h4>'+esc(m.name)+'</h4><p>@'+esc(m.username||'')+'</p></div>').join('')+'</div>':p==='top'?'<h3>🏆 التوب</h3><pre style="white-space:pre-wrap;color:var(--muted)">'+esc(JSON.stringify(d,null,2))+'</pre>':'<h3>👑 الرتب القيادية</h3><div class="grid">'+(d.roles||[]).map(r=>'<div class="bot-card"><h4>'+esc(r.name)+'</h4><p>'+esc(r.membersCount)+' عضو</p></div>').join('')+'</div>');}catch(e){pageBox(p,'<h3>تعذر تحميل البيانات</h3>');} return;
@@ -408,7 +416,7 @@ function syncPrivilegedMenu(){
  const admin=owner||String(user?.role||'').toLowerCase()==='admin';
  const al=document.getElementById('adminLink'), ol=document.getElementById('ownerLink'), as=document.getElementById('adminSection'), os=document.getElementById('ownerSection'), apl=document.getElementById('applicationsLink');
  if(al) al.style.display=admin?'flex':'none'; if(as) as.style.display=admin?'block':'none';
- if(ol) ol.style.display=owner?'flex':'none'; if(os) os.style.display=owner?'block':'none'; if(login) login.style.display=token?'none':'flex'; if(logout) logout.style.display=token?'flex':'none'; if(profile) profile.style.display=token?'flex':'none'; if(apl) apl.style.display=owner?'flex':'none';
+ if(ol) ol.style.display=owner?'flex':'none'; if(os) os.style.display=owner?'block':'none'; if(login) login.style.display=token?'none':'flex'; if(logout) logout.style.display=token?'flex':'none'; if(profile) profile.style.display=token?'flex':'none'; if(appLink) appLink.style.display=owner?'flex':'none'; if(apl) apl.style.display=owner?'flex':'none';
  document.body.classList.toggle('is-owner',owner); document.body.classList.toggle('is-admin',admin);
 }
 setTimeout(syncPrivilegedMenu,0);
@@ -568,3 +576,11 @@ document.getElementById('changePasswordBtn')?.addEventListener('click',async()=>
  msg.className='msg show '+(d.error?'error':'success');msg.textContent=d.error||d.message||'تم';
  if(!d.error){document.getElementById('currentPassword').value='';document.getElementById('newPassword').value='';document.getElementById('newPassword2').value='';}
 });
+
+window.openMLDGame=(type)=>{
+ const host=document.getElementById('embeddedGame'); if(!host)return;
+ document.getElementById('gameCatalog').style.display='none'; host.style.display='block';
+ host.innerHTML='<div class="panel" style="padding:0;overflow:hidden"><div style="display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid rgba(255,255,255,.08)"><b>🎮 جلسة MLD</b><button class="btn-secondary" onclick="closeMLDGame()">رجوع للألعاب</button></div><iframe id="mldGameFrame" title="MLD Game" style="width:100%;height:720px;border:0;background:#08060d"></iframe></div>';
+ document.getElementById('mldGameFrame').src='/game.html?type='+encodeURIComponent(type)+'&embed=1';
+};
+window.closeMLDGame=()=>{const h=document.getElementById('embeddedGame'),c=document.getElementById('gameCatalog');if(h){h.style.display='none';h.innerHTML='';}if(c)c.style.display='grid';};
