@@ -66,7 +66,7 @@ const PORT = process.env.PORT || 3000;
 async function start() {
   try {
     await initDB();
-    httpServer.listen(PORT, () => {
+    httpServer.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 MLD API على ${PORT}`);
       console.log(`👑 MLD | فهد المطيري`);
     });
