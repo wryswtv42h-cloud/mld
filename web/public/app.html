@@ -182,7 +182,7 @@ body.logged .app{display:flex}
 
       <div class="section-title">الإدارة</div>
       <a data-page="tickets">🎫 التذاكر</a>
-      <a data-page="applications" id="applicationsLink">📝 التقديم</a>
+      <a data-page="applications" id="applicationsLink" style="display:none">📝 التقديم</a>
       <a data-page="reviews">⭐ الآراء</a>
 
       <div class="section-title">البوتات</div>
@@ -195,7 +195,7 @@ body.logged .app{display:flex}
       <a id="logoutBtn" style="display:none">🚪 تسجيل الخروج</a>
 
       <div class="section-title" id="ownerSection" style="display:none">الأونر</div>
-      <div class="section-title" id="adminSection" style="display:none">الإدارة</div><a data-page="admin" id="adminLink" style="display:none">🛡️ لوحة الإدارة</a><a data-page="owner-admin" id="ownerLink" style="display:none">👑 لوحة الأونر</a>
+      <div class="section-title" id="adminSection" style="display:none">الإدارة</div><a data-page="admin" id="adminLink" style="display:none">🛡️ لوحة الإدارة</a><a data-page="owner" id="ownerLink" style="display:none">👑 لوحة الأونر</a>
 
       <div class="section-title">روابط</div>
       <a href="/">🌐 الموقع</a>
@@ -263,7 +263,7 @@ body.logged .app{display:flex}
         </div>
       </div>
 
-      <div class="page" id="page-owner-admin"><div class="card"><h3>👑 لوحة الأونر</h3><p class="muted">لوحة التحكم الكاملة بالأونر.</p></div></div>
+      <div class="page" id="page-owner"><div class="card"><h3>👑 لوحة الأونر</h3><p class="muted">لوحة التحكم الكاملة بالأونر.</p></div></div>
       <div class="page" id="page-admin">
         <div class="card"><h3>🛡️ لوحة الإدارة</h3><p class="muted">إدارة الحسابات والتذاكر. التقديم والقروبات وسجلات الأونر تظهر للأونر فقط.</p><div class="grid" id="ownerUsers"></div><div id="adminTickets"></div><div id="ownerApplications"></div><div id="ownerGroups"></div><div id="ownerAudit"></div></div>
       </div>
