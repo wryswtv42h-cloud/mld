@@ -177,7 +177,6 @@ function toggleSidebar(e) {
   button?.setAttribute('aria-expanded', String(open));
 }
 document.getElementById('menuBtn')?.addEventListener('click', toggleSidebar);
-document.getElementById('menuBtn')?.addEventListener('touchend', toggleSidebar, {passive:false});
 document.addEventListener('click', e => {
   const sidebar = document.getElementById('sidebar');
   const button = document.getElementById('menuBtn');
