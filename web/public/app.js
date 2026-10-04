@@ -378,7 +378,11 @@ window.joinCinema=(id)=>{
 
 /* MLD responsive navigation safety */
 document.getElementById('menuBtn')?.setAttribute('aria-label','فتح القائمة');
-document.getElementById('menuBtn')?.addEventListener('click',()=>document.body.classList.toggle('app-menu-open'));
+document.getElementById('menuBtn')?.addEventListener('click',()=>{
+  const s=document.getElementById('sidebar');
+  if(s) s.classList.toggle('open');
+  document.body.classList.toggle('app-menu-open');
+});
 window.addEventListener('resize',()=>{if(innerWidth>820){document.getElementById('sidebar')?.classList.remove('open');document.body.classList.remove('app-menu-open')}});
 /* Explicit owner/admin visibility */
 function syncPrivilegedMenu(){
