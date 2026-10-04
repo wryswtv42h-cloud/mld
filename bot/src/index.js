@@ -1,4 +1,5 @@
 import { Client, GatewayIntentBits, Events, REST, Routes } from 'discord.js';
+import http from 'http';
 import crypto from 'crypto';
 import pg from 'pg';
 import dotenv from 'dotenv';
@@ -43,6 +44,16 @@ async function syncUserBots(){
 
 const API_URL = String(process.env.API_URL || '').replace(/\/$/, '');
 const voiceStarted = new Map();
+
+const PORT = Number(process.env.PORT || 3000);
+const healthServer = http.createServer((req, res) => {
+  if (req.url === '/' || req.url === '/health') {
+    res.writeHead(200, {'content-type':'application/json; charset=utf-8'});
+    return res.end(JSON.stringify({ok:true, service:'mld-bot', status:'online'}));
+  }
+  res.writeHead(404); res.end('Not Found');
+});
+healthServer.listen(PORT, '0.0.0.0', () => console.log(`🌐 MLD Bot health على ${PORT}`));
 
 async function track(discordId, type, minutes = 0) {
   if (!API_URL || !discordId) return;
