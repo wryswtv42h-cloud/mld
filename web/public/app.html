@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#08060d">
 <title>MLD · Community</title>
 <link rel="icon" href="logo.svg.JPG">
-<link rel="stylesheet" href="style.css?v=20261005-12"><script>
+<link rel="stylesheet" href="style.css?v=20261006-1"><script>
 window.toggleAppMenu=function(e){
   if(e){e.preventDefault();e.stopPropagation();}
   const s=document.getElementById('sidebar'), b=document.getElementById('appMenuBackdrop'), btn=document.getElementById('menuBtn');
@@ -75,7 +75,7 @@ window.closeAppMenu=function(){
  .app-shell{width:calc(100% - 12px)}
  .page-titlebar{align-items:flex-start}.page-titlebar h1{font-size:21px}
 }
-</style>
+@media(max-width:900px){#menuBtn.app-menu-btn{display:grid!important;position:relative!important;inset:auto!important;width:46px!important;height:46px!important;min-width:46px!important;place-items:center!important;margin:0!important;padding:0!important;z-index:2500!important;cursor:pointer!important}.sidebar{right:0!important;left:auto!important;transform:translate3d(105%,0,0)!important;visibility:hidden!important;pointer-events:none!important}.sidebar.open{transform:translate3d(0,0,0)!important;visibility:visible!important;pointer-events:auto!important}.app-main{width:100%!important}}</style>
 </head>
 <body>
 <div class="glow g1"></div><div class="glow g2"></div>
@@ -138,5 +138,5 @@ window.closeAppMenu=function(){
  </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
-<script src="/app.js?v=20261005-12"></script>
+<script src="/app.js?v=20261006-1"></script>
 </body></html>
