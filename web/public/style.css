@@ -855,3 +855,11 @@ body.menu-open{overflow:hidden}
  input,textarea,select,.full{max-width:100%!important;min-width:0!important}.auth-card{width:min(460px,calc(100vw - 24px))!important;max-height:calc(100dvh - 24px);overflow:auto}
 }
 @media(min-width:901px){.sidebar{position:sticky!important;top:96px!important;transform:none!important;visibility:visible!important;opacity:1!important}.app-menu-btn{display:none!important}.menu-backdrop{display:none!important}}
+
+/* MLD APP MENU FINAL OVERRIDE */
+#menuBtn.app-menu-btn{display:flex!important;position:relative!important;z-index:10001!important;width:46px!important;height:46px!important;min-width:46px!important;flex:0 0 46px!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;cursor:pointer!important;touch-action:manipulation!important;background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:14px!important;color:#fff!important}
+#menuBtn.app-menu-btn span{display:block!important;width:21px!important;height:2px!important;margin:3px 0!important;background:#fff!important;border-radius:4px!important}
+#appMenuBackdrop{z-index:9998!important}
+#sidebar{z-index:10000!important}
+@media(max-width:900px){#menuBtn.app-menu-btn{display:flex!important}.app-topbar{position:sticky!important;top:0!important;z-index:10001!important}.app-nav{display:flex!important;align-items:center!important;min-height:66px!important}.sidebar{right:0!important;left:auto!important;transform:translateX(110%)!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:10000!important}.sidebar.open{transform:translateX(0)!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}.app-main{width:100%!important;min-width:0!important}.page-titlebar{width:100%!important;box-sizing:border-box!important}.app-shell{display:block!important;width:100%!important;margin:0!important}.content{width:100%!important}.page{width:100%!important;min-width:0!important;overflow:hidden!important}}
+@media(min-width:901px){#menuBtn.app-menu-btn{display:none!important}}
