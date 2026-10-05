@@ -447,3 +447,12 @@ async function loadAdminPanel(p){const d=await api('/api/users');if(p==='admin')
 window.setAdmin=async(id,a)=>{const x=await api('/api/users/'+id+'/admin',{method:'POST',body:JSON.stringify({action:a})});toast(x.message||x.error);renderPage('admin')};window.applicationStatus=async(id,s)=>{const x=await api('/api/community/applications/'+id+'/status',{method:'POST',body:JSON.stringify({status:s})});toast(x.message||x.error);renderPage('owner-admin')};
 document.querySelectorAll('.sidebar a[data-page]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();renderPage(a.dataset.page);history.replaceState(null,'','#'+a.dataset.page)}));window.addEventListener('hashchange',()=>renderPage((location.hash||'#home').slice(1)));document.getElementById('appMenuBackdrop')?.addEventListener('click',()=>setMenu(false));
 setTimeout(()=>renderPage((location.hash||'#home').slice(1)),0);
+
+async function loadAppHomeStats(){
+ try{
+  const r=await fetch(API+'/api/public/server?x='+Date.now(),{cache:'no-store'}),d=await r.json();
+  const set=(id,v)=>document.getElementById(id)&&(document.getElementById(id).textContent=v);
+  set('homeServerName',d.name||'MLD'); set('homeMemberCount',d.memberCount==null?'—':num(d.memberCount)); set('homeOnlineCount',d.onlineCount==null?'—':num(d.onlineCount)); set('homeVisits',d.visits==null?'—':num(d.visits)); set('homeAccount',user?.username||'زائر');
+ }catch(e){console.error('home stats',e)}
+}
+setInterval(loadAppHomeStats,15000);
