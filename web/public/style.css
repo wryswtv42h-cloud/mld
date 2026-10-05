@@ -863,3 +863,22 @@ body.menu-open{overflow:hidden}
 #sidebar{z-index:10000!important}
 @media(max-width:900px){#menuBtn.app-menu-btn{display:flex!important}.app-topbar{position:sticky!important;top:0!important;z-index:10001!important}.app-nav{display:flex!important;align-items:center!important;min-height:66px!important}.sidebar{right:0!important;left:auto!important;transform:translateX(110%)!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:10000!important}.sidebar.open{transform:translateX(0)!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}.app-main{width:100%!important;min-width:0!important}.page-titlebar{width:100%!important;box-sizing:border-box!important}.app-shell{display:block!important;width:100%!important;margin:0!important}.content{width:100%!important}.page{width:100%!important;min-width:0!important;overflow:hidden!important}}
 @media(min-width:901px){#menuBtn.app-menu-btn{display:none!important}}
+/* MLD FINAL MOBILE */
+html,body{max-width:100%;overflow-x:hidden}
+button,a,input,textarea,select{touch-action:manipulation}
+@media(max-width:900px){
+.app-menu-btn{display:grid!important;place-items:center;width:48px;height:48px;padding:0!important;z-index:2600}
+.app-menu-btn span{display:block;width:21px;height:2px;margin:2.5px 0;border-radius:99px;background:#fff}
+.app-shell{display:block!important;width:100%!important;margin:0!important}
+.app-main{width:100%;padding:12px 8px 30px}
+.sidebar{position:fixed!important;right:0!important;left:auto!important;top:0!important;bottom:0!important;width:min(340px,88vw)!important;height:100dvh!important;z-index:2500!important;transform:translate3d(110%,0,0)!important;visibility:hidden;opacity:0;transition:transform .24s ease,opacity .18s ease,visibility .24s}
+.sidebar.open{transform:translate3d(0,0,0)!important;visibility:visible;opacity:1}
+.menu-backdrop{display:none;position:fixed!important;inset:0!important;z-index:2400!important;background:rgba(3,2,7,.68)!important}
+.menu-backdrop.show{display:block!important}
+body.app-menu-open{overflow:hidden!important}
+}
+@media(max-width:560px){
+.app-brand b{font-size:15px}.app-brand small{font-size:8px}
+.page-grid,.page-grid.three{grid-template-columns:1fr!important}
+.panel{padding:14px;border-radius:16px}
+}
