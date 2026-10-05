@@ -105,7 +105,7 @@ async function initApp() {
   const topLoginBtn = document.getElementById('topLoginBtn');
   const logoutBtn = document.getElementById('logoutBtn');
   const authScreen = document.getElementById('authScreen');
-  const openLogin = () => authScreen?.classList.add('show');
+  const openLogin = () => { authScreen?.classList.add('show'); document.body.classList.remove('app-menu-open'); window.closeAppMenu?.(); };
   loginBtn?.addEventListener('click', openLogin);
   topLoginBtn?.addEventListener('click', openLogin);
   if (!token || !user) {
@@ -140,6 +140,7 @@ async function initApp() {
   document.getElementById('profileName').value = user.username || '';
   document.getElementById('profileBio').value = user.bio || '';
 
+  syncPrivilegedMenu();
   syncPrivilegedMenu();
   loadBots();
 }
@@ -404,11 +405,7 @@ window.joinCinema=(id)=>{
 
 /* MLD responsive navigation safety */
 window.addEventListener('resize',()=>{
-  if(innerWidth>820){
-    document.getElementById('sidebar')?.classList.remove('open');
-    document.body.classList.remove('app-menu-open');
-    document.getElementById('appMenuBackdrop')?.classList.remove('show');
-  }
+  if(innerWidth>900) window.closeAppMenu?.();
 });
 /* Explicit owner/admin visibility */
 function syncPrivilegedMenu(){
