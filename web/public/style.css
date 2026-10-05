@@ -14,3 +14,15 @@
 @media(max-width:820px){.menu{display:flex!important;align-items:center;justify-content:center;min-width:46px;height:46px}.server-strip{grid-template-columns:repeat(2,1fr)}}
 @media(min-width:821px){.mobile-menu,.menu-backdrop{display:none!important}}
 body.menu-open{overflow:hidden}
+
+/* MLD page system final */
+.mld-toolbar{display:flex;align-items:center;gap:14px;margin-bottom:18px}.mld-toolbar .full{flex:1}
+.mld-member-grid,.mld-role-grid,.mld-card-grid,.mld-review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.mld-member{display:flex;align-items:center;gap:13px;padding:16px;border:1px solid rgba(255,255,255,.07);border-radius:20px;background:rgba(255,255,255,.035)}
+.mld-member img,.mld-rank img{width:52px;height:52px;border-radius:16px;object-fit:cover;background:#191321}.mld-member b,.mld-member small,.mld-member span{display:block}.mld-member small,.mld-member span{color:#9f98aa;font-size:12px;margin-top:4px}
+.mld-role-grid .panel,.mld-card-grid .panel,.mld-review-grid .panel{min-width:0}.mld-role-grid button{margin-top:14px}
+.mld-rank{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}.mld-rank:last-child{border-bottom:0}.mld-rank i{width:30px;font-style:normal;color:#ff9cde;font-weight:900}.mld-rank span{flex:1}.mld-rank span b,.mld-rank span small{display:block}.mld-rank small{color:#9f98aa;margin-top:3px}.mld-rank strong{font-size:15px}
+.mld-empty{padding:28px;text-align:center;color:#9f98aa;border:1px dashed rgba(255,255,255,.1);border-radius:18px}
+.mld-chat-list{display:grid;gap:10px;margin-bottom:14px}.mld-chat-compose{display:flex;gap:10px}.mld-chat-compose .full{flex:1}
+@media(max-width:900px){.mld-member-grid,.mld-role-grid,.mld-card-grid,.mld-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mld-toolbar{align-items:stretch;flex-direction:column}.mld-chat-compose{flex-direction:column}}
+@media(max-width:520px){.mld-member-grid,.mld-role-grid,.mld-card-grid,.mld-review-grid{grid-template-columns:1fr}.mld-page-head h1{font-size:25px}.mld-page-body{padding:14px}.panel{padding:15px}}
