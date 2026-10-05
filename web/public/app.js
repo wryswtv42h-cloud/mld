@@ -381,3 +381,38 @@ async function init() {
 }
 window.addEventListener("hashchange",()=>{const p=(location.hash||"#home").slice(1)||"home";if(p!=="login")render(p)});
 init();
+
+
+/* ===== FINAL NAV/AUTH OVERRIDE ===== */
+(function(){
+  function privileged(){
+    const role=String(user?.role||'').toLowerCase();
+    const owner=!!user?.is_owner || role==='owner';
+    const admin=owner || role==='admin';
+    const adminLink=document.getElementById('adminLink'), ownerLink=document.getElementById('ownerLink');
+    const adminSection=document.getElementById('adminSection'), ownerSection=document.getElementById('ownerSection');
+    if(adminLink){adminLink.style.setProperty('display',admin?'flex':'none','important');adminLink.hidden=!admin;}
+    if(ownerLink){ownerLink.style.setProperty('display',owner?'flex':'none','important');ownerLink.hidden=!owner;}
+    if(adminSection)adminSection.style.display=admin?'block':'none';
+    if(ownerSection)ownerSection.style.display=owner?'block':'none';
+    return {owner,admin};
+  }
+  function mobileMenu(){
+    const b=document.getElementById('menuBtn'),s=document.getElementById('sidebar');
+    if(!b||!s)return;
+    b.onclick=(e)=>{e.preventDefault();e.stopPropagation();s.classList.toggle('open');document.body.classList.toggle('app-menu-open',s.classList.contains('open'));};
+  }
+  function route(){
+    const p=(location.hash||'#home').slice(1).split('?')[0];
+    if(!p)return;
+    const {owner,admin}=privileged();
+    if(p==='owner-admin' && !owner){toast('لوحة الأونر للأونر فقط');return;}
+    if(p==='admin' && !admin){toast('لوحة الإدارة للإدارة فقط');return;}
+    const link=document.querySelector('.sidebar .nav a[data-page="'+CSS.escape(p)+'"]');
+    if(link && !document.querySelector('#page-'+CSS.escape(p)+'.active')) link.click();
+  }
+  mobileMenu(); privileged();
+  setTimeout(()=>{privileged();mobileMenu();route();},150);
+  setTimeout(()=>{privileged();mobileMenu();route();},1000);
+  window.addEventListener('hashchange',route);
+})();
