@@ -13,17 +13,10 @@ let visits = 0;
 const visitorSeen = new Map();
 const VISITOR_TTL = 60 * 60 * 1000;
 let visitStoreReady = null;
-async function ensureVisitStore() {
-  if (visitStoreReady) return visitStoreReady;
-  visitStoreReady = (async () => {
-    try {
-      await query("CREATE TABLE IF NOT EXISTS site_metrics (key text PRIMARY KEY, value bigint NOT NULL DEFAULT 0, updated_at timestamptz NOT NULL DEFAULT NOW())");
-      const { rows } = await query("SELECT value FROM site_metrics WHERE key = 'visits' LIMIT 1");
-      visits = Number(rows[0]?.value || 0);
-      if (!rows.length) await query("INSERT INTO site_metrics (key, value) VALUES ('visits', 0) ON CONFLICT (key) DO NOTHING");
-    } catch (e) { console.error('visit store:', e); }
-  })();
-  return visitStoreReady;
+async function ensureVisitStore(){
+ if(visitStoreReady)return visitStoreReady;
+ visitStoreReady=query("SELECT value FROM site_metrics WHERE key='visits' LIMIT 1").then(({rows})=>{visits=Number(rows[0]?.value||0)}).catch(e=>console.error('visit store read:',e));
+ return visitStoreReady;
 }
 const CACHE_TTL = 15000;
 
