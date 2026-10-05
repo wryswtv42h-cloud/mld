@@ -1,236 +1,383 @@
 "use strict";
 
-const API="https://api-production-5bddb.up.railway.app";
-let token=localStorage.getItem("token");
-let user=JSON.parse(localStorage.getItem("user")||"null");
+const API = "https://api-production-5bddb.up.railway.app";
+const $ = (s, root=document) => root.querySelector(s);
+const $$ = (s, root=document) => [...root.querySelectorAll(s)];
 
-const $=s=>document.querySelector(s);
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const num=v=>new Intl.NumberFormat("ar-SA").format(Number(v)||0);
+let token = localStorage.getItem("token") || "";
+let user = null;
+try { user = JSON.parse(localStorage.getItem("user") || "null"); } catch { user = null; }
 
-function toast(msg){
-  const e=$("#toast"); if(!e)return;
-  e.textContent=msg; e.classList.add("show");
-  clearTimeout(window.__toast); window.__toast=setTimeout(()=>e.classList.remove("show"),2600);
+const META = {
+  home:["🏠","الرئيسية","مركز مجتمع MLD"],
+  members:["👥","الأعضاء","أعضاء السيرفر والبحث المباشر"],
+  top:["🏆","التوب","ترتيب النشاط داخل المجتمع"],
+  leaders:["👑","الرتب القيادية","الرتب المهمة وأعضاءها"],
+  chat:["💬","الشات العام","محادثة أعضاء MLD"],
+  pigeon:["✉️","الزاجل","رسائلك الخاصة"],
+  games:["🎮","الألعاب","جلسات اللعب والألعاب الجماعية"],
+  cinema:["🎬","السينما","غرف المشاهدة الجماعية"],
+  groups:["👨‍👩‍👧","القروبات","قروبات مرتبطة بمجتمع MLD"],
+  tickets:["🎫","التذاكر","الدعم والمتابعة"],
+  applications:["📝","التقديم","التقديم للإدارة — للأونر"],
+  reviews:["⭐","الآراء","آراء وتجارب أعضاء المجتمع"],
+  bots:["🤖","منصة البوتات","إدارة بوتاتك"],
+  addbot:["➕","إضافة بوت","ربط بوت جديد"],
+  profile:["👤","بروفايلي","بيانات الحساب والأمان"],
+  admin:["🛡️","لوحة الإدارة","إدارة الحسابات والتذاكر"],
+  "owner-admin":["👑","لوحة الأونر","التحكم الكامل بالمجتمع"]
+};
+
+const protectedPages = new Set(["chat","pigeon","tickets","bots","addbot","profile"]);
+const ownerOnlyPages = new Set(["applications","owner-admin"]);
+
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const num = v => new Intl.NumberFormat("ar-SA").format(Number(v) || 0);
+const logged = () => !!token && !!user;
+const owner = () => !!user?.is_owner;
+const admin = () => owner() || ["admin","owner"].includes(String(user?.role || "").toLowerCase());
+
+function toast(message) {
+  const el = $("#toast");
+  if (!el) return;
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(window.__mldToast);
+  window.__mldToast = setTimeout(() => el.classList.remove("show"), 2800);
 }
-function isAdmin(){return !!user?.is_owner||["admin","owner"].includes(String(user?.role||"").toLowerCase())}
-function isOwner(){return !!user?.is_owner}
-function logged(){return !!token&&!!user}
 
-async function api(path,opts={}){
-  const r=await fetch(API+(path.startsWith("/")?path:"/"+path),{
-    ...opts,
-    headers:{"Content-Type":"application/json","Authorization":"Bearer "+(token||""),...(opts.headers||{})},
-    cache:"no-store"
-  });
-  let d={}; try{d=await r.json()}catch{}
-  if(!r.ok) throw new Error(d.error||"تعذر تنفيذ الطلب");
-  return d;
+function openAuth() { $("#authScreen")?.classList.add("show"); }
+function closeAuth() { $("#authScreen")?.classList.remove("show"); }
+
+async function api(path, opts={}) {
+  const headers = { "Content-Type":"application/json", ...(opts.headers || {}) };
+  if (token) headers.Authorization = "Bearer " + token;
+  const res = await fetch(/^https?:\/\//.test(path) ? path : API + (path.startsWith("/") ? path : "/" + path), { ...opts, headers, cache: opts.cache || "no-store" });
+  let data = {};
+  try { data = await res.json(); } catch {}
+  if (!res.ok) throw new Error(data.error || "تعذر تنفيذ الطلب");
+  return data;
 }
 
-function openAuth(){ $("#authScreen")?.classList.add("show"); }
-function closeMenu(){
+function closeMenu() {
   $("#sidebar")?.classList.remove("open");
   $("#appMenuBackdrop")?.classList.remove("show");
   document.body.classList.remove("app-menu-open");
   $("#menuBtn")?.setAttribute("aria-expanded","false");
 }
-function toggleMenu(e){
-  e?.preventDefault();e?.stopPropagation();
-  const s=$("#sidebar");if(!s)return;
-  const open=!s.classList.contains("open");
-  s.classList.toggle("open",open);
-  $("#appMenuBackdrop")?.classList.toggle("show",open);
-  document.body.classList.toggle("app-menu-open",open);
-  $("#menuBtn")?.setAttribute("aria-expanded",String(open));
+window.closeAppMenu = closeMenu;
+window.toggleAppMenu = function(e) {
+  e?.preventDefault(); e?.stopPropagation();
+  const open = !$("#sidebar")?.classList.contains("open");
+  if (open) {
+    $("#sidebar")?.classList.add("open");
+    $("#appMenuBackdrop")?.classList.add("show");
+    document.body.classList.add("app-menu-open");
+    $("#menuBtn")?.setAttribute("aria-expanded","true");
+  } else closeMenu();
+  return false;
+};
+
+function syncUI() {
+  $("#myName").textContent = user?.username || "زائر";
+  $("#myRole").textContent = owner() ? "الأونر 👑" : admin() ? "إدارة 🛡️" : logged() ? "عضو" : "تصفح عام";
+  const avatar = $("#myAvatar");
+  if (avatar) avatar.innerHTML = user?.avatar ? '<img src="'+esc(user.avatar)+'" alt="">' : esc((user?.username || "ز").slice(0,2).toUpperCase());
+
+  if ($("#logoutBtn")) $("#logoutBtn").style.display = logged() ? "flex" : "none";
+  if ($("#loginBtn")) $("#loginBtn").style.display = logged() ? "none" : "flex";
+  if ($("#adminSection")) $("#adminSection").style.display = admin() ? "block" : "none";
+  if ($("#ownerSection")) $("#ownerSection").style.display = owner() ? "block" : "none";
+  if ($("#applicationsLink")) $("#applicationsLink").style.display = owner() ? "flex" : "none";
+  if ($("#homeAccount")) $("#homeAccount").textContent = user?.username || "زائر";
 }
-window.toggleAppMenu=toggleMenu;
-window.closeAppMenu=closeMenu;
 
-function setPage(page){
-  if(["chat","pigeon","tickets","applications","bots","addbot","profile"].includes(page)&&!logged()){
-    closeMenu();openAuth();toast("هذه الصفحة تتطلب تسجيل الدخول");return;
-  }
-  if(page==="applications"&&!isOwner()){toast("التقديم للإدارة متاح للأونر فقط");return;}
-  if(page==="admin"&&!isAdmin()){toast("لوحة الإدارة للإدارة فقط");return;}
-  if(page==="owner-admin"&&!isOwner()){toast("لوحة الأونر للأونر فقط");return;}
-  if(page==="logout"){localStorage.clear();location.href="app.html#home";return;}
-  if(page==="login"){openAuth();return;}
+function shell(page, body, extra="") {
+  const m = META[page] || ["✦",page,""];
+  return '<section class="mld-page-shell page-specific page-'+esc(page)+'">'+
+    '<header class="mld-page-head"><div><span class="mld-kicker">'+m[0]+' MLD COMMUNITY</span><h1>'+m[1]+'</h1><p>'+m[2]+'</p></div>'+extra+'</header>'+
+    '<div class="mld-page-body">'+body+'</div></section>';
+}
 
-  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
-  document.querySelectorAll(".sidebar a[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
-  const el=$("#page-"+page);
-  if(!el)return;
-  el.classList.add("active");
-  $("#pageTitle").textContent=({
-    home:"الرئيسية",members:"الأعضاء",top:"التوب",leaders:"الرتب القيادية",chat:"الشات العام",
-    pigeon:"الزاجل",games:"الألعاب",cinema:"السينما",groups:"القروبات",tickets:"التذاكر",
-    applications:"التقديم",reviews:"الآراء",bots:"منصة البوتات",addbot:"إضافة بوت",profile:"بروفايلي",
-    admin:"لوحة الإدارة","owner-admin":"لوحة الأونر"
-  })[page]||"MLD";
-  location.hash=page;
+function panel(title, body, cls="") {
+  return '<article class="panel '+cls+'"><h3>'+title+'</h3>'+body+'</article>';
+}
+
+function empty(text="لا توجد بيانات حالياً.") {
+  return '<div class="empty-state"><strong>'+esc(text)+'</strong><span>ستظهر البيانات هنا تلقائياً عند توفرها.</span></div>';
+}
+
+function requireLogin() {
+  if (logged()) return true;
   closeMenu();
-  renderPage(page).catch(e=>{el.innerHTML=pageShell(page,"<div class='empty-state'><h3>تعذر تحميل الصفحة</h3><p>"+esc(e.message)+"</p></div>");});
+  toast("هذه الصفحة تتطلب تسجيل الدخول");
+  openAuth();
+  return false;
 }
 
-function pageShell(page,body){
-  const meta={
-    home:["🏠","الرئيسية","واجهة MLD الرئيسية"],
-    members:["👥","الأعضاء","استعرض أعضاء مجتمع MLD وابحث عن أي عضو"],
-    top:["🏆","التوب","إحصائيات النشاط داخل المجتمع"],
-    leaders:["👑","الرتب القيادية","الرتب وأعداد أعضائها"],
-    chat:["💬","الشات العام","محادثة المجتمع"],
-    pigeon:["✉️","الزاجل","رسائلك الخاصة داخل MLD"],
-    games:["🎮","الألعاب","اختَر لعبة وأنشئ جلسة"],
-    cinema:["🎬","السينما","غرف مشاهدة جماعية"],
-    groups:["👨‍👩‍👧","القروبات","قروبات المجتمع المرتبطة بـ MLD"],
-    tickets:["🎫","التذاكر","الدعم ومتابعة الطلبات"],
-    applications:["📝","التقديم","طلبات الانضمام للإدارة"],
-    reviews:["⭐","الآراء","آراء وتجارب أعضاء MLD"],
-    bots:["🤖","منصة البوتات","إدارة بوتاتك"],
-    addbot:["➕","إضافة بوت","ربط بوت جديد"],
-    profile:["👤","بروفايلي","إدارة بيانات حسابك"],
-    admin:["🛡️","لوحة الإدارة","إدارة التذاكر والحسابات المسموح بها"],
-    "owner-admin":["👑","لوحة الأونر","التحكم الكامل بالمجتمع"]
-  }[page]||["✦",page,""];
-  return '<section class="mld-page-shell"><header class="mld-page-head"><span class="mld-kicker">'+meta[0]+' MLD COMMUNITY</span><h1>'+meta[1]+'</h1><p>'+meta[2]+'</p></header><div class="mld-page-body">'+body+"</div></section>";
+function allowed(page) {
+  if (ownerOnlyPages.has(page)) return owner();
+  if (page === "admin") return admin();
+  if (protectedPages.has(page)) return logged();
+  return true;
 }
-const panel=(title,body)=>'<div class="panel"><h3>'+title+"</h3>"+body+"</div>";
-const memberCard=m=>'<article class="mld-member"><img src="'+esc(m.avatar||"/logo.svg")+'" onerror="this.src=\'/logo.svg\'"><span><b>'+esc(m.name)+'</b><small>@'+esc(m.username||"")+'</small><em>'+((m.importantRoles||[]).slice(0,2).map(r=>esc(r.name)).join(" · ")||"عضو")+"</em></span></article>";
 
-async function renderPage(p){
-  const el=$("#page-"+p); if(!el)return;
-  if(p==="home"){
-    const d=await api("/api/public/server");
-    el.innerHTML=pageShell(p,'<div class="page-grid three">'+panel("السيرفر","<strong class="metric">"+esc(d.name||"MLD")+"</strong><p class="muted">مجتمع MLD</p>")+panel("الأعضاء","<strong class="metric">"+num(d.memberCount)+"</strong><p class="muted">عضو في ديسكورد</p>")+panel("المتصلون الآن","<strong class="metric">"+num(d.onlineCount)+"</strong><p class="muted">متصل</p>")+"</div><div class="page-grid three" style="margin-top:16px">"+panel("الزيارات","<strong class="metric">"+num(d.visits)+"</strong><p class="muted">زيارات الموقع</p>")+panel("المنشئ","<strong class="metric">فهد المطيري</strong><p class="muted">@w4px</p>")+panel("الحالة","<strong class="metric online">● متصل</strong><p class="muted">Discord + API</p>")+"</div>");
-    return;
-  }
-  if(p==="members"){
-    const d=await fetch(API+"/api/public/members",{cache:"no-store"}).then(r=>r.json());
-    el.innerHTML=pageShell(p,'<div class="toolbar-row"><input id="memberSearch" class="full" placeholder="ابحث بالاسم أو اليوزر..."><span>'+num(d.total||0)+' عضو</span></div><div id="memberGrid" class="mld-member-grid">'+(d.members||[]).map(memberCard).join("")+"</div>");
-    $("#memberSearch").oninput=async e=>{const q=e.target.value.trim();const x=await fetch(API+"/api/public/members?q="+encodeURIComponent(q),{cache:"no-store"}).then(r=>r.json());$("#memberGrid").innerHTML=(x.members||[]).map(memberCard).join("")||'<div class="empty-state">لا توجد نتائج.</div>'};
-    return;
-  }
-  if(p==="top"){
-    const d=await fetch(API+"/api/public/top",{cache:"no-store"}).then(r=>r.json());
-    const box=(title,list,key,label)=>'<div class="rank-box"><h3>'+title+'</h3>'+((list||[]).map((m,i)=>'<div class="rank-row"><i>'+String(i+1).padStart(2,"0")+'</i><img src="'+esc(m.avatar||"/logo.svg")+'"><span><b>'+esc(m.name)+'</b><small>'+label+'</small></span><strong>'+num(m.stats?.[key])+"</strong></div>").join("")||'<div class="empty-state">لا توجد بيانات نشاط بعد.</div>')+"</div>";
-    el.innerHTML=pageShell(p,'<div class="page-grid">'+box("💬 أكثر الرسائل",d.messages,"messages","رسالة")+box("💬 أكثر المنشنات",d.mentions,"mentionsReceived","منشن")+box("🎙️ وقت الصوت",d.voice,"voiceMinutes","دقيقة")+box("⚡ دخول صوتي",d.joins,"voiceJoins","دخول")+"</div>");
-    return;
-  }
-  if(p==="leaders"){
-    const d=await fetch(API+"/api/public/roles",{cache:"no-store"}).then(r=>r.json());
-    el.innerHTML=pageShell(p,'<div class="role-grid">'+(d.roles||[]).map(r=>'<article class="role-card"><div class="role-top"><i style="background:'+esc(r.color)+'"></i><b>'+num(r.membersCount)+' عضو</b></div><h3>'+esc(r.name)+'</h3><button class="btn-secondary" onclick="location.hash=\'leaders\'">عرض الرتبة</button></article>').join("")+"</div>");
-    return;
-  }
-  if(p==="games"){
-    const games=[["uno","🎴","أونو","2–6 لاعبين"],["baloot","♠️","بلوت","4 لاعبين"],["jaccaro","🎲","جاكارو","2–4 لاعبين"],["ludo","🎯","لودو","2–4 لاعبين"],["mafia","🕵️","مافيا","5+ لاعبين"],["monopoly","🏠","مونوبولي","2–6 لاعبين"],["codenames","🧩","كود نيمز","4+ لاعبين"],["roulette","🎡","روليت","2+ لاعبين"]];
-    el.innerHTML=pageShell(p,'<div class="page-grid three">'+games.map(g=>'<article class="game-card"><div class="game-icon">'+g[1]+'</div><h3>'+g[2]+'</h3><p class="muted">'+g[3]+'</p><a class="btn-primary" href="game.html?type='+g[0]+'">فتح اللعبة</a></article>').join("")+"</div>");
-    return;
-  }
-  if(p==="chat"){
-    el.innerHTML=pageShell(p,'<div id="chatList" class="stack">جاري التحميل...</div><div class="composer"><input id="chatInput" class="full" placeholder="اكتب رسالتك..."><button id="chatSend" class="btn-primary">إرسال</button></div>');
-    const load=async()=>{const d=await api("/api/community/chat");$("#chatList").innerHTML=(d.messages||[]).map(m=>'<div class="message-card"><b>'+esc(m.sender_name)+'</b><p>'+esc(m.content)+'</p></div>').join("")||'<div class="empty-state">لا توجد رسائل.</div>'};
-    $("#chatSend").onclick=async()=>{const i=$("#chatInput");if(!i.value.trim())return;try{await api("/api/community/chat",{method:"POST",body:JSON.stringify({content:i.value.trim()})});i.value="";load()}catch(e){toast(e.message)}};await load();return;
-  }
-  if(p==="reviews"){
-    const d=await fetch(API+"/api/community/reviews",{cache:"no-store"}).then(r=>r.json());
-    el.innerHTML=pageShell(p,'<div id="reviewsList" class="page-grid">'+(d.reviews||[]).map(x=>panel("★ "+esc(x.username||"عضو"),"<p>"+esc(x.content)+"</p><small>"+num(x.rating)+"/5</small>")).join("")||'<div class="empty-state">لا توجد آراء.</div>'+"</div>"+(logged()?'<div class="panel" style="margin-top:16px"><textarea id="reviewText" class="full" placeholder="اكتب رأيك..."></textarea><button id="reviewSend" class="btn-primary">إضافة رأي</button></div>':""));
-    $("#reviewSend")?.addEventListener("click",async()=>{try{await api("/api/community/reviews",{method:"POST",body:JSON.stringify({content:$("#reviewText").value,rating:5})});toast("تمت إضافة رأيك ✓");setPage("reviews")}catch(e){toast(e.message)}});
-    return;
-  }
-  if(p==="groups"){
-    const d=await fetch(API+"/api/community/groups",{cache:"no-store"}).then(r=>r.json());
-    el.innerHTML=pageShell(p,'<div class="page-grid">'+(d.groups||[]).map(g=>panel(esc(g.name),"<p>"+esc(g.description||"")+"</p><button class="btn-secondary" onclick="joinGroup("+g.id+")">انضمام</button>")).join("")||'<div class="empty-state">لا توجد قروبات.</div>'+"</div>"+(logged()?'<div class="panel" style="margin-top:16px"><h3>إنشاء قروب</h3><input id="groupName" class="full" placeholder="اسم القروب"><textarea id="groupDesc" class="full" placeholder="الوصف"></textarea><button id="groupCreate" class="btn-primary">إرسال الطلب</button></div>':""));
-    $("#groupCreate")?.addEventListener("click",async()=>{try{await api("/api/community/groups",{method:"POST",body:JSON.stringify({name:$("#groupName").value,description:$("#groupDesc").value})});toast("تم إرسال الطلب ✓");setPage("groups")}catch(e){toast(e.message)}});
-    return;
-  }
-  if(p==="cinema"){
-    const d=await fetch(API+"/api/community/cinema",{cache:"no-store"}).then(r=>r.json());
-    el.innerHTML=pageShell(p,'<div class="page-grid">'+(d.rooms||[]).map(x=>panel("🎬 "+esc(x.title),"<p>"+esc(x.status||"مفتوحة")+"</p><video controls playsinline src=""+esc(x.media_url)+"" style="width:100%;border-radius:16px"></video>")).join("")||'<div class="empty-state">لا توجد غرف.</div>'+"</div>"+(logged()?'<div class="panel" style="margin-top:16px"><h3>إنشاء غرفة</h3><input id="cinemaTitle" class="full" placeholder="العنوان"><input id="cinemaUrl" class="full" placeholder="رابط المحتوى المصرح لك باستخدامه"><button id="cinemaCreate" class="btn-primary">إنشاء</button></div>':""));
-    $("#cinemaCreate")?.addEventListener("click",async()=>{try{await api("/api/community/cinema",{method:"POST",body:JSON.stringify({title:$("#cinemaTitle").value,media_url:$("#cinemaUrl").value})});toast("تم إنشاء الغرفة ✓");setPage("cinema")}catch(e){toast(e.message)}});
-    return;
-  }
-  if(p==="tickets"){
-    el.innerHTML=pageShell(p,'<div class="panel"><input id="ticketSubject" class="full" placeholder="عنوان التذكرة"><textarea id="ticketContent" class="full" placeholder="اشرح مشكلتك"></textarea><button id="ticketCreate" class="btn-primary">فتح تذكرة</button></div><div id="ticketList" class="stack" style="margin-top:16px"></div>');
-    const load=async()=>{const d=await api("/api/community/tickets");$("#ticketList").innerHTML=(d.tickets||[]).map(t=>'<div class="message-card"><b>#'+t.id+" · "+esc(t.subject)+"</b><p>"+esc(t.status)+"</p></div>").join("")||'<div class="empty-state">لا توجد تذاكر.</div>'};
-    $("#ticketCreate").onclick=async()=>{try{await api("/api/community/tickets",{method:"POST",body:JSON.stringify({subject:$("#ticketSubject").value,content:$("#ticketContent").value})});toast("تم فتح التذكرة ✓");load()}catch(e){toast(e.message)}};await load();return;
-  }
-  if(p==="applications"){
-    el.innerHTML=pageShell(p,'<div class="panel"><h3>التقديم للإدارة</h3><input id="appDiscord" class="full" placeholder="Discord ID"><textarea id="appAnswers" class="full" placeholder="اكتب إجاباتك"></textarea><button id="appSend" class="btn-primary">إرسال التقديم</button></div>');
-    $("#appSend").onclick=async()=>{try{await api("/api/community/applications",{method:"POST",body:JSON.stringify({discord_id:$("#appDiscord").value,answers:{text:$("#appAnswers").value}})});toast("تم إرسال التقديم ✓")}catch(e){toast(e.message)}};return;
-  }
-  if(p==="pigeon"){
-    el.innerHTML=pageShell(p,'<div class="panel"><input id="pigeonTo" class="full" placeholder="ID المستلم"><textarea id="pigeonText" class="full" placeholder="الرسالة"></textarea><button id="pigeonSend" class="btn-primary">إرسال</button></div><div id="pigeonList" class="stack" style="margin-top:16px"></div>');
-    const load=async()=>{const d=await api("/api/community/pigeon");$("#pigeonList").innerHTML=(d.messages||[]).map(x=>'<div class="message-card"><p>'+esc(x.content)+"</p></div>").join("")||'<div class="empty-state">لا توجد رسائل.</div>'};
-    $("#pigeonSend").onclick=async()=>{try{await api("/api/community/pigeon",{method:"POST",body:JSON.stringify({recipient_id:$("#pigeonTo").value,content:$("#pigeonText").value})});toast("تم الإرسال ✓");load()}catch(e){toast(e.message)}};await load();return;
-  }
-  if(p==="profile"){
-    el.innerHTML=pageShell(p,'<div class="panel"><label>اسم المستخدم</label><input id="profileName" class="full" value="'+esc(user?.username||"")+'"><label>النبذة</label><textarea id="profileBio" class="full">'+esc(user?.bio||"")+'</textarea><button id="profileSave" class="btn-primary">حفظ التغييرات</button></div>');
-    $("#profileSave").onclick=async()=>{try{const d=await api("/api/users/me",{method:"PATCH",body:JSON.stringify({username:$("#profileName").value.trim(),bio:$("#profileBio").value.trim()})});user=d.user;localStorage.setItem("user",JSON.stringify(user));syncUI();toast("تم الحفظ ✓")}catch(e){toast(e.message)}};return;
-  }
-  if(p==="bots"){
+async function loadHome(page) {
+  let d;
+  try { d = await api("/api/public/server"); } catch { d = {name:"MLD",memberCount:null,onlineCount:null,visits:0}; }
+  page.innerHTML = shell("home",
+    '<div class="page-grid three">'+
+      panel("🌐 السيرفر",'<strong class="metric">'+esc(d.name || "MLD")+'</strong><p class="muted">مجتمع MLD على Discord</p>')+
+      panel("👥 الأعضاء",'<strong class="metric">'+(d.memberCount==null?"—":num(d.memberCount))+'</strong><p class="muted">عضو في السيرفر</p>')+
+      panel("🟢 المتصلون",'<strong class="metric">'+(d.onlineCount==null?"—":num(d.onlineCount))+'</strong><p class="muted">متصل الآن</p>')+
+    '</div><div class="page-grid three page-gap">'+
+      panel("👁️ الزيارات",'<strong class="metric">'+num(d.visits)+'</strong><p class="muted">زيارات الموقع</p>')+
+      panel("👑 المنشئ",'<strong class="metric">فهد المطيري</strong><p class="muted">@w4px</p>')+
+      panel("⚡ الحالة",'<strong class="metric online">'+(d.memberCount==null?"● غير متاح":"● متصل")+'</strong><p class="muted">Discord + API</p>')+
+    '</div><div class="page-grid two page-gap">'+
+      panel("ابدأ من هنا",'<p class="muted">تصفح الأعضاء والتوب والرتب والألعاب والسينما والقروبات بدون تسجيل. الخدمات الخاصة تظهر بعد تسجيل الدخول.</p><div class="quick-actions"><a class="btn-primary" href="#members">استكشف الأعضاء</a><a class="btn-secondary" href="#games">افتح الألعاب</a></div>')+
+      panel("حسابك",'<p class="muted">'+(logged()?"أنت مسجل باسم <b>"+esc(user.username)+"</b>.":"أنت تتصفح كزائر.")+'</p><button class="btn-primary" id="homeAuth">'+(logged()?"بروفايلي":"دخول المنصة")+'</button>')+
+    '</div>'
+  );
+  $("#homeAuth")?.addEventListener("click",()=>logged()?setPage("profile"):openAuth());
+}
+
+async function loadMembers(page) {
+  page.innerHTML = shell("members",'<div class="toolbar-row"><input id="memberSearch" class="full" placeholder="ابحث بالاسم أو اليوزر أو ID"><span id="memberTotal">جاري...</span></div><div id="memberGrid" class="mld-member-grid"></div>');
+  const render = d => {
+    $("#memberTotal").textContent = num(d.total || (d.members||[]).length) + " عضو";
+    $("#memberGrid").innerHTML = (d.members||[]).map(m =>
+      '<article class="mld-member"><img src="'+esc(m.avatar || "/logo.svg")+'" onerror="this.src=\'/logo.svg\'"><span><b>'+esc(m.name)+'</b><small>@'+esc(m.username||"")+'</small><em>'+((m.importantRoles||[]).slice(0,3).map(r=>esc(r.name)).join(" · ") || "عضو")+'</em></span></article>'
+    ).join("") || empty("لا توجد نتائج");
+  };
+  try { render(await api("/api/public/members")); } catch { $("#memberGrid").innerHTML=empty("تعذر تحميل الأعضاء"); }
+  let timer;
+  $("#memberSearch").oninput = e => {
+    clearTimeout(timer); const q=e.target.value.trim();
+    timer=setTimeout(async()=>{ try { render(await api("/api/public/members?q="+encodeURIComponent(q))); } catch {} },220);
+  };
+}
+
+async function loadTop(page) {
+  try {
+    const d=await api("/api/public/top");
+    const rank=(title,list,key,label)=>'<article class="rank-box"><h3>'+title+'</h3>'+
+      ((list||[]).map((m,i)=>'<div class="rank-row"><i>'+String(i+1).padStart(2,"0")+'</i><img src="'+esc(m.avatar||"/logo.svg")+'"><span><b>'+esc(m.name)+'</b><small>'+label+'</small></span><strong>'+num(m.stats?.[key])+'</strong></div>').join("") || empty("لا توجد إحصائيات بعد"))+'</article>';
+    page.innerHTML=shell("top",'<div class="page-grid">'+rank("💬 أكثر الرسائل",d.messages,"messages","رسالة")+rank("📣 أكثر المنشنات",d.mentions,"mentionsReceived","منشن")+rank("🎙️ وقت الصوت",d.voice,"voiceMinutes","دقيقة")+rank("⚡ الدخول الصوتي",d.joins,"voiceJoins","دخول")+'</div>');
+  } catch { page.innerHTML=shell("top",empty("تعذر تحميل التوب")); }
+}
+
+async function loadLeaders(page) {
+  try {
+    const d=await api("/api/public/roles");
+    page.innerHTML=shell("leaders",'<div class="role-grid">'+(d.roles||[]).map(r=>'<article class="role-card"><div class="role-top"><i style="background:'+esc(r.color)+'"></i><b>'+num(r.membersCount)+' عضو</b></div><h3>'+esc(r.name)+'</h3><p class="muted">رتبة قيادية داخل MLD</p><button class="btn-secondary role-members" data-id="'+esc(r.id)+'">عرض الأعضاء</button></article>').join("") || empty("لا توجد رتب")+'</div>');
+    $$(".role-members",page).forEach(b=>b.onclick=async()=>{try{const d=await api("/api/public/roles/"+encodeURIComponent(b.dataset.id)+"/members");toast((d.members||[]).length+" عضو في "+(d.role?.name||"الرتبة"));}catch{toast("تعذر تحميل أعضاء الرتبة");}});
+  } catch { page.innerHTML=shell("leaders",empty("تعذر تحميل الرتب")); }
+}
+
+function loadGames(page) {
+  const games=[
+    ["uno","🎴","أونو","2–6 لاعبين"],["baloot","♠️","بلوت","4 لاعبين"],["jaccaro","🎲","جاكارو","2–4 لاعبين"],
+    ["ludo","🎯","لودو","2–4 لاعبين"],["mafia","🕵️","مافيا","5+ لاعبين"],["monopoly","🏠","مونوبولي","2–6 لاعبين"],
+    ["codenames","🧩","كود نيمز","4+ لاعبين"],["roulette","🎡","روليت","2+ لاعبين"]
+  ];
+  page.innerHTML=shell("games",'<div class="page-grid three">'+games.map(g=>'<article class="game-card"><div class="game-icon">'+g[1]+'</div><h3>'+g[2]+'</h3><p class="muted">'+g[3]+'</p><a class="btn-primary" href="game.html?type='+encodeURIComponent(g[0])+'">فتح اللعبة</a><small class="game-note">متاح للتصفح • اللعب حسب حالة الجلسة</small></article>').join("")+'</div>');
+}
+
+async function loadReviews(page) {
+  try {
+    const d=await api("/api/community/reviews");
+    page.innerHTML=shell("reviews",'<div class="page-grid">'+((d.reviews||[]).map(x=>panel("⭐ "+esc(x.username||"عضو"),'<p>'+esc(x.content||"")+'</p><small>التقييم: '+num(x.rating)+'/5</small>')).join("") || empty("لا توجد آراء بعد"))+'</div>'+
+      (logged()?'<div class="panel page-gap"><h3>أضف رأيك</h3><textarea id="reviewText" class="full" placeholder="اكتب رأيك عن MLD..."></textarea><button id="reviewSend" class="btn-primary">نشر الرأي</button></div>':""));
+    $("#reviewSend")?.addEventListener("click",async()=>{const v=$("#reviewText").value.trim();if(!v)return toast("اكتب رأيك أولاً");try{await api("/api/community/reviews",{method:"POST",body:JSON.stringify({content:v,rating:5})});toast("تم نشر رأيك ✓");setPage("reviews")}catch(e){toast(e.message)}});
+  } catch { page.innerHTML=shell("reviews",empty("تعذر تحميل الآراء")); }
+}
+
+async function loadGroups(page) {
+  try {
+    const d=await api("/api/community/groups");
+    page.innerHTML=shell("groups",'<div class="page-grid">'+((d.groups||[]).map(g=>panel("👨‍👩‍👧 "+esc(g.name),'<p>'+esc(g.description||"")+'</p><span class="status-chip">'+esc(g.status||"متاحة")+'</span><div class="quick-actions"><button class="btn-secondary join-group" data-id="'+esc(g.id)+'">انضمام</button></div>')).join("") || empty("لا توجد قروبات حالياً"))+'</div>'+
+      (logged()?'<div class="panel page-gap"><h3>إنشاء قروب</h3><input id="groupName" class="full" placeholder="اسم القروب"><textarea id="groupDesc" class="full" placeholder="الوصف"></textarea><button id="groupCreate" class="btn-primary">إرسال الطلب للأونر</button></div>':""));
+    $$(".join-group",page).forEach(b=>b.onclick=async()=>{if(!requireLogin())return;try{await api("/api/community/groups/"+b.dataset.id+"/join",{method:"POST"});toast("تم إرسال طلب الانضمام ✓")}catch(e){toast(e.message)}});
+    $("#groupCreate")?.addEventListener("click",async()=>{try{await api("/api/community/groups",{method:"POST",body:JSON.stringify({name:$("#groupName").value.trim(),description:$("#groupDesc").value.trim()})});toast("تم إرسال طلب القروب ✓");setPage("groups")}catch(e){toast(e.message)}});
+  } catch { page.innerHTML=shell("groups",empty("تعذر تحميل القروبات")); }
+}
+
+async function loadCinema(page) {
+  try {
+    const d=await api("/api/community/cinema");
+    page.innerHTML=shell("cinema",'<div class="page-grid">'+((d.rooms||[]).map(x=>panel("🎬 "+esc(x.title),'<span class="status-chip">'+esc(x.status||"مفتوحة")+'</span><video controls playsinline src="'+esc(x.media_url||"")+'" style="width:100%;margin-top:14px;border-radius:16px;background:#000"></video>')).join("") || empty("لا توجد غرف سينما"))+'</div>'+
+      (logged()?'<div class="panel page-gap"><h3>إنشاء غرفة</h3><input id="cinemaTitle" class="full" placeholder="عنوان الغرفة"><input id="cinemaUrl" class="full" placeholder="رابط محتوى تملك حق استخدامه"><button id="cinemaCreate" class="btn-primary">إنشاء الغرفة</button></div>':""));
+    $("#cinemaCreate")?.addEventListener("click",async()=>{try{await api("/api/community/cinema",{method:"POST",body:JSON.stringify({title:$("#cinemaTitle").value.trim(),media_url:$("#cinemaUrl").value.trim()})});toast("تم إنشاء الغرفة ✓");setPage("cinema")}catch(e){toast(e.message)}});
+  } catch { page.innerHTML=shell("cinema",empty("تعذر تحميل السينما")); }
+}
+
+async function loadChat(page) {
+  page.innerHTML=shell("chat",'<div id="chatList" class="stack"></div><div class="composer"><input id="chatInput" class="full" placeholder="اكتب رسالتك..."><button id="chatSend" class="btn-primary">إرسال</button></div>');
+  const load=async()=>{try{const d=await api("/api/community/chat");$("#chatList").innerHTML=(d.messages||[]).map(m=>'<div class="message-card"><b>'+esc(m.sender_name)+'</b><p>'+esc(m.content)+'</p></div>').join("")||empty("لا توجد رسائل")}catch(e){$("#chatList").innerHTML=empty(e.message)}};
+  await load();
+  $("#chatSend").onclick=async()=>{const v=$("#chatInput").value.trim();if(!v)return;if(v.length>2000)return toast("الرسالة طويلة جداً");try{await api("/api/community/chat",{method:"POST",body:JSON.stringify({content:v})});$("#chatInput").value="";load()}catch(e){toast(e.message)}};
+}
+
+async function loadPigeon(page) {
+  page.innerHTML=shell("pigeon",'<div class="page-grid two"><div class="panel"><h3>إرسال رسالة</h3><input id="pigeonTo" class="full" placeholder="Discord ID أو ID العضو"><textarea id="pigeonText" class="full" placeholder="الرسالة"></textarea><button id="pigeonSend" class="btn-primary">إرسال</button></div><div id="pigeonList" class="stack"></div></div>');
+  try{const d=await api("/api/community/pigeon");$("#pigeonList").innerHTML=(d.messages||[]).map(x=>'<div class="message-card"><p>'+esc(x.content)+'</p></div>').join("")||empty("لا توجد رسائل")}catch(e){$("#pigeonList").innerHTML=empty(e.message)}
+  $("#pigeonSend").onclick=async()=>{const to=$("#pigeonTo").value.trim(),text=$("#pigeonText").value.trim();if(!to||!text)return toast("أكمل البيانات");try{await api("/api/community/pigeon",{method:"POST",body:JSON.stringify({recipient_id:to,content:text})});toast("تم الإرسال ✓");setPage("pigeon")}catch(e){toast(e.message)}};
+}
+
+async function loadTickets(page) {
+  page.innerHTML=shell("tickets",'<div class="panel"><h3>فتح تذكرة جديدة</h3><input id="ticketSubject" class="full" placeholder="عنوان التذكرة"><textarea id="ticketContent" class="full" placeholder="اشرح مشكلتك بالتفصيل"></textarea><button id="ticketCreate" class="btn-primary">فتح التذكرة</button></div><div id="ticketList" class="stack page-gap"></div>');
+  const load=async()=>{try{const d=await api("/api/community/tickets");$("#ticketList").innerHTML=(d.tickets||[]).map(t=>'<div class="message-card"><b>#'+t.id+" · "+esc(t.subject)+'</b><p>'+esc(t.status)+'</p></div>').join("")||empty("لا توجد تذاكر")}catch(e){$("#ticketList").innerHTML=empty(e.message)}};
+  await load();
+  $("#ticketCreate").onclick=async()=>{const s=$("#ticketSubject").value.trim(),c=$("#ticketContent").value.trim();if(!s||!c)return toast("أكمل عنوان التذكرة والمشكلة");try{await api("/api/community/tickets",{method:"POST",body:JSON.stringify({subject:s,content:c})});toast("تم فتح التذكرة ✓");load()}catch(e){toast(e.message)}};
+}
+
+async function loadApplications(page) {
+  page.innerHTML=shell("applications",'<div class="panel"><div class="notice-box">التقديم للإدارة مخصص للأونر فقط حسب نظام MLD.</div><h3>إدارة طلبات التقديم</h3><div id="applicationList" class="stack"></div></div>');
+  try{const d=await api("/api/community/applications");$("#applicationList").innerHTML=(d.applications||[]).map(a=>'<div class="message-card"><b>#'+a.id+'</b><p>'+esc(a.status)+' · Discord: '+esc(a.discord_id||"—")+'</p><button class="btn-secondary app-status" data-id="'+a.id+'" data-status="accepted">قبول</button> <button class="btn-secondary app-status" data-id="'+a.id+'" data-status="rejected">رفض</button></div>').join("")||empty("لا توجد طلبات");}catch(e){$("#applicationList").innerHTML=empty(e.message)}
+  $$(".app-status",page).forEach(b=>b.onclick=async()=>{try{await api("/api/community/applications/"+b.dataset.id+"/status",{method:"POST",body:JSON.stringify({status:b.dataset.status})});toast("تم تحديث الطلب ✓");setPage("applications")}catch(e){toast(e.message)}});
+}
+
+async function loadProfile(page) {
+  page.innerHTML=shell("profile",'<div class="page-grid two"><div class="panel"><h3>بيانات الحساب</h3><label>اسم المستخدم</label><input id="profileName" class="full" value="'+esc(user?.username||"")+'"><label>النبذة</label><textarea id="profileBio" class="full">'+esc(user?.bio||"")+'</textarea><button id="profileSave" class="btn-primary">حفظ التغييرات</button></div><div class="panel"><h3>الأمان</h3><p class="muted">غيّر كلمة المرور من هنا بعد الدخول.</p><input id="currentPassword" class="full" type="password" placeholder="كلمة المرور الحالية"><input id="newPassword" class="full" type="password" placeholder="كلمة المرور الجديدة"><button id="passwordSave" class="btn-secondary">تغيير كلمة المرور</button></div></div>');
+  $("#profileSave").onclick=async()=>{try{const d=await api("/api/users/me",{method:"PATCH",body:JSON.stringify({username:$("#profileName").value.trim(),bio:$("#profileBio").value.trim()})});user=d.user;localStorage.setItem("user",JSON.stringify(user));syncUI();toast("تم حفظ الملف ✓")}catch(e){toast(e.message)}};
+  $("#passwordSave").onclick=async()=>{try{await api("/api/auth/change-password",{method:"POST",body:JSON.stringify({current_password:$("#currentPassword").value,new_password:$("#newPassword").value})});toast("تم تغيير كلمة المرور ✓");$("#currentPassword").value="";$("#newPassword").value=""}catch(e){toast(e.message)}};
+}
+
+async function loadBots(page) {
+  try{
     const d=await api("/api/bots");
-    el.innerHTML=pageShell(p,'<div class="page-grid">'+(d.bots||[]).map(b=>panel("🤖 "+esc(b.name),"<p>السيرفر: "+esc(b.guild_id||"—")+"</p><p>الحالة: "+(b.active?"🟢 نشط":"🔴 متوقف")+"</p><button class="btn-secondary" onclick="toggleBot('"+esc(b.id)+"')">"+(b.active?"إيقاف":"تشغيل")+"</button>")).join("")||'<div class="empty-state">لا توجد بوتات.</div>'+"</div>");
+    page.innerHTML=shell("bots",'<div class="page-grid three">'+((d.bots||[]).map(b=>panel("🤖 "+esc(b.name),'<p>السيرفر: '+esc(b.guild_id||"—")+'</p><p>الحالة: '+(b.active?"🟢 نشط":"🔴 متوقف")+'</p><button class="btn-secondary bot-toggle" data-id="'+esc(b.id)+'">'+(b.active?"إيقاف البوت":"تشغيل البوت")+'</button>')).join("") || empty("لا توجد بوتات"))+'</div>');
+    $$(".bot-toggle",page).forEach(b=>b.onclick=async()=>{try{await api("/api/bots/"+b.dataset.id+"/toggle",{method:"POST"});toast("تم تحديث حالة البوت ✓");setPage("bots")}catch(e){toast(e.message)}});
+  }catch(e){page.innerHTML=shell("bots",empty(e.message))}
+}
+
+function loadAddBot(page) {
+  page.innerHTML=shell("addbot",'<div class="panel form-panel"><h3>ربط بوت جديد</h3><p class="muted">بيانات التوكن تُرسل إلى الخادم ولا توضع داخل ملفات الموقع.</p><input id="botName" class="full" placeholder="اسم البوت"><input id="botToken" class="full" type="password" placeholder="Bot Token"><input id="botGuild" class="full" placeholder="Discord Server ID"><button id="botCreate" class="btn-primary">إضافة البوت</button><div id="botMsg" class="msg"></div></div>');
+  $("#botCreate").onclick=async()=>{try{await api("/api/bots",{method:"POST",body:JSON.stringify({name:$("#botName").value.trim(),token:$("#botToken").value.trim(),guild_id:$("#botGuild").value.trim()})});toast("تمت إضافة البوت ✓");setPage("bots")}catch(e){$("#botMsg").textContent=e.message;$("#botMsg").className="msg show error"}};
+}
+
+async function loadAdmin(page, ownerPanel=false) {
+  if(ownerPanel && !owner()) return;
+  if(!ownerPanel && !admin()) return;
+  page.innerHTML=shell(ownerPanel?"owner-admin":"admin",'<div class="admin-dashboard"><div class="dashboard-kpis"><div class="kpi">👥<b>الحسابات</b><span id="adminUsersCount">...</span></div><div class="kpi">🎫<b>التذاكر</b><span id="adminTicketsCount">...</span></div><div class="kpi">🛡️<b>الصلاحية</b><span>'+(ownerPanel?"أونر كامل":"إدارة")+'</span></div></div><div id="adminUsers" class="panel"><h3>👥 الحسابات</h3><div class="stack"></div></div><div id="adminTickets" class="panel page-gap"><h3>🎫 التذاكر</h3><div class="stack"></div></div>'+(ownerPanel?'<div id="ownerApplications" class="panel page-gap"><h3>📝 التقديم</h3><div class="stack"></div></div><div id="ownerGroups" class="panel page-gap"><h3>👨‍👩‍👧 القروبات</h3><div class="stack"></div></div><div id="ownerAudit" class="panel page-gap"><h3>📋 سجل الأونر</h3><div class="stack"></div></div>':"")+'</div>');
+  try{
+    const users=await api("/api/users");
+    $("#adminUsersCount").textContent=num((users.users||[]).length);
+    $("#adminUsers .stack").innerHTML=(users.users||[]).map(u=>'<div class="message-card"><b>'+esc(u.username)+'</b><p>'+(u.is_owner?"👑 أونر":u.role==="admin"?"🛡️ إداري":"عضو")+'</p>'+(owner()&&!u.is_owner?'<button class="btn-secondary set-admin" data-id="'+esc(u.id)+'" data-action="'+(u.role==="admin"?"remove":"add")+'">'+(u.role==="admin"?"إزالة الإدارة":"تعيين إداري")+'</button>':"")+'</div>').join("")||empty("لا توجد حسابات");
+    $$(".set-admin",page).forEach(b=>b.onclick=async()=>{try{await api("/api/users/"+b.dataset.id+"/admin",{method:"POST",body:JSON.stringify({action:b.dataset.action})});toast("تم تحديث الصلاحية ✓");setPage(ownerPanel?"owner-admin":"admin")}catch(e){toast(e.message)}});
+  }catch(e){$("#adminUsers .stack").innerHTML=empty(e.message)}
+  try{
+    const d=await api("/api/community/tickets");
+    $("#adminTicketsCount").textContent=num((d.tickets||[]).length);
+    $("#adminTickets .stack").innerHTML=(d.tickets||[]).map(t=>'<div class="message-card"><b>#'+t.id+" · "+esc(t.subject)+'</b><p>'+esc(t.status)+' · '+esc(t.claimed_by||"غير مستلمة")+'</p>'+(t.status!=="closed"?'<button class="btn-secondary claim" data-id="'+t.id+'">استلام</button> <button class="btn-secondary close-ticket" data-id="'+t.id+'">إغلاق</button>':"")+'</div>').join("")||empty("لا توجد تذاكر");
+    $$(".claim",page).forEach(b=>b.onclick=async()=>{try{await api("/api/community/tickets/"+b.dataset.id+"/claim",{method:"POST"});toast("تم استلام التذكرة ✓");setPage(ownerPanel?"owner-admin":"admin")}catch(e){toast(e.message)}});
+    $$(".close-ticket",page).forEach(b=>b.onclick=async()=>{try{await api("/api/community/tickets/"+b.dataset.id+"/close",{method:"POST"});toast("تم إغلاق التذكرة ✓");setPage(ownerPanel?"owner-admin":"admin")}catch(e){toast(e.message)}});
+  }catch(e){$("#adminTickets .stack").innerHTML=empty(e.message)}
+  if(ownerPanel){
+    try{
+      const [a,g,l]=await Promise.all([api("/api/community/applications"),api("/api/community/groups/all"),api("/api/community/audit")]);
+      $("#ownerApplications .stack").innerHTML=(a.applications||[]).map(x=>'<div class="message-card"><b>#'+x.id+'</b><p>'+esc(x.status)+' · '+esc(x.discord_id||"—")+'</p><button class="btn-secondary owner-app" data-id="'+x.id+'" data-status="accepted">قبول</button> <button class="btn-secondary owner-app" data-id="'+x.id+'" data-status="rejected">رفض</button></div>').join("")||empty("لا توجد طلبات");
+      $("#ownerGroups .stack").innerHTML=(g.groups||[]).map(x=>'<div class="message-card"><b>'+esc(x.name)+'</b><p>'+esc(x.status)+'</p>'+(x.status==="pending"?'<button class="btn-secondary owner-group" data-id="'+x.id+'">اعتماد</button>':"")+'</div>').join("")||empty("لا توجد طلبات قروبات");
+      $("#ownerAudit .stack").innerHTML=(l.logs||[]).map(x=>'<div class="message-card"><b>'+esc(x.action)+'</b><p>'+esc(x.actor_name||"")+' · '+esc(x.target||"")+'</p></div>').join("")||empty("لا يوجد سجل");
+      $$(".owner-app",page).forEach(b=>b.onclick=async()=>{try{await api("/api/community/applications/"+b.dataset.id+"/status",{method:"POST",body:JSON.stringify({status:b.dataset.status})});toast("تم تحديث التقديم ✓");setPage("owner-admin")}catch(e){toast(e.message)}});
+      $$(".owner-group",page).forEach(b=>b.onclick=async()=>{try{await api("/api/community/groups/"+b.dataset.id+"/status",{method:"POST",body:JSON.stringify({status:"approved"})});toast("تم اعتماد القروب ✓");setPage("owner-admin")}catch(e){toast(e.message)}});
+    }catch(e){toast(e.message)}
+  }
+}
+
+async function render(pageName) {
+  const page=$("#page-"+pageName);
+  if(!page) return;
+  if(!allowed(pageName)) {
+    if(pageName==="admin" || pageName==="owner-admin") toast("ليس لديك صلاحية لهذه اللوحة");
+    else requireLogin();
     return;
   }
-  if(p==="addbot"){
-    el.innerHTML=pageShell(p,'<div class="panel"><input id="botName" class="full" placeholder="اسم البوت"><input id="botToken" class="full" type="password" placeholder="Bot Token"><input id="botGuild" class="full" placeholder="Discord Server ID"><button id="botCreate" class="btn-primary">إضافة البوت</button><p id="botMsg"></p></div>');
-    $("#botCreate").onclick=async()=>{try{await api("/api/bots",{method:"POST",body:JSON.stringify({name:$("#botName").value,token:$("#botToken").value,guild_id:$("#botGuild").value})});toast("تمت إضافة البوت ✓");setPage("bots")}catch(e){$("#botMsg").textContent=e.message}};return;
+  closeMenu();
+  $$(".page").forEach(p=>p.classList.remove("active"));
+  page.classList.add("active");
+  $("#pageTitle").textContent = META[pageName]?.[1] || pageName;
+  try {
+    if(pageName==="home") return loadHome(page);
+    if(pageName==="members") return loadMembers(page);
+    if(pageName==="top") return loadTop(page);
+    if(pageName==="leaders") return loadLeaders(page);
+    if(pageName==="games") return loadGames(page);
+    if(pageName==="reviews") return loadReviews(page);
+    if(pageName==="groups") return loadGroups(page);
+    if(pageName==="cinema") return loadCinema(page);
+    if(pageName==="chat") return loadChat(page);
+    if(pageName==="pigeon") return loadPigeon(page);
+    if(pageName==="tickets") return loadTickets(page);
+    if(pageName==="applications") return loadApplications(page);
+    if(pageName==="profile") return loadProfile(page);
+    if(pageName==="bots") return loadBots(page);
+    if(pageName==="addbot") return loadAddBot(page);
+    if(pageName==="admin") return loadAdmin(page,false);
+    if(pageName==="owner-admin") return loadAdmin(page,true);
+  } catch(e) {
+    page.innerHTML=shell(pageName,empty("حدث خطأ غير متوقع"));
+    console.error(e);
   }
-  if(p==="admin"){return renderAdmin(el,false)}
-  if(p==="owner-admin"){return renderAdmin(el,true)}
 }
 
-async function renderAdmin(el,ownerPanel){
-  if(!isAdmin())throw Error("غير مصرح");
-  const users=await api("/api/users");
-  let body='<div class="page-grid"><div class="panel"><h3>👥 الحسابات</h3><div class="stack">'+(users.users||[]).map(u=>'<div class="message-card"><b>'+esc(u.username)+'</b><p>'+((u.is_owner)?"👑 أونر":u.role==="admin"?"🛡️ إدارة":"عضو")+'</p>'+(!u.is_owner&&isOwner()?'<button class="btn-secondary" onclick="setAdmin(\''+esc(u.id)+'\',\''+(u.role==="admin"?"remove":"add")+'\')">'+(u.role==="admin"?"إزالة الإدارة":"تعيين كإداري")+"</button>":"")+"</div>").join("")+"</div></div>";
-  const tickets=await api("/api/community/tickets");
-  body+='<div class="panel"><h3>🎫 التذاكر</h3><div class="stack">'+(tickets.tickets||[]).map(t=>'<div class="message-card"><b>#'+t.id+" · "+esc(t.subject)+"</b><p>"+esc(t.status)+"</p>"+(t.status!=="closed"?"<button class="btn-secondary" onclick="claimTicket('"+t.id+"')">استلام</button> <button class="btn-secondary" onclick="closeTicket('"+t.id+"')">إغلاق</button>":"")+"</div>").join("")||'<div class="empty-state">لا توجد تذاكر.</div>'+"</div></div></div>";
-  if(ownerPanel){
-    const apps=await api("/api/community/applications"), groups=await api("/api/community/groups/all"), audit=await api("/api/community/audit");
-    body+='<div class="panel" style="margin-top:16px"><h3>📝 التقديم</h3><div class="stack">'+(apps.applications||[]).map(a=>'<div class="message-card"><b>#'+a.id+"</b><p>"+esc(a.status)+" · "+esc(a.discord_id||"—")+'</p><button class="btn-secondary" onclick="applicationStatus(''+a.id+"','accepted')">قبول</button> <button class="btn-secondary" onclick="applicationStatus('"+a.id+"','rejected')">رفض</button></div>").join("")||'<div class="empty-state">لا توجد طلبات.</div>'+"</div></div>";
-    body+='<div class="panel" style="margin-top:16px"><h3>👨‍👩‍👧 القروبات</h3><div class="stack">'+(groups.groups||[]).map(g=>'<div class="message-card"><b>'+esc(g.name)+'</b><p>'+esc(g.status)+'</p>'+((g.status==="pending")?'<button class="btn-secondary" onclick="groupStatus(\''+g.id+"','approved')">اعتماد</button>":"")+"</div>").join("")||'<div class="empty-state">لا توجد طلبات.</div>'+"</div></div>";
-    body+='<div class="panel" style="margin-top:16px"><h3>📋 سجل الأونر</h3><div class="stack">'+(audit.logs||[]).map(x=>'<div class="message-card"><b>'+esc(x.action)+'</b><p>'+esc(x.actor_name||"")+" · "+esc(x.target||"")+"</p></div>").join("")||'<div class="empty-state">لا يوجد سجل.</div>'+"</div></div>";
+function setPage(page) {
+  if(page==="logout") {
+    localStorage.removeItem("token"); localStorage.removeItem("user"); token=""; user=null; syncUI(); toast("تم تسجيل الخروج"); location.hash="#home"; return;
   }
-  el.innerHTML=pageShell(ownerPanel?"owner-admin":"admin",body);
+  if(page==="login") { openAuth(); return; }
+  if(!allowed(page)) {
+    if(page==="admin"||page==="owner-admin") toast("هذه اللوحة غير متاحة لحسابك");
+    else requireLogin();
+    return;
+  }
+  location.hash="#"+page;
+  render(page);
 }
 
-window.setAdmin=async(id,action)=>{try{const d=await api("/api/users/"+id+"/admin",{method:"POST",body:JSON.stringify({action})});toast(d.message||"تم");setPage("admin")}catch(e){toast(e.message)}};
-window.claimTicket=async id=>{try{await api("/api/community/tickets/"+id+"/claim",{method:"POST"});toast("تم استلام التذكرة ✓");setPage("admin")}catch(e){toast(e.message)}};
-window.closeTicket=async id=>{try{await api("/api/community/tickets/"+id+"/close",{method:"POST"});toast("تم إغلاق التذكرة ✓");setPage("admin")}catch(e){toast(e.message)}};
-window.applicationStatus=async(id,status)=>{try{await api("/api/community/applications/"+id+"/status",{method:"POST",body:JSON.stringify({status})});toast("تم تحديث التقديم ✓");setPage("owner-admin")}catch(e){toast(e.message)}};
-window.groupStatus=async(id,status)=>{try{await api("/api/community/groups/"+id+"/status",{method:"POST",body:JSON.stringify({status})});toast("تم تحديث القروب ✓");setPage("owner-admin")}catch(e){toast(e.message)}};
-window.joinGroup=async id=>{if(!logged()){openAuth();return}try{await api("/api/community/groups/"+id+"/join",{method:"POST"});toast("تم الانضمام ✓")}catch(e){toast(e.message)}};
-window.toggleBot=async id=>{try{await api("/api/bots/"+id+"/toggle",{method:"POST"});toast("تم تحديث البوت ✓");setPage("bots")}catch(e){toast(e.message)}};
-
-function syncUI(){
-  $("#myName").textContent=user?.username||"زائر";
-  $("#myRole").textContent=isOwner()?"الأونر 👑":isAdmin()?"إدارة 🛡️":"عضو";
-  const av=$("#myAvatar");if(av){av.innerHTML=user?.avatar?'<img src="'+esc(user.avatar)+'">':esc((user?.username||"ز").slice(0,2).toUpperCase())}
-  $("#logoutBtn").style.display=logged()?"flex":"none";
-  $("#loginBtn").style.display=logged()?"none":"flex";
-  $("#adminSection").style.display=isAdmin()?"block":"none";
-  $("#ownerSection").style.display=isOwner()?"block":"none";
-  $("#applicationsLink").style.display=isOwner()?"flex":"none";
+function bindNavigation() {
+  $$(".sidebar a[data-page]").forEach(a=>{
+    a.onclick=e=>{e.preventDefault();setPage(a.dataset.page);};
+  });
+  $("#appMenuBackdrop")?.addEventListener("click",closeMenu);
+  $("#loginBtn")?.addEventListener("click",e=>{e.preventDefault();openAuth()});
+  $("#topLoginBtn")?.addEventListener("click",openAuth);
+  $("#logoutBtn")?.addEventListener("click",e=>{e.preventDefault();setPage("logout")});
 }
-function bindAuth(){
-  const auth=$("#authScreen"), form=$("#authForm"), tabs=document.querySelectorAll(".tabs button"), discordField=$("#discordField"), submit=$("#submitBtn"), msg=$("#authMsg");
+
+function bindAuth() {
+  const form=$("#authForm"), tabs=$$(".tabs button"), discordField=$("#discordField"), submit=$("#submitBtn"), msg=$("#authMsg");
+  if(!form) return;
   let mode="login";
-  tabs.forEach(b=>b.onclick=()=>{mode=b.dataset.tab;tabs.forEach(x=>x.classList.toggle("active",x===b));discordField.style.display=mode==="register"?"block":"none";submit.textContent=mode==="register"?"تسجيل":"دخول"});
-  $("#verifyDiscordBtn")?.addEventListener("click",async()=>{try{const id=$("#discord_id").value.trim();if(!id)throw Error("اكتب Discord ID");await fetch(API+"/api/auth/verify-discord",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discord_id:id})});msg.textContent="تم إرسال كود التحقق إلى الخاص في Discord ✓";msg.className="msg show success";$("#verification_code").style.display="block"}catch(e){msg.textContent=e.message;msg.className="msg show error"}});
-  form.onsubmit=async e=>{e.preventDefault();try{const d=await fetch(API+"/api/auth/"+mode,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:$("#username").value.trim(),password:$("#password").value,discord_id:$("#discord_id").value.trim(),verification_code:$("#verification_code")?.value.trim()||""})});const x=await d.json();if(!d.ok)throw Error(x.error||"خطأ");token=x.token;user=x.user;localStorage.setItem("token",token);localStorage.setItem("user",JSON.stringify(user));auth.classList.remove("show");syncUI();setPage("home");toast("تم تسجيل الدخول ✓")}catch(e){msg.textContent=e.message;msg.className="msg show error"}};
-  $("#loginBtn").onclick=openAuth;
-  $("#topLoginBtn").onclick=openAuth;
+  tabs.forEach(b=>b.onclick=()=>{mode=b.dataset.tab;tabs.forEach(x=>x.classList.toggle("active",x===b));discordField.style.display=mode==="register"?"block":"none";submit.textContent=mode==="register"?"تسجيل":"دخول";msg.className="msg";});
+  $("#verifyDiscordBtn")?.addEventListener("click",async()=>{
+    const id=$("#discord_id").value.trim(); if(!id)return toast("اكتب Discord ID أو اسم المستخدم");
+    try{await api("/api/auth/verify-discord",{method:"POST",body:JSON.stringify({discord_id:id})});msg.className="msg show success";msg.textContent="تم إرسال كود التحقق إلى الخاص في Discord ✓";$("#verification_code").style.display="block"}catch(e){msg.className="msg show error";msg.textContent=e.message}
+  });
+  form.onsubmit=async e=>{
+    e.preventDefault();
+    msg.className="msg show";msg.textContent="جاري...";
+    try{
+      const headers={"Content-Type":"application/json"};
+      const res=await fetch(API+"/api/auth/"+mode,{method:"POST",headers,body:JSON.stringify({username:$("#username").value.trim(),password:$("#password").value,discord_id:$("#discord_id").value.trim(),verification_code:$("#verification_code")?.value.trim()||""})});
+      const d=await res.json(); if(!res.ok)throw Error(d.error||"تعذر تسجيل الدخول");
+      token=d.token;user=d.user;localStorage.setItem("token",token);localStorage.setItem("user",JSON.stringify(user));closeAuth();syncUI();toast("تم تسجيل الدخول ✓");setPage("home");
+    }catch(e){msg.className="msg show error";msg.textContent=e.message}
+  };
+  $("#forgotOpenBtn")?.addEventListener("click",()=>$("#forgotScreen")?.classList.add("show"));
+  $("#forgotBtn")?.addEventListener("click",async()=>{
+    try{const d=await api("/api/auth/forgot-password",{method:"POST",body:JSON.stringify({username:$("#forgotUsername").value.trim(),discord_id:$("#forgotDiscord").value.trim()})});$("#forgotMsg").className="msg show success";$("#forgotMsg").textContent=d.message||"تم الإرسال"}catch(e){$("#forgotMsg").className="msg show error";$("#forgotMsg").textContent=e.message}
+  });
 }
-function init(){
-  syncUI();bindAuth();
-  $("#menuBtn").addEventListener("click",toggleMenu);
-  $("#appMenuBackdrop").addEventListener("click",closeMenu);
-  document.querySelectorAll(".sidebar a[data-page]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();setPage(a.dataset.page)}));
-  const requested=(location.hash||"#home").slice(1)||"home";
-  setPage(requested);
+
+async function init() {
+  syncUI(); bindNavigation(); bindAuth();
+  $("#menuBtn")?.setAttribute("aria-label","فتح القائمة");
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu()});
+  window.addEventListener("resize",()=>{if(innerWidth>900)closeMenu()});
+  const requested=(location.hash||"#home").slice(1) || "home";
+  if(requested==="login") openAuth(); else await render(requested);
 }
-window.addEventListener("hashchange",()=>{const p=(location.hash||"#home").slice(1)||"home";if(p!== "home")setPage(p)});
-window.addEventListener("resize",()=>{if(innerWidth>900)closeMenu()});
+window.addEventListener("hashchange",()=>{const p=(location.hash||"#home").slice(1)||"home";if(p!=="login")render(p)});
 init();
