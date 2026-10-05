@@ -596,3 +596,41 @@ window.closeMLDGame=()=>{const h=document.getElementById('embeddedGame'),c=docum
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
+
+// ===== MLD unified navigation/access layer =====
+(function(){
+  const protectedPages=['chat','pigeon','tickets','applications','bots','addbot','profile'];
+  const publicPages=['home','members','top','leaders','games','cinema','groups','reviews'];
+  const ownerPages=['owner-admin'];
+  const adminPages=['admin'];
+  function closeMenu(){document.getElementById('sidebar')?.classList.remove('open');document.getElementById('appMenuBackdrop')?.classList.remove('show');document.body.classList.remove('app-menu-open');}
+  function showAuth(){document.getElementById('authScreen')?.classList.add('show');}
+  function allowed(p){
+    if(publicPages.includes(p)) return true;
+    if(protectedPages.includes(p)) return !!token&&!!user;
+    if(ownerPages.includes(p)) return !!user?.is_owner;
+    if(adminPages.includes(p)) return !!user?.is_owner||['admin','owner'].includes(String(user?.role||'').toLowerCase());
+    return false;
+  }
+  function syncMenu(){
+    const owner=!!user?.is_owner, admin=owner||['admin','owner'].includes(String(user?.role||'').toLowerCase());
+    document.querySelectorAll('[data-owner-only]').forEach(x=>x.style.display=owner?'flex':'none');
+    document.querySelectorAll('[data-privileged]').forEach(x=>x.style.display=admin?'flex':'none');
+    const logout=document.getElementById('logoutBtn'), login=document.getElementById('loginBtn');
+    if(logout)logout.style.display=token&&user?'flex':'none';
+    if(login)login.style.display=token&&user?'none':'flex';
+  }
+  document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>{
+    a.addEventListener('click',e=>{
+      const p=a.dataset.page;
+      if(p==='logout'){e.preventDefault();localStorage.clear();location.href='app.html#home';return;}
+      if(p==='login'){e.preventDefault();showAuth();closeMenu();return;}
+      if(!allowed(p)){e.preventDefault();if(protectedPages.includes(p))showAuth();else toast('لا تملك صلاحية الوصول لهذه الصفحة');closeMenu();return;}
+      closeMenu();
+    },true);
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+  syncMenu();
+  window.addEventListener('storage',syncMenu);
+  window.mldAccess={allowed,syncMenu,closeMenu};
+})();
