@@ -19,7 +19,7 @@ function contentType(file) {
   return ({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp'})[ext] || 'application/octet-stream';
 }
 const server=http.createServer((req,res)=>{
-  if(req.url==='/health'){res.writeHead(200,{'content-type':'application/json'});return res.end(JSON.stringify({ok:true,service:'mld-web'}));}
+  if(req.url==='/' || req.url==='/health'){res.writeHead(200,{'content-type':'application/json'});return res.end(JSON.stringify({ok:true,service:'mld-web',status:'online'}));}
   if(req.url.startsWith('/api/') || req.url.startsWith('/socket.io/')){
     proxy.web(req,res,{target:API});
     return;
@@ -38,4 +38,5 @@ server.on('upgrade',(req,socket,head)=>{
   if(req.url.startsWith('/socket.io/')) proxy.ws(req,socket,head,{target:API});
   else socket.destroy();
 });
-const PORT=Number(process.env.PORT||3000);\nserver.listen(PORT,'0.0.0.0',()=>console.log(`🚀 MLD Web + API proxy running on ${PORT}`));
+const PORT=Number(process.env.PORT||3000);
+server.listen(PORT,'0.0.0.0',()=>console.log(`🚀 MLD Web + API proxy running on ${PORT}`));
