@@ -372,6 +372,22 @@ function bindAuth() {
 }
 
 async function init() {
+  if (token) {
+    try {
+      const fresh = await api("/api/auth/me");
+      if (fresh.user) {
+        user = fresh.user;
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+    } catch (e) {
+      if (e.message && /token|unauth|مصـرح|انته/i.test(e.message)) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        token = "";
+        user = null;
+      }
+    }
+  }
   syncUI(); bindNavigation(); bindAuth();
   $("#menuBtn")?.setAttribute("aria-label","فتح القائمة");
   document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu()});
