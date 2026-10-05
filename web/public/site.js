@@ -5,7 +5,7 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 function closeMenu(){const m=$("#mobile-menu"),b=$("#menu-backdrop");m?.classList.remove("open");b?.classList.remove("open");document.body.classList.remove("menu-open");$("#menu")?.setAttribute("aria-expanded","false")}
 function openMenu(){const m=$("#mobile-menu"),b=$("#menu-backdrop");m?.classList.add("open");b?.classList.add("open");document.body.classList.add("menu-open");$("#menu")?.setAttribute("aria-expanded","true")}
 document.addEventListener("DOMContentLoaded",()=>{
- $("#menu")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();m=$("#mobile-menu");m?.classList.contains("open")?closeMenu():openMenu()});
+ $("#menu")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();const m=$("#mobile-menu");m?.classList.contains("open")?closeMenu():openMenu()});
  $("#menu-close")?.addEventListener("click",closeMenu);$("#menu-backdrop")?.addEventListener("click",closeMenu);
  document.querySelectorAll("#mobile-menu a").forEach(a=>a.addEventListener("click",closeMenu));
  loadMLDStats();loadReviews();setInterval(loadMLDStats,15000);
