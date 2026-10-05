@@ -383,3 +383,17 @@ window.addEventListener("hashchange",()=>{const p=(location.hash||"#home").slice
 init();
 
 
+
+async function loadServerStats(){
+  try{
+    const r=await fetch(API+'/api/public/server',{cache:'no-store'});
+    const d=await r.json();
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v==null?'—':String(v)};
+    set('homeServerName',d.name||'MLD');
+    set('homeMemberCount',d.memberCount);
+    set('homeOnlineCount',d.onlineCount);
+    set('homeVisits',d.visits);
+    const status=document.querySelector('#page-home .mld-stats b.online');
+    if(status) status.textContent=d.error?'● تعذر الاتصال':'● متصل';
+  }catch(e){}
+}
