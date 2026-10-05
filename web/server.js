@@ -38,4 +38,4 @@ server.on('upgrade',(req,socket,head)=>{
   if(req.url.startsWith('/socket.io/')) proxy.ws(req,socket,head,{target:API});
   else socket.destroy();
 });
-server.listen(process.env.PORT||3000,()=>console.log('🚀 MLD Web + API proxy running'));
+const PORT=Number(process.env.PORT||3000);\nserver.listen(PORT,'0.0.0.0',()=>console.log(`🚀 MLD Web + API proxy running on ${PORT}`));
