@@ -78,6 +78,16 @@ window.toggleAppMenu = function(e) {
   return false;
 };
 
+function syncMenuAccess(){
+  const loggedIn=!!user;
+  const isOwner=!!user?.is_owner;
+  const isAdmin=isOwner||['admin','owner'].includes(String(user?.role||'').toLowerCase());
+  document.querySelectorAll('[data-owner-only]').forEach(el=>el.style.display=isOwner?'flex':'none');
+  document.querySelectorAll('[data-privileged]').forEach(el=>el.style.display=isAdmin?'flex':'none');
+  const login=document.getElementById('loginBtn'),logout=document.getElementById('logoutBtn');
+  if(login) login.style.display=loggedIn?'none':'flex';
+  if(logout) logout.style.display=loggedIn?'flex':'none';
+}
 function syncUI() {
   $("#myName").textContent = user?.username || "زائر";
   $("#myRole").textContent = owner() ? "الأونر 👑" : admin() ? "إدارة 🛡️" : logged() ? "عضو" : "تصفح عام";
@@ -90,6 +100,7 @@ function syncUI() {
   if ($("#ownerSection")) $("#ownerSection").style.display = owner() ? "block" : "none";
   if ($("#applicationsLink")) $("#applicationsLink").style.display = owner() ? "flex" : "none";
   if ($("#homeAccount")) $("#homeAccount").textContent = user?.username || "زائر";
+  syncMenuAccess();
 }
 
 function shell(page, body, extra="") {
@@ -455,4 +466,4 @@ async function loadAppHomeStats(){
   set('homeServerName',d.name||'MLD'); set('homeMemberCount',d.memberCount==null?'—':num(d.memberCount)); set('homeOnlineCount',d.onlineCount==null?'—':num(d.onlineCount)); set('homeVisits',d.visits==null?'—':num(d.visits)); set('homeAccount',user?.username||'زائر');
  }catch(e){console.error('home stats',e)}
 }
-setInterval(loadAppHomeStats,15000);
+loadAppHomeStats(); setInterval(loadAppHomeStats,15000);
