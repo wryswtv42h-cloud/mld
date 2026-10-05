@@ -404,9 +404,7 @@ window.joinCinema=(id)=>{
 })();
 
 /* MLD responsive navigation safety */
-window.addEventListener('resize',()=>{
-  if(innerWidth>900) window.closeAppMenu?.();
-});
+window.addEventListener('resize',()=>{if(innerWidth>900) window.closeAppMenu?.();});
 /* Explicit owner/admin visibility */
 function syncPrivilegedMenu(){
  const owner=!!user?.is_owner;
