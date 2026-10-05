@@ -38,7 +38,7 @@ const io = new Server(httpServer, {
 setupSocket(io);
 
 app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'mld-api', status: 'online', time: new Date().toISOString() });
+  res.status(200).type('application/json').send(JSON.stringify({ ok: true, service: 'mld-api', status: 'online' }));
 });
 
 app.get('/', (req, res) => {
