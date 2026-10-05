@@ -416,7 +416,8 @@ function syncPrivilegedMenu(){
  const admin=owner||String(user?.role||'').toLowerCase()==='admin';
  const al=document.getElementById('adminLink'), ol=document.getElementById('ownerLink'), as=document.getElementById('adminSection'), os=document.getElementById('ownerSection'), apl=document.getElementById('applicationsLink');
  if(al) al.style.display=admin?'flex':'none'; if(as) as.style.display=admin?'block':'none';
- if(ol) ol.style.display=owner?'flex':'none'; if(os) os.style.display=owner?'block':'none'; if(login) login.style.display=token?'none':'flex'; if(logout) logout.style.display=token?'flex':'none'; if(profile) profile.style.display=token?'flex':'none'; if(appLink) appLink.style.display=owner?'flex':'none'; if(apl) apl.style.display=owner?'flex':'none';
+ if(ol) ol.style.display=owner?'flex':'none'; if(os) os.style.display=owner?'block':'none';
+ const ap=document.getElementById('applicationsLink'); if(ap) ap.style.display=owner?'flex':'none'; if(login) login.style.display=token?'none':'flex'; if(logout) logout.style.display=token?'flex':'none'; if(profile) profile.style.display=token?'flex':'none'; if(appLink) appLink.style.display=owner?'flex':'none'; if(apl) apl.style.display=owner?'flex':'none';
  document.body.classList.toggle('is-owner',owner); document.body.classList.toggle('is-admin',admin);
 }
 setTimeout(syncPrivilegedMenu,0);
