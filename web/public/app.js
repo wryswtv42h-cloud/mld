@@ -167,7 +167,7 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
       a.classList.add('active');
       document.getElementById('page-' + page)?.classList.add('active');
       document.getElementById('pageTitle').textContent = a.textContent.trim();
-      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('sidebar')?.classList.remove('open'); document.getElementById('appMenuBackdrop')?.classList.remove('show'); document.body.classList.remove('app-menu-open');
       if (page === 'bots' || page === 'addbot' || page === 'add-bot') loadBots();
       return;
     }
@@ -180,7 +180,7 @@ document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a => {
       a.classList.add('active');
       document.getElementById('page-admin')?.classList.add('active');
       document.getElementById('pageTitle').textContent = a.textContent.trim();
-      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('sidebar')?.classList.remove('open'); document.getElementById('appMenuBackdrop')?.classList.remove('show'); document.body.classList.remove('app-menu-open');
       loadAdmin();
     }
   };
@@ -342,7 +342,7 @@ async function renderFeature(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active')); page.classList.add('active');
   document.querySelectorAll('.sidebar .nav a').forEach(x=>x.classList.toggle('active',x.dataset.page===p));
   document.getElementById('pageTitle').textContent=pageTitles[p]||p;
-  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar')?.classList.remove('open'); document.getElementById('appMenuBackdrop')?.classList.remove('show'); document.body.classList.remove('app-menu-open');
   if(p==='games'){ pageBox(p,'<div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">🎮 MLD GAMES</span><h1>الألعاب</h1><p>اختر اللعبة وابدأ الجلسة بدون مغادرة منصة MLD.</p></div><div class="mld-page-body"><div id="gameCatalog" class="page-grid three"><div class="panel"><h3>🎴 أونو</h3><p class="muted">لعبة جماعية.</p><button class="btn-primary" onclick="openMLDGame(\'uno\')">ابدأ</button></div><div class="panel"><h3>🎯 لودو</h3><p class="muted">جلسة لودو.</p><button class="btn-primary" onclick="openMLDGame(\'ludo\')">ابدأ</button></div><div class="panel"><h3>🕵️ كود نيمز</h3><p class="muted">تحدي الفرق.</p><button class="btn-primary" onclick="openMLDGame(\'codenames\')">ابدأ</button></div><div class="panel"><h3>🎲 جاكارو</h3><p class="muted">لعبة جماعية.</p><button class="btn-primary" onclick="openMLDGame(\'jaccaro\')">ابدأ</button></div><div class="panel"><h3>♠️ بلوت</h3><p class="muted">جلسة بلوت.</p><button class="btn-primary" onclick="openMLDGame(\'baloot\')">ابدأ</button></div><div class="panel"><h3>🏠 مونوبولي</h3><p class="muted">جلسة مونوبولي.</p><button class="btn-primary" onclick="openMLDGame(\'monopoly\')">ابدأ</button></div></div><div id="embeddedGame" style="display:none;margin-top:18px"></div></div></div>'); return; }
   if(p==='members'||p==='top'||p==='leaders'){
     const endpoint=p==='members'?'/api/public/members':p==='top'?'/api/public/top':'/api/public/roles';
@@ -420,6 +420,7 @@ function syncPrivilegedMenu(){
  document.body.classList.toggle('is-owner',owner); document.body.classList.toggle('is-admin',admin);
 }
 setTimeout(syncPrivilegedMenu,0);
+setTimeout(()=>{ syncPrivilegedMenu(); },300);
 window.addEventListener('storage',syncPrivilegedMenu);
 
 
