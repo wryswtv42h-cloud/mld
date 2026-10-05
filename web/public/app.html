@@ -6,7 +6,25 @@
 <meta name="theme-color" content="#08060d">
 <title>MLD · Community</title>
 <link rel="icon" href="logo.svg.JPG">
-<link rel="stylesheet" href="style.css?v=20261005-8">
+<link rel="stylesheet" href="style.css?v=20261005-10"><script>
+window.toggleAppMenu=function(e){
+  if(e){e.preventDefault();e.stopPropagation();}
+  const s=document.getElementById('sidebar'), b=document.getElementById('appMenuBackdrop'), btn=document.getElementById('menuBtn');
+  if(!s)return false;
+  const open=!s.classList.contains('open');
+  s.classList.toggle('open',open);
+  b?.classList.toggle('show',open);
+  document.body.classList.toggle('app-menu-open',open);
+  btn?.setAttribute('aria-expanded',String(open));
+  return false;
+};
+window.closeAppMenu=function(){
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('appMenuBackdrop')?.classList.remove('show');
+  document.body.classList.remove('app-menu-open');
+  document.getElementById('menuBtn')?.setAttribute('aria-expanded','false');
+};
+</script>
 <style>
 :root{--app-max:1440px}
 .app-layout{min-height:100vh;display:flex;flex-direction:column}
@@ -66,10 +84,10 @@
  <div class="app-nav">
   <a class="app-brand" href="#home"><img src="logo.svg.JPG" onerror="this.src='/logo.svg'"><span><b>MLD</b><small>COMMUNITY</small></span></a>
   <div style="margin-inline-start:auto;color:#9f98aa;font-size:13px" id="topLoginBtn"></div>
-  <button id="menuBtn" class="menu app-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false" onclick="return window.toggleAppMenu ? window.toggleAppMenu(event) : false;"><span></span><span></span><span></span></button>
+  <button id="menuBtn" class="menu app-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false" onclick="return window.toggleAppMenu(event);"><span></span><span></span><span></span></button>
  </div>
 </header>
-<div id="appMenuBackdrop" class="menu-backdrop"></div>
+<div id="appMenuBackdrop" class="menu-backdrop" onclick="window.closeAppMenu()"></div>
 <div class="app-shell">
 <aside id="sidebar" class="sidebar" aria-label="قائمة MLD">
  <div class="sidebar-user"><div id="myAvatar" class="avatar">ز</div><div><strong id="myName">زائر</strong><small id="myRole">تصفح عام</small></div></div>
@@ -84,7 +102,7 @@
    <a href="#games" data-page="games">🎮 الألعاب</a><a href="#cinema" data-page="cinema">🎬 السينما</a><a href="#groups" data-page="groups">👨‍👩‍👧 القروبات</a>
   </div>
   <div class="nav-section"><label>الخدمات</label>
-   <a href="#tickets" data-page="tickets">🎫 التذاكر</a><a href="#applications" id="applicationsLink" data-page="applications" data-privileged>📝 التقديم</a><a href="#reviews" data-page="reviews">⭐ الآراء</a>
+   <a href="#tickets" data-page="tickets">🎫 التذاكر</a><a href="#applications" id="applicationsLink" data-page="applications" data-owner-only>📝 التقديم</a><a href="#reviews" data-page="reviews">⭐ الآراء</a>
   </div>
   <div class="nav-section"><label>البوتات</label>
    <a href="#bots" data-page="bots">🤖 منصة البوتات</a><a href="#addbot" data-page="addbot">➕ إضافة بوت</a>
@@ -93,7 +111,7 @@
    <a href="#profile" data-page="profile">👤 بروفايلي</a><a href="#logout" id="logoutBtn" data-page="logout">🚪 تسجيل الخروج</a><a href="#login" id="loginBtn" data-page="login">🔐 دخول المنصة</a>
   </div>
   <div id="adminSection" class="nav-section" style="display:none"><label>الإدارة</label><a href="#admin" id="adminLink" data-page="admin" data-privileged>🛡️ لوحة الإدارة</a></div>
-  <div id="ownerSection" class="nav-section" style="display:none"><label>الأونر</label><a href="#owner-admin" id="ownerLink" data-page="owner-admin" data-privileged>👑 لوحة الأونر</a></div>
+  <div id="ownerSection" class="nav-section" style="display:none"><label>الأونر</label><a href="#owner-admin" id="ownerLink" data-page="owner-admin" data-owner-only>👑 لوحة الأونر</a></div>
  </nav>
 </aside>
 <main class="app-main">
@@ -120,5 +138,5 @@
  </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
-<script src="/app.js?v=20261005-9"></script>
+<script src="/app.js?v=20261005-10"></script>
 </body></html>
