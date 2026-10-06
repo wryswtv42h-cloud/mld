@@ -269,3 +269,9 @@ document.getElementById('appYear')&&(document.getElementById('appYear').textCont
  document.addEventListener('DOMContentLoaded',()=>{access();setInterval(access,1500);setTimeout(()=>go(location.hash.slice(1)||'home'),150);});
  window.addEventListener('mld-auth-changed',access);
 })();
+
+
+/* MLD single public identity bridge: inline navigation and permission UI must read the same session. */
+try{Object.defineProperty(window,'user',{configurable:true,get:()=>user,set:v=>{user=v;}})}catch(e){window.user=user}
+window.mldGetSession=()=>({token,user});
+window.mldRefreshUserUI=()=>{syncUserUI();window.dispatchEvent(new Event('mld-auth-changed'))};
