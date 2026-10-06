@@ -40,9 +40,23 @@ async function discord(path) {
 
 async function getGuild() {
   if (cache.guild.value && Date.now() - cache.guild.at < CACHE_TTL) return cache.guild.value;
-  const g = await discord('/guilds/' + guildId() + '?with_counts=true');
-  cache.guild = { value: g, at: Date.now() };
-  return g;
+  try {
+    const g = await discord('/guilds/' + guildId() + '?with_counts=true');
+    cache.guild = { value: g, at: Date.now() };
+    return g;
+  } catch (primaryError) {
+    // لا نخلي لوحة الموقع فارغة إذا كان DISCORD_GUILD_ID قديمًا/غير صحيح.
+    const guilds = await discord('/users/@me/guilds');
+    const wanted = String(guildId() || '').trim();
+    const g = Array.isArray(guilds)
+      ? guilds.find(x => String(x.id) === wanted) ||
+        guilds.find(x => String(x.name || '').trim().toLowerCase() === 'mld')
+      : null;
+    if (!g?.id) throw primaryError;
+    const full = await discord('/guilds/' + g.id + '?with_counts=true');
+    cache.guild = { value: full, at: Date.now() };
+    return full;
+  }
 }
 
 async function getMembers() {
