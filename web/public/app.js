@@ -50,6 +50,8 @@ function syncUserUI(){
  if($('#ownerSection'))$('#ownerSection').style.display=owner?'block':'none';
  if($('#ownerLink'))$('#ownerLink').style.display=owner?'flex':'none';
  if($('#applicationsLink'))$('#applicationsLink').style.display=owner?'flex':'none';
+ $('#owner-menu-link').forEach(e=>e.style.display=owner?'flex':'none');
+ $('#admin-menu').forEach(e=>e.style.display=admin?'block':'none');
  ['adminLink','ownerLink','applicationsLink'].forEach(id=>{const e=$('#'+id);if(e)e.setAttribute('aria-hidden',e.style.display==='none'?'true':'false')});
  if($('#logoutBtn'))$('#logoutBtn').style.display=user?'flex':'none';
  if($('#loginBtn'))$('#loginBtn').style.display=user?'none':'flex';
@@ -63,6 +65,7 @@ async function loadStats(){
 }
 
 function setPage(p){
+ document.querySelectorAll('.is-busy').forEach(x=>x.classList.remove('is-busy'));
  if(p==='logout'){logout();return}
  if(p==='login'){$('#authScreen')?.classList.add('show');return}
  if((protectedPages.includes(p)||adminPages.includes(p)||p==='owner-admin')&&!authRequired())return;
@@ -71,7 +74,7 @@ function setPage(p){
  closeMenu();
  $$('.page').forEach(x=>x.classList.remove('active'));
  const page=$('#page-'+p);if(!page)return;
- page.classList.add('active');$('.sidebar a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));window.scrollTo({top:0,behavior:'smooth'});
+ page.classList.add('active');$('.sidebar a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));window.scrollTo(0,0);
  $('#pageTitle').textContent=(meta[p]||['',p,''])[1];
  if(p==='home')return;
  render(p).catch(e=>{page.innerHTML=shell(p,'<div class="mld-empty">تعذر تحميل الصفحة: '+esc(e.message)+'</div>')});
@@ -124,3 +127,10 @@ function bindNav(){
 function boot(){syncUserUI();bindAuth();bindNav();loadStats();setInterval(loadStats,15000);const p=(location.hash||'#home').slice(1);setPage(meta[p]?p:'home')}
 document.addEventListener('DOMContentLoaded',boot);
 })();
+
+// Fast interaction layer: immediate feedback without changing existing actions.
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button.btn-primary,button.btn-secondary');
+ if(b && !b.disabled){ b.classList.add('is-busy'); setTimeout(()=>b.classList.remove('is-busy'),900); }
+});
+document.getElementById('appYear')&&(document.getElementById('appYear').textContent=new Date().getFullYear());
