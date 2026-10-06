@@ -195,3 +195,58 @@ document.getElementById('appYear')&&(document.getElementById('appYear').textCont
   setInterval(applyAccess,1000);
   setTimeout(applyAccess,300);
 })();
+
+
+/* MLD FINAL PAGE CONTROLLER — single source of truth */
+(function(){
+  const API_URL='https://api-production-5bddb.up.railway.app';
+  const protectedPages=new Set(['chat','pigeon','tickets','bots','addbot','profile']);
+  const ownerOnly=new Set(['applications','owner-admin']);
+  const adminPages=new Set(['admin']);
+  const byId=id=>document.getElementById(id);
+  const setText=(id,v)=>{const e=byId(id);if(e)e.textContent=v==null||v===''?'—':String(v)};
+  function isOwner(){return !!user?.is_owner || ['owner'].includes(String(user?.role||'').toLowerCase());}
+  function isAdmin(){return isOwner() || String(user?.role||'').toLowerCase()==='admin';}
+  function closeNav(){window.closeAppMenu?.();byId('sidebar')?.classList.remove('open');byId('appMenuBackdrop')?.classList.remove('show');document.body.classList.remove('app-menu-open');}
+  function applyMenu(){
+    const owner=isOwner(), admin=isAdmin();
+    const show=(id,on,display='flex')=>{const e=byId(id);if(e)e.style.display=on?display:'none'};
+    show('adminLink',admin); show('ownerLink',owner); show('applicationsLink',owner);
+    if(byId('adminSection'))byId('adminSection').style.display=admin?'block':'none';
+    if(byId('ownerSection'))byId('ownerSection').style.display=owner?'block':'none';
+    if(byId('homeAccount'))byId('homeAccount').textContent=user?.username||'زائر';
+    if(byId('myName'))byId('myName').textContent=user?.username||'زائر';
+    if(byId('myRole'))byId('myRole').textContent=owner?'الأونر 👑':isAdmin()?'إدارة 🛡️':user?'عضو':'تصفح عام';
+  }
+  async function refreshSession(){
+    if(!token)return;
+    try{const r=await fetch(API_URL+'/api/auth/me',{headers:{Authorization:'Bearer '+token},cache:'no-store'});if(!r.ok)throw 0;const d=await r.json();if(d.user){user=d.user;localStorage.setItem('user',JSON.stringify(user));}}
+    catch(e){localStorage.removeItem('token');localStorage.removeItem('user');token=null;user=null;}
+    applyMenu();
+  }
+  async function refreshStats(){
+    try{const r=await fetch(API_URL+'/api/public/server',{cache:'no-store'});const d=await r.json();
+      setText('homeServerName',d.name||'MLD'); setText('homeMemberCount',d.memberCount); setText('homeOnlineCount',d.onlineCount); setText('homeVisits',d.visits);
+      setText('server-name',d.name||'MLD'); setText('server-count',d.memberCount); setText('server-online',d.onlineCount); setText('server-visits',d.visits);
+    }catch(e){console.warn('MLD stats unavailable',e)}
+  }
+  function go(p){
+    p=(p||'home').replace(/^#/,'');
+    if(protectedPages.has(p)&&!user){byId('authScreen')?.classList.add('show');toast('هذه الصفحة تتطلب تسجيل الدخول');closeNav();return;}
+    if(ownerOnly.has(p)&&!isOwner()){toast('هذه الصفحة للأونر فقط');closeNav();return;}
+    if(adminPages.has(p)&&!isAdmin()){toast('هذه الصفحة للإدارة فقط');closeNav();return;}
+    closeNav();
+    if(location.hash.slice(1)!==p) history.pushState(null,'','#'+p);
+    if(typeof setPage==='function')setPage(p);else if(typeof finalRender==='function')finalRender(p);
+    document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));
+  }
+  function bind(){
+    document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>{a.onclick=e=>{e.preventDefault();go(a.dataset.page)}});
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{if(a.closest('.sidebar'))return;a.addEventListener('click',e=>{const p=a.getAttribute('href');if(p&&p!=='#'){e.preventDefault();go(p)}})});
+    byId('logoutBtn')?.addEventListener('click',e=>{e.preventDefault();localStorage.removeItem('token');localStorage.removeItem('user');token=null;user=null;closeNav();go('home');toast('تم تسجيل الخروج');applyMenu()});
+    byId('loginBtn')?.addEventListener('click',e=>{e.preventDefault();byId('authScreen')?.classList.add('show');closeNav()});
+    window.addEventListener('popstate',()=>go(location.hash.slice(1)||'home'));
+  }
+  window.mldNavigate=go;
+  document.addEventListener('DOMContentLoaded',async()=>{bind();await refreshSession();applyMenu();await refreshStats();setTimeout(()=>go(location.hash.slice(1)||'home'),0);setInterval(refreshStats,15000);setInterval(applyMenu,1500)});
+})();
