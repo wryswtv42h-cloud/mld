@@ -45,17 +45,14 @@ async function getGuild() {
     cache.guild = { value: g, at: Date.now() };
     return g;
   } catch (primaryError) {
-    // لا نخلي لوحة الموقع فارغة إذا كان DISCORD_GUILD_ID قديمًا/غير صحيح.
-    const guilds = await discord('/users/@me/guilds');
-    const wanted = String(guildId() || '').trim();
-    const g = Array.isArray(guilds)
-      ? guilds.find(x => String(x.id) === wanted) ||
-        guilds.find(x => String(x.name || '').trim().toLowerCase() === 'mld')
-      : null;
-    if (!g?.id) throw primaryError;
-    const full = await discord('/guilds/' + g.id + '?with_counts=true');
-    cache.guild = { value: full, at: Date.now() };
-    return full;
+    // Discord bot tokens cannot use /users/@me/guilds; retry the guild endpoint without count hints.
+    try {
+      const full = await discord('/guilds/' + guildId());
+      cache.guild = { value: full, at: Date.now() };
+      return full;
+    } catch (fallbackError) {
+      throw primaryError;
+    }
   }
 }
 
@@ -137,7 +134,7 @@ router.get('/server', async (req, res) => {
     });
   } catch (e) {
     console.error('PUBLIC_SERVER_ERROR', e.message);
-    res.status(503).json({ error: 'تعذر جلب بيانات ديسكورد', name: 'MLD', memberCount: null, onlineCount: null, visits });
+    res.status(503).json({ error: 'تعذر جلب بيانات ديسكورد', reason: e.message, name: 'MLD', memberCount: null, onlineCount: null, visits });
   }
 });
 
