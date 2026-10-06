@@ -7,48 +7,57 @@ import { initMonopoly, handleMonopolyAction, tickMonopoly } from './monopoly.js'
 import { initMaqousar, handleMaqousarAction, tickMaqousar } from './maqousar.js';
 
 const GAMES = {
-  uno: { init: initUno, action: handleUnoAction, tick: tickUno },
-  jaccaro: { init: initJaccaro, action: handleJaccaroAction, tick: tickJaccaro },
-  codenames: { init: initCodeNames, action: handleCodeNamesAction, tick: tickCodeNames },
-  baloot: { init: initBaloot, action: handleBalootAction, tick: tickBaloot },
-  ludo: { init: initLudo, action: handleLudoAction, tick: tickLudo },
-  monopoly: { init: initMonopoly, action: handleMonopolyAction, tick: tickMonopoly },
-  maqousar: { init: initMaqousar, action: handleMaqousarAction, tick: tickMaqousar }
+  uno:{init:initUno,action:handleUnoAction,tick:tickUno,min:2,max:6},
+  jaccaro:{init:initJaccaro,action:handleJaccaroAction,tick:tickJaccaro,min:2,max:4},
+  codenames:{init:initCodeNames,action:handleCodeNamesAction,tick:tickCodeNames,min:4,max:6},
+  baloot:{init:initBaloot,action:handleBalootAction,tick:tickBaloot,min:4,max:4},
+  ludo:{init:initLudo,action:handleLudoAction,tick:tickLudo,min:2,max:4},
+  monopoly:{init:initMonopoly,action:handleMonopolyAction,tick:tickMonopoly,min:2,max:6},
+  maqousar:{init:initMaqousar,action:handleMaqousarAction,tick:tickMaqousar,min:4,max:6}
 };
 
-export async function initGame(gameType, players) {
-  const game = GAMES[gameType];
-  if (!game) throw new Error('لعبة غير معروفة: ' + gameType);
+export function getGameConfig(type){ return GAMES[type] || null; }
 
-  const minPlayers = getMinPlayers(gameType);
-  const realPlayers = players.filter(p => !p.isBot);
-  if (realPlayers.length < minPlayers) throw new Error(`تحتاج إلى ${minPlayers} لاعبين حقيقيين لبدء اللعبة`);
-  return game.init(realPlayers.map(p => p.name));
+export async function initGame(gameType, players){
+  const game=GAMES[gameType];
+  if(!game) throw new Error('لعبة غير معروفة: '+gameType);
+  const names=players.map(p=>typeof p==='string'?p:p.name).filter(Boolean);
+  while(names.length<game.min) names.push('بوت '+(names.length+1));
+  const state=await game.init(names.slice(0,game.max));
+  state.lastMove=Date.now();
+  state.botPlayers=names.filter(n=>n.startsWith('بوت '));
+  return state;
 }
 
-export async function handleAction(gameType, state, playerName, action) {
-  const game = GAMES[gameType];
-  if (!game) throw new Error('لعبة غير معروفة');
-
-  return game.action(state, playerName, action);
+export async function handleAction(gameType,state,playerName,action){
+  const game=GAMES[gameType];
+  if(!game) throw new Error('لعبة غير معروفة');
+  const next=await game.action(state,playerName,action||{});
+  next.lastMove=Date.now();
+  return next;
 }
 
-export async function tickGame(gameType, state) {
-  const game = GAMES[gameType];
-  if (!game) return { changed: false, state };
-
+export async function tickGame(gameType,state){
+  const game=GAMES[gameType];
+  if(!game||!state) return {changed:false,state};
+  const current=state.players?.[state.currentIndex];
+  if(current?.startsWith('بوت ') && Date.now()-(state.lastMove||0)>=3000){
+    const next=await game.action(state,current,getBotAction(gameType,state));
+    next.lastMove=Date.now();
+    return {changed:true,state:next};
+  }
   return game.tick(state);
 }
 
-function getMinPlayers(gameType) {
-  const mins = {
-    uno: 2,
-    jaccaro: 2,
-    codenames: 4,
-    baloot: 4,
-    ludo: 2,
-    monopoly: 2,
-    maqousar: 4
-  };
-  return mins[gameType] || 2;
+function getBotAction(type,state){
+  switch(type){
+    case 'uno': return {type:'draw'};
+    case 'jaccaro': return {type:'play',cardIndex:0};
+    case 'codenames': return {type:'end-turn'};
+    case 'baloot': return {type:'play',cardIndex:0};
+    case 'ludo': return {type:'roll'};
+    case 'monopoly': return {type:'roll'};
+    case 'maqousar': return {type:'draw'};
+    default:return {type:'draw'};
+  }
 }
