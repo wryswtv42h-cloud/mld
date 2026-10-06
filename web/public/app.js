@@ -278,3 +278,25 @@ document.getElementById('appYear')&&(document.getElementById('appYear').textCont
  window.addEventListener('mld-auth-changed',access);
 })();
 
+
+/* ===== MLD UNIFIED APP NAV v5 ===== */
+(function(){
+  const U=()=>JSON.parse(localStorage.getItem('user')||'null'), logged=()=>!!localStorage.getItem('token')&&!!U();
+  const owner=()=>!!U()?.is_owner||String(U()?.role||'').toLowerCase()==='owner';
+  const admin=()=>owner()||String(U()?.role||'').toLowerCase()==='admin';
+  const navItems=()=>{const m=logged(),a=admin(),o=owner(),x=[
+    ['home','🏠 الرئيسية'],['members','👥 الأعضاء'],['top','🏆 التوب'],['leaders','👑 الرتب القيادية']];
+    if(m)x.push(['chat','💬 الشات العام'],['pigeon','✉️ الزاجل']);
+    x.push(['games','🎮 الألعاب'],['cinema','🎬 السينما'],['reviews','⭐ الآراء'],['groups','👨‍👩‍👧 القروبات 🔒'],['applications','📝 التقديم 🔒'],['tickets','🎫 التذاكر 🔒'],['bots','🤖 منصة البوتات 🔒']);
+    if(m)x.push(['addbot','➕ إضافة بوت'],['profile','👤 بروفايلي']);
+    if(a)x.push(['admin','🛡️ لوحة الإدارة']);if(o)x.push(['owner-admin','👑 لوحة الأونر']);
+    if(m)x.push(['logout','🚪 تسجيل الخروج']);else x.push(['login','🔐 تسجيل الدخول']);return x};
+  function rebuild(){const nav=document.querySelector('.sidebar .nav');if(!nav)return;nav.innerHTML=navItems().map(([p,l])=>'<a href="#'+p+'" data-page="'+p+'">'+l+'</a>').join('');
+    nav.querySelector('[data-page="logout"]')?.addEventListener('click',e=>{e.preventDefault();localStorage.removeItem('token');localStorage.removeItem('user');location.hash='home';location.reload()});
+  }
+  function guestPage(p){const page=document.getElementById('page-'+p);if(!page)return false;const names={pigeon:['✉️','الزاجل','استعراض الرسائل العامة فقط'],groups:['👨‍👩‍👧','القروبات','استعراض القروبات الموجودة'],applications:['📝','التقديم','النموذج متاح للمعاينة؛ الإرسال يتطلب تسجيل الدخول'],tickets:['🎫','التذاكر','استعراض واجهة الدعم؛ فتح تذكرة يتطلب تسجيل الدخول'],bots:['🤖','منصة البوتات','استعراض المنصة؛ إضافة بوت تتطلب تسجيل الدخول']};const n=names[p];if(!n)return false;page.innerHTML='<section class="mld-page-shell"><header class="mld-page-head"><span class="mld-kicker">'+n[0]+' MLD COMMUNITY</span><h1>'+n[1]+'</h1><p>'+n[2]+'</p></header><div class="mld-page-body"><div class="panel"><h3>🔒 وضع الزائر</h3><p class="muted">تقدر تشوف الصفحة كمُتصفح، لكن الإرسال والإنشاء والفتح مقفلة حتى تسجل دخول.</p><button class="btn-primary mld-guest-disabled" onclick="document.getElementById(\'authScreen\')?.classList.add(\'show\')">سجّل دخول للمتابعة</button></div></div></section>';return true}
+  const oldSet=window.setPage;
+  window.setPage=function(p){p=(p||'home').replace(/^#/,'');if(!logged()&&guestPage(p)){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p)?.classList.add('active');document.getElementById('pageTitle')&&(document.getElementById('pageTitle').textContent=(window.meta?.[p]?.[1]||p));window.closeAppMenu?.();window.scrollTo(0,0);return;}return oldSet?oldSet(p):undefined};
+  function boot(){rebuild();document.addEventListener('click',e=>{const a=e.target.closest('.sidebar .nav a[data-page]');if(!a)return;const p=a.dataset.page;if(p==='logout')return;e.preventDefault();e.stopImmediatePropagation();if(!logged()&&['chat','profile','addbot'].includes(p)){document.getElementById('authScreen')?.classList.add('show');return}window.setPage(p)},true)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();window.addEventListener('storage',rebuild);window.addEventListener('mld-auth-changed',rebuild);
+})();
