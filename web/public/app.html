@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#08060d">
 <title>MLD · Community</title>
 <link rel="icon" href="logo.svg.JPG">
-<link rel="stylesheet" href="style.css?v=20261006-2"><script>
+<link rel="stylesheet" href="style.css?v=20261006-4"><script>
 window.toggleAppMenu=function(e){
   if(e){e.preventDefault();e.stopPropagation();}
   const s=document.getElementById('sidebar'), b=document.getElementById('appMenuBackdrop'), btn=document.getElementById('menuBtn');
@@ -217,7 +217,7 @@ window.closeAppMenu=function(){
  </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
-<script src="/app.js?v=20261006-7"></script>
+<script src="/app.js?v=20261006-8"></script>
 <script>
 (function(){
  const API='https://api-production-5bddb.up.railway.app';
@@ -302,7 +302,7 @@ html,body{max-width:100%;overflow-x:hidden}
       const owner=!!currentUser?.is_owner||String(currentUser?.role||'').toLowerCase()==='owner';
       const admin=owner||String(currentUser?.role||'').toLowerCase()==='admin';
       if(p==='login'){close();document.getElementById('authScreen')?.classList.add('show');return;}
-      if(p==='logout'){close();document.getElementById('logoutBtn')?.click();return;}
+      if(p==='logout'){close();if(window.mldNavigate)window.mldNavigate('logout');else document.getElementById('logoutBtn')?.click();return;}
       if(['chat','pigeon','tickets','bots','addbot','profile'].includes(p)&&!currentUser){
         q('#authScreen')?.classList.add('show'); close(); return;
       }
