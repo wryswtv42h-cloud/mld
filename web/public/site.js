@@ -33,6 +33,8 @@ async function change(v){if(!content||!title||!subtitle||!searchWrap)return;view
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>change(b.dataset.view));
 if(search) search.oninput=()=>{if(view!=="members")change("members");searchMembers()};
 $("#menu")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();window.toggleMLDMenu(e)});
+$("#menu-backdrop")?.addEventListener("click",()=>window.toggleMLDMenu());
+document.querySelectorAll('#sidebar a').forEach(a=>a.addEventListener('click',()=>window.toggleMLDMenu()));
 $("#menu-close")?.addEventListener("click",closeMenu);
 backdrop?.addEventListener("click",closeMenu);
 mobile?.querySelectorAll("a").forEach(a=>a.addEventListener("click",closeMenu));
