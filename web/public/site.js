@@ -60,9 +60,9 @@ refreshTimer=setInterval(()=>{if(!content)return;if(modal&&!modal.classList.cont
       const r=await fetch(API_BASE + '/api/public/server',{cache:'no-store'});
       const d=await r.json();
       if(serverName) serverName.textContent=d.name||'MLD';
-      if(count) count.textContent=num(d.memberCount);
-      if(online) online.textContent=num(d.onlineCount);
-      if(visits) visits.textContent=num(d.visits);
+      if(count) count.textContent=d.memberCount==null?'—':num(d.memberCount);
+      if(online) online.textContent=d.onlineCount==null?'—':num(d.onlineCount);
+      if(visits) visits.textContent=d.visits==null?'—':num(d.visits);
       ['homeServerName','serverName'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.name||'MLD'});
       ['homeMemberCount','server-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.memberCount==null?'—':num(d.memberCount)});
       ['homeOnlineCount','server-online'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.onlineCount==null?'—':num(d.onlineCount)});
