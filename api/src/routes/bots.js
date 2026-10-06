@@ -4,6 +4,19 @@ import { query } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
+router.get('/stats', requireAuth, async (req,res)=>{
+  try{
+    const { rows } = await query("SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE active = TRUE)::int AS active FROM bots");
+    res.json(rows[0] || {total:0,active:0});
+  }catch(e){ console.error('bot stats:',e); res.status(500).json({error:'تعذر تحميل إحصائيات البوتات'}); }
+});
+router.get('/:id/logs', requireAuth, async (req,res)=>{
+  try{
+    const { rows } = await query("SELECT id, name, active, locked, created_at FROM bots WHERE id=$1 AND user_id=$2", [req.params.id,req.user.id]);
+    if(!rows[0]) return res.status(404).json({error:'البوت غير موجود'});
+    res.json({logs:[]});
+  }catch(e){ console.error('bot logs:',e); res.status(500).json({error:'تعذر تحميل السجل'}); }
+});
 const KEY = crypto.createHash('sha256').update(process.env.JWT_SECRET || 'mld').digest();
 function encryptToken(value){const iv=crypto.randomBytes(12);const c=crypto.createCipheriv('aes-256-gcm',KEY,iv);const enc=Buffer.concat([c.update(value,'utf8'),c.final()]);return 'enc:'+iv.toString('base64url')+':'+c.getAuthTag().toString('base64url')+':'+enc.toString('base64url');}
 
@@ -86,17 +99,5 @@ router.post('/:id/toggle', requireAuth, async (req, res) => {
   res.json({ message: rows[0].active ? 'تم الإيقاف' : 'تم التشغيل' });
 });
 
-router.get('/stats', requireAuth, async (req,res)=>{
-  try{
-    const { rows } = await query("SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE active = TRUE)::int AS active FROM bots");
-    res.json(rows[0] || {total:0,active:0});
-  }catch(e){ console.error('bot stats:',e); res.status(500).json({error:'تعذر تحميل إحصائيات البوتات'}); }
-});
-router.get('/:id/logs', requireAuth, async (req,res)=>{
-  try{
-    const { rows } = await query("SELECT id, name, active, locked, created_at FROM bots WHERE id=$1 AND user_id=$2", [req.params.id,req.user.id]);
-    if(!rows[0]) return res.status(404).json({error:'البوت غير موجود'});
-    res.json({logs:[]});
-  }catch(e){ console.error('bot logs:',e); res.status(500).json({error:'تعذر تحميل السجل'}); }
-});
+
 export default router;
