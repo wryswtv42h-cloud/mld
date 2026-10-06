@@ -1,118 +1,59 @@
 import express from 'express';
 import { query } from '../db.js';
 import { optionalAuth } from '../middleware/auth.js';
+import { getGameConfig } from '../games/engine.js';
 
-const router = express.Router();
+const router=express.Router();
 
-const GAME_LIMITS = {
-  uno: [2,6], jaccaro:[2,4], codenames:[2,6], baloot:[4,4],
-  ludo:[2,4], monopoly:[2,6], maqousar:[2,6]
-};
-function limits(type){ return GAME_LIMITS[type] || [2,6]; }
-
-function normalizeGame(row) {
+function normalize(row){
   return {
-    ...row,
-    game_type: row.type,
-    host_name: row.host_name || null,
-    spectators: [],
-    max_players: Number(row.max_players || limits(row.type)[1])
+    id:row.id,name:row.name,type:row.type,game_type:row.type,status:row.status,
+    host_id:row.host_id,host_name:row.host_name||null,
+    players:Array.isArray(row.players)?row.players:[],
+    spectators:Array.isArray(row.spectators)?row.spectators:[],
+    state:row.state||null,min_players:Number(row.min_players||2),
+    max_players:Number(row.max_players||4),created_at:row.created_at
   };
 }
 
-// ===== قائمة الجلسات المتاحة =====
-router.get('/sessions', optionalAuth, async (req, res) => {
-  try {
-    const { rows } = await query(
-      `SELECT g.id, g.name, g.type, g.status, g.host_id, g.players, g.min_players, g.max_players, g.created_at,
-              u.username AS host_name
-       FROM games g
-       LEFT JOIN users u ON u.id = g.host_id
-       WHERE g.status IN ('open', 'waiting', 'playing')
-       ORDER BY g.created_at DESC LIMIT 50`
-    );
-    res.json({ sessions: rows.map(normalizeGame) });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'خطأ في السيرفر' });
-  }
+router.get('/sessions',optionalAuth,async(req,res)=>{
+  try{
+    const {rows}=await query(`SELECT g.*,u.username host_name
+      FROM games g LEFT JOIN users u ON u.id=g.host_id
+      WHERE g.status IN ('open','waiting','playing')
+      ORDER BY g.created_at DESC LIMIT 50`);
+    res.json({sessions:rows.map(normalize)});
+  }catch(e){console.error('games list',e);res.status(500).json({error:'تعذر تحميل الجلسات'});}
 });
 
-// ===== إنشاء جلسة جديدة =====
-router.post('/sessions', optionalAuth, async (req, res) => {
-  try {
-    const { game_type, max_players, guest_name } = req.body;
-    if (!game_type || !GAME_LIMITS[game_type]) return res.status(400).json({ error: 'اللعبة غير متاحة' });
-    const [minPlayers,maxAllowed] = limits(game_type);
-    const requestedMax = Number(max_players || maxAllowed);
-    if (!Number.isInteger(requestedMax) || requestedMax < minPlayers || requestedMax > maxAllowed) return res.status(400).json({ error: `عدد اللاعبين يجب أن يكون بين ${minPlayers} و${maxAllowed}` });
-    if (req.user) {
-      const active = await query(
-        "SELECT id FROM games WHERE status IN ('waiting','playing') AND (host_id=$1 OR EXISTS (SELECT 1 FROM jsonb_array_elements(players) p WHERE p->>'userId'=$2)) LIMIT 1",
-        [req.user.id, String(req.user.id)]
-      );
-      if (active.rows[0]) return res.status(409).json({ error:'لديك جلسة نشطة بالفعل' });
-    }
-
-    const hostId = req.user?.id || null;
-    const hostName = req.user?.username || guest_name || 'زائر';
-    const name = req.body.name || game_type;
-    const players = JSON.stringify([{
-      name: hostName,
-      userId: hostId,
-      isBot: false,
-      isHost: true
-    }]);
-
-    const { rows } = await query(
-      `INSERT INTO games (name, type, status, host_id, players, min_players, max_players)
-       VALUES ($1, $2, 'waiting', $3, $4, $5, $6)
-       RETURNING *`,
-      [name, game_type, hostId, players, minPlayers, requestedMax]
-    );
-
-    const { rows: enriched } = await query(
-      `SELECT g.*, u.username AS host_name
-       FROM games g LEFT JOIN users u ON u.id = g.host_id
-       WHERE g.id = $1`,
-      [rows[0].id]
-    );
-
-    await query('UPDATE games SET players=$1 WHERE id=$2',[JSON.stringify([{name:hostName,userId:hostId,isBot:false,isHost:true}]),rows[0].id]);
-    res.json({ session: { ...normalizeGame(enriched[0]), max_players: requestedMax, min_players:minPlayers } });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'خطأ في السيرفر' });
-  }
+router.post('/sessions',optionalAuth,async(req,res)=>{
+  try{
+    const type=String(req.body.game_type||req.body.type||'');
+    const cfg=getGameConfig(type);
+    if(!cfg)return res.status(400).json({error:'اللعبة غير متاحة'});
+    const max=Number(req.body.max_players||cfg.max);
+    if(!Number.isInteger(max)||max<cfg.min||max>cfg.max)return res.status(400).json({error:`عدد اللاعبين يجب أن يكون بين ${cfg.min} و${cfg.max}`});
+    const hostId=req.user?.id||null;
+    const hostName=req.user?.username||String(req.body.guest_name||'').trim()||'زائر';
+    const players=[{name:hostName,userId:hostId,isBot:false,isHost:true}];
+    const {rows}=await query(`INSERT INTO games(name,type,status,host_id,players,min_players,max_players,state,spectators)
+      VALUES($1,$2,'waiting',$3,$4,$5,$6,NULL,'[]'::jsonb) RETURNING *`,
+      [req.body.name||type,type,hostId,JSON.stringify(players),cfg.min,max]);
+    res.json({session:normalize(rows[0])});
+  }catch(e){console.error('games create',e);res.status(500).json({error:'تعذر إنشاء الجلسة'});}
 });
 
-// ===== تفاصيل جلسة =====
-router.get('/sessions/:id', optionalAuth, async (req, res) => {
-  const { rows } = await query(
-    `SELECT g.*, u.username AS host_name
-     FROM games g LEFT JOIN users u ON u.id = g.host_id
-     WHERE g.id = $1`,
-    [req.params.id]
-  );
-  if (!rows[0]) return res.status(404).json({ error: 'الجلسة غير موجودة' });
-  res.json({ session: normalizeGame(rows[0]) });
+router.get('/sessions/:id',optionalAuth,async(req,res)=>{
+  const {rows}=await query(`SELECT g.*,u.username host_name FROM games g LEFT JOIN users u ON u.id=g.host_id WHERE g.id=$1`,[req.params.id]);
+  if(!rows[0])return res.status(404).json({error:'الجلسة غير موجودة'});
+  res.json({session:normalize(rows[0])});
 });
 
-// ===== حذف جلسة =====
-router.delete('/sessions/:id', optionalAuth, async (req, res) => {
-  const { rows } = await query('SELECT * FROM games WHERE id = $1', [req.params.id]);
-  const session = rows[0];
-  if (!session) return res.status(404).json({ error: 'غير موجودة' });
-
-  const isHost = req.user && String(session.host_id) === String(req.user.id);
-  const isOwner = req.user?.is_owner;
-
-  if (!isHost && !isOwner) {
-    return res.status(403).json({ error: 'مالك الجلسة أو الأونر فقط' });
-  }
-
-  await query('DELETE FROM games WHERE id = $1', [req.params.id]);
-  res.json({ message: 'تم إنهاء الجلسة' });
+router.delete('/sessions/:id',optionalAuth,async(req,res)=>{
+  const {rows}=await query('SELECT * FROM games WHERE id=$1',[req.params.id]); const s=rows[0];
+  if(!s)return res.status(404).json({error:'الجلسة غير موجودة'});
+  if(String(s.host_id||'')!==String(req.user?.id||'')&&!req.user?.is_owner)return res.status(403).json({error:'مالك الجلسة أو الأونر فقط'});
+  await query('DELETE FROM games WHERE id=$1',[req.params.id]);
+  res.json({message:'تم إنهاء الجلسة'});
 });
-
 export default router;
