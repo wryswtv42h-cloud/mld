@@ -50,6 +50,7 @@ function syncUserUI(){
  if($('#ownerSection'))$('#ownerSection').style.display=owner?'block':'none';
  if($('#ownerLink'))$('#ownerLink').style.display=owner?'flex':'none';
  if($('#applicationsLink'))$('#applicationsLink').style.display=owner?'flex':'none';
+ ['adminLink','ownerLink','applicationsLink'].forEach(id=>{const e=$('#'+id);if(e)e.setAttribute('aria-hidden',e.style.display==='none'?'true':'false')});
  if($('#logoutBtn'))$('#logoutBtn').style.display=user?'flex':'none';
  if($('#loginBtn'))$('#loginBtn').style.display=user?'none':'flex';
 }
@@ -70,7 +71,7 @@ function setPage(p){
  closeMenu();
  $$('.page').forEach(x=>x.classList.remove('active'));
  const page=$('#page-'+p);if(!page)return;
- page.classList.add('active');$$('.sidebar a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));
+ page.classList.add('active');$('.sidebar a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));window.scrollTo({top:0,behavior:'smooth'});
  $('#pageTitle').textContent=(meta[p]||['',p,''])[1];
  if(p==='home')return;
  render(p).catch(e=>{page.innerHTML=shell(p,'<div class="mld-empty">تعذر تحميل الصفحة: '+esc(e.message)+'</div>')});
