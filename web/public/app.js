@@ -126,6 +126,14 @@ function bindNav(){
 }
 function boot(){syncUserUI();bindAuth();bindNav();loadStats();setInterval(loadStats,15000);const p=(location.hash||'#home').slice(1);setPage(meta[p]?p:'home')}
 document.addEventListener('DOMContentLoaded',boot);
+// Expose the real session and page controller to the legacy layers below this IIFE.
+try {
+  Object.defineProperty(window,'user',{configurable:true,get:()=>user,set:v=>{user=v;}});
+  Object.defineProperty(window,'token',{configurable:true,get:()=>token,set:v=>{token=v;}});
+} catch(e) { window.user=user; window.token=token; }
+window.setPage=setPage;
+window.mldSetPage=setPage;
+window.toast=toast;
 })();
 
 // Fast interaction layer: immediate feedback without changing existing actions.
@@ -176,7 +184,7 @@ document.getElementById('appYear')&&(document.getElementById('appYear').textCont
   }
 
   window.addEventListener('mld-auth-changed',applyAccess);
-  const originalInit=initApp;
+  // removed obsolete reference to a function from a different script scope
   window.addEventListener('load',()=>setTimeout(refreshHomeStats,250));
   setInterval(refreshHomeStats,30000);
 
@@ -270,8 +278,3 @@ document.getElementById('appYear')&&(document.getElementById('appYear').textCont
  window.addEventListener('mld-auth-changed',access);
 })();
 
-
-/* MLD single public identity bridge: inline navigation and permission UI must read the same session. */
-try{Object.defineProperty(window,'user',{configurable:true,get:()=>user,set:v=>{user=v;}})}catch(e){window.user=user}
-window.mldGetSession=()=>({token,user});
-window.mldRefreshUserUI=()=>{syncUserUI();window.dispatchEvent(new Event('mld-auth-changed'))};
