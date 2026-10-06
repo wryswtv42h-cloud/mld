@@ -22,6 +22,7 @@ export async function initDB() {
   await query(`SELECT 1 FROM bots LIMIT 1`);
   await query(`SELECT 1 FROM messages LIMIT 1`);
   await query(`SELECT 1 FROM games LIMIT 1`);
+  await query(`SELECT 1 FROM site_metrics LIMIT 1`).catch(async()=>{ await query(`CREATE TABLE IF NOT EXISTS site_metrics (key text PRIMARY KEY, value bigint NOT NULL DEFAULT 0, updated_at timestamptz NOT NULL DEFAULT NOW())`); });
 
   console.log('✅ تم الاتصال بقاعدة MLD والتحقق من الجداول الحالية');
 }
