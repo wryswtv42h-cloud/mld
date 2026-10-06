@@ -86,4 +86,17 @@ router.post('/:id/toggle', requireAuth, async (req, res) => {
   res.json({ message: rows[0].active ? 'تم الإيقاف' : 'تم التشغيل' });
 });
 
+router.get('/stats', requireAuth, async (req,res)=>{
+  try{
+    const { rows } = await query("SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE active = TRUE)::int AS active FROM bots");
+    res.json(rows[0] || {total:0,active:0});
+  }catch(e){ console.error('bot stats:',e); res.status(500).json({error:'تعذر تحميل إحصائيات البوتات'}); }
+});
+router.get('/:id/logs', requireAuth, async (req,res)=>{
+  try{
+    const { rows } = await query("SELECT id, name, active, locked, created_at FROM bots WHERE id=$1 AND user_id=$2", [req.params.id,req.user.id]);
+    if(!rows[0]) return res.status(404).json({error:'البوت غير موجود'});
+    res.json({logs:[]});
+  }catch(e){ console.error('bot logs:',e); res.status(500).json({error:'تعذر تحميل السجل'}); }
+});
 export default router;
