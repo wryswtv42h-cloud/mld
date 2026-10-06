@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#08060d">
 <title>MLD · Community</title>
 <link rel="icon" href="logo.svg.JPG">
-<link rel="stylesheet" href="style.css?v=20261006-1"><script>
+<link rel="stylesheet" href="style.css?v=20261006-2"><script>
 window.toggleAppMenu=function(e){
   if(e){e.preventDefault();e.stopPropagation();}
   const s=document.getElementById('sidebar'), b=document.getElementById('appMenuBackdrop'), btn=document.getElementById('menuBtn');
@@ -103,7 +103,7 @@ window.closeAppMenu=function(){
 <body>
 <div class="glow g1"></div><div class="glow g2"></div>
 <div class="app-layout">
-<header class="app-topbar">
+<div class="mld-announcement" role="status"><span class="mld-announcement-dot">●</span><strong>أهلاً بكم في ملاذ</strong><span>مرحبًا بكم في مجتمع MLD · كل شيء في مكان واحد</span></div><header class="app-topbar">
  <div class="app-nav">
   <a class="app-brand" href="#home"><img src="logo.svg.JPG" onerror="this.src='/logo.svg'"><span><b>MLD</b><small>COMMUNITY</small></span></a>
   <div style="margin-inline-start:auto;color:#9f98aa;font-size:13px" id="topLoginBtn"></div>
@@ -147,6 +147,17 @@ window.closeAppMenu=function(){
  <section id="page-admin" class="page"><div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">🛡️ MLD ADMIN</span><h1>لوحة الإدارة</h1><p>إدارة التذاكر والمستخدمين المسموح بها فقط.</p></div><div class="mld-page-body"><div id="ownerUsers" class="page-grid"></div><div id="adminTickets" class="panel" style="margin-top:16px"></div></div></div></section>
  <section id="page-owner-admin" class="page"><div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">👑 MLD OWNER</span><h1>لوحة الأونر</h1><p>التحكم الكامل بالمجتمع.</p></div><div class="mld-page-body"><div id="ownerApplications" class="panel"></div><div id="ownerGroups" class="panel" style="margin-top:16px"></div><div id="ownerAudit" class="panel" style="margin-top:16px"></div></div></div></section>
 </main></div></div>
+<footer class="mld-footer">
+  <div class="mld-footer-inner">
+    <div class="mld-footer-brand"><img src="logo.svg.JPG" onerror="this.src='/logo.svg'"><div><b>MLD · COMMUNITY</b><small>مجتمع ملاذ — فهد المطيري</small></div></div>
+    <div class="mld-footer-socials" aria-label="حسابات MLD">
+      <a class="mld-social tiktok" href="https://www.tiktok.com/@jj51" target="_blank" rel="noopener" aria-label="TikTok @jj51" title="TikTok @jj51">♪</a>
+      <a class="mld-social instagram" href="https://www.instagram.com/li5uxi" target="_blank" rel="noopener" aria-label="Instagram @li5uxi" title="Instagram @li5uxi">◎</a>
+      <a class="mld-social discord" href="https://discord.com/users/w4px" target="_blank" rel="noopener" aria-label="Discord @w4px" title="Discord @w4px">◌</a>
+    </div>
+    <div class="mld-footer-copy">© <span id="appYear"></span> MLD · جميع الحقوق محفوظة</div>
+  </div>
+</footer>
 <div id="toast" class="toast"></div>
 <div id="forgotScreen" class="auth-screen"><div class="auth-card"><button type="button" onclick="document.getElementById('forgotScreen').classList.remove('show')" style="float:left;background:none;border:0;color:#fff;font-size:24px">×</button><h2>استعادة كلمة المرور</h2><p class="muted">سيتم إرسال كلمة مرور مؤقتة إلى الخاص في Discord المرتبط بحسابك.</p><input id="forgotUsername" class="full" placeholder="اسم المستخدم"><input id="forgotDiscord" class="full" placeholder="Discord ID أو اسم المستخدم"><button id="forgotBtn" class="btn-primary full">إرسال كلمة المرور المؤقتة</button><div id="forgotMsg" class="msg"></div></div></div>
 <div id="authScreen" class="auth-screen">
@@ -161,5 +172,5 @@ window.closeAppMenu=function(){
  </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
-<script src="/app.js?v=20261006-4"></script>
+<script src="/app.js?v=20261006-5"></script>
 </body></html>
