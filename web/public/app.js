@@ -117,11 +117,11 @@ function bindAuth(){
  $('#topLoginBtn')?.addEventListener('click',()=>$('#authScreen').classList.add('show'));
  $$('.tabs button').forEach(b=>b.onclick=()=>{$$('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');const reg=b.dataset.tab==='register';$('#discordField').style.display=reg?'block':'none';$('#submitBtn').textContent=reg?'تسجيل':'دخول';});
  $('#verifyDiscordBtn')?.addEventListener('click',async()=>{try{const d=await fetch(API+'/api/auth/verify-discord',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({discord_id:$('#discord_id').value.trim()})}).then(r=>r.json());if(d.error)throw Error(d.error);$('#verification_code').style.display='block';$('#authMsg').textContent='تم إرسال كود التحقق إلى Discord ✓'}catch(e){$('#authMsg').textContent=e.message}});
- $('#authForm')?.addEventListener('submit',async e=>{e.preventDefault();try{const mode=$('.tabs button.active')?.dataset.tab||'login';const body={username:$('#username').value,password:$('#password').value};if(mode==='register')Object.assign(body,{discord_id:$('#discord_id').value,verification_code:$('#verification_code').value});const r=await fetch(API+'/api/auth/'+mode,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw Error(d.error||'تعذر الدخول');localStorage.setItem('token',d.token);localStorage.setItem('user',JSON.stringify(d.user));token=d.token;user=d.user;$('#authScreen').classList.remove('show');syncUserUI();setPage('home');toast('تم تسجيل الدخول ✓')}catch(e){$('#authMsg').textContent=e.message}});
+ $('#authForm')?.addEventListener('submit',async e=>{e.preventDefault();try{const mode=$('.tabs button.active')?.dataset.tab||'login';const body={username:$('#username').value,password:$('#password').value};if(mode==='register')Object.assign(body,{discord_id:$('#discord_id').value,verification_code:$('#verification_code').value});const r=await fetch(API+'/api/auth/'+mode,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw Error(d.error||'تعذر الدخول');localStorage.setItem('token',d.token);localStorage.setItem('user',JSON.stringify(d.user));token=d.token;user=d.user;$('#authScreen').classList.remove('show');syncUserUI();window.dispatchEvent(new Event('mld-auth-changed'));setTimeout(()=>{if(typeof applyAccess==='function')applyAccess();},0);setPage('home');toast('تم تسجيل الدخول ✓')}catch(e){$('#authMsg').textContent=e.message}});
  $('#logoutBtn')?.addEventListener('click',e=>{e.preventDefault();logout()});
 }
 function bindNav(){
- $$('.sidebar a[data-page]').forEach(a=>a.onclick=e=>{e.preventDefault();const p=a.dataset.page;location.hash=p;setPage(p)});
+ $('.sidebar a[data-page]').forEach(a=>a.onclick=e=>{e.preventDefault();const p=a.dataset.page;if(p==='applications' && !(user?.is_owner || String(user?.role||'').toLowerCase()==='owner')){toast('التقديم للأونر فقط');return;}if(['chat','pigeon','tickets','bots','addbot','profile'].includes(p)&&!user){$('#authScreen')?.classList.add('show');toast('سجّل دخول أولاً');return;}location.hash=p;setPage(p)});
  window.addEventListener('hashchange',()=>setPage((location.hash||'#home').slice(1)));
 }
 function boot(){syncUserUI();bindAuth();bindNav();loadStats();setInterval(loadStats,15000);const p=(location.hash||'#home').slice(1);setPage(meta[p]?p:'home')}
@@ -175,6 +175,7 @@ document.getElementById('appYear')&&(document.getElementById('appYear').textCont
     }catch(e){ console.warn('MLD home stats',e); }
   }
 
+  window.addEventListener('mld-auth-changed',applyAccess);
   const originalInit=initApp;
   window.addEventListener('load',()=>setTimeout(refreshHomeStats,250));
   setInterval(refreshHomeStats,30000);
