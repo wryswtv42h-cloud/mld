@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MLD | لعبة</title>
 <link rel="icon" href="logo.svg.JPG">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261006-3">
 <style>
 body{overflow:hidden}
 .game-wrap{display:grid;grid-template-columns:1fr 320px;height:100vh;gap:0}
@@ -44,7 +44,11 @@ body{overflow:hidden}
 @media(max-width:820px){.codenames-board{grid-template-columns:repeat(5,minmax(52px,1fr));gap:5px}.codenames-word{min-height:48px;font-size:11px;padding:5px}}
 @media(max-width:820px){.game-wrap{grid-template-columns:1fr}.chat-side{position:fixed;bottom:0;right:0;left:0;height:40vh;z-index:20;border-right:0;border-top:1px solid var(--line)}}
 </style>
-</head>
+<style>
+.game-hand{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:15px 0}.card-btn{min-width:72px;display:flex;flex-direction:column;gap:3px}.card-btn small{font-size:9px;opacity:.7}
+.mld-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;padding:12px 18px;border-radius:14px;background:#17101f;border:1px solid rgba(255,156,222,.35);color:#fff;box-shadow:0 15px 50px #0008}
+@media(max-width:820px){body{overflow:auto!important}.game-wrap{min-height:100dvh;height:auto}.game-main{min-height:60dvh;padding:12px}.game-header{align-items:flex-start;flex-direction:column}.table{min-height:390px;margin-bottom:10px}.chat-side{position:relative!important;inset:auto!important;height:38dvh!important;min-height:280px}.start-overlay{position:absolute}.start-overlay h2{font-size:36px}.actions{padding-bottom:12px}}
+</style></head>
 <body>
 
 <div class="game-wrap">
@@ -80,7 +84,7 @@ body{overflow:hidden}
   </aside>
 </div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="/game.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="game.js?v=20261006-2"></script>
 </body>
 </html>
