@@ -1,0 +1,5 @@
+const API_BASE='https://api-production-5bddb.up.railway.app';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function loadSessions(){const list=document.getElementById('sessions-list');try{const r=await fetch(API_BASE+'/api/games/sessions',{cache:'no-store'}),d=await r.json();list.innerHTML=d.sessions?.length?d.sessions.map(s=>'<div class="session-item"><div><h4>'+esc(s.game_type||'لعبة')+'</h4><p>'+esc(s.host_name||'مضيف')+' · '+(s.players?.length||0)+'/'+(s.max_players||'?')+'</p></div><a class="primary" href="game.html?id='+encodeURIComponent(s.id)+'">انضم</a></div>').join(''):'<p class="muted">لا توجد جلسات حالياً</p>'}catch(e){list.innerHTML='<p class="muted">تعذر تحميل الجلسات الآن</p>'}}
+document.querySelectorAll('[data-game]').forEach(card=>card.querySelector('button').onclick=()=>{const t=card.dataset.game,n=localStorage.getItem('guestName')||prompt('اسمك؟');if(!n)return;localStorage.setItem('guestName',n);location.href='game.html?type='+encodeURIComponent(t)+'&name='+encodeURIComponent(n)});
+loadSessions();setInterval(loadSessions,10000);
