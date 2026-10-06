@@ -98,11 +98,16 @@ router.get('/server', async (req, res) => {
     await touchVisit(req);
     const g = await getGuild();
     let ownerId = /^\d{17,20}$/.test(String(process.env.OWNER_DISCORD_ID || '')) ? String(process.env.OWNER_DISCORD_ID) : null;
+    // Owner lookup must never make the public server counters fail.
     if (!ownerId) {
-      const members = await getMembers();
-      const wanted = String(process.env.OWNER_DISCORD_ID || 'w4px').toLowerCase();
-      const owner = members.find(m => String(m.user?.username || '').toLowerCase() === wanted || String(m.user?.global_name || '').toLowerCase() === wanted);
-      ownerId = owner?.user?.id || null;
+      try {
+        const members = await getMembers();
+        const wanted = String(process.env.OWNER_DISCORD_ID || 'w4px').toLowerCase();
+        const owner = members.find(m => String(m.user?.username || '').toLowerCase() === wanted || String(m.user?.global_name || '').toLowerCase() === wanted);
+        ownerId = owner?.user?.id || null;
+      } catch (ownerErr) {
+        console.error('owner lookup:', ownerErr.message);
+      }
     }
     res.json({
       id: g.id,
