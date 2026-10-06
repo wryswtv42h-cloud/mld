@@ -61,6 +61,10 @@ refreshTimer=setInterval(()=>{if(!content)return;if(modal&&!modal.classList.cont
       if(count) count.textContent=num(d.memberCount);
       if(online) online.textContent=num(d.onlineCount);
       if(visits) visits.textContent=num(d.visits);
+      ['homeServerName','serverName'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.name||'MLD'});
+      ['homeMemberCount','server-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.memberCount==null?'—':num(d.memberCount)});
+      ['homeOnlineCount','server-online'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.onlineCount==null?'—':num(d.onlineCount)});
+      ['homeVisits','server-visits'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.visits==null?'—':num(d.visits)});
       const discordFloat=document.getElementById('discord-float');
       if(discordFloat && d.invite) discordFloat.href=d.invite;
       if(statusEl) statusEl.textContent='● متصل';
