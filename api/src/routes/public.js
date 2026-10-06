@@ -120,11 +120,16 @@ router.get('/server', async (req, res) => {
         console.error('owner lookup:', ownerErr.message);
       }
     }
+    let memberCount = g.approximate_member_count ?? g.member_count;
+    if (memberCount == null) {
+      try { memberCount = (await getMembers()).length; }
+      catch (countError) { console.error('member count fallback:', countError.message); }
+    }
     res.json({
       id: g.id,
       name: g.name || 'MLD',
-      memberCount: g.approximate_member_count ?? g.member_count ?? 0,
-      onlineCount: g.approximate_presence_count ?? 0,
+      memberCount: memberCount == null ? null : Number(memberCount),
+      onlineCount: g.approximate_presence_count ?? null,
       ownerName: 'فهد المطيري',
       ownerUsername: 'w4px',
       ownerId,
