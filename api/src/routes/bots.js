@@ -38,10 +38,18 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'أدخل الاسم والتوكن' });
     }
 
+    const check = await fetch('https://discord.com/api/v10/users/@me', {headers:{Authorization:'Bot '+token}});
+    if(!check.ok) return res.status(400).json({error:'توكن البوت غير صالح'});
+    const botInfo = await check.json();
+    if(guild_id){
+      const memberCheck = await fetch('https://discord.com/api/v10/guilds/'+encodeURIComponent(guild_id)+'/members/'+encodeURIComponent(botInfo.id), {headers:{Authorization:'Bot '+token}});
+      if(!memberCheck.ok) return res.status(400).json({error:'البوت غير موجود في السيرفر المحدد'});
+    }
+    const avatar = botInfo.avatar ? 'https://cdn.discordapp.com/avatars/'+botInfo.id+'/'+botInfo.avatar+'.png?size=128' : '/logo.svg';
     const { rows } = await query(
-      `INSERT INTO bots (user_id, name, token, guild_id, watching, site_url, locked)
-       VALUES ($1, $2, $3, $4, $5, $6, TRUE) RETURNING *`,
-      [req.user.id, name, encryptToken(token), guild_id || null, 'MLD | فهد المطيري', '']
+      `INSERT INTO bots (user_id, name, token, guild_id, avatar, watching, site_url, locked)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE) RETURNING *`,
+      [req.user.id, name, encryptToken(token), guild_id || null, avatar, 'MLD | فهد المطيري', '']
     );
 
     const { token: _, ...bot } = rows[0];
