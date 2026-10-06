@@ -298,9 +298,12 @@ html,body{max-width:100%;overflow-x:hidden}
     if(link){
       e.preventDefault();e.stopImmediatePropagation();
       const p=link.dataset.page;
-      const owner=!!window.user?.is_owner||String(window.user?.role||'').toLowerCase()==='owner';
-      const admin=owner||String(window.user?.role||'').toLowerCase()==='admin';
-      if(['chat','pigeon','tickets','bots','addbot','profile'].includes(p)&&!window.user){
+      const currentUser=window.user||(window.mldGetSession&&window.mldGetSession().user)||null;
+      const owner=!!currentUser?.is_owner||String(currentUser?.role||'').toLowerCase()==='owner';
+      const admin=owner||String(currentUser?.role||'').toLowerCase()==='admin';
+      if(p==='login'){close();document.getElementById('authScreen')?.classList.add('show');return;}
+      if(p==='logout'){close();document.getElementById('logoutBtn')?.click();return;}
+      if(['chat','pigeon','tickets','bots','addbot','profile'].includes(p)&&!currentUser){
         q('#authScreen')?.classList.add('show'); close(); return;
       }
       if(p==='applications'&&!owner){close();return}
@@ -308,6 +311,7 @@ html,body{max-width:100%;overflow-x:hidden}
       if(p==='admin'&&!admin){close();return}
       close();
       if(window.mldNavigate) window.mldNavigate(p);
+      else if(typeof setPage==='function') setPage(p);
       else if(window.renderFeature) window.renderFeature(p);
     }
   },true);
