@@ -39,7 +39,7 @@ function render(){
   if(session?.status==='playing')$('startOverlay').style.display='none'; else $('startOverlay').style.display='grid';
   renderGame();
 }
-function canStart(){return token() && String(session?.host_id||'')===String(JSON.parse(localStorage.getItem('mld_user')||'{}').id||'');}
+function canStart(){return token() && String(session?.host_id||'')===String(JSON.parse(localStorage.getItem('user')||'{}').id||'');}
 function renderGame(){
   const type=state?.game||session?.game_type||session?.type;
   const box=$('gameActions'); if(!box)return;
