@@ -107,7 +107,7 @@ window.closeAppMenu=function(){
  <div class="app-nav">
   <a class="app-brand" href="#home"><img src="logo.svg.JPG" onerror="this.src='/logo.svg'"><span><b>MLD</b><small>COMMUNITY</small></span></a>
   <div style="margin-inline-start:auto;color:#9f98aa;font-size:13px" id="topLoginBtn"></div>
-  <button id="menuBtn" class="menu app-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false" onclick="return window.toggleAppMenu(event);"><span></span><span></span><span></span></button>
+  <button id="menuBtn" onclick="window.toggleAppMenu(event)" class="menu app-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false" onclick="return window.toggleAppMenu(event);"><span></span><span></span><span></span></button>
  </div>
 </header>
 <div id="appMenuBackdrop" class="menu-backdrop" onclick="window.closeAppMenu()"></div>
