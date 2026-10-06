@@ -107,6 +107,43 @@ window.closeAppMenu=function(){
   .sidebar{box-sizing:border-box!important;direction:rtl!important}
   .app-main{overflow-x:hidden!important}
 }
+</style><style id="mld-page-design-v3">
+/* MLD — page-by-page responsive design */
+:root{--mld-glass:rgba(255,255,255,.045);--mld-line:rgba(255,255,255,.09);--mld-shadow:0 24px 70px rgba(0,0,0,.28)}
+.mld-page-shell{position:relative;isolation:isolate}
+.mld-page-head{min-height:118px;display:flex;align-items:center;padding:28px 32px!important}
+.mld-page-head h1{letter-spacing:-.8px}
+.mld-page-body{min-height:220px}
+.mld-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;padding:12px;border:1px solid var(--mld-line);border-radius:18px;background:var(--mld-glass)}
+.mld-toolbar .full{max-width:620px}
+.mld-member-grid,.mld-role-grid,.mld-rank-grid,.mld-bot-grid,.mld-group-grid,.mld-cinema-grid,.mld-review-grid,.mld-admin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.mld-member{min-width:0;display:flex;align-items:center;gap:14px;padding:18px;border:1px solid var(--mld-line);border-radius:22px;background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.018));transition:transform .18s,border-color .18s,box-shadow .18s}
+.mld-member:hover{transform:translateY(-4px);border-color:rgba(255,156,222,.35);box-shadow:var(--mld-shadow)}
+.mld-member img{width:58px;height:58px;flex:0 0 58px;border-radius:18px;object-fit:cover;border:1px solid rgba(255,156,222,.22);background:#160e20}
+.mld-member span{min-width:0}.mld-member b,.mld-member small,.mld-member em{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mld-member b{font-size:15px}.mld-member small{margin-top:4px;color:#aaa1b3;font-size:12px;direction:ltr;text-align:right}.mld-member em{margin-top:8px;width:max-content;max-width:100%;padding:4px 8px;border-radius:999px;background:rgba(255,156,222,.08);color:#f3c9e8;font-style:normal;font-size:10px}
+.mld-rank-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mld-rank-grid>.panel{margin:0}
+.mld-rank{display:grid;grid-template-columns:34px 44px minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px 0;border-top:1px solid rgba(255,255,255,.06)}
+.mld-rank:first-of-type{border-top:0}.mld-rank i{font-style:normal;text-align:center;color:#ffb8e7;font-weight:900}.mld-rank img{width:44px;height:44px;border-radius:14px;object-fit:cover}.mld-rank span{min-width:0}.mld-rank span b,.mld-rank span small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mld-rank span small{color:#91899d;font-size:11px;margin-top:3px}.mld-rank strong{color:#ffb8e7;font-size:14px}
+.mld-stack{display:grid;gap:10px;margin-bottom:16px}.message-card{padding:15px 17px;border:1px solid var(--mld-line);border-radius:18px;background:var(--mld-glass)}.message-card b{color:#ffb8e7}.message-card p{margin:7px 0 0;line-height:1.75;color:#ddd4e0}
+.mld-compose{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;padding:14px;border:1px solid var(--mld-line);border-radius:20px;background:var(--mld-glass)}
+.mld-compose .full{min-height:82px;resize:vertical}.mld-compose .btn-primary{height:50px}
+.mld-page-actions{margin-bottom:16px}.mld-group-grid,.mld-bot-grid,.mld-review-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.mld-group-grid .panel,.mld-bot-grid .panel,.mld-review-grid .panel{margin:0;height:100%}
+.mld-cinema-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:16px}.mld-cinema-grid .panel{margin:0}.mld-cinema-grid video{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:16px;background:#050308;margin-top:12px}
+.mld-review-grid .stars{color:#ffb8e7;letter-spacing:3px;margin:9px 0}
+.admin-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid rgba(255,255,255,.06)}.admin-row:first-child{border-top:0}.admin-row>span{min-width:0}.admin-row b,.admin-row small{display:block}.admin-row small{margin-top:4px;color:#92899e;font-size:11px}
+.mld-empty{display:grid;place-items:center;min-height:150px;padding:24px;border:1px dashed rgba(255,255,255,.1);border-radius:18px;color:#978e9f;text-align:center}
+.group-create{max-width:900px}.group-create h3{margin-top:0}
+#page-profile .panel{max-width:860px;margin:0 auto}#page-profile hr{border:0;border-top:1px solid var(--mld-line);margin:24px 0}
+#page-addbot .panel{max-width:760px;margin:0 auto}#page-addbot .btn-primary{width:100%;margin-top:6px}
+#page-applications .panel{max-width:900px;margin:0 auto}
+#page-admin .mld-page-body,#page-owner-admin .mld-page-body{display:grid;gap:16px}
+#page-admin .panel,#page-owner-admin .panel{margin:0}
+.auth-card input{min-height:48px}.auth-card .tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:16px 0}.auth-card .tabs button{min-height:44px;border:1px solid var(--mld-line);border-radius:13px;background:var(--mld-glass);color:#fff}.auth-card .tabs button.active{background:linear-gradient(135deg,#ff9cde,#a86fdf);color:#1d1024;border-color:transparent}
+.sidebar{overscroll-behavior:contain;scrollbar-width:thin}.sidebar .nav a{min-height:44px}
+@media(max-width:1000px){.mld-member-grid,.mld-role-grid,.mld-bot-grid,.mld-group-grid,.mld-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.mld-page-head{padding:22px 18px!important}.mld-page-head h1{font-size:25px}.mld-toolbar{align-items:stretch;flex-direction:column}.mld-toolbar .full{max-width:none}.mld-member-grid,.mld-role-grid,.mld-rank-grid,.mld-bot-grid,.mld-group-grid,.mld-cinema-grid,.mld-review-grid,.mld-admin-grid{grid-template-columns:1fr}.mld-compose{grid-template-columns:1fr}.mld-compose .btn-primary{width:100%}.mld-rank{grid-template-columns:30px 42px minmax(0,1fr) auto}.admin-row{align-items:flex-start;flex-wrap:wrap}.admin-row .btn-secondary{margin-inline-start:auto}}
+@media(max-width:430px){.mld-page-head{min-height:100px;padding:18px 14px!important}.mld-page-body{padding:12px!important}.mld-member{padding:14px}.mld-member img{width:50px;height:50px;flex-basis:50px}.mld-rank{grid-template-columns:26px 38px minmax(0,1fr) auto;gap:7px}.mld-rank img{width:38px;height:38px}.mld-rank strong{font-size:12px}}
 </style></head>
 <body>
 <div class="glow g1"></div><div class="glow g2"></div>
