@@ -69,7 +69,7 @@ refreshTimer=setInterval(()=>{if(!content)return;if(modal&&!modal.classList.cont
       ['homeVisits','server-visits'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.visits==null?'—':num(d.visits)});
       const discordFloat=document.getElementById('discord-float');
       if(discordFloat && d.invite) discordFloat.href=d.invite;
-      if(statusEl) statusEl.textContent='● متصل';
+      if(statusEl) statusEl.textContent=d.error?'● غير متاح':'● متصل';
       if(statusEl) statusEl.className='online';
     }catch(e){
       if(statusEl) statusEl.textContent='● غير متاح';
