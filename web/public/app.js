@@ -134,3 +134,63 @@ document.addEventListener('click',e=>{
  if(b && !b.disabled){ b.classList.add('is-busy'); setTimeout(()=>b.classList.remove('is-busy'),900); }
 });
 document.getElementById('appYear')&&(document.getElementById('appYear').textContent=new Date().getFullYear());
+
+/* ===== MLD FINAL STABILITY LAYER ===== */
+(function(){
+  const $=id=>document.getElementById(id);
+  window.closeAppMenu=function(){
+    $('sidebar')?.classList.remove('open');
+    $('appMenuBackdrop')?.classList.remove('show');
+    document.body.classList.remove('app-menu-open');
+    $('menuBtn')?.setAttribute('aria-expanded','false');
+  };
+  window.toggleAppMenu=function(e){
+    e?.preventDefault(); e?.stopPropagation();
+    const s=$('sidebar'), b=$('appMenuBackdrop'), btn=$('menuBtn');
+    if(!s)return false;
+    const open=!s.classList.contains('open');
+    s.classList.toggle('open',open);
+    b?.classList.toggle('show',open);
+    document.body.classList.toggle('app-menu-open',open);
+    btn?.setAttribute('aria-expanded',String(open));
+    return false;
+  };
+  document.querySelectorAll('.sidebar .nav a').forEach(a=>{
+    a.addEventListener('click',()=>window.closeAppMenu());
+  });
+  window.addEventListener('resize',()=>{
+    if(innerWidth>900) window.closeAppMenu();
+  });
+
+  async function refreshHomeStats(){
+    try{
+      const r=await fetch(API+'/api/public/server',{cache:'no-store'});
+      const d=await r.json();
+      const set=(id,v)=>{const e=$(id);if(e)e.textContent=(v===null||v===undefined||v==='')?'—':Number.isFinite(Number(v))?Number(v).toLocaleString('ar-SA'):v;};
+      set('homeServerName',d.name||'MLD');
+      set('homeMemberCount',d.memberCount);
+      set('homeOnlineCount',d.onlineCount);
+      set('homeVisits',d.visits);
+      const account=$('homeAccount'); if(account) account.textContent=user?.username||'زائر';
+    }catch(e){ console.warn('MLD home stats',e); }
+  }
+
+  const originalInit=initApp;
+  window.addEventListener('load',()=>setTimeout(refreshHomeStats,250));
+  setInterval(refreshHomeStats,30000);
+
+  function applyAccess(){
+    const owner=!!user?.is_owner || String(user?.role||'').toLowerCase()==='owner';
+    const admin=owner || String(user?.role||'').toLowerCase()==='admin';
+    const show=(id,on)=>{const e=$(id);if(e)e.style.display=on?'flex':'none';};
+    show('adminLink',admin); show('ownerLink',owner);
+    const as=$('adminSection'), os=$('ownerSection');
+    if(as)as.style.display=admin?'block':'none';
+    if(os)os.style.display=owner?'block':'none';
+    const appLink=$('applicationsLink');
+    if(appLink)appLink.style.display=owner?'flex':'none';
+    document.querySelectorAll('[data-owner-only]').forEach(e=>e.style.display=owner?'flex':'none');
+  }
+  setInterval(applyAccess,1000);
+  setTimeout(applyAccess,300);
+})();
