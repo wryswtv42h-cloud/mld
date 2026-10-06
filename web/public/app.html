@@ -99,6 +99,14 @@ window.closeAppMenu=function(){
   .app-brand b{font-size:15px}
   .page-titlebar{padding:0 4px}
 }
+</style><style id="mld-navigation-hardening">
+@media(max-width:900px){
+  .sidebar .nav{display:grid!important;grid-template-columns:1fr!important;gap:6px!important;width:100%!important}
+  .sidebar .nav-section{display:block!important;width:100%!important}
+  .sidebar .nav a{display:flex!important;width:100%!important;box-sizing:border-box!important;white-space:nowrap!important}
+  .sidebar{box-sizing:border-box!important;direction:rtl!important}
+  .app-main{overflow-x:hidden!important}
+}
 </style></head>
 <body>
 <div class="glow g1"></div><div class="glow g2"></div>
@@ -173,7 +181,24 @@ window.closeAppMenu=function(){
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/app.js?v=20261006-5"></script>
-</body></html><style id="mld-unified-navigation">
+<script>
+(function(){
+ const API='https://api-production-5bddb.up.railway.app';
+ const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=(v==null||v==='')?'—':Number.isFinite(Number(v))?Number(v).toLocaleString('ar-SA'):v};
+ async function stats(){try{const r=await fetch(API+'/api/public/server',{cache:'no-store'}),d=await r.json();set('homeServerName',d.name||'MLD');set('homeMemberCount',d.memberCount);set('homeOnlineCount',d.onlineCount);set('homeVisits',d.visits);}catch(e){}}
+ function access(){
+  const u=JSON.parse(localStorage.getItem('user')||'null');
+  const owner=!!u?.is_owner||String(u?.role||'').toLowerCase()==='owner';
+  const admin=owner||String(u?.role||'').toLowerCase()==='admin';
+  const show=(id,on,display='flex')=>{const e=document.getElementById(id);if(e)e.style.display=on?display:'none'};
+  show('adminLink',admin);show('ownerLink',owner);show('applicationsLink',owner);
+  const as=document.getElementById('adminSection'),os=document.getElementById('ownerSection');
+  if(as)as.style.display=admin?'block':'none';if(os)os.style.display=owner?'block':'none';
+  const name=document.getElementById('homeAccount');if(name)name.textContent=u?.username||'زائر';
+ }
+ stats();access();setInterval(stats,15000);setInterval(access,1000);
+})();
+</script></body></html><style id="mld-unified-navigation">
 /* One navigation system on every screen size */
 .app-shell{display:block!important}
 .sidebar{position:fixed!important;top:0!important;right:0!important;width:min(340px,92vw)!important;height:100dvh!important;z-index:3500!important;transform:translate3d(110%,0,0)!important;visibility:hidden!important;pointer-events:none!important;overflow-y:auto!important;border-radius:0 0 0 24px!important;padding:88px 14px 24px!important}
