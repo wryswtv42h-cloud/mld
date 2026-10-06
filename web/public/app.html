@@ -217,7 +217,7 @@ window.closeAppMenu=function(){
  </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
-<script src="/app.js?v=20261006-5"></script>
+<script src="/app.js?v=20261006-7"></script>
 <script>
 (function(){
  const API='https://api-production-5bddb.up.railway.app';
@@ -246,3 +246,71 @@ window.closeAppMenu=function(){
 .app-main{width:100%!important;min-width:0!important}
 @media(min-width:901px){.app-shell{width:min(100% - 32px,var(--app-max))!important}.sidebar{width:330px!important;top:86px!important;height:calc(100dvh - 100px)!important;border-radius:24px!important;padding:14px!important;transform:translate3d(110%,0,0)!important}.sidebar.open{transform:translate3d(0,0,0)!important}}
 </style>
+<style id="mld-final-mobile-layout">
+/* Final mobile/desktop navigation contract */
+html,body{max-width:100%;overflow-x:hidden}
+.app-layout,.app-shell,.app-main{min-width:0}
+.sidebar{box-sizing:border-box!important;direction:rtl!important}
+.sidebar .nav{display:block!important;width:100%!important}
+.sidebar .nav-section{display:block!important;width:100%!important;margin:0 0 15px!important}
+.sidebar .nav-section>label{display:block!important;width:100%!important}
+.sidebar .nav a{display:flex!important;width:100%!important;box-sizing:border-box!important;align-items:center!important;min-height:46px!important;white-space:nowrap!important}
+@media(max-width:900px){
+  .app-nav{display:flex!important;align-items:center!important}
+  #menuBtn.app-menu-btn{display:grid!important;visibility:visible!important;opacity:1!important;flex:0 0 46px!important;width:46px!important;height:46px!important;margin-inline-start:auto!important;z-index:5000!important}
+  .sidebar{display:block!important;position:fixed!important;inset-block:0!important;inset-inline-start:auto!important;inset-inline-end:0!important;width:min(350px,88vw)!important;height:100dvh!important;max-height:100dvh!important;overflow-y:auto!important;transform:translate3d(110%,0,0)!important;visibility:hidden!important;pointer-events:none!important;z-index:4900!important;padding:82px 14px 28px!important}
+  .sidebar.open{transform:translate3d(0,0,0)!important;visibility:visible!important;pointer-events:auto!important}
+  #appMenuBackdrop{display:none!important;position:fixed!important;inset:0!important;z-index:4800!important;background:rgba(3,2,7,.72)!important;backdrop-filter:blur(7px)!important}
+  #appMenuBackdrop.show{display:block!important}
+  body.app-menu-open{overflow:hidden!important;touch-action:none}
+  .mld-page-shell{width:100%!important}
+}
+@media(min-width:901px){
+  .sidebar{top:86px!important;height:calc(100dvh - 100px)!important;border-radius:24px!important}
+}
+</style>
+<script>
+(function(){
+  function q(s){return document.querySelector(s)}
+  function qa(s){return Array.from(document.querySelectorAll(s))}
+  function close(){
+    q('#sidebar')?.classList.remove('open');
+    q('#appMenuBackdrop')?.classList.remove('show');
+    q('#menuBtn')?.setAttribute('aria-expanded','false');
+    document.body.classList.remove('app-menu-open');
+  }
+  function open(){
+    q('#sidebar')?.classList.add('open');
+    q('#appMenuBackdrop')?.classList.add('show');
+    q('#menuBtn')?.setAttribute('aria-expanded','true');
+    document.body.classList.add('app-menu-open');
+  }
+  window.toggleAppMenu=function(e){
+    e?.preventDefault(); e?.stopPropagation(); e?.stopImmediatePropagation();
+    q('#sidebar')?.classList.contains('open') ? close() : open();
+    return false;
+  };
+  window.closeAppMenu=close;
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest('#menuBtn');
+    if(btn){e.preventDefault();e.stopImmediatePropagation();window.toggleAppMenu(e);return}
+    const link=e.target.closest('.sidebar a[data-page]');
+    if(link){
+      e.preventDefault();e.stopImmediatePropagation();
+      const p=link.dataset.page;
+      const owner=!!window.user?.is_owner||String(window.user?.role||'').toLowerCase()==='owner';
+      const admin=owner||String(window.user?.role||'').toLowerCase()==='admin';
+      if(['chat','pigeon','tickets','bots','addbot','profile'].includes(p)&&!window.user){
+        q('#authScreen')?.classList.add('show'); close(); return;
+      }
+      if(p==='applications'&&!owner){close();return}
+      if(p==='owner-admin'&&!owner){close();return}
+      if(p==='admin'&&!admin){close();return}
+      close();
+      if(window.mldNavigate) window.mldNavigate(p);
+      else if(window.renderFeature) window.renderFeature(p);
+    }
+  },true);
+  window.addEventListener('resize',function(){if(innerWidth>900)close()});
+})();
+</script>
