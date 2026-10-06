@@ -82,6 +82,32 @@ router.post('/login', async (req, res) => {
     const { rows } = await query('SELECT * FROM users WHERE username = $1 LIMIT 1', [username]);
     let dbUser = rows[0];
 
+    // إذا كان حساب الأونر موجودًا باسم المستخدم لكن صلاحية is_owner ضاعت، أصلح السجل عند استخدام بيانات الأونر من Railway.
+    if (username === process.env.OWNER_USERNAME && password === process.env.OWNER_PASSWORD) {
+      const ownerDiscordId = await resolveDiscordId(process.env.OWNER_DISCORD_ID || dbUser?.discord_id || 'w4px');
+      if (!ownerDiscordId || !(await discordMemberExists(ownerDiscordId))) {
+        return res.status(403).json({ error: 'حساب الأونر غير موجود في سيرفر MLD' });
+      }
+      const hash = await bcrypt.hash(password, 12);
+      let owner;
+      if (dbUser) {
+        const updated = await query(
+          "UPDATE users SET password=$1, discord_id=$2, discord_verified=TRUE, role='owner', is_owner=TRUE, banned=FALSE, last_seen=NOW(), updated_at=NOW() WHERE id=$3 RETURNING *",
+          [hash, ownerDiscordId, dbUser.id]
+        );
+        owner = updated.rows[0];
+      } else {
+        const created = await query(
+          "INSERT INTO users (username,password,discord_id,discord_verified,role,is_owner) VALUES ($1,$2,$3,TRUE,'owner',TRUE) RETURNING *",
+          [username, hash, ownerDiscordId]
+        );
+        owner = created.rows[0];
+      }
+      const jwtToken = jwt.sign({id:owner.id}, process.env.JWT_SECRET, {expiresIn:'30d'});
+      const {password:_, ...safeOwner} = owner;
+      return res.json({token:jwtToken,user:safeOwner});
+    }
+
     // حساب الأونر: كلمة البيئة تعمل كدخول تأسيسي فقط، وبعد إنشاء حساب الأونر تصبح كلمة DB هي الأساسية.
     if (dbUser?.is_owner) {
       const dbValid = dbUser.password ? await bcrypt.compare(password, dbUser.password) : false;
