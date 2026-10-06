@@ -111,3 +111,35 @@ refreshTimer=setInterval(()=>{if(!content)return;if(modal&&!modal.classList.cont
   setInterval(loadServer,15000);
   setInterval(loadReviews,30000);
 })();
+
+/* ===== MLD UNIFIED VISITOR / MEMBER NAV v5 ===== */
+(function(){
+  const isMember=()=>!!localStorage.getItem('token')&&!!JSON.parse(localStorage.getItem('user')||'null');
+  const getUser=()=>JSON.parse(localStorage.getItem('user')||'null');
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const links=()=>{const member=isMember(),u=getUser(),admin=u&&(u.is_owner||String(u.role||'').toLowerCase()==='admin'||String(u.role||'').toLowerCase()==='owner');
+    const common=[['/','🏠 الرئيسية'],['/#members','👥 الأعضاء'],['/#top','🏆 التوب'],['/#roles','👑 الرتب القيادية']];
+    const out=[...common];
+    if(member) out.push(['chat.html','💬 الشات العام'],['zajel.html','✉️ الزاجل']);
+    out.push(['games.html','🎮 الألعاب'],['cinema.html','🎬 السينما'],['feedback.html','⭐ الآراء'],['groups.html','👨‍👩‍👧 القروبات 🔒'],['apply.html','📝 التقديم 🔒'],['tickets.html','🎫 التذاكر 🔒'],['bots.html','🤖 منصة البوتات 🔒']);
+    if(member) out.push(['addbot.html','➕ إضافة بوت'],['profile.html','👤 بروفايلي']);
+    if(admin) out.push(['app.html#admin','🛡️ لوحة الإدارة']);
+    if(u?.is_owner||String(u?.role||'').toLowerCase()==='owner') out.push(['app.html#owner-admin','👑 لوحة الأونر']);
+    out.push(member?['#mld-logout','🚪 تسجيل الخروج']:['login.html','🔐 تسجيل الدخول']);
+    return out;
+  };
+  function lock(){const m=document.createElement('div');m.className='mld-lock-modal';m.innerHTML='<div class="mld-lock-box"><h3>🔒 سجّل دخول للمتابعة</h3><p>هذي الميزة متاحة للأعضاء المسجلين في MLD.</p><div class="mld-lock-actions"><a class="primary" href="/login.html">تسجيل الدخول</a><button class="btn-secondary" type="button">لاحقاً</button></div></div>';m.querySelector('button').onclick=()=>m.remove();document.body.appendChild(m)}
+  function install(){
+    const nav=document.querySelector('#sidebar nav')||document.querySelector('.sidebar .nav'); if(!nav)return;
+    nav.innerHTML=links().map(([href,label])=>href==='#mld-logout'?'<a href="#" data-mld-logout>'+label+'</a>':'<a href="'+esc(href)+'">'+label+'</a>').join('');
+    nav.querySelector('[data-mld-logout]')?.addEventListener('click',e=>{e.preventDefault();localStorage.removeItem('token');localStorage.removeItem('user');location.href='/'});
+    const menu=document.getElementById('menu');const sidebar=document.getElementById('sidebar');const backdrop=document.getElementById('menu-backdrop');
+    const close=()=>{sidebar?.classList.remove('open');backdrop?.classList.remove('open');document.body.classList.remove('menu-open')};
+    const open=()=>{sidebar?.classList.add('open');backdrop?.classList.add('open');document.body.classList.add('menu-open')};
+    menu?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();sidebar?.classList.contains('open')?close():open()},true);backdrop?.addEventListener('click',close);
+    nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>setTimeout(close,0)));
+    document.querySelectorAll('#mobile-menu').forEach(x=>x.style.display='none');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+  window.addEventListener('storage',install);window.mldLock=lock;
+})();
