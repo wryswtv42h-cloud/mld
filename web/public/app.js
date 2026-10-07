@@ -163,43 +163,49 @@ window.toast=toast;
 })();
 
 
-/* MLD: single navigation/access controller */
+
+/* MLD ROOT NAVIGATION: one router, one access controller. */
 (function(){
 'use strict';
 const adminRoles=new Set(['admin','co-owner','coowner','founder','senior staff','senior_staff','staff','junior staff','junior_staff']);
-const loggedPages=new Set(['chat','pigeon','profile','addbot']);
-const ownerPage='owner-admin', adminPage='admin';
-const getUser=()=>window.user||null, getToken=()=>window.token||localStorage.getItem('token')||'';
-const isOwner=()=>{const u=getUser();return !!u&&(!!u.is_owner||String(u.role||'').toLowerCase()==='owner')};
-const isAdmin=()=>isOwner()||adminRoles.has(String(getUser()?.role||'').toLowerCase());
-const setDisplay=(id,on)=>{const e=document.getElementById(id);if(e)e.style.display=on?'flex':'none'};
-function applyAccess(){
- const logged=!!getUser()&&!!getToken(), owner=isOwner(), admin=isAdmin();
- setDisplay('loginBtn',!logged);setDisplay('logoutBtn',logged);setDisplay('profileLink',logged);setDisplay('addbotLink',logged);
- setDisplay('applicationsLink',owner);setDisplay('adminLink',admin);setDisplay('ownerLink',owner);
- ['chat','pigeon'].forEach(p=>document.querySelectorAll('[data-page="'+p+'"]').forEach(e=>e.style.display=logged?'flex':'none'));
- const a=document.getElementById('adminSection'),o=document.getElementById('ownerSection');
- if(a)a.style.display=admin?'block':'none';if(o)o.style.display=owner?'block':'none';
- const n=document.getElementById('homeAccount');if(n)n.textContent=getUser()?.username||'زائر';
+const getU=()=>window.user||user||null;
+const logged=()=>!!getU()&&!!(window.token||token||localStorage.getItem('token'));
+const owner=()=>{const u=getU();return !!u&&(!!u.is_owner||String(u.role||'').toLowerCase()==='owner')};
+const admin=()=>owner()||adminRoles.has(String(getU()?.role||'').toLowerCase());
+const visible=(id,on)=>{const e=document.getElementById(id);if(e)e.style.display=on?'flex':'none'};
+function access(){
+ const l=logged(),o=owner(),a=admin();
+ visible('loginBtn',!l);visible('logoutBtn',l);visible('profileLink',l);visible('addbotLink',l);
+ visible('applicationsLink',o);visible('adminLink',a);visible('ownerLink',o);
+ document.querySelectorAll('[data-page="chat"],[data-page="pigeon"]').forEach(e=>e.style.display=l?'flex':'none');
+ const as=document.getElementById('adminSection'),os=document.getElementById('ownerSection');
+ if(as)as.style.display=a?'block':'none';if(os)os.style.display=o?'block':'none';
+ const n=document.getElementById('homeAccount');if(n)n.textContent=getU()?.username||'زائر';
 }
-function navigate(page){
- const p=String(page||'home').replace(/^#/,'')||'home', logged=!!getUser()&&!!getToken(), owner=isOwner(), admin=isAdmin();
- if(p==='login'){closeAppMenu?.();document.getElementById('authScreen')?.classList.add('show');return false}
- if(p==='logout'){window.mldLogout?.();return false}
- if(p===ownerPage&&!owner){toast('هذه الصفحة للأونر فقط');closeAppMenu?.();return false}
- if(p===adminPage&&!admin){toast('هذه الصفحة للإدارة فقط');closeAppMenu?.();return false}
- if(p==='applications'&&!owner){toast('التقديم متاح للأونر فقط');closeAppMenu?.();return false}
- if(loggedPages.has(p)&&!logged){document.getElementById('authScreen')?.classList.add('show');toast('سجّل دخول للمتابعة');closeAppMenu?.();return false}
+function go(p,write=true){
+ p=String(p||'home').replace(/^#/,'')||'home';
+ const l=logged(),o=owner(),a=admin();
+ if(p==='login'){document.getElementById('authScreen')?.classList.add('show');window.closeAppMenu?.();return false}
+ if(p==='logout'){window.mldLogout();return false}
+ if(p==='chat'||p==='pigeon'||p==='profile'||p==='addbot'){
+   if(!l){document.getElementById('authScreen')?.classList.add('show');toast('سجّل دخول للمتابعة');window.closeAppMenu?.();return false}
+ }
+ if(p==='applications'&&!o){toast('هذه الصفحة للأونر فقط');window.closeAppMenu?.();return false}
+ if(p==='admin'&&!a){toast('هذه الصفحة للإدارة فقط');window.closeAppMenu?.();return false}
+ if(p==='owner-admin'&&!o){toast('هذه الصفحة للأونر فقط');window.closeAppMenu?.();return false}
  if(!document.getElementById('page-'+p)){toast('الصفحة غير موجودة');return false}
- history.pushState({page:p},'', '#'+p);setPage(p);closeAppMenu?.();return false;
+ if(write&&location.hash!=='#'+p)history.pushState({page:p},'', '#'+p);
+ setPage(p);window.closeAppMenu?.();access();return false;
 }
-window.mldNavigate=navigate;window.applyAccess=applyAccess;
-document.addEventListener('click',e=>{
- const link=e.target.closest('a[data-page],a[data-page-link],.app-brand');if(!link)return;
- e.preventDefault();e.stopImmediatePropagation();navigate(link.dataset.page||'home');
+window.mldNavigate=go;window.mldRouter=go;window.applyAccess=access;
+document.addEventListener('click',function(e){
+ const link=e.target.closest('[data-page]');
+ if(!link)return;
+ e.preventDefault();e.stopPropagation();go(link.getAttribute('data-page'));
 },true);
-window.addEventListener('popstate',()=>setPage((location.hash||'#home').slice(1)));
-window.addEventListener('hashchange',()=>{const p=(location.hash||'#home').slice(1);if(meta[p])setPage(p)});
-window.addEventListener('mld-auth-changed',applyAccess);window.addEventListener('storage',e=>{if(e.key==='token'||e.key==='user')setTimeout(applyAccess,0)});
-document.addEventListener('DOMContentLoaded',applyAccess);setInterval(applyAccess,1000);
+window.addEventListener('popstate',()=>go((location.hash||'#home').slice(1),false));
+window.addEventListener('hashchange',()=>go((location.hash||'#home').slice(1),false));
+window.addEventListener('mld-auth-changed',access);
+document.addEventListener('DOMContentLoaded',()=>{access();go((location.hash||'#home').slice(1),false)});
+setInterval(access,1500);
 })();
