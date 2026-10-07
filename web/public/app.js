@@ -33,7 +33,7 @@ function toast(t){const e=$('#toast');if(!e)return;e.textContent=t;e.classList.a
 async function api(path,opts={}){const r=await fetch(API+(path.startsWith('/')?path:'/ '+path).replace('/ ','/'),{...opts,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opts.headers||{})}});let d={};try{d=await r.json()}catch{}if(!r.ok){if(r.status===401){logout(false)}throw new Error(d.error||'تعذر تنفيذ الطلب')}return d}
 function logout(reload=true){localStorage.removeItem('token');localStorage.removeItem('user');token='';user=null;if(reload)location.hash='home';if(reload)location.reload()}
 function authRequired(){if(!token||!user){$('#authScreen')?.classList.add('show');toast('هذه الصفحة تتطلب تسجيل الدخول');return false}return true}
-function privileged(kind){const role=String(user?.role||'').toLowerCase();return !!user&&(user.is_owner||role==='owner'||(kind==='admin'&&role==='admin'))}
+function privileged(kind){const role=String(user?.role||'').toLowerCase();const adminRoles=new Set(['admin','co-owner','coowner','founder','senior staff','senior_staff','staff','junior staff','junior_staff']);return !!user&&(user.is_owner||role==='owner'||(kind==='admin'&&adminRoles.has(role)))}
 function closeMenu(){window.closeAppMenu?.()}
 function shell(p,body){const m=meta[p]||['✦',p,''];return '<section class="mld-page-shell"><header class="mld-page-head"><span class="mld-kicker">'+m[0]+' MLD COMMUNITY</span><h1>'+m[1]+'</h1><p>'+m[2]+'</p></header><div class="mld-page-body">'+body+'</div></section>'}
 function card(title,body,actions=''){return '<article class="panel"><h3>'+title+'</h3><div class="muted">'+body+'</div>'+actions+'</article>'}
@@ -141,7 +141,7 @@ function bindAuth(){
  $('#logoutBtn')?.addEventListener('click',e=>{e.preventDefault();logout()});
 }
 function bindNav(){
- $('.sidebar a[data-page]').forEach(a=>a.onclick=e=>{e.preventDefault();const p=a.dataset.page;if(p==='owner-admin' && !privileged('owner')){toast('هذه الصفحة للأونر فقط');return;}location.hash=p;setPage(p)});
+ // Navigation is handled by the single controller below. Do not attach competing link handlers here.
  window.addEventListener('hashchange',()=>setPage((location.hash||'#home').slice(1)));
 }
 function boot(){syncUserUI();bindAuth();bindNav();loadStats();setInterval(loadStats,15000);const p=(location.hash||'#home').slice(1);setPage(meta[p]?p:'home')}
@@ -157,51 +157,58 @@ window.toast=toast;
 })();
 
 
-// MLD navigation cleanup: one controller only.
+/* MLD: single navigation + access controller */
 (function(){
+  'use strict';
   const adminRoles=new Set(['admin','co-owner','coowner','founder','senior staff','senior_staff','staff','junior staff','junior_staff']);
-  const isOwner=()=>!!user?.is_owner||String(user?.role||'').toLowerCase()==='owner';
-  const isAdmin=()=>isOwner()||adminRoles.has(String(user?.role||'').toLowerCase());
+  const getUser=()=>window.user||null;
+  const getToken=()=>window.token||localStorage.getItem('token')||'';
+  const owner=()=>{const u=getUser();return !!u&&(!!u.is_owner||String(u.role||'').toLowerCase()==='owner')};
+  const admin=()=>{const u=getUser();return owner()||adminRoles.has(String(u?.role||'').toLowerCase())};
   const close=()=>window.closeAppMenu?.();
-  function apply(){
-    const logged=!!user&&!!token;
-    const show=(id,on)=>{const e=document.getElementById(id);if(e)e.style.display=on?'flex':'none'};
-    show('adminLink',isAdmin());show('ownerLink',isOwner());show('applicationsLink',true);
+  function applyAccess(){
+    const logged=!!getUser()&&!!getToken();
+    const show=(id,on,display='flex')=>{const e=document.getElementById(id);if(e)e.style.display=on?display:'none'};
+    show('loginBtn',!logged);show('logoutBtn',logged);show('profileLink',logged);show('addbot',logged);
+    show('adminLink',admin());show('ownerLink',owner());show('applicationsLink',true);
     const as=document.getElementById('adminSection'),os=document.getElementById('ownerSection');
-    if(as)as.style.display=isAdmin()?'block':'none';
-    if(os)os.style.display=isOwner()?'block':'none';
-    const login=document.getElementById('loginBtn'),logout=document.getElementById('logoutBtn'),profile=document.querySelector('[data-page="profile"]'),addbot=document.querySelector('[data-page="addbot"]');
-    if(login)login.style.display=logged?'none':'flex';
-    if(logout)logout.style.display=logged?'flex':'none';
+    if(as)as.style.display=admin()?'block':'none';
+    if(os)os.style.display=owner()?'block':'none';
+    const profile=document.querySelector('[data-page="profile"]');
+    const addbot=document.querySelector('[data-page="addbot"]');
     if(profile)profile.style.display=logged?'flex':'none';
     if(addbot)addbot.style.display=logged?'flex':'none';
-    if(document.getElementById('homeAccount'))document.getElementById('homeAccount').textContent=user?.username||'زائر';
+    const name=document.getElementById('homeAccount');
+    if(name)name.textContent=getUser()?.username||'زائر';
   }
-  window.mldNavigate=function(p){
-    p=(p||'home').replace(/^#/,'');
-    if(p==='owner-admin'&&!isOwner()){toast('هذه الصفحة للأونر فقط');close();return}
-    if(p==='admin'&&!isAdmin()){toast('هذه الصفحة للإدارة فقط');close();return}
-    if(p==='login'){document.getElementById('authScreen')?.classList.add('show');close();return}
-    if(p==='logout'){logout();return}
+  window.mldNavigate=function(page){
+    const p=String(page||'home').replace(/^#/,'')||'home';
+    if(p==='login'){close();document.getElementById('authScreen')?.classList.add('show');return;}
+    if(p==='logout'){close();logout();return;}
+    if(p==='owner-admin'&&!owner()){toast('هذه الصفحة للأونر فقط');close();return;}
+    if(p==='admin'&&!admin()){toast('هذه الصفحة للإدارة فقط');close();return;}
+    if(!document.getElementById('page-'+p)){toast('الصفحة غير موجودة');close();return;}
     close();
-    if(location.hash.slice(1)!==p)history.pushState(null,'','#'+p);
+    if(location.hash!=='#'+p) history.pushState({page:p},'', '#'+p);
     setPage(p);
     document.querySelectorAll('.sidebar a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));
   };
-  function bind(){
+  function bindSingleNavigation(){
     document.addEventListener('click',e=>{
-      const a=e.target.closest('.sidebar a[data-page]');
-      if(!a)return;
+      const link=e.target.closest('.sidebar a[data-page], .app-brand, [data-page-link]');
+      if(!link)return;
       e.preventDefault();
-      const p=a.dataset.page;
+      e.stopPropagation();
+      const p=link.dataset.page||'home';
+      if(link.classList.contains('app-brand')){window.mldNavigate('home');return;}
       window.mldNavigate(p);
-    });
+    },true);
     window.addEventListener('popstate',()=>setPage((location.hash||'#home').slice(1)));
-    window.addEventListener('hashchange',()=>setPage((location.hash||'#home').slice(1)));
-    document.querySelector('.app-brand')?.addEventListener('click',e=>{e.preventDefault();window.mldNavigate('home')});
-    apply();
+    applyAccess();
   }
-  document.addEventListener('DOMContentLoaded',bind);
-  window.addEventListener('mld-auth-changed',apply);
-  setInterval(apply,1000);
+  window.applyAccess=applyAccess;
+  document.addEventListener('DOMContentLoaded',bindSingleNavigation);
+  window.addEventListener('mld-auth-changed',applyAccess);
+  window.addEventListener('storage',e=>{if(e.key==='token'||e.key==='user')setTimeout(applyAccess,0)});
+  setInterval(applyAccess,1500);
 })();
