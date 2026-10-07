@@ -47,7 +47,7 @@ router.patch('/settings/:key',requireAuth,requireOwner,async(req,res)=>{
 });
 router.get('/audit',requireAuth,requireOwner,async(req,res)=>{const {rows}=await query('SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 200');res.json({logs:rows});});
 
-router.get('/chat', requireAuth, async (req,res)=>{ const {rows}=await query('SELECT * FROM chat_messages ORDER BY created_at DESC LIMIT 100'); res.json({messages:rows.reverse()}); });
+router.get('/chat', async (req,res)=>{ const {rows}=await query('SELECT * FROM chat_messages ORDER BY created_at DESC LIMIT 100'); res.json({messages:rows.reverse()}); });
 router.post('/chat', requireAuth, async (req,res)=>{ const content=String(req.body.content||'').trim(); if(!content)return res.status(400).json({error:'اكتب رسالة'}); const {rows}=await query('INSERT INTO chat_messages(user_id,sender_name,sender_avatar,content) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,req.user.username,req.user.avatar||'',content]); res.json({message:rows[0]}); });
 
 router.get('/reviews', async (req,res)=>{ const {rows}=await query('SELECT * FROM reviews ORDER BY created_at DESC LIMIT 100'); res.json({reviews:rows}); });
