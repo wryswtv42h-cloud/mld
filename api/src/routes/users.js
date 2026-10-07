@@ -75,4 +75,25 @@ router.delete('/:id', requireAuth, requireOwner, async (req, res) => {
   res.json({ message: 'تم الحذف' });
 });
 
+// ===== إدارة حسابات الأونر =====
+router.get('/:id/private', requireAuth, requireOwner, async (req,res)=>{
+  const u=await query('SELECT id,username,avatar,bio,role,is_owner,discord_id FROM users WHERE id=$1',[req.params.id]);
+  if(!u.rows[0])return res.status(404).json({error:'الحساب غير موجود'});
+  const m=await query('SELECT id,sender_id,recipient_id,content,created_at FROM pigeon_messages WHERE sender_id=$1 OR recipient_id=$1 ORDER BY created_at DESC LIMIT 500',[req.params.id]);
+  res.json({user:u.rows[0],messages:m.rows.reverse()});
+});
+router.patch('/:id', requireAuth, requireOwner, async (req,res)=>{
+  if(String(req.params.id)===String(req.user.id))return res.status(400).json({error:'استخدم تعديل بروفايلك الشخصي'});
+  const q=await query('SELECT * FROM users WHERE id=$1',[req.params.id]); const u=q.rows[0];
+  if(!u)return res.status(404).json({error:'الحساب غير موجود'});
+  const username=req.body.username!==undefined?String(req.body.username).trim():u.username;
+  const avatar=req.body.avatar!==undefined?String(req.body.avatar):u.avatar;
+  const bio=req.body.bio!==undefined?String(req.body.bio):u.bio;
+  if(!username)return res.status(400).json({error:'اسم المستخدم مطلوب'});
+  if(username!==u.username){const e=await query('SELECT id FROM users WHERE username=$1 AND id<>$2',[username,u.id]);if(e.rows[0])return res.status(400).json({error:'الاسم مستخدم'});}
+  const r=await query('UPDATE users SET username=$1,avatar=$2,bio=$3,updated_at=NOW() WHERE id=$4 RETURNING id,username,avatar,bio,role,is_owner,discord_id,banned',[username,avatar,bio,u.id]);
+  await query('INSERT INTO audit_logs(actor_id,actor_name,action,target,meta) VALUES($1,$2,$3,$4,$5)',[req.user.id,req.user.username,'account_updated',String(u.id),JSON.stringify({username,avatar})]);
+  res.json({user:r.rows[0]});
+});
+
 export default router;
