@@ -150,7 +150,7 @@ window.closeAppMenu=function(){
 <div class="app-layout">
 <div class="mld-announcement" role="status"><span class="mld-announcement-dot">●</span><strong>أهلاً بكم في ملاذ</strong><span>مرحبًا بكم في مجتمع MLD · كل شيء في مكان واحد</span></div><header class="app-topbar">
  <div class="app-nav">
-  <a class="app-brand" href="#home" onclick="return window.mldNavigate('home')"><img src="logo.svg.JPG" onerror="this.src='/logo.svg'"><span><b>MLD</b><small>COMMUNITY</small></span></a>
+  <a class="app-brand" href="#home"><img src="logo.svg.JPG" onerror="this.src='/logo.svg'"><span><b>MLD</b><small>COMMUNITY</small></span></a>
   <div style="margin-inline-start:auto;color:#9f98aa;font-size:13px" id="topLoginBtn"></div>
   <button id="menuBtn" onclick="return window.toggleAppMenu(event);" class="menu app-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false"><span></span><span></span><span></span></button>
  </div>
@@ -161,30 +161,30 @@ window.closeAppMenu=function(){
  <div class="sidebar-user"><div id="myAvatar" class="avatar">ز</div><div><strong id="myName">زائر</strong><small id="myRole">تصفح عام</small></div></div>
  <nav class="nav">
   <div class="nav-section"><label>رئيسي</label>
-   <a href="#home" data-page="home" onclick="return window.mldNavigate('home')">الرئيسية</a><a href="#members" data-page="members" onclick="return window.mldNavigate('members')">الأعضاء</a><a href="#top" data-page="top" onclick="return window.mldNavigate('top')">التوب</a><a href="#leaders" data-page="leaders" onclick="return window.mldNavigate('leaders')">الرتب القيادية</a>
+   <a href="javascript:void(0)" data-page="home">الرئيسية</a><a href="javascript:void(0)" data-page="members">الأعضاء</a><a href="javascript:void(0)" data-page="top">التوب</a><a href="javascript:void(0)" data-page="leaders">الرتب القيادية</a>
   </div>
   <div class="nav-section"><label>التواصل</label>
-   <a href="#chat" data-page="chat" onclick="return window.mldNavigate('chat')">الشات العام</a><a href="#pigeon" data-page="pigeon" onclick="return window.mldNavigate('pigeon')">الزاجل</a>
+   <a href="javascript:void(0)" data-page="chat">الشات العام</a><a href="javascript:void(0)" data-page="pigeon">الزاجل</a>
   </div>
   <div class="nav-section"><label>الترفيه</label>
-   <a href="#games" data-page="games" onclick="return window.mldNavigate('games')">الألعاب</a><a href="#cinema" data-page="cinema" onclick="return window.mldNavigate('cinema')">السينما</a><a href="#groups" data-page="groups" onclick="return window.mldNavigate('groups')">القروبات</a>
+   <a href="javascript:void(0)" data-page="games">الألعاب</a><a href="javascript:void(0)" data-page="cinema">السينما</a><a href="javascript:void(0)" data-page="groups">القروبات</a>
   </div>
   <div class="nav-section"><label>الخدمات</label>
-   <a href="#tickets" data-page="tickets" onclick="return window.mldNavigate('tickets')">التذاكر</a><a href="#applications" id="applicationsLink" data-page="applications" style="display:none" onclick="return window.mldNavigate('applications')">التقديم</a><a href="#reviews" data-page="reviews" onclick="return window.mldNavigate('reviews')">الآراء</a>
+   <a href="javascript:void(0)" data-page="tickets">التذاكر</a><a href="javascript:void(0)" id="applicationsLink" data-page="applications" style="display:none">التقديم</a><a href="javascript:void(0)" data-page="reviews">الآراء</a>
   </div>
   <div class="nav-section"><label>البوتات</label>
-   <a href="#bots" data-page="bots" onclick="return window.mldNavigate('bots')">منصة البوتات</a><a href="#addbot" id="addbotLink" data-page="addbot" style="display:none" onclick="return window.mldNavigate('addbot')">إضافة بوت</a>
+   <a href="javascript:void(0)" data-page="bots">منصة البوتات</a><a href="javascript:void(0)" id="addbotLink" data-page="addbot" style="display:none">إضافة بوت</a>
   </div>
   <div class="nav-section"><label>حسابي</label>
-   <a href="#profile" id="profileLink" data-page="profile" style="display:none" onclick="return window.mldNavigate('profile')">بروفايلي</a><a href="#logout" id="logoutBtn" data-page="logout" style="display:none" onclick="return window.mldNavigate('logout')">تسجيل الخروج</a><a href="#login" id="loginBtn" data-page="login" onclick="return window.mldNavigate('login')">دخول المنصة</a>
+   <a href="javascript:void(0)" id="profileLink" data-page="profile" style="display:none">بروفايلي</a><a href="javascript:void(0)" id="logoutBtn" data-page="logout" style="display:none">تسجيل الخروج</a><a href="javascript:void(0)" id="loginBtn" data-page="login">دخول المنصة</a>
   </div>
-  <div id="adminSection" class="nav-section" style="display:none"><label>الإدارة</label><a href="#admin" id="adminLink" data-page="admin" data-privileged style="display:none" onclick="return window.mldNavigate('admin')">لوحة الإدارة</a></div>
-  <div id="ownerSection" class="nav-section" style="display:none"><label>الأونر</label><a href="#owner-admin" id="ownerLink" data-page="owner-admin" data-owner-only style="display:none" onclick="return window.mldNavigate('owner-admin')">لوحة الأونر</a></div>
+  <div id="adminSection" class="nav-section" style="display:none"><label>الإدارة</label><a href="javascript:void(0)" id="adminLink" data-page="admin" data-privileged style="display:none">لوحة الإدارة</a></div>
+  <div id="ownerSection" class="nav-section" style="display:none"><label>الأونر</label><a href="javascript:void(0)" id="ownerLink" data-page="owner-admin" data-owner-only style="display:none">لوحة الأونر</a></div>
  </nav>
 </aside>
 <main class="app-main">
  <div class="page-titlebar"><div><h1 id="pageTitle">الرئيسية</h1><p>منصة MLD Community — كل شيء في مكان واحد.</p></div></div>
- <section id="page-home" class="page active"><div class="mld-hero"><div class="mld-hero-copy"><span class="mld-live">● LIVE COMMUNITY SYSTEM</span><h1>مجتمع <span>MLD</span><br>بشكل مختلف.</h1><p>كل مجتمعك في واجهة واحدة: أعضاء، رتب، توب، ألعاب، سينما، قروبات، شات وخدمات الإدارة.</p><div class="mld-hero-actions"><a class="btn-primary" href="#members" data-page-link>ابدأ الاستكشاف ←</a><span>صُنع بواسطة <b>فهد المطيري</b></span></div></div><div class="mld-hero-art"><div class="mld-ring r1"></div><div class="mld-ring r2"></div><div class="mld-orb"></div><img src="logo.svg.JPG"></div></div><div class="mld-stats"><div><small>السيرفر</small><b id="homeServerName">MLD</b></div><div><small>الأعضاء</small><b id="homeMemberCount">—</b></div><div><small>المتصلون</small><b id="homeOnlineCount">—</b></div><div><small>الزيارات</small><b id="homeVisits">—</b></div><div><small>الحساب</small><b id="homeAccount">زائر</b></div></div><div class="mld-feature-grid"><a href="#members" class="mld-feature" data-page-link><i>👥</i><b>الأعضاء</b><span>استكشف مجتمع MLD</span></a><a href="#top" class="mld-feature" data-page-link><i>🏆</i><b>التوب</b><span>أعلى النشاط</span></a><a href="#games" class="mld-feature" data-page-link><i>🎮</i><b>الألعاب</b><span>جلسات وتحديات</span></a><a href="#cinema" class="mld-feature" data-page-link><i>🎬</i><b>السينما</b><span>غرف مشاهدة جماعية</span></a></div></section>
+ <section id="page-home" class="page active"><div class="mld-hero"><div class="mld-hero-copy"><span class="mld-live">● LIVE COMMUNITY SYSTEM</span><h1>مجتمع <span>MLD</span><br>بشكل مختلف.</h1><p>كل مجتمعك في واجهة واحدة: أعضاء، رتب، توب، ألعاب، سينما، قروبات، شات وخدمات الإدارة.</p><div class="mld-hero-actions"><a class="btn-primary" href="#members" data-page-link>ابدأ الاستكشاف ←</a><span>صُنع بواسطة <b>فهد المطيري</b></span></div></div><div class="mld-hero-art"><div class="mld-ring r1"></div><div class="mld-ring r2"></div><div class="mld-orb"></div><img src="logo.svg.JPG"></div></div><div class="mld-stats"><div><small>السيرفر</small><b id="homeServerName">MLD</b></div><div><small>الأعضاء</small><b id="homeMemberCount">—</b></div><div><small>المتصلون</small><b id="homeOnlineCount">—</b></div><div><small>الزيارات</small><b id="homeVisits">—</b></div><div><small>الحساب</small><b id="homeAccount">زائر</b></div></div><div class="mld-feature-grid"><a href="javascript:void(0)" class="mld-feature" data-page-link><i>👥</i><b>الأعضاء</b><span>استكشف مجتمع MLD</span></a><a href="javascript:void(0)" class="mld-feature" data-page-link><i>🏆</i><b>التوب</b><span>أعلى النشاط</span></a><a href="javascript:void(0)" class="mld-feature" data-page-link><i>🎮</i><b>الألعاب</b><span>جلسات وتحديات</span></a><a href="javascript:void(0)" class="mld-feature" data-page-link><i>🎬</i><b>السينما</b><span>غرف مشاهدة جماعية</span></a></div></section>
  <section id="page-members" class="page"></section><section id="page-top" class="page"></section><section id="page-leaders" class="page"></section>
  <section id="page-chat" class="page"></section><section id="page-pigeon" class="page"></section><section id="page-games" class="page"></section><section id="page-cinema" class="page"></section><section id="page-groups" class="page"></section><section id="page-tickets" class="page"></section><section id="page-applications" class="page"></section><section id="page-reviews" class="page"></section><section id="page-profile" class="page"><div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">👤 MLD COMMUNITY</span><h1>بروفايلي</h1><p>إدارة بيانات حسابك.</p></div><div class="mld-page-body"><div class="panel"><label>اسم المستخدم</label><input id="profileName" class="full" autocomplete="username"><label>نبذة</label><textarea id="profileBio" class="full"></textarea><button id="saveProfileBtn" class="btn-primary">حفظ التغييرات</button></div></div></div></section>
  <section id="page-bots" class="page"><div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">🤖 MLD COMMUNITY</span><h1>منصة البوتات</h1><p>إدارة بوتاتك.</p></div><div class="mld-page-body"><div id="botsList" class="page-grid"></div></div></div></section>
@@ -217,25 +217,8 @@ window.closeAppMenu=function(){
  </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
-<script src="/app.js?v=20261007-1"></script>
-<script>
-(function(){
- const API='https://api-production-5bddb.up.railway.app';
- const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=(v==null||v==='')?'—':Number.isFinite(Number(v))?Number(v).toLocaleString('ar-SA'):v};
- async function stats(){try{const r=await fetch(API+'/api/public/server',{cache:'no-store'}),d=await r.json();set('homeServerName',d.name||'MLD');set('homeMemberCount',d.memberCount);set('homeOnlineCount',d.onlineCount);set('homeVisits',d.visits);}catch(e){}}
- function access(){
-  const u=JSON.parse(localStorage.getItem('user')||'null');
-  const owner=!!u?.is_owner||String(u?.role||'').toLowerCase()==='owner';
-  const admin=owner||String(u?.role||'').toLowerCase()==='admin';
-  const show=(id,on,display='flex')=>{const e=document.getElementById(id);if(e)e.style.display=on?display:'none'};
-  show('adminLink',admin);show('ownerLink',owner);show('applicationsLink',owner);
-  const as=document.getElementById('adminSection'),os=document.getElementById('ownerSection');
-  if(as)as.style.display=admin?'block':'none';if(os)os.style.display=owner?'block':'none';
-  const name=document.getElementById('homeAccount');if(name)name.textContent=u?.username||'زائر';
- }
- stats();
-})();
-</script></body></html><style id="mld-unified-navigation">
+<script src="/app.js?v=20261007-root"></script>
+</body></html><style id="mld-unified-navigation">
 /* One navigation system on every screen size */
 .app-shell{display:block!important}
 .sidebar{position:fixed!important;top:0!important;right:0!important;width:min(340px,92vw)!important;height:100dvh!important;z-index:3500!important;transform:translate3d(110%,0,0)!important;visibility:hidden!important;pointer-events:none!important;overflow-y:auto!important;border-radius:0 0 0 24px!important;padding:88px 14px 24px!important}
@@ -269,6 +252,3 @@ html,body{max-width:100%;overflow-x:hidden}
   .sidebar{top:86px!important;height:calc(100dvh - 100px)!important;border-radius:24px!important}
 }
 </style>
-<script>
-/* MLD navigation is controlled exclusively by /app.js. */
-</script>
