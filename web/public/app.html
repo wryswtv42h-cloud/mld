@@ -1,254 +1,46 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#08060d">
-<title>MLD · Community</title>
-<link rel="icon" href="logo.svg.JPG">
-<link rel="stylesheet" href="style.css?v=20261006-4"><script>
-window.toggleAppMenu=function(e){
-  if(e){e.preventDefault();e.stopPropagation();}
-  const s=document.getElementById('sidebar'), b=document.getElementById('appMenuBackdrop'), btn=document.getElementById('menuBtn');
-  if(!s)return false;
-  const open=!s.classList.contains('open');
-  s.classList.toggle('open',open);
-  b?.classList.toggle('show',open);
-  document.body.classList.toggle('app-menu-open',open);
-  btn?.setAttribute('aria-expanded',String(open));
-  return false;
-};
-window.closeAppMenu=function(){
-  document.getElementById('sidebar')?.classList.remove('open');
-  document.getElementById('appMenuBackdrop')?.classList.remove('show');
-  document.body.classList.remove('app-menu-open');
-  document.getElementById('menuBtn')?.setAttribute('aria-expanded','false');
-};
-</script>
-<style>
-:root{--app-max:1440px}
-.app-layout{min-height:100vh;display:flex;flex-direction:column}
-.app-topbar{position:sticky;top:0;z-index:1000;backdrop-filter:blur(18px);background:rgba(8,6,13,.82);border-bottom:1px solid rgba(255,255,255,.07)}
-.app-nav{height:72px;display:flex;align-items:center;gap:16px;padding:0 22px;max-width:var(--app-max);width:100%;margin:auto}
-.app-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;min-width:0}
-.app-brand img{width:42px;height:42px;border-radius:13px;object-fit:cover}
-.app-brand b{display:block;font-size:17px}.app-brand small{display:block;color:#9f98aa;font-size:9px;letter-spacing:1.5px}
-.app-menu-btn{display:none;margin-inline-start:auto;flex-direction:column;gap:5px;align-items:center;justify-content:center}.app-menu-btn span{display:block!important;width:22px!important;height:2px!important;border-radius:999px!important;background:#fff!important;flex:0 0 2px!important}
-.app-shell{width:min(100% - 32px,var(--app-max));margin:24px auto;display:block}
-.sidebar{position:fixed;top:0;right:0;width:min(340px,92vw);height:100dvh;z-index:3500;transform:translate3d(110%,0,0);visibility:hidden;pointer-events:none;overflow-y:auto;border-radius:0 0 0 24px;background:linear-gradient(180deg,#17101f,#0d0914);border:1px solid rgba(255,255,255,.08);padding:88px 14px 24px;box-shadow:-30px 0 80px rgba(0,0,0,.5);transition:transform .22s ease,visibility .22s ease}
-.sidebar-user{display:flex;align-items:center;gap:11px;padding:13px;border-radius:18px;background:rgba(255,255,255,.045);margin-bottom:12px}
-.sidebar-user .avatar{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#ff9cde,#a86fdf);color:#1b1020;font-weight:900;overflow:hidden}
-.sidebar-user .avatar img{width:100%;height:100%;object-fit:cover}
-.sidebar-user strong{display:block}.sidebar-user small{color:#a9a1b1}
-.nav-section{margin:16px 0}.nav-section>label{display:block;color:#81798d;font-size:11px;font-weight:800;padding:0 10px 7px}
-.sidebar .nav{display:grid;gap:5px}.sidebar .nav a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:13px;color:#d9d2df;text-decoration:none;font-weight:700;font-size:14px;transition:.18s}
-.sidebar .nav a:hover,.sidebar .nav a.active{background:linear-gradient(90deg,rgba(255,156,222,.16),rgba(168,111,223,.12));color:#fff;box-shadow:inset 0 0 0 1px rgba(255,156,222,.09)}
-.sidebar .nav a[data-privileged]{display:none}
-.app-main{min-width:0}.page{display:none}.page.active{display:block}
-.page-titlebar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:18px}
-.page-titlebar h1{margin:0;font-size:28px}.page-titlebar p{margin:6px 0 0;color:#9e96a8}
-.mld-page-shell{background:linear-gradient(180deg,rgba(24,16,33,.92),rgba(13,9,18,.96));border:1px solid rgba(255,255,255,.08);border-radius:28px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.28)}
-.mld-page-head{padding:28px 30px;border-bottom:1px solid rgba(255,255,255,.07);background:radial-gradient(circle at 85% 0,rgba(255,156,222,.1),transparent 35%),radial-gradient(circle at 15% 0,rgba(168,111,223,.1),transparent 35%)}
-.mld-page-head h1{margin:7px 0 4px;font-size:30px}.mld-page-head p{margin:0;color:#a9a1b1}.mld-kicker{font-size:10px;color:#ffb4e4;font-weight:900;letter-spacing:1.8px}.mld-page-body{padding:24px}
-.page-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.page-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
-.panel{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:18px}
-.panel h3{margin:0 0 10px}.muted{color:#9f98aa}
-.full{width:100%;box-sizing:border-box}
-.auth-screen{position:fixed;inset:0;z-index:3000;display:none;place-items:center;padding:20px;background:rgba(4,3,7,.78);backdrop-filter:blur(18px)}
-.auth-screen.show{display:grid}.auth-card{width:min(460px,100%);background:#110c19;border:1px solid rgba(255,255,255,.1);border-radius:26px;padding:24px;box-shadow:0 30px 100px #000}
-.menu-backdrop{display:none}
-@media(max-width:900px){
- .app-menu-btn{display:grid}
- .app-shell{display:block;width:min(100% - 20px,var(--app-max));margin:12px auto}
- .sidebar{position:fixed;z-index:2200;top:0;right:0;width:min(330px,88vw);height:100dvh;overflow:auto;border-radius:0 0 0 24px;transform:translateX(105%);transition:transform .22s ease;padding:18px;padding-top:88px}
- .sidebar.open{transform:translate3d(0,0,0);visibility:visible;pointer-events:auto}
- body.app-menu-open{overflow:hidden}
- .menu-backdrop{position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,.58);backdrop-filter:blur(4px)}
- .menu-backdrop.show{display:block}
- .page-grid,.page-grid.three{grid-template-columns:1fr}
- .page-titlebar h1{font-size:23px}
- .mld-page-head{padding:22px 18px}.mld-page-body{padding:15px}
-}
-@media(max-width:520px){
- .app-nav{height:64px;padding:0 12px}.app-brand img{width:38px;height:38px}
- .app-shell{width:calc(100% - 12px)}
- .page-titlebar{align-items:flex-start}.page-titlebar h1{font-size:21px}
-}
-@media(max-width:900px){#menuBtn.app-menu-btn{display:grid!important;position:relative!important;inset:auto!important;width:46px!important;height:46px!important;min-width:46px!important;place-items:center!important;margin:0!important;padding:0!important;z-index:2500!important;cursor:pointer!important}.sidebar{right:0!important;left:auto!important;transform:translate3d(105%,0,0)!important;visibility:hidden!important;pointer-events:none!important}.sidebar.open{transform:translate3d(0,0,0)!important;visibility:visible!important;pointer-events:auto!important}.app-main{width:100%!important}}</style>
-<style>.mld-hero{min-height:560px;display:flex;align-items:center;justify-content:space-between;gap:40px;padding:54px 38px;border-radius:34px;overflow:hidden;position:relative;background:radial-gradient(circle at 80% 30%,rgba(255,156,222,.15),transparent 35%),radial-gradient(circle at 15% 90%,rgba(168,111,223,.16),transparent 40%),linear-gradient(135deg,rgba(28,16,39,.96),rgba(10,7,15,.98));border:1px solid rgba(255,156,222,.12);box-shadow:0 30px 100px rgba(0,0,0,.35),inset 0 1px rgba(255,255,255,.05)}.mld-hero-copy{position:relative;z-index:2;max-width:700px}.mld-live{display:inline-flex;padding:9px 15px;border:1px solid rgba(255,156,222,.35);border-radius:999px;background:rgba(255,156,222,.07);color:#ffb9e6;font-size:11px;font-weight:900;letter-spacing:1.4px}.mld-hero h1{margin:22px 0 16px;font-size:clamp(48px,6vw,88px);line-height:1.02;letter-spacing:-4px}.mld-hero h1 span{color:#ff9cde;text-shadow:0 0 45px rgba(255,156,222,.4)}.mld-hero p{max-width:650px;color:#d5c0d9;font-size:18px;line-height:1.9;margin:0}.mld-hero-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:28px;color:#9f98aa;font-size:13px}.mld-hero-art{width:360px;height:360px;flex:0 0 360px;position:relative;display:grid;place-items:center}.mld-hero-art img{width:190px;height:190px;object-fit:cover;border-radius:55px;position:relative;z-index:3;border:1px solid rgba(255,255,255,.14);box-shadow:0 0 80px rgba(255,156,222,.35),0 0 140px rgba(168,111,223,.25)}.mld-ring{position:absolute;border-radius:50%;border:1px solid rgba(255,156,222,.25);box-shadow:0 0 45px rgba(255,156,222,.12)}.mld-ring.r1{width:330px;height:180px;transform:rotate(-18deg)}.mld-ring.r2{width:260px;height:330px;transform:rotate(35deg);border-color:rgba(168,111,223,.28)}.mld-orb{position:absolute;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,#ff9cde55,#a86fdf20 45%,transparent 70%);filter:blur(10px)}.mld-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.mld-stats>div{padding:18px 20px;border:1px solid rgba(255,255,255,.07);border-radius:20px;background:rgba(255,255,255,.035)}.mld-stats small{display:block;color:#8f879b;font-size:11px;margin-bottom:7px}.mld-stats b{font-size:18px}.mld-feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.mld-feature{padding:22px;border-radius:22px;border:1px solid rgba(255,255,255,.07);background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.018));color:#fff;text-decoration:none;display:flex;flex-direction:column;gap:7px;transition:.2s}.mld-feature:hover{transform:translateY(-5px);border-color:rgba(255,156,222,.3);box-shadow:0 18px 45px rgba(255,156,222,.08)}.mld-feature i{font-style:normal;font-size:28px}.mld-feature span{color:#9f98aa;font-size:12px}@media(max-width:900px){.mld-hero{min-height:0;padding:34px 22px;flex-direction:column;align-items:stretch}.mld-hero h1{font-size:clamp(42px,12vw,68px)}.mld-hero-art{width:100%;height:280px;flex-basis:280px}.mld-hero-art img{width:145px;height:145px;border-radius:42px}.mld-ring.r1{width:270px;height:145px}.mld-ring.r2{width:210px;height:270px}.mld-stats{grid-template-columns:repeat(2,1fr)}.mld-feature-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.mld-hero{padding:28px 16px;border-radius:25px}.mld-hero p{font-size:15px}.mld-feature-grid{grid-template-columns:1fr 1fr}.mld-feature{padding:17px}.mld-hero-art{height:230px;flex-basis:230px}}</style><style id="mld-mobile-final">
-@media(max-width:900px){
-  html,body{width:100%;max-width:100%;overflow-x:hidden}
-  .app-topbar{position:sticky;top:0}
-  .app-nav{display:flex!important;width:100%;box-sizing:border-box}
-  #menuBtn.app-menu-btn{display:grid!important;visibility:visible!important;opacity:1!important;position:relative!important;width:46px!important;height:46px!important;flex:0 0 46px!important;margin-inline-start:auto!important;z-index:4000!important}
-  .app-shell{display:block!important;width:calc(100% - 12px)!important;margin:10px auto!important}
-  .sidebar{display:block!important;position:fixed!important;top:0!important;right:0!important;left:auto!important;width:min(340px,88vw)!important;height:100dvh!important;box-sizing:border-box!important;z-index:3500!important;transform:translate3d(110%,0,0)!important;visibility:hidden!important;pointer-events:none!important;overflow-y:auto!important}
-  .sidebar.open{transform:translate3d(0,0,0)!important;visibility:visible!important;pointer-events:auto!important}
-  #appMenuBackdrop{display:none;position:fixed!important;inset:0!important;z-index:3400!important}
-  #appMenuBackdrop.show{display:block!important}
-  body.app-menu-open{overflow:hidden!important}
-  .app-main{width:100%!important;min-width:0!important}
-  .page{width:100%!important;box-sizing:border-box}
-  .mld-page-shell{width:100%!important}
-  .mld-page-body{overflow:hidden}
-}
-@media(max-width:520px){
-  .app-nav{padding:0 10px!important}
-  .app-brand small{font-size:8px}
-  .app-brand b{font-size:15px}
-  .page-titlebar{padding:0 4px}
-}
-</style><style id="mld-navigation-hardening">
-@media(max-width:900px){
-  .sidebar .nav{display:grid!important;grid-template-columns:1fr!important;gap:6px!important;width:100%!important}
-  .sidebar .nav-section{display:block!important;width:100%!important}
-  .sidebar .nav a{display:flex!important;width:100%!important;box-sizing:border-box!important;white-space:nowrap!important}
-  .sidebar{box-sizing:border-box!important;direction:rtl!important}
-  .app-main{overflow-x:hidden!important}
-}
-</style><style id="mld-page-design-v3">
-/* MLD — page-by-page responsive design */
-:root{--mld-glass:rgba(255,255,255,.045);--mld-line:rgba(255,255,255,.09);--mld-shadow:0 24px 70px rgba(0,0,0,.28)}
-.mld-page-shell{position:relative;isolation:isolate}
-.mld-page-head{min-height:118px;display:flex;align-items:center;padding:28px 32px!important}
-.mld-page-head h1{letter-spacing:-.8px}
-.mld-page-body{min-height:220px}
-.mld-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;padding:12px;border:1px solid var(--mld-line);border-radius:18px;background:var(--mld-glass)}
-.mld-toolbar .full{max-width:620px}
-.mld-member-grid,.mld-role-grid,.mld-rank-grid,.mld-bot-grid,.mld-group-grid,.mld-cinema-grid,.mld-review-grid,.mld-admin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.mld-member{min-width:0;display:flex;align-items:center;gap:14px;padding:18px;border:1px solid var(--mld-line);border-radius:22px;background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.018));transition:transform .18s,border-color .18s,box-shadow .18s}
-.mld-member:hover{transform:translateY(-4px);border-color:rgba(255,156,222,.35);box-shadow:var(--mld-shadow)}
-.mld-member img{width:58px;height:58px;flex:0 0 58px;border-radius:18px;object-fit:cover;border:1px solid rgba(255,156,222,.22);background:#160e20}
-.mld-member span{min-width:0}.mld-member b,.mld-member small,.mld-member em{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mld-member b{font-size:15px}.mld-member small{margin-top:4px;color:#aaa1b3;font-size:12px;direction:ltr;text-align:right}.mld-member em{margin-top:8px;width:max-content;max-width:100%;padding:4px 8px;border-radius:999px;background:rgba(255,156,222,.08);color:#f3c9e8;font-style:normal;font-size:10px}
-.mld-rank-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-.mld-rank-grid>.panel{margin:0}
-.mld-rank{display:grid;grid-template-columns:34px 44px minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px 0;border-top:1px solid rgba(255,255,255,.06)}
-.mld-rank:first-of-type{border-top:0}.mld-rank i{font-style:normal;text-align:center;color:#ffb8e7;font-weight:900}.mld-rank img{width:44px;height:44px;border-radius:14px;object-fit:cover}.mld-rank span{min-width:0}.mld-rank span b,.mld-rank span small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mld-rank span small{color:#91899d;font-size:11px;margin-top:3px}.mld-rank strong{color:#ffb8e7;font-size:14px}
-.mld-stack{display:grid;gap:10px;margin-bottom:16px}.message-card{padding:15px 17px;border:1px solid var(--mld-line);border-radius:18px;background:var(--mld-glass)}.message-card b{color:#ffb8e7}.message-card p{margin:7px 0 0;line-height:1.75;color:#ddd4e0}
-.mld-compose{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;padding:14px;border:1px solid var(--mld-line);border-radius:20px;background:var(--mld-glass)}
-.mld-compose .full{min-height:82px;resize:vertical}.mld-compose .btn-primary{height:50px}
-.mld-page-actions{margin-bottom:16px}.mld-group-grid,.mld-bot-grid,.mld-review-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.mld-group-grid .panel,.mld-bot-grid .panel,.mld-review-grid .panel{margin:0;height:100%}
-.mld-cinema-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:16px}.mld-cinema-grid .panel{margin:0}.mld-cinema-grid video{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:16px;background:#050308;margin-top:12px}
-.mld-review-grid .stars{color:#ffb8e7;letter-spacing:3px;margin:9px 0}
-.admin-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid rgba(255,255,255,.06)}.admin-row:first-child{border-top:0}.admin-row>span{min-width:0}.admin-row b,.admin-row small{display:block}.admin-row small{margin-top:4px;color:#92899e;font-size:11px}
-.mld-empty{display:grid;place-items:center;min-height:150px;padding:24px;border:1px dashed rgba(255,255,255,.1);border-radius:18px;color:#978e9f;text-align:center}
-.group-create{max-width:900px}.group-create h3{margin-top:0}
-#page-profile .panel{max-width:860px;margin:0 auto}#page-profile hr{border:0;border-top:1px solid var(--mld-line);margin:24px 0}
-#page-addbot .panel{max-width:760px;margin:0 auto}#page-addbot .btn-primary{width:100%;margin-top:6px}
-#page-applications .panel{max-width:900px;margin:0 auto}
-#page-admin .mld-page-body,#page-owner-admin .mld-page-body{display:grid;gap:16px}
-#page-admin .panel,#page-owner-admin .panel{margin:0}
-.auth-card input{min-height:48px}.auth-card .tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:16px 0}.auth-card .tabs button{min-height:44px;border:1px solid var(--mld-line);border-radius:13px;background:var(--mld-glass);color:#fff}.auth-card .tabs button.active{background:linear-gradient(135deg,#ff9cde,#a86fdf);color:#1d1024;border-color:transparent}
-.sidebar{overscroll-behavior:contain;scrollbar-width:thin}.sidebar .nav a{min-height:44px}
-@media(max-width:1000px){.mld-member-grid,.mld-role-grid,.mld-bot-grid,.mld-group-grid,.mld-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:760px){.mld-page-head{padding:22px 18px!important}.mld-page-head h1{font-size:25px}.mld-toolbar{align-items:stretch;flex-direction:column}.mld-toolbar .full{max-width:none}.mld-member-grid,.mld-role-grid,.mld-rank-grid,.mld-bot-grid,.mld-group-grid,.mld-cinema-grid,.mld-review-grid,.mld-admin-grid{grid-template-columns:1fr}.mld-compose{grid-template-columns:1fr}.mld-compose .btn-primary{width:100%}.mld-rank{grid-template-columns:30px 42px minmax(0,1fr) auto}.admin-row{align-items:flex-start;flex-wrap:wrap}.admin-row .btn-secondary{margin-inline-start:auto}}
-@media(max-width:430px){.mld-page-head{min-height:100px;padding:18px 14px!important}.mld-page-body{padding:12px!important}.mld-member{padding:14px}.mld-member img{width:50px;height:50px;flex-basis:50px}.mld-rank{grid-template-columns:26px 38px minmax(0,1fr) auto;gap:7px}.mld-rank img{width:38px;height:38px}.mld-rank strong{font-size:12px}}
-</style></head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#120b18"><title>MLD · Community</title>
+<link rel="icon" href="logo.svg.JPG"><link rel="stylesheet" href="style.css?v=20261007-rebuild">
+</head>
 <body>
-<div class="glow g1"></div><div class="glow g2"></div>
-<div class="app-layout">
-<div class="mld-announcement" role="status"><span class="mld-announcement-dot">●</span><strong>أهلاً بكم في ملاذ</strong><span>مرحبًا بكم في مجتمع MLD · كل شيء في مكان واحد</span></div><header class="app-topbar">
- <div class="app-nav">
-  <a class="app-brand" href="#home"><img src="logo.svg.JPG" onerror="this.src='/logo.svg'"><span><b>MLD</b><small>COMMUNITY</small></span></a>
-  <div style="margin-inline-start:auto;color:#9f98aa;font-size:13px" id="topLoginBtn"></div>
-  <button id="menuBtn" onclick="return window.toggleAppMenu(event);" class="menu app-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false"><span></span><span></span><span></span></button>
- </div>
+<div id="intro"><img src="logo.svg.JPG" alt="MLD"><strong>أهلاً بكم في ملاذ</strong><span>MLD · Community</span></div>
+<div id="toast"></div>
+<div id="backdrop" class="backdrop" data-close></div>
+<header class="topbar">
+  <button id="menuBtn" class="menu-btn" aria-label="القائمة" aria-expanded="false">☰</button>
+  <a class="brand" href="#home" data-page="home"><img src="logo.svg.JPG" alt="MLD"><span><b>MLD</b><small>COMMUNITY</small></span></a>
+  <div class="top-actions"><span id="topUser">زائر</span><button id="topLogin" class="btn small" data-page="login">تسجيل الدخول</button></div>
 </header>
-<div id="appMenuBackdrop" class="menu-backdrop" onclick="window.closeAppMenu()"></div>
-<div class="app-shell">
-<aside id="sidebar" class="sidebar" aria-label="قائمة MLD">
- <div class="sidebar-user"><div id="myAvatar" class="avatar">ز</div><div><strong id="myName">زائر</strong><small id="myRole">تصفح عام</small></div></div>
- <nav class="nav">
-  <div class="nav-section"><label>رئيسي</label>
-   <a href="javascript:void(0)" data-page="home">الرئيسية</a><a href="javascript:void(0)" data-page="members">الأعضاء</a><a href="javascript:void(0)" data-page="top">التوب</a><a href="javascript:void(0)" data-page="leaders">الرتب القيادية</a>
-  </div>
-  <div class="nav-section"><label>التواصل</label>
-   <a href="javascript:void(0)" data-page="chat">الشات العام</a><a href="javascript:void(0)" data-page="pigeon">الزاجل</a>
-  </div>
-  <div class="nav-section"><label>الترفيه</label>
-   <a href="javascript:void(0)" data-page="games">الألعاب</a><a href="javascript:void(0)" data-page="cinema">السينما</a><a href="javascript:void(0)" data-page="groups">القروبات</a>
-  </div>
-  <div class="nav-section"><label>الخدمات</label>
-   <a href="javascript:void(0)" data-page="tickets">التذاكر</a><a href="javascript:void(0)" id="applicationsLink" data-page="applications" style="display:none">التقديم</a><a href="javascript:void(0)" data-page="reviews">الآراء</a>
-  </div>
-  <div class="nav-section"><label>البوتات</label>
-   <a href="javascript:void(0)" data-page="bots">منصة البوتات</a><a href="javascript:void(0)" id="addbotLink" data-page="addbot" style="display:none">إضافة بوت</a>
-  </div>
-  <div class="nav-section"><label>حسابي</label>
-   <a href="javascript:void(0)" id="profileLink" data-page="profile" style="display:none">بروفايلي</a><a href="javascript:void(0)" id="logoutBtn" data-page="logout" style="display:none">تسجيل الخروج</a><a href="javascript:void(0)" id="loginBtn" data-page="login">دخول المنصة</a>
-  </div>
-  <div id="adminSection" class="nav-section" style="display:none"><label>الإدارة</label><a href="javascript:void(0)" id="adminLink" data-page="admin" data-privileged style="display:none">لوحة الإدارة</a></div>
-  <div id="ownerSection" class="nav-section" style="display:none"><label>الأونر</label><a href="javascript:void(0)" id="ownerLink" data-page="owner-admin" data-owner-only style="display:none">لوحة الأونر</a></div>
- </nav>
-</aside>
-<main class="app-main">
- <div class="page-titlebar"><div><h1 id="pageTitle">الرئيسية</h1><p>منصة MLD Community — كل شيء في مكان واحد.</p></div></div>
- <section id="page-home" class="page active"><div class="mld-hero"><div class="mld-hero-copy"><span class="mld-live">● LIVE COMMUNITY SYSTEM</span><h1>مجتمع <span>MLD</span><br>بشكل مختلف.</h1><p>كل مجتمعك في واجهة واحدة: أعضاء، رتب، توب، ألعاب، سينما، قروبات، شات وخدمات الإدارة.</p><div class="mld-hero-actions"><a class="btn-primary" href="#members" data-page-link>ابدأ الاستكشاف ←</a><span>صُنع بواسطة <b>فهد المطيري</b></span></div></div><div class="mld-hero-art"><div class="mld-ring r1"></div><div class="mld-ring r2"></div><div class="mld-orb"></div><img src="logo.svg.JPG"></div></div><div class="mld-stats"><div><small>السيرفر</small><b id="homeServerName">MLD</b></div><div><small>الأعضاء</small><b id="homeMemberCount">—</b></div><div><small>المتصلون</small><b id="homeOnlineCount">—</b></div><div><small>الزيارات</small><b id="homeVisits">—</b></div><div><small>الحساب</small><b id="homeAccount">زائر</b></div></div><div class="mld-feature-grid"><a href="javascript:void(0)" class="mld-feature" data-page-link><i>👥</i><b>الأعضاء</b><span>استكشف مجتمع MLD</span></a><a href="javascript:void(0)" class="mld-feature" data-page-link><i>🏆</i><b>التوب</b><span>أعلى النشاط</span></a><a href="javascript:void(0)" class="mld-feature" data-page-link><i>🎮</i><b>الألعاب</b><span>جلسات وتحديات</span></a><a href="javascript:void(0)" class="mld-feature" data-page-link><i>🎬</i><b>السينما</b><span>غرف مشاهدة جماعية</span></a></div></section>
- <section id="page-members" class="page"></section><section id="page-top" class="page"></section><section id="page-leaders" class="page"></section>
- <section id="page-chat" class="page"></section><section id="page-pigeon" class="page"></section><section id="page-games" class="page"></section><section id="page-cinema" class="page"></section><section id="page-groups" class="page"></section><section id="page-tickets" class="page"></section><section id="page-applications" class="page"></section><section id="page-reviews" class="page"></section><section id="page-profile" class="page"><div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">👤 MLD COMMUNITY</span><h1>بروفايلي</h1><p>إدارة بيانات حسابك.</p></div><div class="mld-page-body"><div class="panel"><label>اسم المستخدم</label><input id="profileName" class="full" autocomplete="username"><label>نبذة</label><textarea id="profileBio" class="full"></textarea><button id="saveProfileBtn" class="btn-primary">حفظ التغييرات</button></div></div></div></section>
- <section id="page-bots" class="page"><div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">🤖 MLD COMMUNITY</span><h1>منصة البوتات</h1><p>إدارة بوتاتك.</p></div><div class="mld-page-body"><div id="botsList" class="page-grid"></div></div></div></section>
- <section id="page-addbot" class="page"><div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">➕ MLD COMMUNITY</span><h1>إضافة بوت</h1><p>أضف بوتك للمنصة.</p></div><div class="mld-page-body"><div class="panel"><input id="botName" class="full" placeholder="اسم البوت"><input id="botToken" class="full" type="password" placeholder="Bot Token"><input id="botGuild" class="full" placeholder="Discord Server ID"><button id="createBotBtn" class="btn-primary">إضافة البوت</button><div id="botMsg" class="msg"></div></div></div></div></section>
- <section id="page-admin" class="page"><div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">🛡️ MLD ADMIN</span><h1>لوحة الإدارة</h1><p>إدارة التذاكر والمستخدمين المسموح بها فقط.</p></div><div class="mld-page-body"><div id="ownerUsers" class="page-grid"></div><div id="adminTickets" class="panel" style="margin-top:16px"></div></div></div></section>
- <section id="page-owner-admin" class="page"><div class="mld-page-shell"><div class="mld-page-head"><span class="mld-kicker">👑 MLD OWNER</span><h1>لوحة الأونر</h1><p>التحكم الكامل بالمجتمع.</p></div><div class="mld-page-body"><div id="ownerApplications" class="panel"></div><div id="ownerGroups" class="panel" style="margin-top:16px"></div><div id="ownerAudit" class="panel" style="margin-top:16px"></div></div></div></section>
-</main></div></div>
-<footer class="mld-footer">
-  <div class="mld-footer-inner">
-    <div class="mld-footer-brand"><img src="logo.svg.JPG" onerror="this.src='/logo.svg'"><div><b>MLD · COMMUNITY</b><small>مجتمع ملاذ — فهد المطيري</small></div></div>
-    <div class="mld-footer-socials" aria-label="حسابات MLD">
-      <a class="mld-social tiktok" href="https://www.tiktok.com/@jj51" target="_blank" rel="noopener" aria-label="TikTok @jj51" title="TikTok @jj51">♪</a>
-      <a class="mld-social instagram" href="https://www.instagram.com/li5uxi" target="_blank" rel="noopener" aria-label="Instagram @li5uxi" title="Instagram @li5uxi">◎</a>
-      <a class="mld-social discord" href="https://discord.com/users/w4px" target="_blank" rel="noopener" aria-label="Discord @w4px" title="Discord @w4px">◌</a>
+<div class="layout">
+<aside id="sidebar" class="sidebar">
+  <div class="side-user"><div id="avatar" class="avatar">ز</div><div><b id="userName">زائر</b><small id="userRole">زائر</small></div></div>
+  <nav>
+    <div class="nav-group"><label>الرئيسية</label>
+      <a data-page="home">🏠 الرئيسية</a><a data-page="members">👥 الأعضاء</a><a data-page="top">🏆 التوب</a><a data-page="leaders">👑 الرتب القيادية</a>
     </div>
-    <div class="mld-footer-copy">© <span id="appYear"></span> MLD · جميع الحقوق محفوظة</div>
-  </div>
-</footer>
-<div id="toast" class="toast"></div>
-<div id="forgotScreen" class="auth-screen"><div class="auth-card"><button type="button" onclick="document.getElementById('forgotScreen').classList.remove('show')" style="float:left;background:none;border:0;color:#fff;font-size:24px">×</button><h2>استعادة كلمة المرور</h2><p class="muted">سيتم إرسال كلمة مرور مؤقتة إلى الخاص في Discord المرتبط بحسابك.</p><input id="forgotUsername" class="full" placeholder="اسم المستخدم"><input id="forgotDiscord" class="full" placeholder="Discord ID أو اسم المستخدم"><button id="forgotBtn" class="btn-primary full">إرسال كلمة المرور المؤقتة</button><div id="forgotMsg" class="msg"></div></div></div>
-<div id="authScreen" class="auth-screen">
- <div class="auth-card">
-  <button type="button" onclick="document.getElementById('authScreen').classList.remove('show')" style="float:left;background:none;border:0;color:#fff;font-size:24px">×</button>
-  <h2>دخول MLD</h2><p class="muted">تسجيل الدخول أو إنشاء حساب.</p>
-  <div class="tabs"><button type="button" data-tab="login" class="active">دخول</button><button type="button" data-tab="register">تسجيل</button></div>
-  <form id="authForm"><input id="username" class="full" placeholder="اسم المستخدم" required><input id="password" class="full" type="password" placeholder="كلمة المرور" required>
-   <div id="discordField" style="display:none"><input id="discord_id" class="full" placeholder="Discord ID"><button id="verifyDiscordBtn" type="button" class="btn-primary">إرسال كود التحقق</button><input id="verification_code" class="full" placeholder="كود التحقق" style="display:none"></div>
-   <button id="submitBtn" class="btn-primary full" type="submit">دخول</button><button id="forgotOpenBtn" type="button" class="btn-secondary full">نسيت كلمة المرور؟</button><div id="authMsg" class="msg"></div>
-  </form>
- </div>
+    <div class="nav-group" data-auth><label>التواصل</label>
+      <a data-page="chat">💬 الشات العام</a><a data-page="pigeon">✉️ الزاجل</a>
+    </div>
+    <div class="nav-group"><label>الترفيه</label>
+      <a data-page="games">🎮 الألعاب</a><a data-page="cinema">🎬 السينما</a><a data-page="groups">👨‍👩‍👧 القروبات</a>
+    </div>
+    <div class="nav-group"><label>الخدمات</label>
+      <a data-page="tickets">🎫 التذاكر</a><a data-page="applications" data-owner>📝 التقديم</a><a data-page="reviews">⭐ الآراء</a>
+    </div>
+    <div class="nav-group"><label>البوتات</label>
+      <a data-page="bots">🤖 منصة البوتات</a><a data-page="addbot" data-auth>➕ إضافة بوت</a>
+    </div>
+    <div class="nav-group" data-auth><label>حسابي</label><a data-page="profile">👤 بروفايلي</a><a id="logout" data-action="logout">🚪 تسجيل الخروج</a></div>
+    <div class="nav-group" data-admin><label>الإدارة</label><a data-page="admin">🛡️ لوحة الإدارة</a></div>
+    <div class="nav-group" data-owner><label>الأونر</label><a data-page="owner-admin">👑 لوحة الأونر</a></div>
+  </nav>
+</aside>
+<main id="main" class="main"></main>
 </div>
-<script src="/socket.io/socket.io.js"></script>
-<script src="/app.js?v=20261007-root"></script>
-</body></html><style id="mld-unified-navigation">
-/* One navigation system on every screen size */
-.app-shell{display:block!important}
-.sidebar{position:fixed!important;top:0!important;right:0!important;width:min(340px,92vw)!important;height:100dvh!important;z-index:3500!important;transform:translate3d(110%,0,0)!important;visibility:hidden!important;pointer-events:none!important;overflow-y:auto!important;border-radius:0 0 0 24px!important;padding:88px 14px 24px!important}
-.sidebar.open{transform:translate3d(0,0,0)!important;visibility:visible!important;pointer-events:auto!important}
-#menuBtn.app-menu-btn{display:grid!important;visibility:visible!important;opacity:1!important;position:relative!important;width:46px!important;height:46px!important;flex:0 0 46px!important;margin-inline-start:auto!important;z-index:4000!important}
-#appMenuBackdrop{display:none;position:fixed!important;inset:0!important;z-index:3400!important;background:rgba(3,2,7,.68)!important;backdrop-filter:blur(5px)}
-#appMenuBackdrop.show{display:block!important}
-.app-main{width:100%!important;min-width:0!important}
-@media(min-width:901px){.app-shell{width:min(100% - 32px,var(--app-max))!important}.sidebar{width:330px!important;top:86px!important;height:calc(100dvh - 100px)!important;border-radius:24px!important;padding:14px!important;transform:translate3d(110%,0,0)!important}.sidebar.open{transform:translate3d(0,0,0)!important}}
-</style>
-<style id="mld-final-mobile-layout">
-/* Final mobile/desktop navigation contract */
-html,body{max-width:100%;overflow-x:hidden}
-.app-layout,.app-shell,.app-main{min-width:0}
-.sidebar{box-sizing:border-box!important;direction:rtl!important}
-.sidebar .nav{display:block!important;width:100%!important}
-.sidebar .nav-section{display:block!important;width:100%!important;margin:0 0 15px!important}
-.sidebar .nav-section>label{display:block!important;width:100%!important}
-.sidebar .nav a{display:flex!important;width:100%!important;box-sizing:border-box!important;align-items:center!important;min-height:46px!important;white-space:nowrap!important}
-@media(max-width:900px){
-  .app-nav{display:flex!important;align-items:center!important}
-  #menuBtn.app-menu-btn{display:grid!important;visibility:visible!important;opacity:1!important;flex:0 0 46px!important;width:46px!important;height:46px!important;margin-inline-start:auto!important;z-index:5000!important}
-  .sidebar{display:block!important;position:fixed!important;inset-block:0!important;inset-inline-start:auto!important;inset-inline-end:0!important;width:min(350px,88vw)!important;height:100dvh!important;max-height:100dvh!important;overflow-y:auto!important;transform:translate3d(110%,0,0)!important;visibility:hidden!important;pointer-events:none!important;z-index:4900!important;padding:82px 14px 28px!important}
-  .sidebar.open{transform:translate3d(0,0,0)!important;visibility:visible!important;pointer-events:auto!important}
-  #appMenuBackdrop{display:none!important;position:fixed!important;inset:0!important;z-index:4800!important;background:rgba(3,2,7,.72)!important;backdrop-filter:blur(7px)!important}
-  #appMenuBackdrop.show{display:block!important}
-  body.app-menu-open{overflow:hidden!important;touch-action:none}
-  .mld-page-shell{width:100%!important}
-}
-@media(min-width:901px){
-  .sidebar{top:86px!important;height:calc(100dvh - 100px)!important;border-radius:24px!important}
-}
-</style>
+<footer><img src="logo.svg.JPG" alt="MLD"><div><b>MLD · Community</b><span>مجتمع ملاذ — جميع الحقوق محفوظة</span></div><div class="social"><a href="https://www.tiktok.com/@jj51" target="_blank">TikTok</a><a href="https://www.instagram.com/li5uxi" target="_blank">Instagram</a></div></footer>
+<div id="authModal" class="modal"><div class="modal-box"><button class="close" data-close-modal>×</button><img src="logo.svg.JPG" alt="MLD"><h2>تسجيل الدخول</h2><p>ادخل بحساب MLD الخاص بك.</p><input id="loginUser" placeholder="اسم المستخدم" autocomplete="username"><input id="loginPass" type="password" placeholder="كلمة المرور" autocomplete="current-password"><button id="loginSubmit" class="btn primary">دخول</button><small id="loginMsg"></small></div></div>
+<script src="app.js?v=20261007-rebuild"></script>
+</body></html>
