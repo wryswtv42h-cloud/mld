@@ -105,4 +105,30 @@ async function ownerSubscriptions(){
 const box=$('#ownerSection'),d=await api('/api/community/owner/bot-subscriptions'),bots=d.bots||[];
 box.innerHTML='<h2>اشتراكات البوتات</h2><div class="list">'+(bots.length?bots.map(b=>'<div class="row"><b>'+esc(b.name)+'</b><span>'+esc(b.expires_at?'ينتهي '+new Date(b.expires_at).toLocaleString('ar-SA'):'بدون اشتراك')+'</span><button class="btn" data-sub-bot="'+b.id+'">إعطاء اشتراك</button></div>').join(''):'<div class="empty">لا توجد بوتات.</div>')+'</div>';
 }
-;
+document.addEventListener('click',e=>{
+const p=e.target.closest('[data-page]');if(p){e.preventDefault();go(p.dataset.page);return}
+if(e.target.closest('#menuBtn')){e.preventDefault();$('#sidebar')?.classList.contains('open')?closeMenu():openMenu();return}
+if(e.target.closest('#shade')){closeMenu();return}
+if(e.target.closest('#loginBtn')||e.target.closest('[data-login-action]')){openLogin();return}
+if(e.target.closest('#closeLogin')){closeLogin();return}
+if(e.target.closest('#submitLogin')){login();return}
+if(e.target.closest('[data-action="logout"]')){logout();return}
+if(e.target.closest('[data-game]')){if(!logged())openLogin();else toast('سيتم تشغيل '+e.target.closest('[data-game]').dataset.game+' من نظام الألعاب.');return}
+if(e.target.closest('[data-action="ticket"]')){if(!logged())openLogin();else toast('تم فتح منطقة التذاكر');return}
+const as=e.target.closest('[data-admin-section]');if(as){as.dataset.adminSection==='tickets'?showAdminTickets():showApplications();return}
+const to=e.target.closest('[data-ticket-open]');if(to){openTicketThread(to.dataset.ticketOpen);return}
+const tc=e.target.closest('[data-ticket-close]');if(tc){api('/api/community/tickets/'+tc.dataset.ticketClose+'/close',{method:'POST'}).then(()=>showAdminTickets()).catch(err=>toast(err.message));return}
+const ap=e.target.closest('[data-app-status]');if(ap){api('/api/community/applications/'+ap.dataset.appStatus+'/status',{method:'POST',body:JSON.stringify({status:ap.dataset.status})}).then(()=>showApplications()).catch(err=>toast(err.message));return}
+const os=e.target.closest('[data-owner-section]');if(os){
+const k=os.dataset.ownerSection;
+if(k==='announcement')ownerAnnouncement();else if(k==='broadcast')ownerBroadcast();else if(k==='accounts')ownerAccounts();else if(k==='logs')api('/api/community/audit').then(d=>$('#ownerSection').innerHTML='<h2>اللوقات</h2><div class="list">'+(d.logs||[]).map(x=>'<div class="row"><b>'+esc(x.actor_name||'')+'</b><span>'+esc(x.action||'')+'</span><small>'+esc(new Date(x.created_at).toLocaleString('ar-SA'))+'</small></div>').join('')+'</div>');else if(k==='subscriptions')ownerSubscriptions();return}
+const av=e.target.closest('[data-account-view]');if(av){ownerAccountDetail(av.dataset.accountView);return}
+const apr=e.target.closest('[data-account-private]');if(apr){ownerAccountDetail(apr.dataset.accountPrivate);return}
+const ae=e.target.closest('[data-account-edit]');if(ae){ownerEditAccount(ae.dataset.accountEdit);return}
+const ad=e.target.closest('[data-account-delete]');if(ad){if(confirm('حذف الحساب نهائيًا؟'))api('/api/users/'+ad.dataset.accountDelete,{method:'DELETE'}).then(()=>ownerAccounts()).catch(err=>toast(err.message));return}
+const sb=e.target.closest('[data-sub-bot]');if(sb){const days=prompt('مدة الاشتراك بالأيام:','30');if(days)api('/api/community/owner/bot-subscriptions/'+sb.dataset.subBot,{method:'POST',body:JSON.stringify({days:Number(days)})}).then(()=>ownerSubscriptions()).catch(err=>toast(err.message));return}
+});
+$('#loginModal')?.addEventListener('click',e=>{if(e.target.id==='loginModal')closeLogin()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closeLogin()}if(e.key==='Enter'&&document.activeElement===$('#password'))login()});
+window.addEventListener('hashchange',()=>go(location.hash||'home'));
+window.addEventListener('DOMContentLoaded',()=>{sync();loadAnnouncement();setTimeout(()=>$('#intro')?.classList.add('hide'),750);go(location.hash||'home')});
