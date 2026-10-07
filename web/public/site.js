@@ -33,6 +33,7 @@ profile:()=>page('بروفايلي','حسابك في MLD','<div class="card" sty
 admin:()=>page('لوحة الإدارة','متاحة للأونر والإدارة فقط','<div id="adminPanel"><div class="empty">جاري تحميل لوحة الإدارة…</div></div>'),
 owner:()=>page('لوحة الأونر','تحكم كامل بالموقع','<div id="ownerPanel"><div class="empty">جاري تحميل لوحة الأونر…</div></div>')
 };
+async function loadAnnouncement(){try{const d=await api('/api/community/announcement');const a=d.announcement;if(!a||!a.enabled||!a.text)return;let e=document.querySelector('#siteAnnouncement');if(!e){e=document.createElement('div');e.id='siteAnnouncement';e.style.cssText='position:sticky;top:0;z-index:60;text-align:center;padding:9px 14px;font-weight:700';document.body.prepend(e)}e.textContent=a.text;e.style.background=a.color||'#ff9cdc';e.style.color='#160d1d'}catch{}}
 function go(p='home'){p=String(p).replace(/^#/,'');if(!pages[p])p='home';if(['chat','tickets','profile','admin','owner'].includes(p)&&!logged()){openLogin();return}if(p==='admin'&&!admin()){toast('لوحة الإدارة للإدارة والأونر فقط');return}if(p==='owner'&&!owner()){toast('لوحة الأونر للأونر فقط');return}history.replaceState(null,'','#'+p);closeMenu();$('#app').innerHTML=pages[p]();document.querySelectorAll('.sidebar nav a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));if(p==='home')loadStats();if(p==='members')loadMembers();if(p==='top')loadTop();if(p==='chat')initChat();if(p==='cinema')loadCinema();if(p==='reviews')loadReviews();if(p==='bots')loadBots();if(p==='tickets')loadTickets();if(p==='admin')loadAdmin();if(p==='owner')loadOwner()}
 async function loadStats(){try{const d=await api('/api/public/server');$('#sMembers').textContent=d.memberCount??'—';$('#sOnline').textContent=d.onlineCount??'—';$('#sVisits').textContent=d.visits??'—'}catch{}}
 async function loadMembers(){const e=$('#memberList');try{const d=await api('/api/public/members');const a=d.members||d||[];e.innerHTML=a.slice(0,24).map(m=>'<article class="card member-card"><div class="avatar">'+(m.avatar?'<img src="'+esc(m.avatar)+'">':'👤')+'</div><h3>'+esc(m.displayName||m.username||'عضو')+'</h3><p>'+esc(m.role||'عضو')+'</p></article>').join('')||'<div class="empty">لا توجد بيانات حالياً.</div>'}catch{e.innerHTML='<div class="empty">تعذر تحميل الأعضاء من الـAPI حالياً.</div>'}}
@@ -44,12 +45,64 @@ async function initChat(){const box=$('#chatMessages');try{const d=await api('/a
 async function loadReviews(){try{const d=await api('/api/community/reviews');const a=d.reviews||[];$('#reviewList').innerHTML=a.length?a.map(r=>card('★',r.username||'عضو',esc(r.content||''),'★'.repeat(Number(r.rating||5)))).join(''):'<div class="empty">لا توجد آراء حاليًا.</div>'}catch{}}
 async function loadBots(){try{const d=await api('/api/bots/public');const a=d.bots||[];$('#botList').innerHTML=a.length?a.map(b=>card('⚙',b.name||'بوت',b.active?'يعمل الآن':'متوقف')).join(''):'<div class="empty">لا توجد بوتات معروضة.</div>'}catch{}}
 async function loadTickets(){const e=$('#ticketList');if(!e)return;try{const d=await api('/api/community/tickets');const a=d.tickets||[];e.innerHTML=a.length?a.map(t=>'<div class="row"><b>#'+t.id+'</b><span>'+esc(t.subject||'تذكرة')+'</span><strong>'+esc(t.status||'open')+'</strong></div>').join(''):'<div class="empty">لا توجد تذاكر.</div>'}catch(err){e.innerHTML='<div class="empty">'+esc(err.message)+'</div>'}}
-async function loadAdmin(){const box=$('#adminPanel');try{const [t,u]=await Promise.all([api('/api/community/tickets'),api('/api/users')]);const tickets=t.tickets||[],users=u.users||u||[];box.innerHTML='<div class="grid">'+card('🎫','التذاكر','إجمالي التذاكر: '+tickets.length)+card('👥','الأعضاء','إجمالي الحسابات: '+users.length)+'</div><div class="section"><h2>آخر التذاكر</h2><div class="list">'+(tickets.slice(0,20).map(x=>'<div class="row"><b>#'+x.id+'</b><span>'+esc(x.subject||'تذكرة')+'</span><strong>'+esc(x.status||'open')+'</strong></div>').join('')||'<div class="empty">لا توجد تذاكر.</div>')+'</div></div>'}catch(e){box.innerHTML='<div class="empty">تعذر تحميل لوحة الإدارة: '+esc(e.message)+'</div>'}}
-async function loadOwner(){const box=$('#ownerPanel');try{const [t,u,a]=await Promise.all([api('/api/community/tickets'),api('/api/users'),api('/api/community/audit')]);const users=u.users||u||[],tickets=t.tickets||[],logs=a.logs||[];box.innerHTML='<div class="grid">'+card('👥','الحسابات',users.length+' حساب')+card('🎫','التذاكر',tickets.length+' تذكرة')+card('📋','سجل العمليات',logs.length+' عملية')+'</div><div class="section"><h2>إدارة الحسابات</h2><div class="list">'+users.slice(0,50).map(x=>'<div class="row"><b>'+esc(x.username||'عضو')+'</b><span>'+esc(x.role||'member')+'</span>'+(x.is_owner?'<strong>👑</strong>':'<button class="btn" data-admin-user="'+x.id+'" data-admin-add="'+(x.role==='admin'?'0':'1')+'">'+(x.role==='admin'?'إزالة الإدارة':'تعيين إدارة')+'</button>')+'</div>').join('')+'</div></div><div class="section"><h2>آخر العمليات</h2><div class="list">'+logs.slice(0,20).map(x=>'<div class="row"><b>'+esc(x.actor_name||'')+'</b><span>'+esc(x.action||'')+'</span></div>').join('')+'</div></div>'}catch(e){box.innerHTML='<div class="empty">تعذر تحميل لوحة الأونر: '+esc(e.message)+'</div>'}}
-async function toggleAdmin(id,add){try{await api('/api/users/'+id+'/admin',{method:'POST',body:JSON.stringify({action:add?'add':'remove'})});toast(add?'تم تعيين الإدارة':'تمت إزالة الإدارة');loadOwner()}catch(e){toast(e.message)}}
-document.addEventListener('click',e=>{const p=e.target.closest('[data-page]');if(p){e.preventDefault();go(p.dataset.page);return}if(e.target.closest('#menuBtn')){e.preventDefault();$('#sidebar')?.classList.contains('open')?closeMenu():openMenu();return}if(e.target.closest('#shade')){closeMenu();return}if(e.target.closest('#loginBtn')||e.target.closest('[data-login-action]')){openLogin();return}if(e.target.closest('#closeLogin')){closeLogin();return}if(e.target.closest('#submitLogin')){login();return}if(e.target.closest('[data-action="logout"]')){logout();return}if(e.target.closest('[data-game]')){if(!logged())openLogin();else toast('سيتم تشغيل '+e.target.closest('[data-game]').dataset.game+' من نظام الألعاب.');return}if(e.target.closest('[data-action="ticket"]')){if(!logged())openLogin();else toast('تم فتح منطقة التذاكر');return}const au=e.target.closest('[data-admin-user]');if(au){toggleAdmin(au.dataset.adminUser,au.dataset.adminAdd==='1');return}});
-$('#loginModal')?.addEventListener('click',e=>{if(e.target.id==='loginModal')closeLogin()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closeLogin()}if(e.key==='Enter'&&document.activeElement===$('#password'))login()});
-window.addEventListener('hashchange',()=>go(location.hash||'home'));
-window.addEventListener('DOMContentLoaded',()=>{sync();setTimeout(()=>$('#intro')?.classList.add('hide'),750);go(location.hash||'home')});
-})();
+async function loadAdmin(){
+const box=$('#adminPanel');try{
+const [t,a]=await Promise.all([api('/api/community/tickets'),api('/api/community/applications')]);
+const tickets=t.tickets||[],apps=a.applications||[];
+box.innerHTML='<div class="grid">'+
+card('🎫','التذاكر','التذاكر المفتوحة: '+tickets.filter(x=>x.status!=='closed').length,'<button class="primary" data-admin-section="tickets">فتح التذاكر</button>')+
+card('📝','التقديمات','طلبات الإدارة: '+apps.filter(x=>x.status==='pending').length,'<button class="primary" data-admin-section="applications">فتح التقديمات</button>')+
+'</div><div id="adminSection" class="section" style="margin-top:15px"><div class="empty">اختر التذاكر أو التقديمات.</div></div>';
+}catch(e){box.innerHTML='<div class="empty">تعذر تحميل لوحة الإدارة: '+esc(e.message)+'</div>'}}
+async function showAdminTickets(){
+const box=$('#adminSection');try{const d=await api('/api/community/tickets'),a=(d.tickets||[]).filter(x=>x.status!=='closed');
+box.innerHTML='<h2>التذاكر المفتوحة</h2><div class="list">'+(a.length?a.map(x=>'<div class="row"><b>#'+x.id+'</b><span>'+esc(x.subject||'تذكرة')+'</span><button class="btn" data-ticket-open="'+x.id+'">فتح المحادثة</button></div>').join(''):'<div class="empty">لا توجد تذاكر مفتوحة.</div>')+'</div><div id="ticketThread" style="margin-top:15px"></div>';
+}catch(e){box.innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
+async function showApplications(){
+const box=$('#adminSection');try{const d=await api('/api/community/applications');const a=d.applications||[];
+box.innerHTML='<h2>التقديمات</h2><div class="list">'+(a.length?a.map(x=>'<div class="row"><b>#'+x.id+' · '+esc(x.username||'عضو')+'</b><span>'+esc(x.status||'pending')+'</span>'+(x.status==='pending'?'<span><button class="btn" data-app-status="'+x.id+'" data-status="accepted">قبول</button> <button class="btn danger" data-app-status="'+x.id+'" data-status="rejected">رفض</button></span>':'')+'</div>').join(''):'<div class="empty">لا توجد تقديمات.</div>')+'</div>';
+}catch(e){box.innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
+async function openTicketThread(id){
+const box=$('#ticketThread');try{const d=await api('/api/community/tickets/'+id),t=d.ticket,m=d.messages||[];
+box.innerHTML='<div class="card"><div class="chat-head"><div><b>تذكرة #'+t.id+' · '+esc(t.subject||'')+'</b><span>محادثة مباشرة مع '+esc(t.user_id)+'</span></div><button class="btn danger" data-ticket-close="'+id+'">إغلاق</button></div><div class="chat-messages" id="ticketMsgs">'+(m.length?m.map(chatRow).join(''):'<div class="empty">لا توجد ردود.</div>')+'</div><form id="ticketReplyForm" class="chat-form"><input id="ticketReplyInput" maxlength="2000" placeholder="اكتب ردك لصاحب التذكرة..."><button class="primary">إرسال</button></form></div>';
+$('#ticketReplyForm')?.addEventListener('submit',async e=>{e.preventDefault();const input=$('#ticketReplyInput'),content=input.value.trim();if(!content)return;await api('/api/community/tickets/'+id+'/messages',{method:'POST',body:JSON.stringify({content})});input.value='';openTicketThread(id)});
+}catch(e){box.innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
+
+async function loadOwner(){
+const box=$('#ownerPanel');try{
+const [u,l,b]=await Promise.all([api('/api/users'),api('/api/community/audit'),api('/api/community/owner/bot-subscriptions')]);const users=u.users||[],logs=l.logs||[],bots=b.bots||[];
+box.innerHTML='<div class="grid">'+
+card('📢','شريط الإعلان','تحكم بالنص واللون','<button class="primary" data-owner-section="announcement">إدارة الإعلان</button>')+
+card('📣','برودكاست Discord','إرسال رسالة خاصة لأعضاء السيرفر','<button class="primary" data-owner-section="broadcast">إرسال رسالة</button>')+
+card('👥','الحسابات',users.length+' حساب','<button class="primary" data-owner-section="accounts">إدارة الحسابات</button>')+
+card('📋','اللوقات',logs.length+' عملية','<button class="primary" data-owner-section="logs">عرض اللوقات</button>')+
+card('🤖','اشتراكات البوتات',bots.length+' بوت','<button class="primary" data-owner-section="subscriptions">إدارة الاشتراكات</button>')+
+'</div><div id="ownerSection" class="section" style="margin-top:15px"><div class="empty">اختر قسمًا من لوحة الأونر.</div></div>';
+}catch(e){box.innerHTML='<div class="empty">تعذر تحميل لوحة الأونر: '+esc(e.message)+'</div>'}}
+async function ownerAnnouncement(){
+const box=$('#ownerSection');const d=await api('/api/community/owner/announcement'),a=d.announcement||{};
+box.innerHTML='<h2>شريط الإعلان</h2><div class="card"><label>النص<input id="annText" value="'+esc(a.text||'')+'"></label><label>اللون<input id="annColor" type="color" value="'+esc(a.color||'#ff9cdc')+'"></label><label><input id="annEnabled" type="checkbox" '+(a.enabled!==false?'checked':'')+'> مفعل</label><button class="primary" id="saveAnnouncement">حفظ</button></div>';
+$('#saveAnnouncement')?.addEventListener('click',async()=>{await api('/api/community/owner/announcement',{method:'PATCH',body:JSON.stringify({text:$('#annText').value,color:$('#annColor').value,enabled:$('#annEnabled').checked})});toast('تم تحديث شريط الإعلان');loadAnnouncement()});
+}
+async function ownerBroadcast(){
+const box=$('#ownerSection');box.innerHTML='<h2>برودكاست Discord</h2><div class="card"><textarea id="broadcastText" maxlength="2000" placeholder="اكتب الرسالة التي ستصل خاص للأعضاء..."></textarea><button class="primary" id="sendBroadcast">إرسال للأعضاء</button><p>سيتم تجاهل حسابات البوتات.</p></div>';
+$('#sendBroadcast')?.addEventListener('click',async()=>{const content=$('#broadcastText').value.trim();if(!content)return toast('اكتب الرسالة');const d=await api('/api/community/owner/broadcast',{method:'POST',body:JSON.stringify({content})});toast(d.message||'بدأ الإرسال')});
+}
+async function ownerAccounts(){
+const box=$('#ownerSection'),d=await api('/api/users'),users=d.users||[];
+box.innerHTML='<h2>الحسابات</h2><div class="list">'+(users.map(x=>'<div class="row"><b>'+esc(x.username)+'</b><span>'+esc(x.role||'member')+'</span><span><button class="btn" data-account-view="'+x.id+'">المعلومات</button> <button class="btn" data-account-private="'+x.id+'">الخاص</button> '+(!x.is_owner?'<button class="btn" data-account-edit="'+x.id+'">تعديل</button> <button class="btn danger" data-account-delete="'+x.id+'">حذف</button>':'')+'</span></div>').join('')||'<div class="empty">لا توجد حسابات.</div>')+'</div><div id="accountDetail" style="margin-top:15px"></div>';
+}
+async function ownerAccountDetail(id){
+const d=await api('/api/users/'+id+'/private');const u=d.user,m=d.messages||[];const box=$('#accountDetail');
+box.innerHTML='<div class="card"><h2>'+esc(u.username)+'</h2><p>الدور: '+esc(u.role)+' · Discord: '+esc(u.discord_id||'غير مرتبط')+'</p><p>البايو: '+esc(u.bio||'')+'</p><div class="chat-messages">'+(m.length?m.map(chatRow).join(''):'<div class="empty">لا توجد رسائل خاصة.</div>')+'</div></div>';
+}
+async function ownerEditAccount(id){
+const username=prompt('اسم المستخدم الجديد (اتركه كما هو إذا لا تريد تغييره):');if(username===null)return;
+const avatar=prompt('رابط الصورة الجديدة:');if(avatar===null)return;const bio=prompt('البايو الجديد:');if(bio===null)return;
+await api('/api/users/'+id,{method:'PATCH',body:JSON.stringify({username,avatar,bio})});toast('تم تعديل الحساب');ownerAccounts();
+}
+async function ownerSubscriptions(){
+const box=$('#ownerSection'),d=await api('/api/community/owner/bot-subscriptions'),bots=d.bots||[];
+box.innerHTML='<h2>اشتراكات البوتات</h2><div class="list">'+(bots.length?bots.map(b=>'<div class="row"><b>'+esc(b.name)+'</b><span>'+esc(b.expires_at?'ينتهي '+new Date(b.expires_at).toLocaleString('ar-SA'):'بدون اشتراك')+'</span><button class="btn" data-sub-bot="'+b.id+'">إعطاء اشتراك</button></div>').join(''):'<div class="empty">لا توجد بوتات.</div>')+'</div>';
+}
+;
