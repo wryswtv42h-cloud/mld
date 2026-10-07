@@ -61,22 +61,9 @@ router.post('/tickets/:id/messages',requireAuth,async(req,res)=>{const admin=!!r
 router.post('/tickets/:id/claim',requireAuth,requireAdmin,async(req,res)=>{const {rows}=await query('UPDATE tickets SET claimed_by=$1 WHERE id=$2 AND status <> \'closed\' RETURNING *',[req.user.id,req.params.id]);if(!rows[0])return res.status(404).json({error:'التذكرة غير متاحة'});await audit(req.user,'ticket_claim',String(req.params.id));res.json({ticket:rows[0]});});
 router.post('/tickets/:id/close',requireAuth,requireAdmin,async(req,res)=>{const {rows}=await query('SELECT * FROM tickets WHERE id=$1',[req.params.id]);if(!rows[0])return res.status(404).json({error:'غير موجود'});await query("UPDATE tickets SET status='closed',closed_at=NOW() WHERE id=$1",[req.params.id]);res.json({message:'تم إغلاق التذكرة'});});
 
-router.get('/applications',requireAuth,async(req,res)=>{const owner=!!req.user.is_owner; const {rows}=await query('SELECT * FROM applications WHERE user_id=$1 OR $2=true ORDER BY created_at DESC',[req.user.id,owner]);res.json({applications:rows});});
+router.get('/applications',requireAuth,async(req,res)=>{const admin=!!req.user.is_owner||['admin','owner'].includes(String(req.user.role||'').toLowerCase());const {rows}=await query('SELECT a.*,u.username,u.avatar FROM applications a LEFT JOIN users u ON u.id=a.user_id WHERE a.user_id=$1 OR $2=true ORDER BY a.created_at DESC',[req.user.id,admin]);res.json({applications:rows});});
 router.post('/applications',requireAuth,async(req,res)=>{const discord_id=String(req.body.discord_id||req.user.discord_id||'').trim();if(!discord_id)return res.status(400).json({error:'أدخل Discord ID'});const resolved=await resolveDiscordId(discord_id);if(!resolved||String(resolved)!==String(req.user.discord_id))return res.status(400).json({error:'يجب استخدام حساب ديسكورد الموثق المرتبط بحسابك'});const answers=req.body.answers||{};const {rows}=await query("INSERT INTO applications(user_id,discord_id,answers,status) VALUES($1,$2,$3,'pending') RETURNING *",[req.user.id,resolved,JSON.stringify(answers)]);res.json({application:rows[0]});});
-router.post('/applications/:id/status',requireAuth,requireOwner,async(req,res)=>{
-  const status=String(req.body.status||'pending'); if(!['pending','accepted','rejected'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});
-  const {rows}=await query('SELECT * FROM applications WHERE id=$1',[req.params.id]); if(!rows[0])return res.status(404).json({error:'التقديم غير موجود'});
-  await query('UPDATE applications SET status=$1 WHERE id=$2',[status,req.params.id]);
-  if(status==='accepted'){
-    const roles=await discordApi('/guilds/'+guildId()+'/roles');
-    const adminRoles=roles.filter(r=>!r.managed && r.name.toLowerCase().includes('admin')).sort((a,b)=>(a.position||0)-(b.position||0));
-    const role=adminRoles[0];
-    if(role && /^\d+$/.test(String(rows[0].discord_id))) await discordApi('/guilds/'+guildId()+'/members/'+rows[0].discord_id+'/roles/'+role.id,{method:'PUT',body:'{}'});
-    await query("UPDATE users SET role='admin' WHERE id=$1",[rows[0].user_id]);
-  }
-  await audit(req.user,'application_'+status,String(req.params.id));
-  res.json({message:'تم التحديث'});
-});
+router.post('/applications/:id/status',requireAuth,requireAdmin,async(req,res)=>{const status=String(req.body.status||'pending');if(!['pending','accepted','rejected'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});const {rows}=await query('SELECT * FROM applications WHERE id=$1',[req.params.id]);if(!rows[0])return res.status(404).json({error:'التقديم غير موجود'});await query('UPDATE applications SET status=$1 WHERE id=$2',[status,req.params.id]);if(status==='accepted'){const roles=await discordApi('/guilds/'+guildId()+'/roles');const adminRoles=roles.filter(r=>!r.managed&&/admin|إدارة|ادارة/i.test(String(r.name||''))).sort((a,b)=>(a.position||0)-(b.position||0));const role=adminRoles[0];if(role&&/^\d+$/.test(String(rows[0].discord_id)))await discordApi('/guilds/'+guildId()+'/members/'+rows[0].discord_id+'/roles/'+role.id,{method:'PUT',body:'{}'});await query("UPDATE users SET role='admin' WHERE id=$1",[rows[0].user_id]);try{await dmDiscord(rows[0].discord_id,'✅ تمت الموافقة على تقديمك في MLD.\nتم منحك رتبة الإدارة الأدنى المعتمدة في السيرفر.')}catch{}}else if(status==='rejected'){try{await dmDiscord(rows[0].discord_id,'❌ تم رفض تقديمك للإدارة في MLD.')}catch{}}await audit(req.user,'application_'+status,String(req.params.id),{user_id:rows[0].user_id});res.json({message:'تم التحديث'});});
 
 router.get('/groups',async(req,res)=>{const {rows}=await query("SELECT * FROM groups WHERE status='approved' ORDER BY created_at DESC");res.json({groups:rows});});
 router.get('/groups/all',requireAuth,requireOwner,async(req,res)=>{const {rows}=await query("SELECT * FROM groups ORDER BY created_at DESC");res.json({groups:rows});});
