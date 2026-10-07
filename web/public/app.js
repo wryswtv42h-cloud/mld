@@ -27,8 +27,7 @@ reviews:['⭐','الآراء','آراء وتجارب أعضاء المجتمع']
 bots:['🤖','منصة البوتات','إدارة بوتاتك'],
 addbot:['➕','إضافة بوت','ربط بوت جديد'],
 profile:['👤','بروفايلي','بيانات حسابك'],
-admin:['🛡️','لوحة الإدارة','إدارة الحسابات والتذاكر'],
-'owner-admin':['👑','لوحة الأونر','التحكم الكامل بالمجتمع']
+admin:['','لوحة الإدارة','إدارة الحسابات والتذاكر'],'owner-admin':['','لوحة الأونر','التحكم الكامل بالمجتمع']
 };
 function toast(t){const e=$('#toast');if(!e)return;e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500)}
 async function api(path,opts={}){const r=await fetch(API+(path.startsWith('/')?path:'/ '+path).replace('/ ','/'),{...opts,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opts.headers||{})}});let d={};try{d=await r.json()}catch{}if(!r.ok){if(r.status===401){logout(false)}throw new Error(d.error||'تعذر تنفيذ الطلب')}return d}
@@ -102,7 +101,7 @@ async function renderGuest(p){
 }
 async function render(p){
  const page=$('#page-'+p);if(!page)return;
- if(p==='games'){location.href='/game.html';return}
+ if(p==='games'){location.href='/games.html';return}
  if(p==='members'){const d=await fetch(API+'/api/public/members',{cache:'no-store'}).then(r=>r.json());page.innerHTML=shell(p,'<div class="mld-toolbar"><input id="memberSearch" class="full" placeholder="ابحث عن عضو..."><b>'+num((d.members||[]).length)+' عضو</b></div><div class="mld-member-grid">'+memberCards(d.members)+'</div>');$('#memberSearch').oninput=async e=>{const q=e.target.value.trim();const x=await fetch(API+'/api/public/members?q='+encodeURIComponent(q),{cache:'no-store'}).then(r=>r.json());page.querySelector('.mld-member-grid').innerHTML=memberCards(x.members)};return}
  if(p==='top'){const d=await fetch(API+'/api/public/top',{cache:'no-store'}).then(r=>r.json());page.innerHTML=shell(p,rankSections(d));return}
  if(p==='leaders'){const d=await fetch(API+'/api/public/roles',{cache:'no-store'}).then(r=>r.json());page.innerHTML=shell(p,'<div class="mld-role-grid">'+(d.roles||[]).map(r=>'<article class="panel"><div class="role-top"><b>'+num(r.membersCount)+' عضو</b></div><h3>'+esc(r.name)+'</h3><p class="muted">'+esc((r.permissions||[]).slice(0,4).join(' · ')||'صلاحيات عادية')+'</p></article>').join('')+'</div>');return}
@@ -320,4 +319,23 @@ document.getElementById('appYear')&&(document.getElementById('appYear').textCont
   window.setPage=function(p){p=(p||'home').replace(/^#/,'');if(!logged()&&guestPage(p)){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p)?.classList.add('active');document.getElementById('pageTitle')&&(document.getElementById('pageTitle').textContent=(window.meta?.[p]?.[1]||p));window.closeAppMenu?.();window.scrollTo(0,0);return;}return oldSet?oldSet(p):undefined};
   function boot(){rebuild();document.addEventListener('click',e=>{const a=e.target.closest('.sidebar .nav a[data-page]');if(!a)return;const p=a.dataset.page;if(p==='logout')return;e.preventDefault();e.stopImmediatePropagation();if(!logged()&&['chat','profile','addbot'].includes(p)){document.getElementById('authScreen')?.classList.add('show');return}window.setPage(p)},true)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();window.addEventListener('storage',rebuild);window.addEventListener('mld-auth-changed',rebuild);
+  function roleNav(){
+    const u=JSON.parse(localStorage.getItem('user')||'null');
+    const logged=!!localStorage.getItem('token')&&!!u;
+    const owner=!!u?.is_owner||String(u?.role||'').toLowerCase()==='owner';
+    const admin=owner||String(u?.role||'').toLowerCase()==='admin';
+    const memberOnly=['chat','pigeon','bots','addbot','profile','logout'];
+    document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>{
+      const p=a.dataset.page;
+      let show=true;
+      if(memberOnly.includes(p)) show=logged;
+      if(p==='admin') show=admin;
+      if(p==='owner-admin') show=owner;
+      if(p==='login') show=!logged;
+      a.style.display=show?'flex':'none';
+    });
+    document.querySelectorAll('.sidebar .nav-section').forEach(s=>s.style.display=[...s.querySelectorAll('a[data-page]')].some(x=>x.style.display!=='none')?'block':'none');
+  }
+  window.addEventListener('hashchange',()=>{const p=location.hash.replace('#','')||'home'; if(p==='home'){location.href='/';return;} roleNav();});
+  roleNav(); setInterval(roleNav,1000);
 })();
