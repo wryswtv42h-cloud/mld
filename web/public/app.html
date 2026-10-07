@@ -7,7 +7,7 @@
 <meta name="description" content="MLD · Community — مجتمع ملاذ">
 <title>MLD · Community</title>
 <link rel="icon" href="logo.svg.JPG">
-<link rel="stylesheet" href="style.css?v=20261007-design2">
+<link rel="stylesheet" href="style.css?v=20261007-rootfix">
 </head>
 <body>
 <div id="intro">
@@ -111,6 +111,23 @@
     <small id="loginMsg"></small>
   </div>
 </div>
-<script src="app.js?v=20261007-design3"></script><script>window.addEventListener("error",function(){var x=document.getElementById("intro");if(x){x.classList.add("hide");}});window.addEventListener("load",function(){setTimeout(function(){var x=document.getElementById("intro");if(x)x.classList.add("hide");},900);});</script>
-</body>
+<script src="app.js?v=20261007-rootfix"></script><script>window.addEventListener("error",function(){var x=document.getElementById("intro");if(x){x.classList.add("hide");}});window.addEventListener("load",function(){setTimeout(function(){var x=document.getElementById("intro");if(x)x.classList.add("hide");},900);});</script>
+<script>
+(function(){
+  function bootFallback(){
+    var main=document.getElementById('main');
+    if(!main||main.children.length)return;
+    var pages={
+      home:'<section class="hero"><div class="hero-copy"><span class="eyebrow">MLD · COMMUNITY</span><h1>مجتمع <em>ملاذ</em><br>في مكان واحد.</h1><p>منصة مجتمع MLD المرتبطة بسيرفر الديسكورد.</p><div class="actions"><button class="btn primary" data-fallback="members">استكشف المجتمع</button><button class="btn" data-fallback="games">الألعاب</button></div></div><div class="hero-logo"><img src="logo.svg.JPG" alt="MLD"></div></section><section class="stats"><div><b>—</b><span>الأعضاء</span></div><div><b>—</b><span>المتصلون</span></div><div><b>—</b><span>الزيارات</span></div><div><b>24/7</b><span>المجتمع</span></div></section>',
+      members:'<section class="page-shell"><div class="page-head"><span>👥 MLD COMMUNITY</span><h1>الأعضاء</h1><p>أعضاء مجتمع MLD</p></div><div class="page-body"><div class="grid three"><article class="card"><i>👥</i><h3>أعضاء المجتمع</h3><p>سيتم تحميل بيانات الأعضاء من Discord.</p></article></div></div></section>',
+      games:'<section class="page-shell"><div class="page-head"><span>🎮 MLD COMMUNITY</span><h1>الألعاب</h1><p>ترفيه وجلسات لعب داخل MLD</p></div><div class="page-body"><div class="grid three">'+['أونو','جاكارو','لودو','بلوت','كود نيمز','مونوبولي','مافيا','رووليت'].map(function(x){return '<article class="card"><i>🎮</i><h3>'+x+'</h3><p>جلسة لعبة</p><button class="btn primary" data-fallback="login">دخول</button></article>'}).join('')+'</div></div></section>'
+    };
+    function render(p){main.innerHTML=pages[p]||pages.home;document.querySelectorAll('[data-fallback]').forEach(function(b){b.onclick=function(){var p=b.getAttribute('data-fallback');if(p==='login'){document.getElementById('authModal').classList.add('show')}else render(p)}})}
+    render('home');
+    document.querySelectorAll('.sidebar a[data-page],.brand[data-page]').forEach(function(a){a.onclick=function(e){e.preventDefault();render(a.getAttribute('data-page'))}});
+  }
+  setTimeout(bootFallback,500);
+  window.addEventListener('error',function(){setTimeout(bootFallback,0)});
+})();
+</script></body>
 </html>
