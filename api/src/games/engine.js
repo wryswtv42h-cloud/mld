@@ -22,10 +22,10 @@ export async function initGame(gameType, players){
   const game=GAMES[gameType];
   if(!game) throw new Error('لعبة غير معروفة: '+gameType);
   const names=players.map(p=>typeof p==='string'?p:p.name).filter(Boolean);
-  while(names.length<game.min) names.push('بوت '+(names.length+1));
+  if(names.length<game.min) throw new Error(`تحتاج اللعبة إلى ${game.min} لاعبين حقيقيين على الأقل`);
   const state=await game.init(names.slice(0,game.max));
   state.lastMove=Date.now();
-  state.botPlayers=names.filter(n=>n.startsWith('بوت '));
+  state.botPlayers=[];
   return state;
 }
 
@@ -41,11 +41,6 @@ export async function tickGame(gameType,state){
   const game=GAMES[gameType];
   if(!game||!state) return {changed:false,state};
   const current=state.players?.[state.currentIndex];
-  if(current?.startsWith('بوت ') && Date.now()-(state.lastMove||0)>=3000){
-    const next=await game.action(state,current,getBotAction(gameType,state));
-    next.lastMove=Date.now();
-    return {changed:true,state:next};
-  }
   return game.tick(state);
 }
 
