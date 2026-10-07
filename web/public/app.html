@@ -233,7 +233,7 @@ window.closeAppMenu=function(){
   if(as)as.style.display=admin?'block':'none';if(os)os.style.display=owner?'block':'none';
   const name=document.getElementById('homeAccount');if(name)name.textContent=u?.username||'زائر';
  }
- stats();access();setInterval(stats,15000);setInterval(access,1000);
+ stats();
 })();
 </script></body></html><style id="mld-unified-navigation">
 /* One navigation system on every screen size */
@@ -270,48 +270,5 @@ html,body{max-width:100%;overflow-x:hidden}
 }
 </style>
 <script>
-(function(){
-  function q(s){return document.querySelector(s)}
-  function qa(s){return Array.from(document.querySelectorAll(s))}
-  function close(){
-    q('#sidebar')?.classList.remove('open');
-    q('#appMenuBackdrop')?.classList.remove('show');
-    q('#menuBtn')?.setAttribute('aria-expanded','false');
-    document.body.classList.remove('app-menu-open');
-  }
-  function open(){
-    q('#sidebar')?.classList.add('open');
-    q('#appMenuBackdrop')?.classList.add('show');
-    q('#menuBtn')?.setAttribute('aria-expanded','true');
-    document.body.classList.add('app-menu-open');
-  }
-  window.toggleAppMenu=function(e){
-    e?.preventDefault(); e?.stopPropagation(); e?.stopImmediatePropagation();
-    q('#sidebar')?.classList.contains('open') ? close() : open();
-    return false;
-  };
-  window.closeAppMenu=close;
-  document.addEventListener('click',function(e){
-    const btn=e.target.closest('#menuBtn');
-    if(btn){e.preventDefault();e.stopImmediatePropagation();window.toggleAppMenu(e);return}
-    const link=e.target.closest('.sidebar a[data-page]');
-    if(link){
-      e.preventDefault();e.stopImmediatePropagation();
-      const p=link.dataset.page;
-      const currentUser=window.user||(window.mldGetSession&&window.mldGetSession().user)||null;
-      const owner=!!currentUser?.is_owner||String(currentUser?.role||'').toLowerCase()==='owner';
-      const roles=['admin','co-owner','coowner','founder','senior staff','senior_staff','staff','junior staff','junior_staff'];
-      const admin=owner||roles.includes(String(currentUser?.role||'').toLowerCase());
-      if(p==='login'){close();document.getElementById('authScreen')?.classList.add('show');return;}
-      if(p==='logout'){close();if(window.mldNavigate)window.mldNavigate('logout');else document.getElementById('logoutBtn')?.click();return;}
-      if(p==='owner-admin'&&!owner){close();return}
-      if(p==='admin'&&!admin){close();return}
-      close();
-      if(window.mldNavigate) window.mldNavigate(p);
-      else if(typeof setPage==='function') setPage(p);
-      else if(window.renderFeature) window.renderFeature(p);
-    }
-  },true);
-  window.addEventListener('resize',function(){if(innerWidth>900)close()});
-})();
+/* MLD navigation is controlled exclusively by /app.js. */
 </script>
