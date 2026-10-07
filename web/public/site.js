@@ -1,145 +1,48 @@
-"use strict";
-
-const API_BASE = 'https://api-production-5bddb.up.railway.app';
-
-const $=s=>document.querySelector(s);
-const content=$("#content"),status=$("#status"),search=$("#search"),searchWrap=$("#search-wrap"),modal=$("#modal"),box=$("#modal-content"),title=$("#view-title"),subtitle=$("#subtitle"),mobile=$("#mobile-menu"),backdrop=$("#menu-backdrop");
-let view="members",all=[],roles=[],timer,refreshTimer,selected=null;
-const fallback="/logo.svg";
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const num=v=>new Intl.NumberFormat("ar-SA").format(Number(v)||0);
-const avatar=m=>m?.avatar||fallback;
-function setStatus(x){if(status) status.textContent=x}
-function openModal(){if(!modal||!box)return;modal.classList.remove("hidden");document.body.classList.add("modal-open")}
-function closeModal(){if(!modal)return;modal.classList.add("hidden");document.body.classList.remove("modal-open")}
-window.toggleMLDMenu=function(e){e?.preventDefault();e?.stopPropagation();const m=document.getElementById("mobile-menu");if(m?.classList.contains("open"))closeMenu();else openMenu();};
-function closeMenu(){if(!mobile)return;mobile.classList.remove("open");backdrop?.classList.remove("open");mobile.setAttribute("aria-hidden","true");$("#menu")?.setAttribute("aria-expanded","false");document.body.classList.remove("menu-open")}
-function openMenu(){if(!mobile)return;mobile.classList.add("open");backdrop?.classList.add("open");mobile.setAttribute("aria-hidden","false");$("#menu")?.setAttribute("aria-expanded","true");document.body.classList.add("menu-open")}
-function bind(){document.querySelectorAll("[data-member]").forEach(x=>x.onclick=()=>openMember(x.dataset.member));document.querySelectorAll("[data-role]").forEach(x=>x.onclick=()=>openRole(x.dataset.role))}
-function card(m){return `<article class="card" data-member="${esc(m.id)}"><img src="${esc(avatar(m))}" onerror="this.src='${fallback}'"><div><h3>${esc(m.name)}</h3><p>@${esc(m.username||"")}</p><div class="roles">${(m.importantRoles||[]).map(r=>`<span class="role">${esc(r.name)}</span>`).join("")||`<span class="member-tag">عضو</span>`}</div></div><b>↗</b></article>`}
-function renderMembers(list){if(!content)return;content.className="grid";content.innerHTML=list.length?list.map(card).join(""):`<div class="empty"><h3>لا توجد نتائج</h3><p>تأكد من تفعيل Server Members Intent.</p></div>`;bind()}
-function topSec(t,list,k,l){return `<section class="top-section"><h3>${t}</h3>${list.map((m,i)=>`<article class="top-card" data-member="${esc(m.id)}"><span class="rank">${i+1}</span><img src="${esc(avatar(m))}"><div><small>${l}</small><h4>${esc(m.name)}</h4><strong>${num(m.stats?.[k])}</strong></div></article>`).join("")||`<p class="muted">لا توجد بيانات بعد.</p>`}</section>`}
-function renderTop(d){if(!content)return;content.className="top-grid";content.innerHTML=topSec("🏆 أكثر الرسائل",d.messages||[],"messages","رسالة")+topSec("💬 أكثر المنشنات",d.mentions||[],"mentionsReceived","منشن")+topSec("🎙️ وقت الصوت",d.voice||[],"voiceMinutes","دقيقة")+topSec("⚡ دخول صوتي",d.joins||[],"voiceJoins","دخول");bind()}
-function renderRoles(){if(!content)return;content.className="role-grid";content.innerHTML=roles.map(r=>`<article class="role-card" data-role="${esc(r.id)}"><div class="role-top"><i style="background:${esc(r.color)}"></i><b>${num(r.membersCount)} عضو</b></div><h3>${esc(r.name)}</h3><div class="roles">${(r.permissions||[]).slice(0,4).map(p=>`<span class="permission">${esc(p)}</span>`).join("")||`<span class="muted">صلاحيات عادية</span>`}</div><small>عرض الأعضاء ↗</small></article>`).join("");bind()}
-function gamesView(){if(!content||!title||!subtitle||!searchWrap)return;title.textContent="الألعاب الجماعية";subtitle.textContent="أنشئ جلسة أو انضم لجلسة موجودة";searchWrap.style.display="none";content.className="games-page";content.innerHTML=`<div class="games-grid"><article class="game-card" data-game="uno"><div class="game-icon">🎴</div><h3>أونو</h3><p>2-6 لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="jaccaro"><div class="game-icon">🎲</div><h3>جاكارو</h3><p>2-4 لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="codenames"><div class="game-icon">🕵️</div><h3>كود نيمز</h3><p>4+ لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="baloot"><div class="game-icon">♠️</div><h3>بلوت</h3><p>4 لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="ludo"><div class="game-icon">🎯</div><h3>لودو</h3><p>2-4 لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="monopoly"><div class="game-icon">🏠</div><h3>مونوبولي</h3><p>2-6 لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="maqousar"><div class="game-icon">🃏</div><h3>مقوصر</h3><p>4+ لاعبين</p><button class="primary">إنشاء جلسة</button></article></div><div class="sessions-box"><h3>الجلسات المتاحة</h3><div id="sessions-list" class="sessions-list">جاري التحميل...</div></div>`;document.querySelectorAll("[data-game]").forEach(c=>c.querySelector("button").onclick=()=>{const t=c.dataset.game,n=localStorage.getItem("guestName")||prompt("اسمك؟");if(!n)return;localStorage.setItem("guestName",n);location.href=`game.html?type=${t}&name=${encodeURIComponent(n)}`});loadSessions()}
-async function loadSessions(){try{const r=await fetch(API_BASE + '/api/games/sessions'),d=await r.json(),list=$("#sessions-list");if(!list)return;list.innerHTML=d.sessions?.length?d.sessions.map(s=>`<div class="session-item"><div><h4>${esc(s.game_type)}</h4><p>${esc(s.host_name)} · ${s.players?.length||0}/${s.max_players}</p></div><a class="primary" href="game.html?id=${s.id}">انضم</a></div>`).join(""):"<p class='muted'>لا توجد جلسات حالياً</p>"}catch(e){const l=$("#sessions-list");if(l)l.innerHTML="<p class='muted'>تعذر التحميل</p>"}}
-function messageView(){if(!content||!title||!subtitle||!searchWrap)return;title.textContent="رسالة خاصة";subtitle.textContent="اختر عضوًا واكتب رسالتك؛ ستصل داخل Embed بعنوان.";searchWrap.style.display="none";content.className="message-page";content.innerHTML=`<div class="message-box"><div class="message-icon">✦</div><h3>إرسال رسالة خاصة</h3><p class="muted">اكتب اسم العضو للبحث ثم اختره من النتائج.</p><input id="recipient-search" class="full" placeholder="ابحث عن المستلم..." autocomplete="off"><div id="recipient-results" class="recipient-results"></div><input id="msg-title" class="full" maxlength="120" placeholder="عنوان الرسالة"><label class="check"><input id="show-name" type="checkbox"> إظهار اسم المرسل</label><input id="sender-name" class="full hidden" maxlength="60" placeholder="اسم المرسل"><textarea id="msg-text" class="full" maxlength="2000" placeholder="اكتب رسالتك..."></textarea><p id="msg-status"></p><button id="send" class="primary wide">إرسال الآن</button></div>`;const rs=$("#recipient-search");rs.oninput=async()=>{const q=rs.value.trim();if(!q){$("#recipient-results").innerHTML="";return}const d=await fetch(API_BASE + `/api/public/members?q=${encodeURIComponent(q)}`).then(r=>r.json());$("#recipient-results").innerHTML=(d.members||[]).slice(0,8).map(m=>`<button class="recipient" data-recipient="${esc(m.id)}"><img src="${esc(avatar(m))}"><span>${esc(m.name)}<small>@${esc(m.username||"")}</small></span></button>`).join("");document.querySelectorAll("[data-recipient]").forEach(x=>x.onclick=()=>{selected={id:x.dataset.recipient,name:x.textContent};rs.value=x.textContent;$("#recipient-results").innerHTML="<b class='selected'>تم اختيار المستلم ✓</b>"})};$("#show-name").onchange=e=>$("#sender-name").classList.toggle("hidden",!e.target.checked);$("#send").onclick=sendMessage}
-async function sendMessage(){const st=$("#msg-status"),btn=$("#send"),t=$("#msg-text").value.trim(),show=$("#show-name").checked,n=$("#sender-name").value.trim();if(!selected)return st.textContent="اختر مستلمًا أولًا";if(!t)return st.textContent="اكتب الرسالة أولًا";if(show&&!n)return st.textContent="اكتب اسم المرسل";btn.disabled=true;try{const r=await fetch(API_BASE + '/api/public/message',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId:selected.id,title:$("#msg-title").value.trim()||"رسالة من إدارة MLD",message:show?`من: ${n}\n\n${t}`:t})}),d=await r.json();if(!r.ok)throw Error(d.error);st.textContent="تم الإرسال بنجاح ✓";$("#msg-text").value=""}catch(e){st.textContent=e.message||"تعذر الإرسال"}finally{btn.disabled=false}}
-async function openMember(id){
-  openModal(); box.innerHTML="<div class='loading'>جاري التحميل...</div>";
-  try {
-    const r=await fetch(API_BASE + '/api/public/member/' + encodeURIComponent(id),{cache:'no-store'});
-    const m=await r.json(); if(!r.ok) throw new Error(m.error||'تعذر تحميل العضو'); const s=m.stats||{};
-    box.innerHTML='<div class="profile"><div class="profile-head"><img src="'+esc(avatar(m))+'"><div><p class="eyebrow">ملف العضو</p><h2>'+esc(m.name)+'</h2><p class="muted">@'+esc(m.username||'')+'</p><span class="badge">'+esc(m.rank||'عضو')+'</span></div></div><div class="stats">'+[[s.messages,'رسالة'],[s.mentionsReceived,'منشن جاه'],[s.mentionsSent,'منشن أرسله'],[Math.floor((s.voiceMinutes||0)/60)+'س '+((s.voiceMinutes||0)%60)+'د','وقت صوتي'],[s.voiceJoins,'دخول صوتي'],[s.chatRounds,'نشاط شات']].map(x=>'<b>'+esc(num(x[0]))+'<small>'+x[1]+'</small></b>').join('')+'</div><h3>كل الرتب</h3><div class="roles">'+((m.roles||[]).map(x=>'<span class="role">'+esc(x.name)+'</span>').join('')||'<span class="muted">لا توجد رتب</span>')+'</div><h3>أقوى الصلاحيات</h3><div class="permission-box">'+((m.permissions||[]).map(x=>'<span class="permission">'+esc(x)+'</span>').join('')||'<span class="muted">لا توجد</span>')+'</div></div>';
-  } catch(e) { box.innerHTML='<div class="empty"><h3>تعذر تحميل العضو</h3><p>'+esc(e.message)+'</p></div>'; }
-}
-async function openRole(id){
-  openModal(); box.innerHTML="<div class='loading'>جاري تحميل الرتبة...</div>";
-  try {
-    const r=await fetch(API_BASE + '/api/public/roles/' + encodeURIComponent(id) + '/members',{cache:'no-store'});
-    const d=await r.json(); if(!r.ok) throw new Error(d.error||'تعذر تحميل الرتبة');
-    box.innerHTML='<p class="eyebrow">دليل الرتبة</p><h2>'+esc(d.role?.name||'الرتبة')+'</h2><div class="role-meta"><b>'+num(d.role?.membersCount)+' عضو فعلي</b></div><div class="permission-box">'+((d.role?.permissions||[]).map(x=>'<span class="permission">'+esc(x)+'</span>').join('')||'<span class="muted">لا توجد</span>')+'</div><h3>الأعضاء</h3><div class="grid compact">'+((d.members||[]).map(card).join(''))+'</div>'; bind();
-  } catch(e) { box.innerHTML='<div class="empty"><h3>تعذر تحميل الرتبة</h3><p>'+esc(e.message)+'</p></div>'; }
-}
-async function refresh(){if(!content||!status||!search||!searchWrap||!title||!subtitle)return;try{const[sr,rr]=await Promise.all([fetch(API_BASE + '/api/public/server',{cache:'no-store'}),fetch(API_BASE + '/api/public/roles',{cache:'no-store'})]),s=await sr.json(),rd=await rr.json();$("#server-name").textContent=s.name||"MLD";$("#server-count").textContent=s.memberCount==null?"—":num(s.memberCount); $("#server-online").textContent=s.onlineCount==null?"—":num(s.onlineCount); $("#server-visits").textContent=s.visits==null?"—":num(s.visits); $("#server-status").textContent=s.error?"● غير متاح":"● متصل";if(s.error){setStatus(s.reason||s.error)}roles=rd.roles||[];if(view==="members"&&!search.value){const d=await fetch(API_BASE + '/api/public/members').then(r=>r.json());all=d.members||[];renderMembers(all);setStatus(`${num(all.length)} عضو`)}else if(view==="roles")renderRoles();else if(view==="top")renderTop(await fetch(API_BASE + '/api/public/top').then(r=>r.json()))}catch(e){setStatus("تعذر تحديث البيانات")}}
-async function searchMembers(){if(!search)return;clearTimeout(timer);const q=search.value.trim();if(!q){renderMembers(all);setStatus(`${num(all.length)} عضو`);return}setStatus("جاري البحث...");timer=setTimeout(async()=>{const d=await fetch(API_BASE + `/api/public/members?q=${encodeURIComponent(q)}`).then(r=>r.json());renderMembers(d.members||[]);setStatus(`${num((d.members||[]).length)} نتيجة`)},250)}
-async function change(v){if(!content||!title||!subtitle||!searchWrap)return;view=v;closeMenu();if(v==="message")return messageView();if(v==="games")return gamesView();searchWrap.style.display=v==="members"?"flex":"none";title.textContent=v==="members"?"أعضاء المجتمع":v==="roles"?"الرتب القيادية":"لوحة TOP";if(v==="members"||v==="roles")return refresh();renderTop(await fetch(API_BASE + '/api/public/top').then(r=>r.json()));setStatus("تحديث مباشر للنشاط")}
-document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>change(b.dataset.view));
-if(search) search.oninput=()=>{if(view!=="members")change("members");searchMembers()};
-$("#menu")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();window.toggleMLDMenu(e)});
-$("#menu-backdrop")?.addEventListener("click",()=>window.toggleMLDMenu());
-document.querySelectorAll('#sidebar a').forEach(a=>a.addEventListener('click',()=>window.toggleMLDMenu()));
-$("#menu-close")?.addEventListener("click",closeMenu);
-backdrop?.addEventListener("click",closeMenu);
-mobile?.querySelectorAll("a").forEach(a=>a.addEventListener("click",closeMenu));
-$("#close")?.addEventListener("click",closeModal);
-modal?.addEventListener("click",e=>{if(e.target===modal)closeModal()});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeMenu()}});
-const yearEl=$("#year");
-if(yearEl) yearEl.textContent=new Date().getFullYear();
-refresh();
-refreshTimer=setInterval(()=>{if(!content)return;if(modal&&!modal.classList.contains("hidden")||view==="message")return;refresh()},15000);
-/* ===== Homepage live dashboard override ===== */
-(async function initHomeDashboard(){
-  const serverName=document.getElementById('server-name');
-  const count=document.getElementById('server-count');
-  const online=document.getElementById('server-online');
-  const visits=document.getElementById('server-visits');
-  const statusEl=document.getElementById('server-status');
-  const track=document.getElementById('home-reviews');
-  if(!track)return;
-
-  async function loadServer(){
-    try{
-      const r=await fetch(API_BASE + '/api/public/server',{cache:'no-store'});
-      const d=await r.json();
-      if(serverName) serverName.textContent=d.name||'MLD';
-      if(count) count.textContent=d.memberCount==null?'—':num(d.memberCount);
-      if(online) online.textContent=d.onlineCount==null?'—':num(d.onlineCount);
-      if(visits) visits.textContent=d.visits==null?'—':num(d.visits);
-      ['homeServerName','serverName'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.name||'MLD'});
-      ['homeMemberCount','server-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.memberCount==null?'—':num(d.memberCount)});
-      ['homeOnlineCount','server-online'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.onlineCount==null?'—':num(d.onlineCount)});
-      ['homeVisits','server-visits'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.visits==null?'—':num(d.visits)});
-      const discordFloat=document.getElementById('discord-float');
-      if(discordFloat && d.invite) discordFloat.href=d.invite;
-      if(statusEl) statusEl.textContent=d.error?'● غير متاح':'● متصل';
-      if(statusEl) statusEl.className='online';
-    }catch(e){
-      if(statusEl) statusEl.textContent='● غير متاح';
-      if(statusEl) statusEl.className='';
-    }
-  }
-
-  async function loadReviews(){
-    try{
-      const r=await fetch(API_BASE + '/api/community/reviews',{cache:'no-store'});
-      const d=await r.json();
-      const list=d.reviews||[];
-      if(!list.length){
-        track.innerHTML='<div class="review-card"><div class="review-stars">★★★★★</div><h3>كن أول من يترك رأيه</h3><p>شاركنا تجربتك في MLD وسيظهر رأيك هنا بشكل جميل.</p><div class="review-meta"><span>MLD Community</span><span>♡</span></div></div>';
-        return;
-      }
-      const cards=list.map(x=>`<article class="review-card"><div class="review-stars">${'★'.repeat(Math.max(1,Math.min(5,Number(x.rating)||5)))}</div><h3>${esc(x.username||'عضو MLD')}</h3><p>${esc(x.content||'')}</p><div class="review-meta"><span>عضو في MLD</span><span>رأي موثّق</span></div></article>`).join('');
-      track.innerHTML=cards+cards;
-    }catch(e){
-      track.innerHTML='<div class="review-card"><h3>آراء الناس عنّا</h3><p>تعذر تحميل الآراء الآن، جرّب تحديث الصفحة.</p></div>';
-    }
-  }
-
-  await Promise.all([loadServer(),loadReviews()]);
-  setInterval(loadServer,15000);
-  setInterval(loadReviews,30000);
-})();
-
-/* ===== MLD UNIFIED VISITOR / MEMBER NAV v5 ===== */
-(function(){
-  const isMember=()=>!!localStorage.getItem('token')&&!!JSON.parse(localStorage.getItem('user')||'null');
-  const getUser=()=>JSON.parse(localStorage.getItem('user')||'null');
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const links=()=>{const member=isMember(),u=getUser(),admin=u&&(u.is_owner||String(u.role||'').toLowerCase()==='admin'||String(u.role||'').toLowerCase()==='owner');
-    const common=[['/','🏠 الرئيسية'],['/#members','👥 الأعضاء'],['/#top','🏆 التوب'],['/#roles','👑 الرتب القيادية']];
-    const out=[...common];
-    if(member) out.push(['chat.html','💬 الشات العام'],['zajel.html','✉️ الزاجل']);
-    out.push(['games.html','🎮 الألعاب'],['cinema.html','🎬 السينما'],['feedback.html','⭐ الآراء'],['groups.html','👨‍👩‍👧 القروبات 🔒'],['apply.html','📝 التقديم 🔒'],['tickets.html','🎫 التذاكر 🔒'],['bots.html','🤖 منصة البوتات 🔒']);
-    if(member) out.push(['addbot.html','➕ إضافة بوت'],['profile.html','👤 بروفايلي']);
-    if(admin) out.push(['app.html#admin','🛡️ لوحة الإدارة']);
-    if(u?.is_owner||String(u?.role||'').toLowerCase()==='owner') out.push(['app.html#owner-admin','👑 لوحة الأونر']);
-    out.push(member?['#mld-logout','🚪 تسجيل الخروج']:['login.html','🔐 تسجيل الدخول']);
-    return out;
-  };
-  function lock(){const m=document.createElement('div');m.className='mld-lock-modal';m.innerHTML='<div class="mld-lock-box"><h3>🔒 سجّل دخول للمتابعة</h3><p>هذي الميزة متاحة للأعضاء المسجلين في MLD.</p><div class="mld-lock-actions"><a class="primary" href="/login.html">تسجيل الدخول</a><button class="btn-secondary" type="button">لاحقاً</button></div></div>';m.querySelector('button').onclick=()=>m.remove();document.body.appendChild(m)}
-  function install(){
-    const nav=document.querySelector('#sidebar nav')||document.querySelector('.sidebar .nav'); if(!nav)return;
-    nav.innerHTML=links().map(([href,label])=>href==='#mld-logout'?'<a href="#" data-mld-logout>'+label+'</a>':'<a href="'+esc(href)+'">'+label+'</a>').join('');
-    nav.querySelector('[data-mld-logout]')?.addEventListener('click',e=>{e.preventDefault();localStorage.removeItem('token');localStorage.removeItem('user');location.href='/'});
-    const menu=document.getElementById('menu');const sidebar=document.getElementById('sidebar');const backdrop=document.getElementById('menu-backdrop');
-    const close=()=>{sidebar?.classList.remove('open');backdrop?.classList.remove('open');document.body.classList.remove('menu-open')};
-    const open=()=>{sidebar?.classList.add('open');backdrop?.classList.add('open');document.body.classList.add('menu-open')};
-    menu?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();sidebar?.classList.contains('open')?close():open()},true);backdrop?.addEventListener('click',close);
-    nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>setTimeout(close,0)));
-    document.querySelectorAll('#mobile-menu').forEach(x=>x.style.display='none');
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
-  window.addEventListener('storage',install);window.mldLock=lock;
+(()=>{'use strict';
+const API=(window.MLD_API||'https://api-production-5bddb.up.railway.app').replace(/\/$/,'');
+let token=localStorage.getItem('token')||'', user=null;
+try{user=JSON.parse(localStorage.getItem('user')||'null')}catch{}
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const roles=new Set(['admin','co-owner','coowner','founder','senior staff','senior_staff','staff','junior staff','junior_staff']);
+const isLogged=()=>!!token&&!!user, isOwner=()=>!!user&&(user.is_owner===true||String(user.role||'').toLowerCase()==='owner'), isAdmin=()=>isOwner()||roles.has(String(user?.role||'').toLowerCase());
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(window._toast);window._toast=setTimeout(()=>e.classList.remove('show'),2400)}
+async function api(path,opt={}){const r=await fetch(API+(path.startsWith('/')?path:'/api/'+path),{...opt,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opt.headers||{})}});let d={};try{d=await r.json()}catch{}if(!r.ok){if(r.status===401)logout(false);throw Error(d.error||'تعذر تنفيذ الطلب')}return d}
+function logout(reload=true){token='';user=null;localStorage.removeItem('token');localStorage.removeItem('user');sync();if(reload)go('home')}
+function requireLogin(){if(!isLogged()){openAuth();return false}return true}
+function openAuth(){const m=$('#authModal');m.classList.add('show');setTimeout(()=>$('#loginUser')?.focus(),50)}
+function closeAuth(){$('#authModal')?.classList.remove('show')}
+function sync(){ $('#topUser').textContent=user?.username||'زائر';$('#userName').textContent=user?.username||'زائر';$('#userRole').textContent=isOwner()?'الأونر 👑':isAdmin()?'إدارة 🛡️':isLogged()?'عضو':'زائر';$('#avatar').innerHTML=user?.avatar?'<img src="'+esc(user.avatar)+'">':esc((user?.username||'ز').slice(0,2));$('#topLogin').style.display=isLogged()?'none':'inline-flex';$$('[data-auth]').forEach(e=>e.style.display=isLogged()?'':'none');$$('[data-owner]').forEach(e=>e.style.display=isOwner()?'':'none');$$('[data-admin]').forEach(e=>e.style.display=isAdmin()?'':'none');$('#logout').style.display=isLogged()?'':'none')}
+function pageShell(icon,title,sub,body){return '<section class="page-shell"><div class="page-head"><span>'+icon+' MLD COMMUNITY</span><h1>'+title+'</h1><p>'+sub+'</p></div><div class="page-body">'+body+'</div></section>'}
+function card(icon,title,text,action=''){return '<article class="card"><i>'+icon+'</i><h3>'+title+'</h3><p>'+text+'</p>'+action+'</article>'}
+const pages={
+home:()=>'<section class="hero"><div class="hero-copy"><span class="eyebrow">MLD · COMMUNITY</span><h1>مجتمع <em>ملاذ</em><br>في مكان واحد.</h1><p>منصة مجتمع MLD المرتبطة بسيرفر الديسكورد. استكشف الأعضاء، الألعاب، القروبات، الخدمات وكل ما يخص المجتمع.</p><div class="actions"><button class="btn primary" data-page="members">استكشف المجتمع</button><button class="btn" data-page="games">الألعاب</button></div><small>Discord: <b>w4px</b></small></div><div class="hero-logo"><img src="logo.svg.JPG" alt="MLD"></div></section><section class="stats"><div><b id="membersStat">—</b><span>الأعضاء</span></div><div><b id="onlineStat">—</b><span>المتصلون</span></div><div><b id="visitsStat">—</b><span>الزيارات</span></div><div><b>24/7</b><span>المجتمع</span></div></section><div class="section-title"><span>MLD</span><h2>كل شيء مرتب وواضح</h2></div><div class="grid three">'+card('👥','الأعضاء','تصفح أعضاء المجتمع والبيانات العامة.','<button class="btn" data-page="members">فتح</button>')+card('🎮','الألعاب','جلسات اللعب والترفيه داخل المنصة.','<button class="btn" data-page="games">فتح</button>')+card('⭐','الآراء','شاهد آراء وتجارب أعضاء MLD.','<button class="btn" data-page="reviews">فتح</button>')+'</div>',
+members:()=>pageShell('👥','الأعضاء','أعضاء مجتمع MLD', '<div id="membersList" class="grid three"><div class="loading">جاري تحميل الأعضاء…</div></div>'),
+top:()=>pageShell('🏆','التوب','أعلى النشاط والنقاط في المجتمع','<div class="grid three">'+card('🥇','أفضل الأعضاء','يتم جلب الترتيب من خدمة MLD.','<button class="btn" data-action="load-top">تحديث</button>')+card('📊','النشاط','إحصائيات المجتمع الحية.','')+card('✨','النقاط','نتائج الأعضاء المسجلين فقط تدخل التوب.','')+'</div><div id="topList" class="list"></div>'),
+leaders:()=>pageShell('👑','الرتب القيادية','الرتب المرتبطة بسيرفر MLD','<div class="grid three">'+['الأونر','Co-Owner','Founder','Senior Staff','Staff','Junior Staff'].map((x,i)=>card(['👑','💎','🏅','🛡️','🔰','🎖️'][i],x,'صلاحيات الرتبة مرتبطة بالديسكورد.')).join('')+'</div>'),
+chat:()=>pageShell('💬','الشات العام','مساحة التواصل لأعضاء MLD',isLogged()?'<div class="chatbox"><div id="chatMessages" class="chat-messages"><p>جاري تحميل المحادثة…</p></div><div class="chat-send"><input id="chatInput" placeholder="اكتب رسالتك…"><button class="btn primary" data-action="send-chat">إرسال</button></div></div>':'<div class="empty">سجل الدخول لاستخدام الشات.</div>'),
+pigeon:()=>pageShell('✉️','الزاجل','رسائلك الخاصة داخل المجتمع',isLogged()?'<div class="empty">الزاجل جاهز للحسابات المسجلة.</div>':'<div class="empty">سجل الدخول لاستخدام الزاجل.</div>'),
+games:()=>pageShell('🎮','الألعاب','ترفيه وجلسات لعب داخل MLD','<div class="grid three">'+[['🎴','أونو','2–6 لاعبين'],['🎲','جاكارو','2–4 لاعبين'],['🎯','لودو','2–4 لاعبين'],['♠️','بلوت','4 لاعبين'],['🕵️','كود نيمز','4+ لاعبين'],['🏠','مونوبولي','2–6 لاعبين'],['🃏','مافيا','4+ لاعبين'],['🎰','رووليت','متعدد']].map(g=>card(g[0],g[1],g[2],'<button class="btn primary" data-action="game" data-game="'+g[1]+'">إنشاء جلسة</button>')).join('')+'</div><div class="notice">الزائر يستطيع الاستكشاف واللعب، لكن نتائج الزائر لا تُحفظ في التوب.</div>'),
+cinema:()=>pageShell('🎬','السينما','غرف مشاهدة جماعية','<div class="empty">غرف السينما ستظهر هنا عند توفرها.</div>'),
+groups:()=>pageShell('👨‍👩‍👧','القروبات','قروبات مرتبطة بمجتمع MLD','<div class="grid three">'+card('➕','طلب قروب','أنشئ طلب قروب مرتبط بالديسكورد.','<button class="btn" data-action="group">طلب جديد</button>')+card('📋','قروباتي','القروبات التي تملكها أو انضممت إليها.','')+card('🔗','Discord','القروب المقبول ينشئ عناصره داخل السيرفر.','')+'</div>'),
+tickets:()=>pageShell('🎫','التذاكر','الدعم ومتابعة الطلبات',isLogged()?'<div class="empty">لا توجد تذاكر معروضة حالياً.</div>':'<div class="empty">سجل الدخول لفتح تذكرة.</div>'),
+applications:()=>pageShell('📝','التقديم','إدارة طلبات الانضمام للإدارة','<div class="empty">هذه الصفحة خاصة بالأونر.</div>'),
+reviews:()=>pageShell('⭐','الآراء','آراء وتجارب أعضاء المجتمع','<div class="grid three">'+card('💗','مجتمع جميل','نرتب آراء الأعضاء هنا بشكل واضح.')+card('✨','تجربة MLD','الآراء تُعرض من قاعدة بيانات المجتمع.')+card('📝','أضف رأيك','بعد تسجيل الدخول يمكنك إرسال رأيك.','<button class="btn" data-action="review">إضافة رأي</button>')+'</div>'),
+bots:()=>pageShell('🤖','منصة البوتات','إدارة وربط بوتات المجتمع','<div class="grid three">'+card('⚙️','بوتات MLD','أدوات النظام والحماية والألعاب.')+card('🎮','الألعاب','أدوات الألعاب والاقتصاد.')+card('📢','البث','التنبيهات والزاجل والإعلانات.')+'</div>'),
+addbot:()=>pageShell('➕','إضافة بوت','ربط بوت جديد بحسابك',isLogged()?'<div class="form"><input id="botName" placeholder="اسم البوت"><input id="botToken" placeholder="توكن البوت" type="password"><button class="btn primary" data-action="add-bot">إضافة</button></div>':'<div class="empty">سجل الدخول أولاً.</div>'),
+profile:()=>pageShell('👤','بروفايلي','بيانات حسابك',isLogged()?'<div class="profile-card"><div class="avatar big">'+esc((user.username||'ز').slice(0,2))+'</div><h2>'+esc(user.username||'')+'</h2><p>'+esc(user.role||'member')+'</p></div>':'<div class="empty">سجل الدخول أولاً.</div>'),
+admin:()=>pageShell('🛡️','لوحة الإدارة','إدارة المجتمع والحسابات والتذاكر','<div class="grid three">'+card('👥','الحسابات','إدارة الحسابات والصلاحيات.')+card('🎫','التذاكر','متابعة التذاكر والرد عليها.')+card('📋','السجلات','مراجعة عمليات الإدارة.')+'</div>'),
+'owner-admin':()=>pageShell('👑','لوحة الأونر','التحكم الكامل في MLD','<div class="grid three">'+card('⚡','الإدارة','تعيين وإدارة طاقم الإدارة.')+card('📢','الإعلانات','إدارة الشريط والإرسال الجماعي.')+card('🧾','السجلات','سجلات الأونر والإدارة.')+card('⚙️','الإعدادات','إعدادات المنصة والمجتمع.')+'</div>')};
+function allowed(p){if(p==='chat'||p==='pigeon'||p==='profile'||p==='addbot'||p==='tickets')return isLogged();if(p==='applications'||p==='owner-admin')return isOwner();if(p==='admin')return isAdmin();return true}
+function go(p){p=String(p||'home').replace(/^#/,'');if(p==='login'){openAuth();return}if(p==='logout'){logout();return}if(!pages[p])p='home';if(!allowed(p)){toast('ليس لديك صلاحية لهذه الصفحة');return}history.replaceState(null,'','#'+p);closeMenu();$('#main').innerHTML=pages[p]();$$('.sidebar a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));afterPage(p)}
+function afterPage(p){if(p==='home')loadStats();if(p==='members')loadMembers();if(p==='top')loadTop()}
+async function loadStats(){try{const d=await api('/api/public/server');$('#membersStat').textContent=d.memberCount??'—';$('#onlineStat').textContent=d.onlineCount??'—';$('#visitsStat').textContent=d.visits??'—'}catch{}}
+async function loadMembers(){const e=$('#membersList');try{const d=await api('/api/public/members');const list=d.members||d||[];e.innerHTML=list.slice(0,24).map(m=>'<article class="card member"><div class="avatar">'+(m.avatar?'<img src="'+esc(m.avatar)+'">':'👤')+'</div><h3>'+esc(m.displayName||m.username||'عضو')+'</h3><p>'+esc(m.role||'عضو')+'</p></article>').join('')||'<div class="empty">لا يوجد أعضاء حالياً.</div>'}catch{e.innerHTML='<div class="empty">تعذر تحميل الأعضاء الآن.</div>'}}
+async function loadTop(){const e=$('#topList');try{const d=await api('/api/public/top');const list=d.users||d.top||d||[];e.innerHTML=list.slice(0,20).map((x,i)=>'<div class="list-row"><b>#'+(i+1)+'</b><span>'+esc(x.username||x.name||'عضو')+'</span><strong>'+esc(x.points??x.score??0)+'</strong></div>').join('')||'<div class="empty">لا توجد بيانات توب حالياً.</div>'}catch{e.innerHTML='<div class="empty">تعذر تحميل التوب الآن.</div>'}}
+async function login(){const u=$('#loginUser').value.trim(),p=$('#loginPass').value;if(!u||!p)return toast('اكتب اسم المستخدم وكلمة المرور');$('#loginSubmit').disabled=true;try{const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify({username:u,password:p})});token=d.token||d.accessToken||'';user=d.user||d.account||null;if(!token||!user)throw Error('بيانات الدخول غير مكتملة');localStorage.setItem('token',token);localStorage.setItem('user',JSON.stringify(user));closeAuth();sync();toast('تم تسجيل الدخول');go('home')}catch(e){$('#loginMsg').textContent=e.message||'فشل الدخول'}finally{$('#loginSubmit').disabled=false}}
+function closeMenu(){const s=$('#sidebar'),b=$('#backdrop'),m=$('#menuBtn');s?.classList.remove('open');b?.classList.remove('show');document.body.classList.remove('menu-open');m?.setAttribute('aria-expanded','false')}
+function openMenu(){const s=$('#sidebar'),b=$('#backdrop'),m=$('#menuBtn');s?.classList.add('open');b?.classList.add('show');document.body.classList.add('menu-open');m?.setAttribute('aria-expanded','true')}
+function bind(){document.addEventListener('click',e=>{const page=e.target.closest('[data-page]');if(page){e.preventDefault();go(page.dataset.page);return}if(e.target.closest('[data-close]')){closeMenu();return}if(e.target.closest('[data-close-modal]')){closeAuth();return}const act=e.target.closest('[data-action]');if(act){const a=act.dataset.action;if(a==='logout')logout();else if(a==='send-chat')toast('الشات متصل عند اكتمال خدمة الرسائل');else if(a==='game')toast('إنشاء جلسة '+act.dataset.game+' يحتاج تسجيل الدخول للحفظ');else if(a==='review'||a==='group'||a==='add-bot')toast('هذه الخدمة ستفتح عند اكتمال مسارها');}});$('#menuBtn').onclick=(e)=>{e.preventDefault();e.stopPropagation();$('#sidebar').classList.contains('open')?closeMenu():openMenu()};
+$('#backdrop').onclick=closeMenu;$('#topLogin').onclick=openAuth;$('#loginSubmit').onclick=login;$('#loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')login()});window.addEventListener('hashchange',()=>go(location.hash||'#home'));window.addEventListener('popstate',()=>go(location.hash||'#home'))}
+window.addEventListener('DOMContentLoaded',()=>{bind();sync();document.body.classList.add('app-ready');setTimeout(()=>{$('#intro')?.classList.add('hide');},700);go(location.hash||'home')});
 })();
