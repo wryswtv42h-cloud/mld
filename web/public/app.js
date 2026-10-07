@@ -8,8 +8,8 @@ const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=v=>new Intl.NumberFormat('ar-SA').format(Number(v)||0);
-const protectedPages=['chat','pigeon','tickets','bots','addbot','profile'];
-const ownerOnly=['applications','owner-admin'];
+const protectedPages=[];
+const ownerOnly=['owner-admin'];
 const adminPages=['admin'];
 const meta={
 home:['🏠','الرئيسية','واجهة MLD الرئيسية'],
@@ -141,7 +141,7 @@ function bindAuth(){
  $('#logoutBtn')?.addEventListener('click',e=>{e.preventDefault();logout()});
 }
 function bindNav(){
- $('.sidebar a[data-page]').forEach(a=>a.onclick=e=>{e.preventDefault();const p=a.dataset.page;if(p==='applications' && !(user?.is_owner || String(user?.role||'').toLowerCase()==='owner')){toast('التقديم للأونر فقط');return;}if(['chat','pigeon','tickets','bots','addbot','profile'].includes(p)&&!user){$('#authScreen')?.classList.add('show');toast('سجّل دخول أولاً');return;}location.hash=p;setPage(p)});
+ $('.sidebar a[data-page]').forEach(a=>a.onclick=e=>{e.preventDefault();const p=a.dataset.page;if(p==='owner-admin' && !privileged('owner')){toast('هذه الصفحة للأونر فقط');return;}location.hash=p;setPage(p)});
  window.addEventListener('hashchange',()=>setPage((location.hash||'#home').slice(1)));
 }
 function boot(){syncUserUI();bindAuth();bindNav();loadStats();setInterval(loadStats,15000);const p=(location.hash||'#home').slice(1);setPage(meta[p]?p:'home')}
@@ -156,186 +156,52 @@ window.mldSetPage=setPage;
 window.toast=toast;
 })();
 
-// Fast interaction layer: immediate feedback without changing existing actions.
-document.addEventListener('click',e=>{
- const b=e.target.closest('button.btn-primary,button.btn-secondary');
- if(b && !b.disabled){ b.classList.add('is-busy'); setTimeout(()=>b.classList.remove('is-busy'),900); }
-});
-document.getElementById('appYear')&&(document.getElementById('appYear').textContent=new Date().getFullYear());
 
-/* ===== MLD FINAL STABILITY LAYER ===== */
+// MLD navigation cleanup: one controller only.
 (function(){
-  const $=id=>document.getElementById(id);
-  window.closeAppMenu=function(){
-    $('sidebar')?.classList.remove('open');
-    $('appMenuBackdrop')?.classList.remove('show');
-    document.body.classList.remove('app-menu-open');
-    $('menuBtn')?.setAttribute('aria-expanded','false');
-  };
-  window.toggleAppMenu=function(e){
-    e?.preventDefault(); e?.stopPropagation();
-    const s=$('sidebar'), b=$('appMenuBackdrop'), btn=$('menuBtn');
-    if(!s)return false;
-    const open=!s.classList.contains('open');
-    s.classList.toggle('open',open);
-    b?.classList.toggle('show',open);
-    document.body.classList.toggle('app-menu-open',open);
-    btn?.setAttribute('aria-expanded',String(open));
-    return false;
-  };
-  document.querySelectorAll('.sidebar .nav a').forEach(a=>{
-    a.addEventListener('click',()=>window.closeAppMenu());
-  });
-  window.addEventListener('resize',()=>{
-    if(innerWidth>900) window.closeAppMenu();
-  });
-
-  async function refreshHomeStats(){
-    try{
-      const r=await fetch(API+'/api/public/server',{cache:'no-store'});
-      const d=await r.json();
-      const set=(id,v)=>{const e=$(id);if(e)e.textContent=(v===null||v===undefined||v==='')?'—':Number.isFinite(Number(v))?Number(v).toLocaleString('ar-SA'):v;};
-      set('homeServerName',d.name||'MLD');
-      set('homeMemberCount',d.memberCount);
-      set('homeOnlineCount',d.onlineCount);
-      set('homeVisits',d.visits);
-      const account=$('homeAccount'); if(account) account.textContent=user?.username||'زائر';
-    }catch(e){ console.warn('MLD home stats',e); }
+  const adminRoles=new Set(['admin','co-owner','coowner','founder','senior staff','senior_staff','staff','junior staff','junior_staff']);
+  const isOwner=()=>!!user?.is_owner||String(user?.role||'').toLowerCase()==='owner';
+  const isAdmin=()=>isOwner()||adminRoles.has(String(user?.role||'').toLowerCase());
+  const close=()=>window.closeAppMenu?.();
+  function apply(){
+    const logged=!!user&&!!token;
+    const show=(id,on)=>{const e=document.getElementById(id);if(e)e.style.display=on?'flex':'none'};
+    show('adminLink',isAdmin());show('ownerLink',isOwner());show('applicationsLink',true);
+    const as=document.getElementById('adminSection'),os=document.getElementById('ownerSection');
+    if(as)as.style.display=isAdmin()?'block':'none';
+    if(os)os.style.display=isOwner()?'block':'none';
+    const login=document.getElementById('loginBtn'),logout=document.getElementById('logoutBtn'),profile=document.querySelector('[data-page="profile"]'),addbot=document.querySelector('[data-page="addbot"]');
+    if(login)login.style.display=logged?'none':'flex';
+    if(logout)logout.style.display=logged?'flex':'none';
+    if(profile)profile.style.display=logged?'flex':'none';
+    if(addbot)addbot.style.display=logged?'flex':'none';
+    if(document.getElementById('homeAccount'))document.getElementById('homeAccount').textContent=user?.username||'زائر';
   }
-
-  window.addEventListener('mld-auth-changed',applyAccess);
-  // removed obsolete reference to a function from a different script scope
-  window.addEventListener('load',()=>setTimeout(refreshHomeStats,250));
-  setInterval(refreshHomeStats,30000);
-
-  function applyAccess(){
-    const owner=!!user?.is_owner || String(user?.role||'').toLowerCase()==='owner';
-    const admin=owner || String(user?.role||'').toLowerCase()==='admin';
-    const show=(id,on)=>{const e=$(id);if(e)e.style.display=on?'flex':'none';};
-    show('adminLink',admin); show('ownerLink',owner);
-    const as=$('adminSection'), os=$('ownerSection');
-    if(as)as.style.display=admin?'block':'none';
-    if(os)os.style.display=owner?'block':'none';
-    const appLink=$('applicationsLink');
-    if(appLink)appLink.style.display=owner?'flex':'none';
-    document.querySelectorAll('[data-owner-only]').forEach(e=>e.style.display=owner?'flex':'none');
-  }
-  setInterval(applyAccess,1000);
-  setTimeout(applyAccess,300);
-})();
-
-
-/* MLD FINAL PAGE CONTROLLER — single source of truth */
-(function(){
-  const API_URL='https://api-production-5bddb.up.railway.app';
-  const protectedPages=new Set(['chat','pigeon','tickets','bots','addbot','profile']);
-  const ownerOnly=new Set(['applications','owner-admin']);
-  const adminPages=new Set(['admin']);
-  const byId=id=>document.getElementById(id);
-  const setText=(id,v)=>{const e=byId(id);if(e)e.textContent=v==null||v===''?'—':String(v)};
-  function isOwner(){return !!user?.is_owner || ['owner'].includes(String(user?.role||'').toLowerCase());}
-  function isAdmin(){return isOwner() || String(user?.role||'').toLowerCase()==='admin';}
-  function closeNav(){window.closeAppMenu?.();byId('sidebar')?.classList.remove('open');byId('appMenuBackdrop')?.classList.remove('show');document.body.classList.remove('app-menu-open');}
-  function applyMenu(){
-    const owner=isOwner(), admin=isAdmin();
-    const show=(id,on,display='flex')=>{const e=byId(id);if(e)e.style.display=on?display:'none'};
-    show('adminLink',admin); show('ownerLink',owner); show('applicationsLink',owner);
-    if(byId('adminSection'))byId('adminSection').style.display=admin?'block':'none';
-    if(byId('ownerSection'))byId('ownerSection').style.display=owner?'block':'none';
-    if(byId('homeAccount'))byId('homeAccount').textContent=user?.username||'زائر';
-    if(byId('myName'))byId('myName').textContent=user?.username||'زائر';
-    if(byId('myRole'))byId('myRole').textContent=owner?'الأونر 👑':isAdmin()?'إدارة 🛡️':user?'عضو':'تصفح عام';
-  }
-  async function refreshSession(){
-    if(!token)return;
-    try{const r=await fetch(API_URL+'/api/auth/me',{headers:{Authorization:'Bearer '+token},cache:'no-store'});if(!r.ok)throw 0;const d=await r.json();if(d.user){user=d.user;localStorage.setItem('user',JSON.stringify(user));}}
-    catch(e){localStorage.removeItem('token');localStorage.removeItem('user');token=null;user=null;}
-    applyMenu();
-  }
-  async function refreshStats(){
-    try{const r=await fetch(API_URL+'/api/public/server',{cache:'no-store'});const d=await r.json();
-      setText('homeServerName',d.name||'MLD'); setText('homeMemberCount',d.memberCount); setText('homeOnlineCount',d.onlineCount); setText('homeVisits',d.visits);
-      setText('server-name',d.name||'MLD'); setText('server-count',d.memberCount); setText('server-online',d.onlineCount); setText('server-visits',d.visits);
-    }catch(e){console.warn('MLD stats unavailable',e)}
-  }
-  function go(p){
+  window.mldNavigate=function(p){
     p=(p||'home').replace(/^#/,'');
-    if(protectedPages.has(p)&&!user){byId('authScreen')?.classList.add('show');toast('هذه الصفحة تتطلب تسجيل الدخول');closeNav();return;}
-    if(ownerOnly.has(p)&&!isOwner()){toast('هذه الصفحة للأونر فقط');closeNav();return;}
-    if(adminPages.has(p)&&!isAdmin()){toast('هذه الصفحة للإدارة فقط');closeNav();return;}
-    closeNav();
-    if(location.hash.slice(1)!==p) history.pushState(null,'','#'+p);
-    if(typeof setPage==='function')setPage(p);else if(typeof finalRender==='function')finalRender(p);
-    document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));
-  }
+    if(p==='owner-admin'&&!isOwner()){toast('هذه الصفحة للأونر فقط');close();return}
+    if(p==='admin'&&!isAdmin()){toast('هذه الصفحة للإدارة فقط');close();return}
+    if(p==='login'){document.getElementById('authScreen')?.classList.add('show');close();return}
+    if(p==='logout'){logout();return}
+    close();
+    if(location.hash.slice(1)!==p)history.pushState(null,'','#'+p);
+    setPage(p);
+    document.querySelectorAll('.sidebar a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));
+  };
   function bind(){
-    document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>{a.onclick=e=>{e.preventDefault();go(a.dataset.page)}});
-    document.querySelectorAll('a[href^="#"]').forEach(a=>{if(a.closest('.sidebar'))return;a.addEventListener('click',e=>{const p=a.getAttribute('href');if(p&&p!=='#'){e.preventDefault();go(p)}})});
-    byId('logoutBtn')?.addEventListener('click',e=>{e.preventDefault();localStorage.removeItem('token');localStorage.removeItem('user');token=null;user=null;closeNav();go('home');toast('تم تسجيل الخروج');applyMenu()});
-    byId('loginBtn')?.addEventListener('click',e=>{e.preventDefault();byId('authScreen')?.classList.add('show');closeNav()});
-    window.addEventListener('popstate',()=>go(location.hash.slice(1)||'home'));
-  }
-  window.mldNavigate=go;
-  document.addEventListener('DOMContentLoaded',async()=>{bind();await refreshSession();applyMenu();await refreshStats();setTimeout(()=>go(location.hash.slice(1)||'home'),0);setInterval(refreshStats,15000);setInterval(applyMenu,1500)});
-})();
-
-/* MLD FINAL MOBILE + NAV OVERRIDE: single capture-level controller */
-(function(){
- const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
- const protectedPages=new Set(['chat','pigeon','tickets','bots','addbot','profile']);
- const ownerOnly=new Set(['applications','owner-admin']);
- const adminOnly=new Set(['admin']);
- const owner=()=>!!user?.is_owner||String(user?.role||'').toLowerCase()==='owner';
- const admin=()=>owner()||String(user?.role||'').toLowerCase()==='admin';
- const close=()=>{q('#sidebar')?.classList.remove('open');q('#appMenuBackdrop')?.classList.remove('show');document.body.classList.remove('app-menu-open');q('#menuBtn')?.setAttribute('aria-expanded','false')};
- const toggle=e=>{e?.preventDefault();e?.stopPropagation();e?.stopImmediatePropagation();const s=q('#sidebar');if(!s)return;const open=!s.classList.contains('open');s.classList.toggle('open',open);q('#appMenuBackdrop')?.classList.toggle('show',open);document.body.classList.toggle('app-menu-open',open);q('#menuBtn')?.setAttribute('aria-expanded',String(open));};
- window.toggleAppMenu=toggle;window.closeAppMenu=close;
- function access(){qa('[data-owner-only]').forEach(x=>x.style.display=owner()?'flex':'none');const al=q('#adminLink'),ol=q('#ownerLink'),as=q('#adminSection'),os=q('#ownerSection'),ap=q('#applicationsLink');if(al)al.style.display=admin()?'flex':'none';if(ol)ol.style.display=owner()?'flex':'none';if(as)as.style.display=admin()?'block':'none';if(os)os.style.display=owner()?'block':'none';if(ap)ap.style.display=owner()?'flex':'none';if(q('#myName'))q('#myName').textContent=user?.username||'زائر';if(q('#myRole'))q('#myRole').textContent=owner()?'الأونر 👑':admin()?'إدارة 🛡️':user?'عضو':'تصفح عام';if(q('#homeAccount'))q('#homeAccount').textContent=user?.username||'زائر';}
- function go(p){p=(p||'home').replace(/^#/,'');if(protectedPages.has(p)&&!user){q('#authScreen')?.classList.add('show');toast('هذه الصفحة تتطلب تسجيل الدخول');close();return}if(ownerOnly.has(p)&&!owner()){toast('هذه الصفحة للأونر فقط');close();return}if(adminOnly.has(p)&&!admin()){toast('هذه الصفحة للإدارة فقط');close();return}close();if(location.hash.slice(1)!==p)history.pushState(null,'','#'+p);if(typeof setPage==='function')setPage(p);else if(typeof renderFeature==='function')renderFeature(p);qa('.sidebar .nav a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));}
- document.addEventListener('click',e=>{const menu=e.target.closest('#menuBtn');if(menu){toggle(e);return}const link=e.target.closest('.sidebar .nav a[data-page]');if(link){e.preventDefault();e.stopImmediatePropagation();go(link.dataset.page);return}},true);
- q('#appMenuBackdrop')?.addEventListener('click',close,true);window.addEventListener('resize',()=>{if(innerWidth>900)close()});window.addEventListener('popstate',()=>go(location.hash.slice(1)||'home'));
- document.addEventListener('DOMContentLoaded',()=>{access();setInterval(access,1500);setTimeout(()=>go(location.hash.slice(1)||'home'),150);});
- window.addEventListener('mld-auth-changed',access);
-})();
-
-
-/* ===== MLD UNIFIED APP NAV v5 ===== */
-(function(){
-  const U=()=>JSON.parse(localStorage.getItem('user')||'null'), logged=()=>!!localStorage.getItem('token')&&!!U();
-  const owner=()=>!!U()?.is_owner||String(U()?.role||'').toLowerCase()==='owner';
-  const admin=()=>owner()||String(U()?.role||'').toLowerCase()==='admin';
-  const navItems=()=>{const m=logged(),a=admin(),o=owner(),x=[
-    ['home','🏠 الرئيسية'],['members','👥 الأعضاء'],['top','🏆 التوب'],['leaders','👑 الرتب القيادية']];
-    if(m)x.push(['chat','💬 الشات العام'],['pigeon','✉️ الزاجل']);
-    x.push(['games','🎮 الألعاب'],['cinema','🎬 السينما'],['reviews','⭐ الآراء'],['groups','👨‍👩‍👧 القروبات 🔒'],['applications','📝 التقديم 🔒'],['tickets','🎫 التذاكر 🔒'],['bots','🤖 منصة البوتات 🔒']);
-    if(m)x.push(['addbot','➕ إضافة بوت'],['profile','👤 بروفايلي']);
-    if(a)x.push(['admin','🛡️ لوحة الإدارة']);if(o)x.push(['owner-admin','👑 لوحة الأونر']);
-    if(m)x.push(['logout','🚪 تسجيل الخروج']);else x.push(['login','🔐 تسجيل الدخول']);return x};
-  function rebuild(){const nav=document.querySelector('.sidebar .nav');if(!nav)return;nav.innerHTML=navItems().map(([p,l])=>'<a href="#'+p+'" data-page="'+p+'">'+l+'</a>').join('');
-    nav.querySelector('[data-page="logout"]')?.addEventListener('click',e=>{e.preventDefault();localStorage.removeItem('token');localStorage.removeItem('user');location.hash='home';location.reload()});
-  }
-  function guestPage(p){const page=document.getElementById('page-'+p);if(!page)return false;const names={pigeon:['✉️','الزاجل','استعراض الرسائل العامة فقط'],groups:['👨‍👩‍👧','القروبات','استعراض القروبات الموجودة'],applications:['📝','التقديم','النموذج متاح للمعاينة؛ الإرسال يتطلب تسجيل الدخول'],tickets:['🎫','التذاكر','استعراض واجهة الدعم؛ فتح تذكرة يتطلب تسجيل الدخول'],bots:['🤖','منصة البوتات','استعراض المنصة؛ إضافة بوت تتطلب تسجيل الدخول']};const n=names[p];if(!n)return false;page.innerHTML='<section class="mld-page-shell"><header class="mld-page-head"><span class="mld-kicker">'+n[0]+' MLD COMMUNITY</span><h1>'+n[1]+'</h1><p>'+n[2]+'</p></header><div class="mld-page-body"><div class="panel"><h3>🔒 وضع الزائر</h3><p class="muted">تقدر تشوف الصفحة كمُتصفح، لكن الإرسال والإنشاء والفتح مقفلة حتى تسجل دخول.</p><button class="btn-primary mld-guest-disabled" onclick="document.getElementById(\'authScreen\')?.classList.add(\'show\')">سجّل دخول للمتابعة</button></div></div></section>';return true}
-  const oldSet=window.setPage;
-  window.setPage=function(p){p=(p||'home').replace(/^#/,'');if(!logged()&&guestPage(p)){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p)?.classList.add('active');document.getElementById('pageTitle')&&(document.getElementById('pageTitle').textContent=(window.meta?.[p]?.[1]||p));window.closeAppMenu?.();window.scrollTo(0,0);return;}return oldSet?oldSet(p):undefined};
-  function boot(){rebuild();document.addEventListener('click',e=>{const a=e.target.closest('.sidebar .nav a[data-page]');if(!a)return;const p=a.dataset.page;if(p==='logout')return;e.preventDefault();e.stopImmediatePropagation();if(!logged()&&['chat','profile','addbot'].includes(p)){document.getElementById('authScreen')?.classList.add('show');return}window.setPage(p)},true)}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();window.addEventListener('storage',rebuild);window.addEventListener('mld-auth-changed',rebuild);
-  function roleNav(){
-    const u=JSON.parse(localStorage.getItem('user')||'null');
-    const logged=!!localStorage.getItem('token')&&!!u;
-    const owner=!!u?.is_owner||String(u?.role||'').toLowerCase()==='owner';
-    const admin=owner||String(u?.role||'').toLowerCase()==='admin';
-    const memberOnly=['chat','pigeon','bots','addbot','profile','logout'];
-    document.querySelectorAll('.sidebar .nav a[data-page]').forEach(a=>{
+    document.addEventListener('click',e=>{
+      const a=e.target.closest('.sidebar a[data-page]');
+      if(!a)return;
+      e.preventDefault();
       const p=a.dataset.page;
-      let show=true;
-      if(memberOnly.includes(p)) show=logged;
-      if(p==='admin') show=admin;
-      if(p==='owner-admin') show=owner;
-      if(p==='login') show=!logged;
-      a.style.display=show?'flex':'none';
+      window.mldNavigate(p);
     });
-    document.querySelectorAll('.sidebar .nav-section').forEach(s=>s.style.display=[...s.querySelectorAll('a[data-page]')].some(x=>x.style.display!=='none')?'block':'none');
+    window.addEventListener('popstate',()=>setPage((location.hash||'#home').slice(1)));
+    window.addEventListener('hashchange',()=>setPage((location.hash||'#home').slice(1)));
+    document.querySelector('.app-brand')?.addEventListener('click',e=>{e.preventDefault();window.mldNavigate('home')});
+    apply();
   }
-  window.addEventListener('hashchange',()=>{const p=location.hash.replace('#','')||'home'; if(p==='home'){location.href='/';return;} roleNav();});
-  roleNav(); setInterval(roleNav,1000);
+  document.addEventListener('DOMContentLoaded',bind);
+  window.addEventListener('mld-auth-changed',apply);
+  setInterval(apply,1000);
 })();
