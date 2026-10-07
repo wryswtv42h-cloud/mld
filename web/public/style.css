@@ -20,3 +20,17 @@ body.menu-open{overflow:hidden}
   .top-actions{position:relative;z-index:121}
   .sidebar{z-index:100!important}
 }
+
+/* FINAL CLEAR CONTENT LAYER */
+.main,.layout,#main,.page-shell,.page-body,.hero,.stats,.section-title,.grid,.card{
+  filter:none!important;
+  -webkit-filter:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.main{position:relative;z-index:1;background:transparent!important}
+.page-shell{background:#1b1024!important}
+.card,.stats div{background:#24162f!important}
+#backdrop:not(.show){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+#backdrop.show{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body:not(.menu-open) #backdrop{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
