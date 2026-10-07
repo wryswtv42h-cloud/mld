@@ -7,7 +7,7 @@
 <meta name="description" content="MLD · Community — مجتمع ملاذ">
 <title>MLD · Community</title>
 <link rel="icon" href="logo.svg.JPG">
-<link rel="stylesheet" href="style.css?v=20261007-rootfix">
+<link rel="stylesheet" href="style.css?v=20261007-polish1">
 </head>
 <body>
 <div id="intro">
@@ -19,7 +19,7 @@
 <div id="backdrop" class="backdrop" data-close></div>
 
 <header class="topbar">
-  <button id="menuBtn" class="menu-btn" aria-label="فتح القائمة" aria-expanded="false">☰</button>
+  <button id="menuBtn" class="menu-btn" aria-label="فتح القائمة" aria-expanded="false"><span></span><span></span><span></span></button>
   <a class="brand" href="#home" data-page="home">
     <span class="brand-mark"><img src="logo.svg.JPG" alt="MLD"></span>
     <span class="brand-copy"><b>MLD</b><small>COMMUNITY</small></span>
@@ -27,7 +27,7 @@
   <div class="top-actions">
     <span class="live-dot"><i></i> MLD LIVE</span>
     <span id="topUser">زائر</span>
-    <button id="topLogin" class="btn small primary">تسجيل الدخول</button>
+    <button id="topLogin" class="btn small primary" type="button">تسجيل الدخول</button>
   </div>
 </header>
 
@@ -105,13 +105,13 @@
     <span class="modal-kicker">MLD ACCOUNT</span>
     <h2>مرحبًا بعودتك</h2>
     <p>ادخل بحساب MLD الخاص بك للوصول إلى الخدمات.</p>
-    <input id="loginUser" placeholder="اسم المستخدم" autocomplete="username">
-    <input id="loginPass" type="password" placeholder="كلمة المرور" autocomplete="current-password">
+    <label class="field-label" for="loginUser">اسم المستخدم</label><input id="loginUser" placeholder="اسم المستخدم" autocomplete="username" autocapitalize="none" spellcheck="false">
+    <label class="field-label" for="loginPass">كلمة المرور</label><input id="loginPass" type="password" placeholder="كلمة المرور" autocomplete="current-password">
     <button id="loginSubmit" class="btn primary wide">دخول إلى المجتمع</button>
     <small id="loginMsg"></small>
   </div>
 </div>
-<script src="app.js?v=20261007-rootfix"></script><script>window.addEventListener("error",function(){var x=document.getElementById("intro");if(x){x.classList.add("hide");}});window.addEventListener("load",function(){setTimeout(function(){var x=document.getElementById("intro");if(x)x.classList.add("hide");},900);});</script>
+<script src="app.js?v=20261007-polish1"></script><script>window.addEventListener("error",function(){var x=document.getElementById("intro");if(x){x.classList.add("hide");}});window.addEventListener("load",function(){setTimeout(function(){var x=document.getElementById("intro");if(x)x.classList.add("hide");},900);});</script>
 <script>
 (function(){
   function bootFallback(){
