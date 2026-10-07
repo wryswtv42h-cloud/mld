@@ -116,4 +116,80 @@ router.get('/cinema',async(req,res)=>{const {rows}=await query("SELECT * FROM ci
 router.post('/cinema',requireAuth,async(req,res)=>{const title=String(req.body.title||'').trim(),media_url=String(req.body.media_url||'').trim();if(!title||!media_url)return res.status(400).json({error:'أدخل العنوان والرابط'});const {rows}=await query("INSERT INTO cinema_rooms(owner_id,title,media_url,status) VALUES($1,$2,$3,'open') RETURNING *",[req.user.id,title,media_url]);res.json({room:rows[0]});});
 router.post('/cinema/:id/close',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM cinema_rooms WHERE id=$1',[req.params.id]);if(!rows[0])return res.status(404).json({error:'الغرفة غير موجودة'});if(String(rows[0].owner_id)!==String(req.user.id)&&!req.user.is_owner)return res.status(403).json({error:'غير مصرح'});await query("UPDATE cinema_rooms SET status='closed' WHERE id=$1",[req.params.id]);res.json({message:'تم الإغلاق'});});
 
+router.patch('/tickets/:id/messages', requireAuth, async (req,res)=>{res.status(405).json({error:'استخدم POST لإرسال الرد'});});
+
+router.get('/applications',requireAuth,async(req,res)=>{
+  const admin=!!req.user.is_owner || ['admin','owner'].includes(String(req.user.role||'').toLowerCase());
+  const {rows}=await query('SELECT a.*,u.username,u.avatar FROM applications a LEFT JOIN users u ON u.id=a.user_id WHERE a.user_id=$1 OR $2=true ORDER BY a.created_at DESC',[req.user.id,admin]);
+  res.json({applications:rows});
+});
+
+router.post('/applications/:id/status',requireAuth,requireAdmin,async(req,res)=>{
+  const status=String(req.body.status||'pending');
+  if(!['pending','accepted','rejected'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});
+  const q=await query('SELECT a.*,u.username,u.discord_id AS linked_discord_id FROM applications a LEFT JOIN users u ON u.id=a.user_id WHERE a.id=$1',[req.params.id]);
+  const a=q.rows[0]; if(!a)return res.status(404).json({error:'التقديم غير موجود'});
+  await query('UPDATE applications SET status=$1 WHERE id=$2',[status,a.id]);
+  if(status==='accepted'){
+    const roles=await discordApi('/guilds/'+guildId()+'/roles');
+    const adminRoles=roles.filter(r=>!r.managed && /admin|إدارة|ادارة/i.test(String(r.name||''))).sort((x,y)=>(x.position||0)-(y.position||0));
+    const role=adminRoles[0];
+    if(role && /^\d+$/.test(String(a.discord_id))) await discordApi('/guilds/'+guildId()+'/members/'+a.discord_id+'/roles/'+role.id,{method:'PUT',body:'{}'});
+    await query("UPDATE users SET role='admin' WHERE id=$1",[a.user_id]);
+    try{await dmDiscord(a.discord_id,'✅ تمت الموافقة على تقديمك في MLD.\nتم منحك رتبة الإدارة الأدنى المعتمدة في السيرفر.');}catch(e){console.error('application DM',e.message)}
+  }else if(status==='rejected'){
+    try{await dmDiscord(a.discord_id,'❌ تم رفض تقديمك للإدارة في MLD.');}catch(e){console.error('application DM',e.message)}
+  }
+  await audit(req.user,'application_'+status,String(a.id),{user_id:a.user_id});
+  res.json({message:'تم تحديث التقديم'});
+});
+
+router.get('/owner/announcement',requireAuth,requireOwner,async(req,res)=>{
+  const q=await query("SELECT value FROM site_settings WHERE key='announcement'");
+  res.json({announcement:q.rows[0]?.value||{text:'',color:'#ff9cdc',enabled:true}});
+});
+router.patch('/owner/announcement',requireAuth,requireOwner,async(req,res)=>{
+  const value={text:String(req.body.text||'').slice(0,500),color:String(req.body.color||'#ff9cdc'),enabled:req.body.enabled!==false};
+  await query("INSERT INTO site_settings(key,value,updated_at) VALUES('announcement',$1,NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()",[JSON.stringify(value)]);
+  await audit(req.user,'announcement_update','announcement',value); res.json({announcement:value});
+});
+router.post('/owner/broadcast',requireAuth,requireOwner,async(req,res)=>{
+  const content=String(req.body.content||'').trim(); if(!content)return res.status(400).json({error:'اكتب رسالة البرودكاست'});
+  const token=discordToken(),guild=guildId(); if(!token||!guild)return res.status(500).json({error:'إعدادات Discord ناقصة'});
+  res.json({message:'بدأ إرسال البرودكاست للأعضاء'});
+  setImmediate(async()=>{
+    try{
+      let after='0',total=0;
+      for(let page=0;page<100;page++){
+        const members=await discordApi('/guilds/'+guild+'/members?limit=1000&after='+after);
+        if(!Array.isArray(members)||!members.length)break;
+        for(const m of members){
+          if(m.user?.bot)continue;
+          try{await dmDiscord(m.user.id,content);total++}catch{}
+        }
+        after=members[members.length-1].user.id;
+        if(members.length<1000)break;
+      }
+      await audit(req.user,'broadcast_sent','discord_guild',{content,total});
+    }catch(e){console.error('broadcast',e)}
+  });
+});
+router.get('/owner/bot-subscriptions',requireAuth,requireOwner,async(req,res)=>{
+  const {rows}=await query(`SELECT b.id,b.name,b.avatar,b.guild_id,b.active,bs.id AS subscription_id,bs.started_at,bs.expires_at,bs.active AS subscription_active,bs.features
+    FROM bots b LEFT JOIN LATERAL (SELECT * FROM bot_subscriptions WHERE bot_id=b.id ORDER BY expires_at DESC LIMIT 1) bs ON true ORDER BY b.created_at DESC`);
+  res.json({bots:rows});
+});
+router.post('/owner/bot-subscriptions/:botId',requireAuth,requireOwner,async(req,res)=>{
+  const days=Math.max(1,Math.min(3650,Number(req.body.days)||0)); if(!days)return res.status(400).json({error:'حدد مدة الاشتراك بالأيام'});
+  const b=await query('SELECT id,user_id,name FROM bots WHERE id=$1',[req.params.botId]); if(!b.rows[0])return res.status(404).json({error:'البوت غير موجود'});
+  await query('UPDATE bot_subscriptions SET active=false WHERE bot_id=$1 AND active=true',[req.params.botId]);
+  const {rows}=await query("INSERT INTO bot_subscriptions(bot_id,user_id,expires_at,active,features) VALUES($1,$2,NOW()+($3::text||' days')::interval,true,$4) RETURNING *",[req.params.botId,b.rows[0].user_id,days,JSON.stringify({all:true})]);
+  await audit(req.user,'bot_subscription_granted',String(req.params.botId),{days,expires_at:rows[0].expires_at});
+  res.json({subscription:rows[0]});
+});
+router.get('/owner/account/:id/private',requireAuth,requireOwner,async(req,res)=>{
+  const q=await query(`SELECT id,sender_id,recipient_id,content,created_at FROM pigeon_messages WHERE sender_id=$1 OR recipient_id=$1 ORDER BY created_at DESC LIMIT 500`,[req.params.id]);
+  res.json({messages:q.rows.reverse()});
+});
+
 export default router;
