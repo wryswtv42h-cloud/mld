@@ -20,6 +20,17 @@ router.get('/:id/logs', requireAuth, async (req,res)=>{
 const KEY = crypto.createHash('sha256').update(process.env.JWT_SECRET || 'mld').digest();
 function encryptToken(value){const iv=crypto.randomBytes(12);const c=crypto.createCipheriv('aes-256-gcm',KEY,iv);const enc=Buffer.concat([c.update(value,'utf8'),c.final()]);return 'enc:'+iv.toString('base64url')+':'+c.getAuthTag().toString('base64url')+':'+enc.toString('base64url');}
 
+// ===== قائمة البوتات العامة (بدون توكنات) =====
+router.get('/public', async (req,res) => {
+  try {
+    const { rows } = await query("SELECT id,name,guild_id,avatar,watching,site_url,locked,active,created_at FROM bots ORDER BY created_at DESC");
+    res.json({ bots: rows });
+  } catch (e) {
+    console.error('public bots:', e);
+    res.status(500).json({ error: 'تعذر تحميل البوتات' });
+  }
+});
+
 // ===== قائمة بوتاتي =====
 router.get('/', requireAuth, async (req, res) => {
   const { rows } = await query(
