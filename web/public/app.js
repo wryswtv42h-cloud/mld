@@ -101,7 +101,7 @@ async function renderGuest(p){
 }
 async function render(p){
  const page=$('#page-'+p);if(!page)return;
- if(p==='games'){location.href='/games.html';return}
+ if(p==='games'){page.innerHTML=shell(p,'<div class="panel"><h3>🎮 الألعاب</h3><p class="muted">منطقة الألعاب في MLD. اختر اللعبة من القائمة المتاحة.</p><div class="mld-empty">جاري تجهيز ألعاب المجتمع…</div></div>');return}
  if(p==='members'){const d=await fetch(API+'/api/public/members',{cache:'no-store'}).then(r=>r.json());page.innerHTML=shell(p,'<div class="mld-toolbar"><input id="memberSearch" class="full" placeholder="ابحث عن عضو..."><b>'+num((d.members||[]).length)+' عضو</b></div><div class="mld-member-grid">'+memberCards(d.members)+'</div>');$('#memberSearch').oninput=async e=>{const q=e.target.value.trim();const x=await fetch(API+'/api/public/members?q='+encodeURIComponent(q),{cache:'no-store'}).then(r=>r.json());page.querySelector('.mld-member-grid').innerHTML=memberCards(x.members)};return}
  if(p==='top'){const d=await fetch(API+'/api/public/top',{cache:'no-store'}).then(r=>r.json());page.innerHTML=shell(p,rankSections(d));return}
  if(p==='leaders'){const d=await fetch(API+'/api/public/roles',{cache:'no-store'}).then(r=>r.json());page.innerHTML=shell(p,'<div class="mld-role-grid">'+(d.roles||[]).map(r=>'<article class="panel"><div class="role-top"><b>'+num(r.membersCount)+' عضو</b></div><h3>'+esc(r.name)+'</h3><p class="muted">'+esc((r.permissions||[]).slice(0,4).join(' · ')||'صلاحيات عادية')+'</p></article>').join('')+'</div>');return}
