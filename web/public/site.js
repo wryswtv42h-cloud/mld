@@ -103,7 +103,7 @@ await api('/api/users/'+id,{method:'PATCH',body:JSON.stringify({username,avatar,
 }
 async function ownerSubscriptions(){
 const box=$('#ownerSection'),d=await api('/api/community/owner/bot-subscriptions'),bots=d.bots||[];
-box.innerHTML='<h2>اشتراكات البوتات</h2><div class="list">'+(bots.length?bots.map(b=>'<div class="row"><b>'+esc(b.name)+'</b><span>'+esc(b.expires_at?'ينتهي '+new Date(b.expires_at).toLocaleString('ar-SA'):'بدون اشتراك')+'</span><button class="btn" data-sub-bot="'+b.id+'">إعطاء اشتراك</button></div>').join(''):'<div class="empty">لا توجد بوتات.</div>')+'</div>';
+box.innerHTML='<h2>اشتراكات البوتات</h2><div class="list">'+(bots.length?bots.map(b=>'<div class="row"><b>'+esc(b.name)+'</b><span>'+esc(b.expires_at?'ينتهي '+new Date(b.expires_at).toLocaleString("ar-SA"):'بدون اشتراك')+'</span><button class="btn" data-sub-bot="'+b.id+'">إعطاء اشتراك</button></div>').join(''):'<div class="empty">لا توجد بوتات.</div>')+'</div>';
 }
 document.addEventListener('click',e=>{
 const p=e.target.closest('[data-page]');if(p){e.preventDefault();go(p.dataset.page);return}
