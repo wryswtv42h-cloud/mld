@@ -1,136 +1,145 @@
-(()=>{'use strict';
-const API=(window.MLD_API||'https://api-production-5bddb.up.railway.app').replace(/\/$/,'');
-let token=localStorage.getItem('token')||'',user=null;
-try{user=JSON.parse(localStorage.getItem('user')||'null')}catch{}
+"use strict";
+
+const API_BASE = 'https://api-production-5bddb.up.railway.app';
+
 const $=s=>document.querySelector(s);
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const logged=()=>!!token&&!!user;
-const owner=()=>!!user&&(user.is_owner===true||user.role==='owner');
-const admin=()=>owner()||String(user?.role||'').toLowerCase()==='admin';
-const toast=t=>{const e=$('#toast');if(!e)return;e.textContent=t;e.classList.add('show');clearTimeout(window._toast);window._toast=setTimeout(()=>e.classList.remove('show'),2200)};
-async function api(path,opt={}){const r=await fetch(API+path,{...opt,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opt.headers||{})}});let d={};try{d=await r.json()}catch{}if(!r.ok)throw Error(d.error||'تعذر الاتصال بالخدمة');return d}
-function closeMenu(){$('#sidebar')?.classList.remove('open');$('#shade')?.classList.remove('show');document.body.style.overflow=''}
-function openMenu(){$('#sidebar')?.classList.add('open');$('#shade')?.classList.add('show');document.body.style.overflow='hidden'}
-function sync(){const name=user?.username||'زائر';if($('#topUser'))$('#topUser').textContent=name;if($('#sideName'))$('#sideName').textContent=name;if($('#sideRole'))$('#sideRole').textContent=owner()?'الأونر 👑':admin()?'إدارة 🛡️':logged()?'عضو':'زائر';if($('#sideAvatar'))$('#sideAvatar').textContent=name.slice(0,2);if($('#loginBtn'))$('#loginBtn').style.display=logged()?'none':'block';document.querySelectorAll('[data-member]').forEach(e=>e.style.display=logged()?'flex':'none');renderRoleLinks()}
-function renderRoleLinks(){document.querySelectorAll('[data-role-admin]').forEach(e=>e.style.display=admin()?'flex':'none');document.querySelectorAll('[data-role-owner]').forEach(e=>e.style.display=owner()?'flex':'none')}
-function openLogin(){$('#loginModal')?.classList.add('show');$('#loginModal')?.setAttribute('aria-hidden','false');setTimeout(()=>$('#username')?.focus(),80)}
-function closeLogin(){$('#loginModal')?.classList.remove('show');$('#loginModal')?.setAttribute('aria-hidden','true')}
-function card(icon,title,text,button=''){return '<article class="card"><div class="icon">'+icon+'</div><h3>'+title+'</h3><p>'+text+'</p>'+button+'</article>'}
-function page(title,sub,body){return '<section class="page"><div class="page-head"><span>MLD · COMMUNITY</span><h1>'+title+'</h1><p>'+sub+'</p></div>'+body+'</section>'}
-const pages={
-home:()=>'<section class="hero"><div><span class="eyebrow">MLD · COMMUNITY</span><h1>مجتمع <em>ملاذ</em><br>بطريقة مختلفة.</h1><p>منصة مجتمع MLD المرتبطة بالديسكورد. اكتشف الأعضاء والرتب والتوب والخدمات في واجهة واحدة مرتبة.</p><div class="actions"><button class="primary" data-page="members">استكشف المجتمع</button><button class="btn" data-page="games">استكشف الألعاب</button></div><span class="hero-note">Discord Owner: <b>w4px</b></span></div><div class="hero-art"><div class="logo-orbit"><img src="/logo.svg.JPG"></div></div></section><section class="stats"><div class="stat"><b id="sMembers">—</b><span>أعضاء السيرفر</span></div><div class="stat"><b id="sOnline">—</b><span>متصلون الآن</span></div><div class="stat"><b id="sVisits">—</b><span>زيارات المنصة</span></div><div class="stat"><b>24/7</b><span>مجتمع MLD</span></div></section><section class="section"><span class="section-kicker">DISCOVER MLD</span><h2>كل شيء في مكان واحد</h2><div class="grid">'+card('◉','الأعضاء','تصفح أعضاء مجتمع MLD والبيانات العامة.','<button class="btn" data-page="members">الأعضاء</button>')+card('♛','التوب','تابع أفضل الأعضاء والنشاط والنقاط.','<button class="btn" data-page="top">التوب</button>')+card('✦','الرتب','تعرف على الرتب القيادية في المجتمع.','<button class="btn" data-page="roles">الرتب</button>')+'</div></section>',
-members:()=>page('الأعضاء','أعضاء مجتمع MLD','<div id="memberList" class="grid"><div class="empty">جاري تحميل الأعضاء…</div></div>'),
-top:()=>page('التوب','أفضل أعضاء المجتمع','<div id="topList" class="list"><div class="empty">جاري تحميل التوب…</div></div>'),
-roles:()=>page('الرتب القيادية','رتب مجتمع MLD','<div class="grid">'+['👑 الأونر','💎 Co-Owner','🏅 Founder','🛡️ Senior Staff','🔰 Staff','🎖️ Junior Staff'].map(x=>card(x.slice(0,2),x.slice(2),'صلاحيات الرتبة مرتبطة بسيرفر الديسكورد.')).join('')+'</div>'),
-chat:()=>page('الشات العام','أي شخص مسجل دخول يقدر يرسل هنا','<div class="chat-wrap"><div class="chat-head"><div><b>الشات العام</b><span>منطقة التراسل العامة لمجتمع MLD</span></div><button class="primary" id="privateBtn">＋ إنشاء خاص</button></div><div id="chatMessages" class="chat-messages"><div class="empty">جاري تحميل الرسائل…</div></div><form id="chatForm" class="chat-form"><input id="chatInput" maxlength="2000" placeholder="اكتب رسالتك..." autocomplete="off"><button class="primary">إرسال</button></form></div>'),
-games:()=>page('الألعاب','أنظمة الألعاب ستُربط بالأنظمة التي سترسلها','<div class="grid">'+[['🎴','أونو','2–6 لاعبين'],['🎲','جاكارو','2–4 لاعبين'],['🎯','لودو','2–4 لاعبين'],['♠','بلوت','4 لاعبين'],['🕵','مافيا','4+ لاعبين'],['🏠','مونوبولي','2–6 لاعبين']].map(g=>card(g[0],g[1],g[2],'<button class="primary" data-game="'+g[1]+'">إنشاء جلسة</button>')).join('')+'</div>'),
-groups:()=>page('القروبات','مجتمع القروبات','<div class="grid">'+card('◇','طلب قروب','أرسل طلب قروب مرتبط بالديسكورد.','<button class="btn" data-login-action>طلب جديد</button>')+card('◈','قروباتي','تابع القروبات التي تملكها أو انضممت إليها.')+card('🔗','Discord','القروبات المقبولة ترتبط بعناصر السيرفر.')+'</div>'),
-cinema:()=>page('السينما','غرف مشاهدة جماعية','<div id="cinemaList" class="grid"><div class="empty">جاري تحميل الغرف…</div></div>'),
-tickets:()=>page('التذاكر','الدعم والخدمات','<div class="grid">'+card('🎫','تذكرة جديدة','افتح تذكرة للدعم والمتابعة.','<button class="primary" data-action="ticket">فتح تذكرة</button>')+card('▤','تذاكري','تابع التذاكر المفتوحة والمغلقة.','<button class="btn" id="loadTickets">عرض التذاكر</button>')+'</div><div id="ticketList" class="list" style="margin-top:15px"></div>'),
-reviews:()=>page('الآراء','آراء أعضاء MLD','<div id="reviewList" class="grid"><div class="empty">جاري تحميل الآراء…</div></div>'),
-bots:()=>page('منصة البوتات','أدوات مجتمع MLD','<div id="botList" class="grid"><div class="empty">جاري تحميل البوتات…</div></div>'),
-profile:()=>page('بروفايلي','حسابك في MLD','<div class="card" style="text-align:center"><div class="avatar" style="margin:auto">'+esc((user?.username||'ز').slice(0,2))+'</div><h2>'+esc(user?.username||'')+'</h2><p>'+esc(user?.role||'member')+'</p></div>'),
-admin:()=>page('لوحة الإدارة','متاحة للأونر والإدارة فقط','<div id="adminPanel"><div class="empty">جاري تحميل لوحة الإدارة…</div></div>'),
-owner:()=>page('لوحة الأونر','تحكم كامل بالموقع','<div id="ownerPanel"><div class="empty">جاري تحميل لوحة الأونر…</div></div>')
-};
-async function loadAnnouncement(){try{const d=await api('/api/community/announcement');const a=d.announcement;if(!a||!a.enabled||!a.text)return;let e=document.querySelector('#siteAnnouncement');if(!e){e=document.createElement('div');e.id='siteAnnouncement';e.style.cssText='position:sticky;top:0;z-index:60;text-align:center;padding:9px 14px;font-weight:700';document.body.prepend(e)}e.textContent=a.text;e.style.background=a.color||'#ff9cdc';e.style.color='#160d1d'}catch{}}
-function go(p='home'){p=String(p).replace(/^#/,'');if(!pages[p])p='home';if(['chat','tickets','profile','admin','owner'].includes(p)&&!logged()){openLogin();return}if(p==='admin'&&!admin()){toast('لوحة الإدارة للإدارة والأونر فقط');return}if(p==='owner'&&!owner()){toast('لوحة الأونر للأونر فقط');return}history.replaceState(null,'','#'+p);closeMenu();$('#app').innerHTML=pages[p]();document.querySelectorAll('.sidebar nav a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));if(p==='home')loadStats();if(p==='members')loadMembers();if(p==='top')loadTop();if(p==='chat')initChat();if(p==='cinema')loadCinema();if(p==='reviews')loadReviews();if(p==='bots')loadBots();if(p==='tickets')loadTickets();if(p==='admin')loadAdmin();if(p==='owner')loadOwner()}
-async function loadStats(){try{const d=await api('/api/public/server');$('#sMembers').textContent=d.memberCount??'—';$('#sOnline').textContent=d.onlineCount??'—';$('#sVisits').textContent=d.visits??'—'}catch{}}
-async function loadMembers(){const e=$('#memberList');try{const d=await api('/api/public/members');const a=d.members||d||[];e.innerHTML=a.slice(0,24).map(m=>'<article class="card member-card"><div class="avatar">'+(m.avatar?'<img src="'+esc(m.avatar)+'">':'👤')+'</div><h3>'+esc(m.displayName||m.username||'عضو')+'</h3><p>'+esc(m.role||'عضو')+'</p></article>').join('')||'<div class="empty">لا توجد بيانات حالياً.</div>'}catch{e.innerHTML='<div class="empty">تعذر تحميل الأعضاء من الـAPI حالياً.</div>'}}
-async function loadTop(){const e=$('#topList');try{const d=await api('/api/public/top');const a=d.users||d.top||d||[];e.innerHTML=a.slice(0,20).map((x,i)=>'<div class="row"><b>#'+(i+1)+'</b><span>'+esc(x.username||x.name||'عضو')+'</span><strong>'+esc(x.points??x.score??0)+'</strong></div>').join('')||'<div class="empty">لا توجد بيانات توب حالياً.</div>'}catch{e.innerHTML='<div class="empty">تعذر تحميل التوب من الـAPI حالياً.</div>'}}
-async function login(){const u=$('#username').value.trim(),p=$('#password').value;if(!u||!p)return toast('اكتب اسم المستخدم وكلمة المرور');$('#submitLogin').disabled=true;$('#loginError').textContent='';try{const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify({username:u,password:p})});token=d.token||d.accessToken||'';user=d.user||d.account||null;if(!token||!user)throw Error('بيانات الدخول غير مكتملة');localStorage.setItem('token',token);localStorage.setItem('user',JSON.stringify(user));sync();closeLogin();toast('تم تسجيل الدخول');go('home')}catch(e){$('#loginError').textContent=e.message||'فشل تسجيل الدخول'}finally{$('#submitLogin').disabled=false}}
-function logout(){token='';user=null;localStorage.removeItem('token');localStorage.removeItem('user');sync();go('home');toast('تم تسجيل الخروج')}
-function chatRow(m){return '<div class="chat-msg"><div class="avatar">'+esc((m.sender_name||'ز').slice(0,2))+'</div><div><b>'+esc(m.sender_name||'عضو')+'</b><span>'+esc(m.content||'')+'</span></div></div>'}
-async function initChat(){const box=$('#chatMessages');try{const d=await api('/api/community/chat');const a=d.messages||[];box.innerHTML=a.length?a.map(chatRow).join(''):'<div class="empty">لا توجد رسائل بعد. كن أول من يكتب.</div>';box.scrollTop=box.scrollHeight}catch{box.innerHTML='<div class="empty">تعذر تحميل الشات.</div>'}$('#chatForm')?.addEventListener('submit',async e=>{e.preventDefault();if(!logged())return openLogin();const input=$('#chatInput'),content=input.value.trim();if(!content)return;try{const d=await api('/api/community/chat',{method:'POST',body:JSON.stringify({content})});input.value='';box.querySelector('.empty')?.remove();box.insertAdjacentHTML('beforeend',chatRow(d.message));box.scrollTop=box.scrollHeight}catch(err){toast(err.message)}});$('#privateBtn')?.addEventListener('click',async()=>{if(!logged())return openLogin();try{const d=await api('/api/users');const users=(d.users||[]).filter(x=>String(x.id)!==String(user.id));if(!users.length)return toast('لا يوجد أعضاء متاحون');const names=users.slice(0,30).map((x,i)=>(i+1)+'. '+x.username).join('\\n');const choice=prompt('اختر رقم العضو لإنشاء خاص:\\n'+names);const n=Number(choice)-1;if(!Number.isInteger(n)||!users[n])return;const target=users[n];const html='<div class="private-box card"><div class="chat-head"><div><b>خاص مع '+esc(target.username)+'</b><span>رسائل خاصة بينكما</span></div><button class="btn" id="closePrivate">إغلاق</button></div><div id="privateMessages" class="chat-messages"></div><form id="privateForm" class="chat-form"><input id="privateInput" maxlength="2000" placeholder="اكتب رسالة خاصة..."><button class="primary">إرسال</button></form></div>';box.innerHTML=html;const pm=$('#privateMessages');const loadPrivate=async()=>{const x=await api('/api/community/pigeon');const arr=(x.messages||[]).filter(m=>(String(m.sender_id)===String(user.id)&&String(m.recipient_id)===String(target.id))||(String(m.sender_id)===String(target.id)&&String(m.recipient_id)===String(user.id)));pm.innerHTML=arr.length?arr.map(m=>'<div class="chat-msg"><div class="avatar">'+esc((m.sender_id===user.id?user.username:target.username).slice(0,2))+'</div><div><b>'+esc(m.sender_id===user.id?user.username:target.username)+'</b><span>'+esc(m.content)+'</span></div></div>').join(''):'<div class="empty">لا توجد رسائل خاصة بعد.</div>';pm.scrollTop=pm.scrollHeight};await loadPrivate();$('#closePrivate')?.addEventListener('click',()=>initChat());$('#privateForm')?.addEventListener('submit',async e=>{e.preventDefault();const input=$('#privateInput'),content=input.value.trim();if(!content)return;try{await api('/api/community/pigeon',{method:'POST',body:JSON.stringify({recipient_id:target.id,content})});input.value='';await loadPrivate()}catch(err){toast(err.message)}})}catch(e){toast(e.message||'تعذر إنشاء الخاص')}})}async function loadCinema(){try{const d=await api('/api/community/cinema');const a=d.rooms||[];$('#cinemaList').innerHTML=a.length?a.map(r=>card('▶',r.title||'غرفة مشاهدة','غرفة مشاهدة مشتركة','<button class="btn">دخول</button>')).join(''):'<div class="empty">لا توجد غرف مشاهدة حاليًا.</div>'}catch{}}
-async function loadReviews(){try{const d=await api('/api/community/reviews');const a=d.reviews||[];$('#reviewList').innerHTML=a.length?a.map(r=>card('★',r.username||'عضو',esc(r.content||''),'★'.repeat(Number(r.rating||5)))).join(''):'<div class="empty">لا توجد آراء حاليًا.</div>'}catch{}}
-async function loadBots(){try{const d=await api('/api/bots/public');const a=d.bots||[];$('#botList').innerHTML=a.length?a.map(b=>card('⚙',b.name||'بوت',b.active?'يعمل الآن':'متوقف')).join(''):'<div class="empty">لا توجد بوتات معروضة.</div>'}catch{}}
-async function loadTickets(){const e=$('#ticketList');if(!e)return;try{const d=await api('/api/community/tickets');const a=d.tickets||[];e.innerHTML=a.length?a.map(t=>'<div class="row"><b>#'+t.id+'</b><span>'+esc(t.subject||'تذكرة')+'</span><strong>'+esc(t.status||'open')+'</strong></div>').join(''):'<div class="empty">لا توجد تذاكر.</div>'}catch(err){e.innerHTML='<div class="empty">'+esc(err.message)+'</div>'}}
-async function loadAdmin(){
-const box=$('#adminPanel');try{
-const [t,a]=await Promise.all([api('/api/community/tickets'),api('/api/community/applications')]);
-const tickets=t.tickets||[],apps=a.applications||[];
-box.innerHTML='<div class="grid">'+
-card('🎫','التذاكر','التذاكر المفتوحة: '+tickets.filter(x=>x.status!=='closed').length,'<button class="primary" data-admin-section="tickets">فتح التذاكر</button>')+
-card('📝','التقديمات','طلبات الإدارة: '+apps.filter(x=>x.status==='pending').length,'<button class="primary" data-admin-section="applications">فتح التقديمات</button>')+
-'</div><div id="adminSection" class="section" style="margin-top:15px"><div class="empty">اختر التذاكر أو التقديمات.</div></div>';
-}catch(e){box.innerHTML='<div class="empty">تعذر تحميل لوحة الإدارة: '+esc(e.message)+'</div>'}}
-async function showAdminTickets(){
-const box=$('#adminSection');try{const d=await api('/api/community/tickets'),a=(d.tickets||[]).filter(x=>x.status!=='closed');
-box.innerHTML='<h2>التذاكر المفتوحة</h2><div class="list">'+(a.length?a.map(x=>'<div class="row"><b>#'+x.id+'</b><span>'+esc(x.subject||'تذكرة')+'</span><button class="btn" data-ticket-open="'+x.id+'">فتح المحادثة</button></div>').join(''):'<div class="empty">لا توجد تذاكر مفتوحة.</div>')+'</div><div id="ticketThread" style="margin-top:15px"></div>';
-}catch(e){box.innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
-async function showApplications(){
-const box=$('#adminSection');try{const d=await api('/api/community/applications');const a=d.applications||[];
-box.innerHTML='<h2>التقديمات</h2><div class="list">'+(a.length?a.map(x=>'<div class="row"><b>#'+x.id+' · '+esc(x.username||'عضو')+'</b><span>'+esc(x.status||'pending')+'</span>'+(x.status==='pending'?'<span><button class="btn" data-app-status="'+x.id+'" data-status="accepted">قبول</button> <button class="btn danger" data-app-status="'+x.id+'" data-status="rejected">رفض</button></span>':'')+'</div>').join(''):'<div class="empty">لا توجد تقديمات.</div>')+'</div>';
-}catch(e){box.innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
-async function openTicketThread(id){
-const box=$('#ticketThread');try{const d=await api('/api/community/tickets/'+id),t=d.ticket,m=d.messages||[];
-box.innerHTML='<div class="card"><div class="chat-head"><div><b>تذكرة #'+t.id+' · '+esc(t.subject||'')+'</b><span>محادثة مباشرة مع '+esc(t.user_id)+'</span></div><button class="btn danger" data-ticket-close="'+id+'">إغلاق</button></div><div class="chat-messages" id="ticketMsgs">'+(m.length?m.map(chatRow).join(''):'<div class="empty">لا توجد ردود.</div>')+'</div><form id="ticketReplyForm" class="chat-form"><input id="ticketReplyInput" maxlength="2000" placeholder="اكتب ردك لصاحب التذكرة..."><button class="primary">إرسال</button></form></div>';
-$('#ticketReplyForm')?.addEventListener('submit',async e=>{e.preventDefault();const input=$('#ticketReplyInput'),content=input.value.trim();if(!content)return;await api('/api/community/tickets/'+id+'/messages',{method:'POST',body:JSON.stringify({content})});input.value='';openTicketThread(id)});
-}catch(e){box.innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
+const content=$("#content"),status=$("#status"),search=$("#search"),searchWrap=$("#search-wrap"),modal=$("#modal"),box=$("#modal-content"),title=$("#view-title"),subtitle=$("#subtitle"),mobile=$("#mobile-menu"),backdrop=$("#menu-backdrop");
+let view="members",all=[],roles=[],timer,refreshTimer,selected=null;
+const fallback="/logo.svg";
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=v=>new Intl.NumberFormat("ar-SA").format(Number(v)||0);
+const avatar=m=>m?.avatar||fallback;
+function setStatus(x){if(status) status.textContent=x}
+function openModal(){if(!modal||!box)return;modal.classList.remove("hidden");document.body.classList.add("modal-open")}
+function closeModal(){if(!modal)return;modal.classList.add("hidden");document.body.classList.remove("modal-open")}
+window.toggleMLDMenu=function(e){e?.preventDefault();e?.stopPropagation();const m=document.getElementById("mobile-menu");if(m?.classList.contains("open"))closeMenu();else openMenu();};
+function closeMenu(){if(!mobile)return;mobile.classList.remove("open");backdrop?.classList.remove("open");mobile.setAttribute("aria-hidden","true");$("#menu")?.setAttribute("aria-expanded","false");document.body.classList.remove("menu-open")}
+function openMenu(){if(!mobile)return;mobile.classList.add("open");backdrop?.classList.add("open");mobile.setAttribute("aria-hidden","false");$("#menu")?.setAttribute("aria-expanded","true");document.body.classList.add("menu-open")}
+function bind(){document.querySelectorAll("[data-member]").forEach(x=>x.onclick=()=>openMember(x.dataset.member));document.querySelectorAll("[data-role]").forEach(x=>x.onclick=()=>openRole(x.dataset.role))}
+function card(m){return `<article class="card" data-member="${esc(m.id)}"><img src="${esc(avatar(m))}" onerror="this.src='${fallback}'"><div><h3>${esc(m.name)}</h3><p>@${esc(m.username||"")}</p><div class="roles">${(m.importantRoles||[]).map(r=>`<span class="role">${esc(r.name)}</span>`).join("")||`<span class="member-tag">عضو</span>`}</div></div><b>↗</b></article>`}
+function renderMembers(list){if(!content)return;content.className="grid";content.innerHTML=list.length?list.map(card).join(""):`<div class="empty"><h3>لا توجد نتائج</h3><p>تأكد من تفعيل Server Members Intent.</p></div>`;bind()}
+function topSec(t,list,k,l){return `<section class="top-section"><h3>${t}</h3>${list.map((m,i)=>`<article class="top-card" data-member="${esc(m.id)}"><span class="rank">${i+1}</span><img src="${esc(avatar(m))}"><div><small>${l}</small><h4>${esc(m.name)}</h4><strong>${num(m.stats?.[k])}</strong></div></article>`).join("")||`<p class="muted">لا توجد بيانات بعد.</p>`}</section>`}
+function renderTop(d){if(!content)return;content.className="top-grid";content.innerHTML=topSec("🏆 أكثر الرسائل",d.messages||[],"messages","رسالة")+topSec("💬 أكثر المنشنات",d.mentions||[],"mentionsReceived","منشن")+topSec("🎙️ وقت الصوت",d.voice||[],"voiceMinutes","دقيقة")+topSec("⚡ دخول صوتي",d.joins||[],"voiceJoins","دخول");bind()}
+function renderRoles(){if(!content)return;content.className="role-grid";content.innerHTML=roles.map(r=>`<article class="role-card" data-role="${esc(r.id)}"><div class="role-top"><i style="background:${esc(r.color)}"></i><b>${num(r.membersCount)} عضو</b></div><h3>${esc(r.name)}</h3><div class="roles">${(r.permissions||[]).slice(0,4).map(p=>`<span class="permission">${esc(p)}</span>`).join("")||`<span class="muted">صلاحيات عادية</span>`}</div><small>عرض الأعضاء ↗</small></article>`).join("");bind()}
+function gamesView(){if(!content||!title||!subtitle||!searchWrap)return;title.textContent="الألعاب الجماعية";subtitle.textContent="أنشئ جلسة أو انضم لجلسة موجودة";searchWrap.style.display="none";content.className="games-page";content.innerHTML=`<div class="games-grid"><article class="game-card" data-game="uno"><div class="game-icon">🎴</div><h3>أونو</h3><p>2-6 لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="jaccaro"><div class="game-icon">🎲</div><h3>جاكارو</h3><p>2-4 لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="codenames"><div class="game-icon">🕵️</div><h3>كود نيمز</h3><p>4+ لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="baloot"><div class="game-icon">♠️</div><h3>بلوت</h3><p>4 لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="ludo"><div class="game-icon">🎯</div><h3>لودو</h3><p>2-4 لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="monopoly"><div class="game-icon">🏠</div><h3>مونوبولي</h3><p>2-6 لاعبين</p><button class="primary">إنشاء جلسة</button></article><article class="game-card" data-game="maqousar"><div class="game-icon">🃏</div><h3>مقوصر</h3><p>4+ لاعبين</p><button class="primary">إنشاء جلسة</button></article></div><div class="sessions-box"><h3>الجلسات المتاحة</h3><div id="sessions-list" class="sessions-list">جاري التحميل...</div></div>`;document.querySelectorAll("[data-game]").forEach(c=>c.querySelector("button").onclick=()=>{const t=c.dataset.game,n=localStorage.getItem("guestName")||prompt("اسمك؟");if(!n)return;localStorage.setItem("guestName",n);location.href=`game.html?type=${t}&name=${encodeURIComponent(n)}`});loadSessions()}
+async function loadSessions(){try{const r=await fetch(API_BASE + '/api/games/sessions'),d=await r.json(),list=$("#sessions-list");if(!list)return;list.innerHTML=d.sessions?.length?d.sessions.map(s=>`<div class="session-item"><div><h4>${esc(s.game_type)}</h4><p>${esc(s.host_name)} · ${s.players?.length||0}/${s.max_players}</p></div><a class="primary" href="game.html?id=${s.id}">انضم</a></div>`).join(""):"<p class='muted'>لا توجد جلسات حالياً</p>"}catch(e){const l=$("#sessions-list");if(l)l.innerHTML="<p class='muted'>تعذر التحميل</p>"}}
+function messageView(){if(!content||!title||!subtitle||!searchWrap)return;title.textContent="رسالة خاصة";subtitle.textContent="اختر عضوًا واكتب رسالتك؛ ستصل داخل Embed بعنوان.";searchWrap.style.display="none";content.className="message-page";content.innerHTML=`<div class="message-box"><div class="message-icon">✦</div><h3>إرسال رسالة خاصة</h3><p class="muted">اكتب اسم العضو للبحث ثم اختره من النتائج.</p><input id="recipient-search" class="full" placeholder="ابحث عن المستلم..." autocomplete="off"><div id="recipient-results" class="recipient-results"></div><input id="msg-title" class="full" maxlength="120" placeholder="عنوان الرسالة"><label class="check"><input id="show-name" type="checkbox"> إظهار اسم المرسل</label><input id="sender-name" class="full hidden" maxlength="60" placeholder="اسم المرسل"><textarea id="msg-text" class="full" maxlength="2000" placeholder="اكتب رسالتك..."></textarea><p id="msg-status"></p><button id="send" class="primary wide">إرسال الآن</button></div>`;const rs=$("#recipient-search");rs.oninput=async()=>{const q=rs.value.trim();if(!q){$("#recipient-results").innerHTML="";return}const d=await fetch(API_BASE + `/api/public/members?q=${encodeURIComponent(q)}`).then(r=>r.json());$("#recipient-results").innerHTML=(d.members||[]).slice(0,8).map(m=>`<button class="recipient" data-recipient="${esc(m.id)}"><img src="${esc(avatar(m))}"><span>${esc(m.name)}<small>@${esc(m.username||"")}</small></span></button>`).join("");document.querySelectorAll("[data-recipient]").forEach(x=>x.onclick=()=>{selected={id:x.dataset.recipient,name:x.textContent};rs.value=x.textContent;$("#recipient-results").innerHTML="<b class='selected'>تم اختيار المستلم ✓</b>"})};$("#show-name").onchange=e=>$("#sender-name").classList.toggle("hidden",!e.target.checked);$("#send").onclick=sendMessage}
+async function sendMessage(){const st=$("#msg-status"),btn=$("#send"),t=$("#msg-text").value.trim(),show=$("#show-name").checked,n=$("#sender-name").value.trim();if(!selected)return st.textContent="اختر مستلمًا أولًا";if(!t)return st.textContent="اكتب الرسالة أولًا";if(show&&!n)return st.textContent="اكتب اسم المرسل";btn.disabled=true;try{const r=await fetch(API_BASE + '/api/public/message',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId:selected.id,title:$("#msg-title").value.trim()||"رسالة من إدارة MLD",message:show?`من: ${n}\n\n${t}`:t})}),d=await r.json();if(!r.ok)throw Error(d.error);st.textContent="تم الإرسال بنجاح ✓";$("#msg-text").value=""}catch(e){st.textContent=e.message||"تعذر الإرسال"}finally{btn.disabled=false}}
+async function openMember(id){
+  openModal(); box.innerHTML="<div class='loading'>جاري التحميل...</div>";
+  try {
+    const r=await fetch(API_BASE + '/api/public/member/' + encodeURIComponent(id),{cache:'no-store'});
+    const m=await r.json(); if(!r.ok) throw new Error(m.error||'تعذر تحميل العضو'); const s=m.stats||{};
+    box.innerHTML='<div class="profile"><div class="profile-head"><img src="'+esc(avatar(m))+'"><div><p class="eyebrow">ملف العضو</p><h2>'+esc(m.name)+'</h2><p class="muted">@'+esc(m.username||'')+'</p><span class="badge">'+esc(m.rank||'عضو')+'</span></div></div><div class="stats">'+[[s.messages,'رسالة'],[s.mentionsReceived,'منشن جاه'],[s.mentionsSent,'منشن أرسله'],[Math.floor((s.voiceMinutes||0)/60)+'س '+((s.voiceMinutes||0)%60)+'د','وقت صوتي'],[s.voiceJoins,'دخول صوتي'],[s.chatRounds,'نشاط شات']].map(x=>'<b>'+esc(num(x[0]))+'<small>'+x[1]+'</small></b>').join('')+'</div><h3>كل الرتب</h3><div class="roles">'+((m.roles||[]).map(x=>'<span class="role">'+esc(x.name)+'</span>').join('')||'<span class="muted">لا توجد رتب</span>')+'</div><h3>أقوى الصلاحيات</h3><div class="permission-box">'+((m.permissions||[]).map(x=>'<span class="permission">'+esc(x)+'</span>').join('')||'<span class="muted">لا توجد</span>')+'</div></div>';
+  } catch(e) { box.innerHTML='<div class="empty"><h3>تعذر تحميل العضو</h3><p>'+esc(e.message)+'</p></div>'; }
+}
+async function openRole(id){
+  openModal(); box.innerHTML="<div class='loading'>جاري تحميل الرتبة...</div>";
+  try {
+    const r=await fetch(API_BASE + '/api/public/roles/' + encodeURIComponent(id) + '/members',{cache:'no-store'});
+    const d=await r.json(); if(!r.ok) throw new Error(d.error||'تعذر تحميل الرتبة');
+    box.innerHTML='<p class="eyebrow">دليل الرتبة</p><h2>'+esc(d.role?.name||'الرتبة')+'</h2><div class="role-meta"><b>'+num(d.role?.membersCount)+' عضو فعلي</b></div><div class="permission-box">'+((d.role?.permissions||[]).map(x=>'<span class="permission">'+esc(x)+'</span>').join('')||'<span class="muted">لا توجد</span>')+'</div><h3>الأعضاء</h3><div class="grid compact">'+((d.members||[]).map(card).join(''))+'</div>'; bind();
+  } catch(e) { box.innerHTML='<div class="empty"><h3>تعذر تحميل الرتبة</h3><p>'+esc(e.message)+'</p></div>'; }
+}
+async function refresh(){if(!content||!status||!search||!searchWrap||!title||!subtitle)return;try{const[sr,rr]=await Promise.all([fetch(API_BASE + '/api/public/server',{cache:'no-store'}),fetch(API_BASE + '/api/public/roles',{cache:'no-store'})]),s=await sr.json(),rd=await rr.json();$("#server-name").textContent=s.name||"MLD";$("#server-count").textContent=s.memberCount==null?"—":num(s.memberCount); $("#server-online").textContent=s.onlineCount==null?"—":num(s.onlineCount); $("#server-visits").textContent=s.visits==null?"—":num(s.visits); $("#server-status").textContent=s.error?"● غير متاح":"● متصل";if(s.error){setStatus(s.reason||s.error)}roles=rd.roles||[];if(view==="members"&&!search.value){const d=await fetch(API_BASE + '/api/public/members').then(r=>r.json());all=d.members||[];renderMembers(all);setStatus(`${num(all.length)} عضو`)}else if(view==="roles")renderRoles();else if(view==="top")renderTop(await fetch(API_BASE + '/api/public/top').then(r=>r.json()))}catch(e){setStatus("تعذر تحديث البيانات")}}
+async function searchMembers(){if(!search)return;clearTimeout(timer);const q=search.value.trim();if(!q){renderMembers(all);setStatus(`${num(all.length)} عضو`);return}setStatus("جاري البحث...");timer=setTimeout(async()=>{const d=await fetch(API_BASE + `/api/public/members?q=${encodeURIComponent(q)}`).then(r=>r.json());renderMembers(d.members||[]);setStatus(`${num((d.members||[]).length)} نتيجة`)},250)}
+async function change(v){if(!content||!title||!subtitle||!searchWrap)return;view=v;closeMenu();if(v==="message")return messageView();if(v==="games")return gamesView();searchWrap.style.display=v==="members"?"flex":"none";title.textContent=v==="members"?"أعضاء المجتمع":v==="roles"?"الرتب القيادية":"لوحة TOP";if(v==="members"||v==="roles")return refresh();renderTop(await fetch(API_BASE + '/api/public/top').then(r=>r.json()));setStatus("تحديث مباشر للنشاط")}
+document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>change(b.dataset.view));
+if(search) search.oninput=()=>{if(view!=="members")change("members");searchMembers()};
+$("#menu")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();window.toggleMLDMenu(e)});
+$("#menu-backdrop")?.addEventListener("click",()=>window.toggleMLDMenu());
+document.querySelectorAll('#sidebar a').forEach(a=>a.addEventListener('click',()=>window.toggleMLDMenu()));
+$("#menu-close")?.addEventListener("click",closeMenu);
+backdrop?.addEventListener("click",closeMenu);
+mobile?.querySelectorAll("a").forEach(a=>a.addEventListener("click",closeMenu));
+$("#close")?.addEventListener("click",closeModal);
+modal?.addEventListener("click",e=>{if(e.target===modal)closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeMenu()}});
+const yearEl=$("#year");
+if(yearEl) yearEl.textContent=new Date().getFullYear();
+refresh();
+refreshTimer=setInterval(()=>{if(!content)return;if(modal&&!modal.classList.contains("hidden")||view==="message")return;refresh()},15000);
+/* ===== Homepage live dashboard override ===== */
+(async function initHomeDashboard(){
+  const serverName=document.getElementById('server-name');
+  const count=document.getElementById('server-count');
+  const online=document.getElementById('server-online');
+  const visits=document.getElementById('server-visits');
+  const statusEl=document.getElementById('server-status');
+  const track=document.getElementById('home-reviews');
+  if(!track)return;
 
-async function loadOwner(){
-const box=$('#ownerPanel');try{
-const [u,l,b]=await Promise.all([api('/api/users'),api('/api/community/audit'),api('/api/community/owner/bot-subscriptions')]);const users=u.users||[],logs=l.logs||[],bots=b.bots||[];
-box.innerHTML='<div class="grid">'+
-card('📢','شريط الإعلان','تحكم بالنص واللون','<button class="primary" data-owner-section="announcement">إدارة الإعلان</button>')+
-card('📣','برودكاست Discord','إرسال رسالة خاصة لأعضاء السيرفر','<button class="primary" data-owner-section="broadcast">إرسال رسالة</button>')+
-card('👥','الحسابات',users.length+' حساب','<button class="primary" data-owner-section="accounts">إدارة الحسابات</button>')+
-card('📋','اللوقات',logs.length+' عملية','<button class="primary" data-owner-section="logs">عرض اللوقات</button>')+
-card('🤖','اشتراكات البوتات',bots.length+' بوت','<button class="primary" data-owner-section="subscriptions">إدارة الاشتراكات</button>')+
-'</div><div id="ownerSection" class="section" style="margin-top:15px"><div class="empty">اختر قسمًا من لوحة الأونر.</div></div>';
-}catch(e){box.innerHTML='<div class="empty">تعذر تحميل لوحة الأونر: '+esc(e.message)+'</div>'}}
-async function ownerAnnouncement(){
-const box=$('#ownerSection');const d=await api('/api/community/owner/announcement'),a=d.announcement||{};
-box.innerHTML='<h2>شريط الإعلان</h2><div class="card"><label>النص<input id="annText" value="'+esc(a.text||'')+'"></label><label>اللون<input id="annColor" type="color" value="'+esc(a.color||'#ff9cdc')+'"></label><label><input id="annEnabled" type="checkbox" '+(a.enabled!==false?'checked':'')+'> مفعل</label><button class="primary" id="saveAnnouncement">حفظ</button></div>';
-$('#saveAnnouncement')?.addEventListener('click',async()=>{await api('/api/community/owner/announcement',{method:'PATCH',body:JSON.stringify({text:$('#annText').value,color:$('#annColor').value,enabled:$('#annEnabled').checked})});toast('تم تحديث شريط الإعلان');loadAnnouncement()});
-}
-async function ownerBroadcast(){
-const box=$('#ownerSection');box.innerHTML='<h2>برودكاست Discord</h2><div class="card"><textarea id="broadcastText" maxlength="2000" placeholder="اكتب الرسالة التي ستصل خاص للأعضاء..."></textarea><button class="primary" id="sendBroadcast">إرسال للأعضاء</button><p>سيتم تجاهل حسابات البوتات.</p></div>';
-$('#sendBroadcast')?.addEventListener('click',async()=>{const content=$('#broadcastText').value.trim();if(!content)return toast('اكتب الرسالة');const d=await api('/api/community/owner/broadcast',{method:'POST',body:JSON.stringify({content})});toast(d.message||'بدأ الإرسال')});
-}
-async function ownerAccounts(){
-const box=$('#ownerSection'),d=await api('/api/users'),users=d.users||[];
-box.innerHTML='<h2>الحسابات</h2><div class="list">'+(users.map(x=>'<div class="row"><b>'+esc(x.username)+'</b><span>'+esc(x.role||'member')+'</span><span><button class="btn" data-account-view="'+x.id+'">المعلومات</button> <button class="btn" data-account-private="'+x.id+'">الخاص</button> '+(!x.is_owner?'<button class="btn" data-account-edit="'+x.id+'">تعديل</button> <button class="btn danger" data-account-delete="'+x.id+'">حذف</button>':'')+'</span></div>').join('')||'<div class="empty">لا توجد حسابات.</div>')+'</div><div id="accountDetail" style="margin-top:15px"></div>';
-}
-async function ownerAccountDetail(id){
-const d=await api('/api/users/'+id+'/private');const u=d.user,m=d.messages||[];const box=$('#accountDetail');
-box.innerHTML='<div class="card"><h2>'+esc(u.username)+'</h2><p>الدور: '+esc(u.role)+' · Discord: '+esc(u.discord_id||'غير مرتبط')+'</p><p>البايو: '+esc(u.bio||'')+'</p><div class="chat-messages">'+(m.length?m.map(chatRow).join(''):'<div class="empty">لا توجد رسائل خاصة.</div>')+'</div></div>';
-}
-async function ownerEditAccount(id){
-const username=prompt('اسم المستخدم الجديد (اتركه كما هو إذا لا تريد تغييره):');if(username===null)return;
-const avatar=prompt('رابط الصورة الجديدة:');if(avatar===null)return;const bio=prompt('البايو الجديد:');if(bio===null)return;
-await api('/api/users/'+id,{method:'PATCH',body:JSON.stringify({username,avatar,bio})});toast('تم تعديل الحساب');ownerAccounts();
-}
-async function ownerSubscriptions(){
-const box=$('#ownerSection'),d=await api('/api/community/owner/bot-subscriptions'),bots=d.bots||[];
-box.innerHTML='<h2>اشتراكات البوتات</h2><div class="list">'+(bots.length?bots.map(b=>'<div class="row"><b>'+esc(b.name)+'</b><span>'+esc(b.expires_at?'ينتهي '+new Date(b.expires_at).toLocaleString("ar-SA"):'بدون اشتراك')+'</span><button class="btn" data-sub-bot="'+b.id+'">إعطاء اشتراك</button></div>').join(''):'<div class="empty">لا توجد بوتات.</div>')+'</div>';
-}
-document.addEventListener('click',e=>{
-const p=e.target.closest('[data-page]');if(p){e.preventDefault();go(p.dataset.page);return}
-if(e.target.closest('#menuBtn')){e.preventDefault();$('#sidebar')?.classList.contains('open')?closeMenu():openMenu();return}
-if(e.target.closest('#shade')){closeMenu();return}
-if(e.target.closest('#loginBtn')||e.target.closest('[data-login-action]')){openLogin();return}
-if(e.target.closest('#closeLogin')){closeLogin();return}
-if(e.target.closest('#submitLogin')){login();return}
-if(e.target.closest('[data-action="logout"]')){logout();return}
-if(e.target.closest('[data-game]')){if(!logged())openLogin();else toast('سيتم تشغيل '+e.target.closest('[data-game]').dataset.game+' من نظام الألعاب.');return}
-if(e.target.closest('[data-action="ticket"]')){if(!logged())openLogin();else toast('تم فتح منطقة التذاكر');return}
-const as=e.target.closest('[data-admin-section]');if(as){as.dataset.adminSection==='tickets'?showAdminTickets():showApplications();return}
-const to=e.target.closest('[data-ticket-open]');if(to){openTicketThread(to.dataset.ticketOpen);return}
-const tc=e.target.closest('[data-ticket-close]');if(tc){api('/api/community/tickets/'+tc.dataset.ticketClose+'/close',{method:'POST'}).then(()=>showAdminTickets()).catch(err=>toast(err.message));return}
-const ap=e.target.closest('[data-app-status]');if(ap){api('/api/community/applications/'+ap.dataset.appStatus+'/status',{method:'POST',body:JSON.stringify({status:ap.dataset.status})}).then(()=>showApplications()).catch(err=>toast(err.message));return}
-const os=e.target.closest('[data-owner-section]');if(os){
-const k=os.dataset.ownerSection;
-if(k==='announcement')ownerAnnouncement();else if(k==='broadcast')ownerBroadcast();else if(k==='accounts')ownerAccounts();else if(k==='logs')api('/api/community/audit').then(d=>$('#ownerSection').innerHTML='<h2>اللوقات</h2><div class="list">'+(d.logs||[]).map(x=>'<div class="row"><b>'+esc(x.actor_name||'')+'</b><span>'+esc(x.action||'')+'</span><small>'+esc(new Date(x.created_at).toLocaleString("ar-SA"))+'</small></div>').join('')+'</div>');else if(k==='subscriptions')ownerSubscriptions();return}
-const av=e.target.closest('[data-account-view]');if(av){ownerAccountDetail(av.dataset.accountView);return}
-const apr=e.target.closest('[data-account-private]');if(apr){ownerAccountDetail(apr.dataset.accountPrivate);return}
-const ae=e.target.closest('[data-account-edit]');if(ae){ownerEditAccount(ae.dataset.accountEdit);return}
-const ad=e.target.closest('[data-account-delete]');if(ad){if(confirm('حذف الحساب نهائيًا؟'))api('/api/users/'+ad.dataset.accountDelete,{method:'DELETE'}).then(()=>ownerAccounts()).catch(err=>toast(err.message));return}
-const sb=e.target.closest('[data-sub-bot]');if(sb){const days=prompt('مدة الاشتراك بالأيام:','30');if(days)api('/api/community/owner/bot-subscriptions/'+sb.dataset.subBot,{method:'POST',body:JSON.stringify({days:Number(days)})}).then(()=>ownerSubscriptions()).catch(err=>toast(err.message));return}
-});
-$('#loginModal')?.addEventListener('click',e=>{if(e.target.id==='loginModal')closeLogin()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closeLogin()}if(e.key==='Enter'&&document.activeElement===$('#password'))login()});
-window.addEventListener('hashchange',()=>go(location.hash||'home'));
-window.addEventListener('DOMContentLoaded',()=>{sync();loadAnnouncement();setTimeout(()=>$('#intro')?.classList.add('hide'),750);go(location.hash||'home')});
+  async function loadServer(){
+    try{
+      const r=await fetch(API_BASE + '/api/public/server',{cache:'no-store'});
+      const d=await r.json();
+      if(serverName) serverName.textContent=d.name||'MLD';
+      if(count) count.textContent=d.memberCount==null?'—':num(d.memberCount);
+      if(online) online.textContent=d.onlineCount==null?'—':num(d.onlineCount);
+      if(visits) visits.textContent=d.visits==null?'—':num(d.visits);
+      ['homeServerName','serverName'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.name||'MLD'});
+      ['homeMemberCount','server-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.memberCount==null?'—':num(d.memberCount)});
+      ['homeOnlineCount','server-online'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.onlineCount==null?'—':num(d.onlineCount)});
+      ['homeVisits','server-visits'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=d.visits==null?'—':num(d.visits)});
+      const discordFloat=document.getElementById('discord-float');
+      if(discordFloat && d.invite) discordFloat.href=d.invite;
+      if(statusEl) statusEl.textContent=d.error?'● غير متاح':'● متصل';
+      if(statusEl) statusEl.className='online';
+    }catch(e){
+      if(statusEl) statusEl.textContent='● غير متاح';
+      if(statusEl) statusEl.className='';
+    }
+  }
 
-});
+  async function loadReviews(){
+    try{
+      const r=await fetch(API_BASE + '/api/community/reviews',{cache:'no-store'});
+      const d=await r.json();
+      const list=d.reviews||[];
+      if(!list.length){
+        track.innerHTML='<div class="review-card"><div class="review-stars">★★★★★</div><h3>كن أول من يترك رأيه</h3><p>شاركنا تجربتك في MLD وسيظهر رأيك هنا بشكل جميل.</p><div class="review-meta"><span>MLD Community</span><span>♡</span></div></div>';
+        return;
+      }
+      const cards=list.map(x=>`<article class="review-card"><div class="review-stars">${'★'.repeat(Math.max(1,Math.min(5,Number(x.rating)||5)))}</div><h3>${esc(x.username||'عضو MLD')}</h3><p>${esc(x.content||'')}</p><div class="review-meta"><span>عضو في MLD</span><span>رأي موثّق</span></div></article>`).join('');
+      track.innerHTML=cards+cards;
+    }catch(e){
+      track.innerHTML='<div class="review-card"><h3>آراء الناس عنّا</h3><p>تعذر تحميل الآراء الآن، جرّب تحديث الصفحة.</p></div>';
+    }
+  }
+
+  await Promise.all([loadServer(),loadReviews()]);
+  setInterval(loadServer,15000);
+  setInterval(loadReviews,30000);
+})();
+
+/* ===== MLD UNIFIED VISITOR / MEMBER NAV v5 ===== */
+(function(){
+  const isMember=()=>!!localStorage.getItem('token')&&!!JSON.parse(localStorage.getItem('user')||'null');
+  const getUser=()=>JSON.parse(localStorage.getItem('user')||'null');
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const links=()=>{const member=isMember(),u=getUser(),admin=u&&(u.is_owner||String(u.role||'').toLowerCase()==='admin'||String(u.role||'').toLowerCase()==='owner');
+    const common=[['/','🏠 الرئيسية'],['/#members','👥 الأعضاء'],['/#top','🏆 التوب'],['/#roles','👑 الرتب القيادية']];
+    const out=[...common];
+    if(member) out.push(['chat.html','💬 الشات العام'],['zajel.html','✉️ الزاجل']);
+    out.push(['games.html','🎮 الألعاب'],['cinema.html','🎬 السينما'],['feedback.html','⭐ الآراء'],['groups.html','👨‍👩‍👧 القروبات 🔒'],['apply.html','📝 التقديم 🔒'],['tickets.html','🎫 التذاكر 🔒'],['bots.html','🤖 منصة البوتات 🔒']);
+    if(member) out.push(['addbot.html','➕ إضافة بوت'],['profile.html','👤 بروفايلي']);
+    if(admin) out.push(['app.html#admin','🛡️ لوحة الإدارة']);
+    if(u?.is_owner||String(u?.role||'').toLowerCase()==='owner') out.push(['app.html#owner-admin','👑 لوحة الأونر']);
+    out.push(member?['#mld-logout','🚪 تسجيل الخروج']:['login.html','🔐 تسجيل الدخول']);
+    return out;
+  };
+  function lock(){const m=document.createElement('div');m.className='mld-lock-modal';m.innerHTML='<div class="mld-lock-box"><h3>🔒 سجّل دخول للمتابعة</h3><p>هذي الميزة متاحة للأعضاء المسجلين في MLD.</p><div class="mld-lock-actions"><a class="primary" href="/login.html">تسجيل الدخول</a><button class="btn-secondary" type="button">لاحقاً</button></div></div>';m.querySelector('button').onclick=()=>m.remove();document.body.appendChild(m)}
+  function install(){
+    const nav=document.querySelector('#sidebar nav')||document.querySelector('.sidebar .nav'); if(!nav)return;
+    nav.innerHTML=links().map(([href,label])=>href==='#mld-logout'?'<a href="#" data-mld-logout>'+label+'</a>':'<a href="'+esc(href)+'">'+label+'</a>').join('');
+    nav.querySelector('[data-mld-logout]')?.addEventListener('click',e=>{e.preventDefault();localStorage.removeItem('token');localStorage.removeItem('user');location.href='/'});
+    const menu=document.getElementById('menu');const sidebar=document.getElementById('sidebar');const backdrop=document.getElementById('menu-backdrop');
+    const close=()=>{sidebar?.classList.remove('open');backdrop?.classList.remove('open');document.body.classList.remove('menu-open')};
+    const open=()=>{sidebar?.classList.add('open');backdrop?.classList.add('open');document.body.classList.add('menu-open')};
+    menu?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();sidebar?.classList.contains('open')?close():open()},true);backdrop?.addEventListener('click',close);
+    nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>setTimeout(close,0)));
+    document.querySelectorAll('#mobile-menu').forEach(x=>x.style.display='none');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+  window.addEventListener('storage',install);window.mldLock=lock;
+})();
