@@ -121,7 +121,7 @@ const tc=e.target.closest('[data-ticket-close]');if(tc){api('/api/community/tick
 const ap=e.target.closest('[data-app-status]');if(ap){api('/api/community/applications/'+ap.dataset.appStatus+'/status',{method:'POST',body:JSON.stringify({status:ap.dataset.status})}).then(()=>showApplications()).catch(err=>toast(err.message));return}
 const os=e.target.closest('[data-owner-section]');if(os){
 const k=os.dataset.ownerSection;
-if(k==='announcement')ownerAnnouncement();else if(k==='broadcast')ownerBroadcast();else if(k==='accounts')ownerAccounts();else if(k==='logs')api('/api/community/audit').then(d=>$('#ownerSection').innerHTML='<h2>اللوقات</h2><div class="list">'+(d.logs||[]).map(x=>'<div class="row"><b>'+esc(x.actor_name||'')+'</b><span>'+esc(x.action||'')+'</span><small>'+esc(new Date(x.created_at).toLocaleString('ar-SA'))+'</small></div>').join('')+'</div>');else if(k==='subscriptions')ownerSubscriptions();return}
+if(k==='announcement')ownerAnnouncement();else if(k==='broadcast')ownerBroadcast();else if(k==='accounts')ownerAccounts();else if(k==='logs')api('/api/community/audit').then(d=>$('#ownerSection').innerHTML='<h2>اللوقات</h2><div class="list">'+(d.logs||[]).map(x=>'<div class="row"><b>'+esc(x.actor_name||'')+'</b><span>'+esc(x.action||'')+'</span><small>'+esc(new Date(x.created_at).toLocaleString("ar-SA"))+'</small></div>').join('')+'</div>');else if(k==='subscriptions')ownerSubscriptions();return}
 const av=e.target.closest('[data-account-view]');if(av){ownerAccountDetail(av.dataset.accountView);return}
 const apr=e.target.closest('[data-account-private]');if(apr){ownerAccountDetail(apr.dataset.accountPrivate);return}
 const ae=e.target.closest('[data-account-edit]');if(ae){ownerEditAccount(ae.dataset.accountEdit);return}
