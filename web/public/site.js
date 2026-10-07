@@ -132,3 +132,5 @@ $('#loginModal')?.addEventListener('click',e=>{if(e.target.id==='loginModal')clo
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closeLogin()}if(e.key==='Enter'&&document.activeElement===$('#password'))login()});
 window.addEventListener('hashchange',()=>go(location.hash||'home'));
 window.addEventListener('DOMContentLoaded',()=>{sync();loadAnnouncement();setTimeout(()=>$('#intro')?.classList.add('hide'),750);go(location.hash||'home')});
+
+});
