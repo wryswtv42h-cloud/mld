@@ -161,25 +161,25 @@ window.closeAppMenu=function(){
  <div class="sidebar-user"><div id="myAvatar" class="avatar">ز</div><div><strong id="myName">زائر</strong><small id="myRole">تصفح عام</small></div></div>
  <nav class="nav">
   <div class="nav-section"><label>رئيسي</label>
-   <a href="#home" data-page="home">🏠 الرئيسية</a><a href="#members" data-page="members">👥 الأعضاء</a><a href="#top" data-page="top">🏆 التوب</a><a href="#leaders" data-page="leaders">👑 الرتب القيادية</a>
+   <a href="/" data-page="home">الرئيسية</a><a href="#members" data-page="members">الأعضاء</a><a href="#top" data-page="top">التوب</a><a href="#leaders" data-page="leaders">الرتب القيادية</a>
   </div>
   <div class="nav-section"><label>التواصل</label>
-   <a href="#chat" data-page="chat">💬 الشات العام</a><a href="#pigeon" data-page="pigeon">✉️ الزاجل</a>
+   <a href="#chat" data-page="chat">الشات العام</a><a href="#pigeon" data-page="pigeon">الزاجل</a>
   </div>
   <div class="nav-section"><label>الترفيه</label>
-   <a href="#games" data-page="games">🎮 الألعاب</a><a href="#cinema" data-page="cinema">🎬 السينما</a><a href="#groups" data-page="groups">👨‍👩‍👧 القروبات</a>
+   <a href="#games" data-page="games">الألعاب</a><a href="#cinema" data-page="cinema">السينما</a><a href="#groups" data-page="groups">القروبات</a>
   </div>
   <div class="nav-section"><label>الخدمات</label>
-   <a href="#tickets" data-page="tickets">🎫 التذاكر</a><a href="#applications" id="applicationsLink" data-page="applications" data-owner-only>📝 التقديم</a><a href="#reviews" data-page="reviews">⭐ الآراء</a>
+   <a href="#tickets" data-page="tickets">التذاكر</a><a href="#applications" id="applicationsLink" data-page="applications">التقديم</a><a href="#reviews" data-page="reviews">الآراء</a>
   </div>
   <div class="nav-section"><label>البوتات</label>
-   <a href="#bots" data-page="bots">🤖 منصة البوتات</a><a href="#addbot" data-page="addbot">➕ إضافة بوت</a>
+   <a href="#bots" data-page="bots">منصة البوتات</a><a href="#addbot" data-page="addbot">إضافة بوت</a>
   </div>
   <div class="nav-section"><label>حسابي</label>
-   <a href="#profile" data-page="profile">👤 بروفايلي</a><a href="#logout" id="logoutBtn" data-page="logout">🚪 تسجيل الخروج</a><a href="#login" id="loginBtn" data-page="login">🔐 دخول المنصة</a>
+   <a href="#profile" data-page="profile">بروفايلي</a><a href="#logout" id="logoutBtn" data-page="logout">تسجيل الخروج</a><a href="#login" id="loginBtn" data-page="login">دخول المنصة</a>
   </div>
-  <div id="adminSection" class="nav-section" style="display:none"><label>الإدارة</label><a href="#admin" id="adminLink" data-page="admin" data-privileged>🛡️ لوحة الإدارة</a></div>
-  <div id="ownerSection" class="nav-section" style="display:none"><label>الأونر</label><a href="#owner-admin" id="ownerLink" data-page="owner-admin" data-owner-only>👑 لوحة الأونر</a></div>
+  <div id="adminSection" class="nav-section" style="display:none"><label>الإدارة</label><a href="#admin" id="adminLink" data-page="admin" data-privileged>لوحة الإدارة</a></div>
+  <div id="ownerSection" class="nav-section" style="display:none"><label>الأونر</label><a href="#owner-admin" id="ownerLink" data-page="owner-admin" data-owner-only>لوحة الأونر</a></div>
  </nav>
 </aside>
 <main class="app-main">
@@ -306,7 +306,7 @@ html,body{max-width:100%;overflow-x:hidden}
       if(['chat','pigeon','tickets','bots','addbot','profile'].includes(p)&&!currentUser){
         q('#authScreen')?.classList.add('show'); close(); return;
       }
-      if(p==='applications'&&!owner){close();return}
+      
       if(p==='owner-admin'&&!owner){close();return}
       if(p==='admin'&&!admin){close();return}
       close();
