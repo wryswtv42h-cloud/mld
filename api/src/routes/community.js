@@ -34,6 +34,7 @@ async function audit(actor, action, target, meta={}) {
 }
 
 
+router.get('/announcement',async(req,res)=>{const q=await query("SELECT value FROM site_settings WHERE key='announcement'");res.json({announcement:q.rows[0]?.value||{text:'',color:'#ff9cdc',enabled:true}});});
 router.get('/settings/:key',requireAuth,async(req,res)=>{
   if(!['application_questions','ticket_questions'].includes(req.params.key))return res.status(404).json({error:'الإعداد غير موجود'});
   const q=await query('SELECT value FROM site_settings WHERE key=$1',[req.params.key]); res.json({value:q.rows[0]?.value||[]});
