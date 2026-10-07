@@ -11,10 +11,10 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
 const server=http.createServer((req,res)=>{
  const u=(req.url||'/').split('?')[0];
  if(u.startsWith('/api/')||u.startsWith('/socket.io/'))return proxy.web(req,res,{target:API});
- let p=u==='/'?'/app.html':decodeURIComponent(u);
+ let p=u==='/'?'/index.html':decodeURIComponent(u);
  const file=path.normalize(path.join(root,p));
  if(!file.startsWith(root))return res.writeHead(403).end();
- fs.readFile(file,(err,data)=>{if(err)return fs.readFile(path.join(root,'app.html'),(e,d)=>{if(e)return res.writeHead(404).end('Not found');res.writeHead(200,{'content-type':types['.html'],'cache-control':'no-cache'});res.end(d)});res.writeHead(200,{'content-type':types[path.extname(file).toLowerCase()]||'application/octet-stream','cache-control':'no-cache'});res.end(data)});
+ fs.readFile(file,(err,data)=>{if(err)return fs.readFile(path.join(root,'index.html'),(e,d)=>{if(e)return res.writeHead(404).end('Not found');res.writeHead(200,{'content-type':types['.html'],'cache-control':'no-cache'});res.end(d)});res.writeHead(200,{'content-type':types[path.extname(file).toLowerCase()]||'application/octet-stream','cache-control':'no-cache'});res.end(data)});
 });
 server.on('upgrade',(req,socket,head)=>{if(req.url.startsWith('/socket.io/'))proxy.ws(req,socket,head,{target:API});else socket.destroy()});
 server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log('MLD Web SPA online'));
