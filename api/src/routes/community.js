@@ -105,32 +105,6 @@ router.post('/cinema/:id/close',requireAuth,async(req,res)=>{const {rows}=await 
 
 router.patch('/tickets/:id/messages', requireAuth, async (req,res)=>{res.status(405).json({error:'استخدم POST لإرسال الرد'});});
 
-router.get('/applications',requireAuth,async(req,res)=>{
-  const admin=!!req.user.is_owner || ['admin','owner'].includes(String(req.user.role||'').toLowerCase());
-  const {rows}=await query('SELECT a.*,u.username,u.avatar FROM applications a LEFT JOIN users u ON u.id=a.user_id WHERE a.user_id=$1 OR $2=true ORDER BY a.created_at DESC',[req.user.id,admin]);
-  res.json({applications:rows});
-});
-
-router.post('/applications/:id/status',requireAuth,requireAdmin,async(req,res)=>{
-  const status=String(req.body.status||'pending');
-  if(!['pending','accepted','rejected'].includes(status))return res.status(400).json({error:'حالة غير صحيحة'});
-  const q=await query('SELECT a.*,u.username,u.discord_id AS linked_discord_id FROM applications a LEFT JOIN users u ON u.id=a.user_id WHERE a.id=$1',[req.params.id]);
-  const a=q.rows[0]; if(!a)return res.status(404).json({error:'التقديم غير موجود'});
-  await query('UPDATE applications SET status=$1 WHERE id=$2',[status,a.id]);
-  if(status==='accepted'){
-    const roles=await discordApi('/guilds/'+guildId()+'/roles');
-    const adminRoles=roles.filter(r=>!r.managed && /admin|إدارة|ادارة/i.test(String(r.name||''))).sort((x,y)=>(x.position||0)-(y.position||0));
-    const role=adminRoles[0];
-    if(role && /^\d+$/.test(String(a.discord_id))) await discordApi('/guilds/'+guildId()+'/members/'+a.discord_id+'/roles/'+role.id,{method:'PUT',body:'{}'});
-    await query("UPDATE users SET role='admin' WHERE id=$1",[a.user_id]);
-    try{await dmDiscord(a.discord_id,'✅ تمت الموافقة على تقديمك في MLD.\nتم منحك رتبة الإدارة الأدنى المعتمدة في السيرفر.');}catch(e){console.error('application DM',e.message)}
-  }else if(status==='rejected'){
-    try{await dmDiscord(a.discord_id,'❌ تم رفض تقديمك للإدارة في MLD.');}catch(e){console.error('application DM',e.message)}
-  }
-  await audit(req.user,'application_'+status,String(a.id),{user_id:a.user_id});
-  res.json({message:'تم تحديث التقديم'});
-});
-
 router.get('/owner/announcement',requireAuth,requireOwner,async(req,res)=>{
   const q=await query("SELECT value FROM site_settings WHERE key='announcement'");
   res.json({announcement:q.rows[0]?.value||{text:'',color:'#ff9cdc',enabled:true}});
