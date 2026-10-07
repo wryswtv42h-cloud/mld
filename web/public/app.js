@@ -67,8 +67,9 @@ async function loadStats(){
 function setPage(p){
  document.querySelectorAll('.is-busy').forEach(x=>x.classList.remove('is-busy'));
  if(p==='logout'){logout();return}
+ if(!user && ['chat','pigeon','tickets','applications','bots','groups','reviews','cinema'].includes(p)){closeMenu();$('.page').forEach(x=>x.classList.remove('active'));const pg=$('#page-'+p);if(pg){pg.classList.add('active');$('.sidebar a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===p));$('#pageTitle').textContent=(meta[p]||['',p,''])[1];renderGuest(p).catch(e=>{pg.innerHTML=shell(p,'<div class="mld-empty">تعذر تحميل الصفحة: '+esc(e.message)+'</div>')});window.scrollTo(0,0)}return}
  if(p==='login'){$('#authScreen')?.classList.add('show');return}
- if((protectedPages.includes(p)||adminPages.includes(p)||p==='owner-admin')&&!authRequired())return;
+ if((adminPages.includes(p)||p==='owner-admin')&&!authRequired())return;
  if(ownerOnly.includes(p)&&!privileged('owner')){toast('هذه الصفحة للأونر فقط');return}
  if(adminPages.includes(p)&&!privileged('admin')){toast('هذه الصفحة للإدارة فقط');return}
  closeMenu();
@@ -78,6 +79,26 @@ function setPage(p){
  $('#pageTitle').textContent=(meta[p]||['',p,''])[1];
  if(p==='home')return;
  render(p).catch(e=>{page.innerHTML=shell(p,'<div class="mld-empty">تعذر تحميل الصفحة: '+esc(e.message)+'</div>')});
+}
+async function renderGuest(p){
+ const page=$('#page-'+p); if(!page)return;
+ if(p==='chat'){
+   const d=await fetch(API+'/api/community/chat',{cache:'no-store'}).then(r=>r.json());
+   page.innerHTML=shell(p,'<div class="mld-stack">'+(d.messages||[]).map(x=>'<article class="message-card"><b>'+esc(x.sender_name||'عضو')+'</b><p>'+esc(x.content||'')+'</p></article>').join('')||'<div class="mld-empty">لا توجد رسائل بعد</div>')+'</div><div class="panel guest-action"><h3>💬 المشاركة</h3><p class="muted">تقدر تشوف الشات، وللإرسال سجّل دخول.</p><button class="btn-primary" onclick="document.getElementById(\'authScreen\')?.classList.add(\'show\')">سجّل دخول للإرسال</button></div>'); return;
+ }
+ if(p==='pigeon'){page.innerHTML=shell(p,'<div class="panel"><h3>✉️ الزاجل</h3><p class="muted">صفحة الرسائل الخاصة. محتوى الرسائل لا يظهر للزائر حفاظًا على الخصوصية.</p><button class="btn-primary" onclick="document.getElementById(\'authScreen\')?.classList.add(\'show\')">سجّل دخول للمتابعة</button></div>'); return;}
+ if(p==='tickets'){page.innerHTML=shell(p,'<div class="panel"><h3>🎫 التذاكر</h3><p class="muted">تقدر تتعرف على نظام الدعم هنا. فتح التذكرة ومتابعة تذاكرك يتطلب تسجيل الدخول.</p><button class="btn-primary" onclick="document.getElementById(\'authScreen\')?.classList.add(\'show\')">سجّل دخول لفتح تذكرة</button></div>'); return;}
+ if(p==='applications'){page.innerHTML=shell(p,'<div class="panel"><h3>📝 التقديم</h3><p class="muted">يمكنك معاينة نموذج التقديم. الإرسال متاح بعد تسجيل الدخول وبحسب صلاحيات الأونر.</p><textarea class="full" disabled placeholder="معاينة نموذج التقديم"></textarea><button class="btn-primary" onclick="document.getElementById(\'authScreen\')?.classList.add(\'show\')">سجّل دخول للمتابعة</button></div>'); return;}
+ if(p==='bots'){
+   const d=await fetch(API+'/api/bots/public',{cache:'no-store'}).then(r=>r.json());
+   page.innerHTML=shell(p,'<div class="mld-bot-grid">'+(d.bots||[]).map(b=>'<article class="panel"><h3>🤖 '+esc(b.name)+'</h3><p class="muted">'+(b.active?'● نشط':'○ متوقف')+'</p><small class="muted">'+esc(b.watching||'MLD')+'</small></article>').join('')||'<div class="mld-empty">لا توجد بوتات مضافة بعد</div>')+'</div><div class="panel guest-action"><h3>➕ إضافة بوت</h3><p class="muted">إضافة البوت تتطلب تسجيل الدخول والتحقق من صلاحياتك في Discord.</p><button class="btn-primary" onclick="document.getElementById(\'authScreen\')?.classList.add(\'show\')">سجّل دخول للمتابعة</button></div>'); return;
+ }
+ if(['groups','reviews','cinema'].includes(p)){
+   await render(p);
+   const actionIds={groups:['groupCreate'],reviews:['reviewSend'],cinema:['cinemaCreate']}[p]||[];
+   actionIds.forEach(id=>{const e=$('#'+id);if(e){e.disabled=true;e.title='سجّل دخول للمتابعة';e.textContent='🔒 سجّل دخول للمتابعة';e.onclick=()=>$('#authScreen')?.classList.add('show')}});
+   return;
+ }
 }
 async function render(p){
  const page=$('#page-'+p);if(!page)return;
