@@ -5,13 +5,15 @@ import { getGameConfig } from '../games/engine.js';
 
 const router=express.Router();
 
-function normalize(row){
+function normalize(row,viewerName=null){
+  let gameState=row.state||null;
+  if(gameState?.hands){gameState=JSON.parse(JSON.stringify(gameState));for(const [name,hand] of Object.entries(gameState.hands)){if(name!==viewerName)gameState.hands[name]={hidden:true,count:Array.isArray(hand)?hand.length:0};}}
   return {
     id:row.id,name:row.name,type:row.type,game_type:row.type,status:row.status,
     host_id:row.host_id,host_name:row.host_name||null,
     players:Array.isArray(row.players)?row.players:[],
     spectators:Array.isArray(row.spectators)?row.spectators:[],
-    state:row.state||null,min_players:Number(row.min_players||2),
+    state:gameState,min_players:Number(row.min_players||2),
     max_players:Number(row.max_players||4),created_at:row.created_at
   };
 }
@@ -22,7 +24,7 @@ router.get('/sessions',optionalAuth,async(req,res)=>{
       FROM games g LEFT JOIN users u ON u.id::text=g.host_id::text
       WHERE g.status IN ('open','waiting','playing')
       ORDER BY g.created_at DESC LIMIT 50`);
-    res.json({sessions:rows.map(normalize)});
+    res.json({sessions:rows.map(row=>normalize(row,req.user?.username||null))});
   }catch(e){console.error('games list',e);res.status(500).json({error:'تعذر تحميل الجلسات'});}
 });
 
@@ -39,7 +41,7 @@ router.post('/sessions',requireAuth,async(req,res)=>{
     const {rows}=await query(`INSERT INTO games(name,type,status,host_id,players,min_players,max_players,state,spectators)
       VALUES($1,$2,'waiting',$3,$4,$5,$6,NULL,'[]'::jsonb) RETURNING *`,
       [req.body.name||type,type,hostId,JSON.stringify(players),cfg.min,max]);
-    res.json({session:normalize(rows[0])});
+    res.json({session:normalize(rows[0],req.user?.username||null)});
   }catch(e){console.error('games create',e);res.status(500).json({error:'تعذر إنشاء الجلسة'});}
 });
 
