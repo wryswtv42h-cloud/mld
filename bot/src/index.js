@@ -168,9 +168,9 @@ async function start() {
   try {
     setupStatsTracking(client);
     await loadHandlers();
+    client.once(Events.ClientReady, async () => await registerCommands());
     await client.login(process.env.DISCORD_TOKEN);
     if (pool) { await syncUserBots(); setInterval(syncUserBots, 30000); }
-    client.once(Events.ClientReady, async () => await registerCommands());
   } catch (err) {
     console.error('❌ فشل تشغيل البوت:', err.message);
     process.exit(1);

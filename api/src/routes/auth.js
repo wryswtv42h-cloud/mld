@@ -1,7 +1,8 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { query } from '../db.js';
+import crypto from 'crypto';
+import { query, pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 
 async function resolveDiscordId(value) {
@@ -24,20 +25,43 @@ async function discordMemberExists(discordId) {
   const r = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${encodeURIComponent(id)}`, { headers: { Authorization: `Bot ${token}` } });
   return r.ok;
 }
-async function sendVerificationCode(discordId) {
-  const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
-  const dm = await fetch('https://discord.com/api/v10/users/@me/channels', { method:'POST', headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({recipient_id:String(discordId)}) });
-  if (!dm.ok) throw new Error('تعذر فتح الخاص مع حسابك في ديسكورد');
-  const channel = await dm.json();
-  const code = String(Math.floor(100000 + Math.random() * 900000));
-  const sent = await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, { method:'POST', headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({content:`🔐 كود التحقق الخاص بـ MLD Community: **${code}**\\nلا تشارك هذا الكود مع أي شخص.`}) });
-  if (!sent.ok) throw new Error('تعذر إرسال كود التحقق');
-  verificationCodes.set(String(discordId), { code, expires: Date.now() + 10 * 60 * 1000 });
-  return code;
+const router = express.Router();
+const hashVerificationCode=(discordId,code)=>crypto.createHash('sha256').update(`${process.env.JWT_SECRET}:${discordId}:${code}`).digest('hex');
+function requireBotSignature(req,res,next){
+  const secret=process.env.MLD_BOT_API_SECRET||'',timestamp=String(req.get('X-MLD-Bot-Timestamp')||''),signature=String(req.get('X-MLD-Bot-Signature')||'');
+  if(!secret||!/^\d{13}$/.test(timestamp)||Math.abs(Date.now()-Number(timestamp))>60_000)return res.status(401).json({error:'طلب البوت غير موثق أو منتهي'});
+  const expected=crypto.createHmac('sha256',secret).update(JSON.stringify(req.body||{})).digest();let supplied;
+  try{supplied=Buffer.from(signature,'hex')}catch{return res.status(401).json({error:'توقيع البوت غير صالح'});}
+  if(supplied.length!==expected.length||!crypto.timingSafeEqual(supplied,expected))return res.status(401).json({error:'توقيع البوت غير صالح'});
+  next();
 }
 
-const router = express.Router();
-const verificationCodes = new Map();
+router.post('/bot/send-verification',requireBotSignature,async(req,res)=>{
+  try{
+    const discordId=String(req.body.discord_id||'').trim();
+    if(!/^\d{17,20}$/.test(discordId))return res.status(400).json({error:'Discord ID غير صالح'});
+    const token=process.env.DISCORD_TOKEN||process.env.DISCORD_BOT_TOKEN,guildId=process.env.DISCORD_GUILD_ID;
+    if(!token||!guildId)return res.status(503).json({error:'إعدادات Discord غير مكتملة'});
+    await query("DELETE FROM verification_codes WHERE expires_at<NOW()");
+    const member=await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`,{headers:{Authorization:`Bot ${token}`},signal:AbortSignal.timeout(7000)});
+    if(!member.ok)return res.status(403).json({error:'انضم إلى سيرفر MLD أولاً'});
+    const linked=await query('SELECT id FROM users WHERE discord_id=$1 LIMIT 1',[discordId]);
+    if(linked.rows[0])return res.status(409).json({error:'Discord هذا مرتبط بحساب موقع بالفعل'});
+      const previous=await query('SELECT created_at,code_hash,expires_at FROM verification_codes WHERE discord_id=$1',[discordId]);
+      if(previous.rows[0]&&Date.now()-new Date(previous.rows[0].created_at).getTime()<60_000)return res.status(429).json({error:'انتظر دقيقة قبل طلب كود آخر'});
+    const code=crypto.randomInt(100000,1000000).toString();
+      try{
+        await query(`INSERT INTO verification_codes(discord_id,code_hash,expires_at,attempts,confirmed_at,registration_ticket_hash) VALUES($1,$2,NOW()+INTERVAL '10 minutes',0,NULL,NULL)
+          ON CONFLICT(discord_id) DO UPDATE SET code_hash=EXCLUDED.code_hash,expires_at=EXCLUDED.expires_at,attempts=0,confirmed_at=NULL,registration_ticket_hash=NULL,created_at=NOW()`,[discordId,hashVerificationCode(discordId,code)]);
+        const dm=await fetch('https://discord.com/api/v10/users/@me/channels',{method:'POST',headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'},body:JSON.stringify({recipient_id:discordId}),signal:AbortSignal.timeout(7000)});
+        if(!dm.ok){await query('DELETE FROM verification_codes WHERE discord_id=$1',[discordId]);return res.status(502).json({error:'تعذر فتح الخاص معك؛ فعّل الرسائل الخاصة وحاول مجددًا'});}
+        const channel=await dm.json();
+        const sent=await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`,{method:'POST',headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'},body:JSON.stringify({content:`🔐 كود تسجيل MLD: **${code}**\nاستخدم /verify confirm وأدخل الكود في النافذة الخاصة. صالح لمدة 10 دقائق ولا تشاركه.`}),signal:AbortSignal.timeout(7000)});
+        if(!sent.ok){await query('DELETE FROM verification_codes WHERE discord_id=$1',[discordId]);return res.status(502).json({error:'تعذر إرسال رسالة التحقق إلى الخاص'});}
+      }catch(error){await query('DELETE FROM verification_codes WHERE discord_id=$1',[discordId]).catch(()=>{});throw error;}
+      return res.json({message:'أُرسل كود التحقق إلى الخاص'});
+  }catch(error){console.error('bot verification send:',error.message);return res.status(500).json({error:'تعذر إرسال كود التحقق'});}
+});
 
 // ===== تحقق Discord عبر رسالة خاصة من البوت =====
 router.get('/discord-suggestions', async (req, res) => {
@@ -64,36 +88,56 @@ router.get('/discord-suggestions', async (req, res) => {
 });
 
 router.post('/verify-discord', async (req, res) => {
-  try {
-    const { discord_id } = req.body;
-    if (!discord_id) return res.status(400).json({ error: 'أدخل Discord ID أو اسم المستخدم' });
-    const resolvedId = await resolveDiscordId(discord_id);
-    if (!resolvedId || !(await discordMemberExists(resolvedId))) return res.status(400).json({ error: 'هذا الحساب ليس عضوًا في سيرفر MLD' });
-    const linked = await query('SELECT id FROM users WHERE discord_id=$1 LIMIT 1',[resolvedId]);
-    if (linked.rows[0]) return res.status(400).json({ error: 'حساب ديسكورد هذا مرتبط بحساب موقع آخر' });
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
-    const dm = await fetch('https://discord.com/api/v10/users/@me/channels', { method:'POST', headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({recipient_id:String(resolvedId)}) });
-    if (!dm.ok) return res.status(502).json({ error: 'تعذر فتح الخاص مع حسابك في ديسكورد' });
-    const channel = await dm.json();
-    const sent = await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, { method:'POST', headers:{Authorization:`Bot ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({content:`🔐 كود التحقق الخاص بـ MLD Community: **${code}**\\nلا تشارك هذا الكود مع أي شخص.`}) });
-    if (!sent.ok) return res.status(502).json({ error: 'تعذر إرسال كود التحقق' });
-    verificationCodes.set(String(resolvedId), { code, expires: Date.now() + 10 * 60 * 1000 });
-    return res.json({ verified: false, message: 'تم إرسال كود التحقق إلى الخاص في ديسكورد' });
-  } catch (e) { console.error(e); res.status(500).json({ error:'تعذر تنفيذ التحقق' }); }
+  res.status(410).json({error:'أرسل كود التحقق عبر أمر /verify send في بوت MLD الرسمي'});
 });
 
 // ===== تأكيد كود Discord من البوت =====
-router.post('/confirm-discord', async (req,res)=>{
+router.post('/confirm-discord',requireBotSignature,async (req,res)=>{
   try{
     const discordId=String(req.body.discord_id||req.body.discordId||'').trim();
     const code=String(req.body.verification_code||req.body.code||'').trim();
-    if(!discordId||!code)return res.status(400).json({error:'بيانات التحقق ناقصة'});
-    const resolved=await resolveDiscordId(discordId);
-    const pending=resolved ? verificationCodes.get(String(resolved)) : null;
-    if(!resolved||!pending||pending.expires<Date.now()||pending.code!==code)return res.status(400).json({error:'كود التحقق غير صحيح أو منتهي'});
-    return res.json({verified:true,discord_id:resolved});
+    const actorId=String(req.body.actor_discord_id||'').trim();
+    if(!discordId||discordId!==actorId||!/^\d{17,20}$/.test(actorId)||!code)return res.status(400).json({error:'بيانات التحقق ناقصة أو لا تطابق مستخدم Discord'});
+    const pending=(await query('SELECT code_hash,expires_at,attempts FROM verification_codes WHERE discord_id=$1',[discordId])).rows[0];
+    if(!pending||new Date(pending.expires_at).getTime()<Date.now())return res.status(400).json({error:'كود التحقق غير صحيح أو منتهي'});
+    if(Number(pending.attempts)>=5)return res.status(429).json({error:'تجاوزت عدد محاولات التحقق. اطلب كودًا جديدًا'});
+    const supplied=Buffer.from(hashVerificationCode(discordId,code),'hex'),expected=Buffer.from(pending.code_hash,'hex');
+    if(supplied.length!==expected.length||!crypto.timingSafeEqual(supplied,expected)){
+      await query('UPDATE verification_codes SET attempts=attempts+1 WHERE discord_id=$1',[discordId]);
+      return res.status(400).json({error:'كود التحقق غير صحيح أو منتهي'});
+    }
+    const registrationTicket=crypto.randomBytes(32).toString('base64url');
+    await query('UPDATE verification_codes SET confirmed_at=NOW(),registration_ticket_hash=$2 WHERE discord_id=$1',[discordId,crypto.createHash('sha256').update(registrationTicket).digest('hex')]);
+    return res.json({verified:true,discord_id:discordId,registration_ticket:registrationTicket});
   }catch(e){console.error(e);res.status(500).json({error:'تعذر تأكيد التحقق'});}
+});
+
+router.post('/bot/login-ticket',requireBotSignature,async(req,res)=>{
+  try{
+    const discordId=String(req.body.discord_id||'').trim();
+    const user=(await query('SELECT id FROM users WHERE discord_id=$1 AND COALESCE(banned,FALSE)=FALSE ORDER BY is_owner DESC,created_at ASC LIMIT 1',[discordId])).rows[0];
+    if(!user)return res.status(404).json({error:'لا يوجد حساب موقع مرتبط بهذا Discord؛ استخدم /verify send'});
+    const ticket=crypto.randomBytes(32).toString('base64url'),hash=crypto.createHash('sha256').update(ticket).digest('hex');
+    await query('DELETE FROM bot_login_tickets WHERE expires_at<NOW()');
+    await query("INSERT INTO bot_login_tickets(ticket_hash,user_id,expires_at) VALUES($1,$2,NOW()+INTERVAL '2 minutes')",[hash,user.id]);
+    return res.json({ticket});
+  }catch(error){console.error('bot login ticket:',error.message);return res.status(500).json({error:'تعذر إنشاء رابط الدخول'});}
+});
+router.post('/bot/exchange-ticket',async(req,res)=>{
+  try{
+    const ticket=String(req.body.ticket||'').trim();if(ticket.length<32)return res.status(400).json({error:'تذكرة الدخول غير صالحة'});
+    const hash=crypto.createHash('sha256').update(ticket).digest('hex'),connection=await pool.connect();
+    try{
+      await connection.query('BEGIN');
+      const found=await connection.query('DELETE FROM bot_login_tickets WHERE ticket_hash=$1 AND expires_at>NOW() RETURNING user_id',[hash]);
+      if(!found.rows[0]){await connection.query('ROLLBACK');return res.status(400).json({error:'انتهت صلاحية رابط الدخول أو استُخدم من قبل'});}
+      const {rows}=await connection.query('SELECT id,username,role,is_owner,discord_id,discord_verified,avatar FROM users WHERE id=$1 AND COALESCE(banned,FALSE)=FALSE',[found.rows[0].user_id]);
+      if(!rows[0]){await connection.query('ROLLBACK');return res.status(401).json({error:'الحساب غير متاح'});}
+      const token=jwt.sign({id:rows[0].id},process.env.JWT_SECRET,{expiresIn:'30d'});
+      await connection.query('COMMIT');
+      return res.json({token,user:rows[0]});
+    }catch(error){await connection.query('ROLLBACK').catch(()=>{});throw error;}finally{connection.release();}
+  }catch(error){console.error('exchange login ticket:',error.message);return res.status(500).json({error:'تعذر إنشاء جلسة الدخول'});}
 });
 
 // ===== تسجيل الدخول =====
@@ -187,7 +231,7 @@ router.post('/login', async (req, res) => {
 // ===== تسجيل جديد =====
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, discord_id, verification_code } = req.body;
+    const { username, password, discord_id, verification_code, registration_ticket } = req.body;
     if (!username || !password || !discord_id) return res.status(400).json({ error: 'التسجيل يتطلب يوزر الموقع + الباسورد + التحقق من حساب ديسكورد' });
     if (username.length < 2 || password.length < 6) {
       return res.status(400).json({ error: 'الاسم قصير أو الباسورد أقل من 6 أحرف' });
@@ -195,19 +239,31 @@ router.post('/register', async (req, res) => {
 
     const verifiedDiscordId = await resolveDiscordId(discord_id);
     if (!verifiedDiscordId || !(await discordMemberExists(verifiedDiscordId))) return res.status(400).json({ error: 'حساب ديسكورد غير موجود في سيرفر MLD' });
-    const pending = verificationCodes.get(String(verifiedDiscordId));
-    if (!pending || pending.expires < Date.now() || pending.code !== String(verification_code || '')) return res.status(400).json({ error: 'أرسل كود التحقق لديسكورد وأدخله بشكل صحيح' });
-
-    const exists = await query('SELECT id FROM users WHERE username = $1', [username]);
-    if (exists.rows[0]) return res.status(400).json({ error: 'الاسم مستخدم' });
-
-    const hash = await bcrypt.hash(password, 10);
-    const { rows } = await query(
-      `INSERT INTO users (username, password, discord_id, discord_verified)
-       VALUES ($1, $2, $3, TRUE) RETURNING *`,
-      [username, hash, verifiedDiscordId]
-    );
-    verificationCodes.delete(String(verifiedDiscordId));
+    const connection=await pool.connect();
+    let rows,hash;
+    try{
+      await connection.query('BEGIN');
+      const pending=await connection.query('SELECT code_hash,expires_at,confirmed_at,registration_ticket_hash FROM verification_codes WHERE discord_id=$1 FOR UPDATE',[String(verifiedDiscordId)]);
+      if(!pending.rows[0]||new Date(pending.rows[0].expires_at).getTime()<Date.now())throw Object.assign(new Error('انتهت صلاحية التحقق؛ أعد /verify send'),{status:400});
+      if(Number(pending.rows[0].attempts)>=5)throw Object.assign(new Error('تجاوزت عدد محاولات التحقق. اطلب كودًا جديدًا'),{status:429});
+      if(pending.rows[0].confirmed_at){
+        if(!registration_ticket||!pending.rows[0].registration_ticket_hash)throw Object.assign(new Error('أكمل التحقق عبر بوت MLD وأدخل تذكرة التسجيل'),{status:400});
+        const saved=Buffer.from(pending.rows[0].registration_ticket_hash,'hex'),submitted=Buffer.from(crypto.createHash('sha256').update(String(registration_ticket)).digest('hex'),'hex');
+        if(saved.length!==submitted.length||!crypto.timingSafeEqual(saved,submitted))throw Object.assign(new Error('تذكرة التسجيل غير صحيحة'),{status:400});
+      }else{
+        const supplied=Buffer.from(hashVerificationCode(verifiedDiscordId,String(verification_code||'')),'hex'),expected=Buffer.from(pending.rows[0].code_hash,'hex');
+        if(supplied.length!==expected.length||!crypto.timingSafeEqual(supplied,expected)){
+          throw Object.assign(new Error('أرسل كود التحقق عبر رسالة Discord أو استخدم /verify confirm في البوت'),{status:422});
+        }
+      }
+      hash=await bcrypt.hash(password,10);
+      const exists=await connection.query('SELECT id FROM users WHERE username=$1 OR discord_id=$2 LIMIT 1',[username,verifiedDiscordId]);
+      if(exists.rows[0])throw Object.assign(new Error('الاسم أو حساب Discord مستخدم'),{status:409});
+      const created=await connection.query('INSERT INTO users(username,password,discord_id,discord_verified) VALUES($1,$2,$3,TRUE) RETURNING *',[username,hash,verifiedDiscordId]);
+      rows=created.rows;
+      await connection.query('DELETE FROM verification_codes WHERE discord_id=$1',[String(verifiedDiscordId)]);
+      await connection.query('COMMIT');
+    }catch(error){await connection.query('ROLLBACK').catch(()=>{});if(error.status===422){await query('UPDATE verification_codes SET attempts=attempts+1 WHERE discord_id=$1',[String(verifiedDiscordId)]);return res.status(400).json({error:error.message});}if(error.status)return res.status(error.status).json({error:error.message});if(error.code==='23505')return res.status(409).json({error:'الاسم أو حساب Discord مستخدم'});throw error;}finally{connection.release();}
     const { password: _, ...user } = rows[0];
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });

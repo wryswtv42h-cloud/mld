@@ -10,6 +10,7 @@
 ## الهيكل
 - `api/` — الخادم الخلفي (Express + PostgreSQL + Socket.IO)
 - `web/` — الموقع (HTML + CSS + JS)
+- `bot/` — بوت Discord الرسمي (التحقق، الشات، الزاجل، الغرف، الإعلانات)
 
 ## المميزات
 - تسجيل دخول (يوزر/باسورد)
@@ -31,3 +32,25 @@
 1. Supabase (قاعدة البيانات)
 2. Railway (النشر)
 3. Discord Bot (التوكن)
+
+## أوامر بوت MLD الرسمي
+- `/verify send` يرسل كود التحقق إلى الخاص.
+- `/verify confirm` يفتح نموذجًا خاصًا لتأكيد الكود ويرسل تذكرة التسجيل السرية؛ أدخلها في نموذج التسجيل بالموقع.
+- `/mld chat` يرسل رسالة للشات العام بعد ربط Discord بحساب الموقع.
+- `/mld zajel` يرسل رسالة خاصة داخل الموقع إلى عضو مسجّل.
+- `/mld room` ينشئ فئة وقناة شات وصوت في سيرفر Discord ويحفظها في الموقع (للأونر فقط).
+- `/mld broadcast` ينشر إعلانًا في قناة الإعلانات المحددة (للأونر فقط).
+
+### نشر البوت على Railway
+أنشئ خدمة Railway ثالثة من هذا المستودع وحدد **Root Directory** إلى `/bot`. استخدم `bot/railway.json`، وأضف المتغيرات التالية إلى خدمات API وBot:
+- `DATABASE_URL` — نفس قاعدة PostgreSQL المشتركة.
+- `DISCORD_TOKEN` — توكن بوت MLD الرسمي نفسه.
+- `DISCORD_GUILD_ID` — معرّف سيرفر MLD.
+- `API_URL` — عنوان API العام، مثل `https://api-production-5bddb.up.railway.app`.
+- `WEB_URL` — عنوان الموقع العام؛ يستخدمه البوت لإنشاء رابط الدخول الآمن.
+- `MLD_BOT_API_SECRET` — سر عشوائي قوي واحد، متطابق في API وBot؛ لا ترفعه إلى GitHub.
+- `DISCORD_CLIENT_ID` — Application ID الخاص ببوت MLD.
+- `DISCORD_ANNOUNCEMENT_CHANNEL_ID` — القناة التي سينشر فيها البرودكاست.
+- `JWT_SECRET` — نفس سر API (مطلوب إذا كان البوت يشغّل بوتات المستخدمين أيضًا).
+
+فعّل في Discord Developer Portal intents المطلوبة، ومنها **Server Members Intent** و**Message Content Intent**. يحتاج البوت صلاحيات إرسال الرسائل وإدارة القنوات لإنشاء رومات Discord. بعد نشر البوت، يُسجل أوامر `/verify` و`/mld` في سيرفر MLD عند بدء الخدمة.

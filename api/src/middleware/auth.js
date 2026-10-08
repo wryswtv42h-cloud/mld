@@ -20,7 +20,7 @@ async function isCurrentMember(discordId) {
       }
       return value;
     })
-    .catch(() => cached?.value && cached.expires + 60_000 > Date.now() ? cached.value : false)
+    .catch(() => cached?.value && cached.expires > Date.now() ? cached.value : false)
     .finally(() => pendingMembers.delete(key));
   pendingMembers.set(key, check);
   return check;

@@ -1,11 +1,25 @@
 import express from 'express';
+import crypto from 'crypto';
 import { query } from '../db.js';
-import { requireAuth, requireOwner, requireAdmin, optionalAuth } from '../middleware/auth.js';
+import { requireAuth, requireOwner, optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 const activeBroadcasts = new Set();
 const discordToken = () => process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
 const guildId = () => process.env.DISCORD_GUILD_ID;
+function requireBotSignature(req,res,next){
+  const secret=process.env.MLD_BOT_API_SECRET||'',timestamp=String(req.get('X-MLD-Bot-Timestamp')||''),signature=String(req.get('X-MLD-Bot-Signature')||'');
+  if(!secret||!/^\d{13}$/.test(timestamp)||Math.abs(Date.now()-Number(timestamp))>60_000)return res.status(401).json({error:'طلب البوت غير موثق أو منتهي'});
+  const expected=crypto.createHmac('sha256',secret).update(JSON.stringify(req.body||{})).digest();
+  let supplied;try{supplied=Buffer.from(signature,'hex')}catch{return res.status(401).json({error:'توقيع البوت غير صالح'});}
+  if(supplied.length!==expected.length||!crypto.timingSafeEqual(supplied,expected))return res.status(401).json({error:'توقيع البوت غير صالح'});
+  next();
+}
+async function botUser(discordId){
+  const {rows}=await query('SELECT id,username,discord_id,role,is_owner FROM users WHERE discord_id=$1 AND COALESCE(banned,FALSE)=FALSE ORDER BY is_owner DESC,created_at ASC LIMIT 1',[String(discordId||'')]);
+  return rows[0]||null;
+}
+function isPlatformOwner(user){return !!user?.is_owner;}
 async function resolveDiscordId(value){
   const input=String(value||'').trim();
   if(/^\d{17,20}$/.test(input)) return input;
@@ -82,6 +96,54 @@ router.patch('/settings/:key',requireAuth,requireOwner,async(req,res)=>{
   res.json({message:'تم الحفظ'});
 });
 router.get('/audit',requireAuth,requireOwner,async(req,res)=>{const {rows}=await query('SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 200');res.json({logs:rows});});
+
+router.post('/bot/chat',requireBotSignature,async(req,res)=>{
+  try{const user=await botUser(req.body.discord_id);if(!user)return res.status(403).json({error:'اربط حساب الموقع أولاً قبل استخدام شات ملاذ'});const content=String(req.body.content||'').trim();if(!content||content.length>2000)return res.status(400).json({error:'الرسالة فارغة أو أطول من المسموح'});const {rows}=await query("INSERT INTO messages(room_id,sender_id,sender_name,content,type) VALUES('public',$1,$2,$3,'public') RETURNING id,created_at",[user.id,user.username,content]);res.status(201).json({message:'وصلت رسالتك إلى الشات العام',id:rows[0].id});}catch(error){console.error('bot chat:',error.message);res.status(500).json({error:'تعذر إرسال الرسالة'});}
+});
+router.post('/bot/zajel',requireBotSignature,async(req,res)=>{
+  try{const sender=await botUser(req.body.discord_id);if(!sender)return res.status(403).json({error:'اربط حساب الموقع أولاً قبل استخدام الزاجل'});const recipient=String(req.body.recipient||'').trim(),content=String(req.body.content||'').trim().slice(0,2000);if(!recipient||!content)return res.status(400).json({error:'أدخل المستلم والرسالة'});const target=await query('SELECT id,username FROM users WHERE (username=$1 OR discord_id=$1 OR id::text=$1) AND id<>$2 AND banned=FALSE LIMIT 1',[recipient,sender.id]);if(!target.rows[0])return res.status(404).json({error:'المستلم غير موجود أو ليس لديه حساب موقع'});await query('INSERT INTO secret_messages(sender_id,recipient_id,content,anonymous) VALUES($1,$2,$3,$4)',[sender.id,target.rows[0].id,content,!!req.body.anonymous]);res.status(201).json({message:`تم تسليم الزاجل إلى ${target.rows[0].username}`});}catch(error){console.error('bot pigeon:',error.message);res.status(500).json({error:'تعذر إرسال الزاجل'});}
+});
+router.post('/bot/room',requireBotSignature,async(req,res)=>{
+  try{
+    const owner=await botUser(req.body.discord_id);if(!owner||!isPlatformOwner(owner))return res.status(403).json({error:'إنشاء الغرف محصور بأونر MLD'});
+    const guild=String(req.body.discord_guild_id||''),name=String(req.body.name||'').trim().slice(0,80),isPrivate=!!req.body.is_private;
+    if(!name)return res.status(400).json({error:'اكتب اسم الغرفة'});
+    if(!guild||guild!==guildId())return res.status(403).json({error:'السيرفر غير مصرح به'});
+    const channelOverwrites=isPrivate?[{id:guild,type:0,deny:'1024'},{id:req.body.discord_id,type:1,allow:'1051648'}]:[];
+    const category=await discordApi('/guilds/'+guild+'/channels',{method:'POST',body:JSON.stringify({name:name.slice(0,100),type:4,permission_overwrites:channelOverwrites})});
+    let textChannel;
+    try{textChannel=await discordApi('/guilds/'+guild+'/channels',{method:'POST',body:JSON.stringify({name:'chat',type:0,parent_id:category.id,permission_overwrites:channelOverwrites})});}
+    catch(error){await fetch('https://discord.com/api/v10/channels/'+category.id,{method:'DELETE',headers:{Authorization:'Bot '+discordToken()}}).catch(()=>{});throw error;}
+    let voiceChannel=null;
+    try{voiceChannel=await discordApi('/guilds/'+guild+'/channels',{method:'POST',body:JSON.stringify({name:'Voice',type:2,parent_id:category.id,permission_overwrites:channelOverwrites})});}catch(error){console.warn('room voice channel:',error.message);}
+    try{
+      const {rows}=await query('INSERT INTO community_rooms(name,voice_name,is_private,created_by,discord_category_id,discord_text_channel_id,discord_voice_channel_id) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id,name,voice_name,is_private,created_at,discord_text_channel_id,discord_voice_channel_id',[name,voiceChannel?.name||null,isPrivate,owner.id,category.id,textChannel.id,voiceChannel?.id||null]);
+      await query('INSERT INTO community_room_members(room_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[rows[0].id,owner.id]);
+      await audit(owner,'bot_room_created',String(rows[0].id),{discord_category_id:category.id,discord_text_channel_id:textChannel.id});
+      return res.status(201).json({message:'تم إنشاء الشات والروم في Discord والموقع',...rows[0]});
+    }catch(error){for(const channel of [voiceChannel,textChannel,category])if(channel?.id)await fetch('https://discord.com/api/v10/channels/'+channel.id,{method:'DELETE',headers:{Authorization:'Bot '+discordToken()}}).catch(()=>{});throw error;}
+  }catch(error){console.error('bot room:',error.message);res.status(500).json({error:'تعذر إنشاء الغرفة في Discord'});}
+});
+router.post('/bot/broadcast',requireBotSignature,async(req,res)=>{
+  try{
+    const owner=await botUser(req.body.discord_id);if(!owner||!isPlatformOwner(owner))return res.status(403).json({error:'البرودكاست محصور بأونر MLD'});
+    const guild=String(req.body.discord_guild_id||''),title=String(req.body.title||'').trim(),content=String(req.body.content||'').trim(),channelId=process.env.DISCORD_ANNOUNCEMENT_CHANNEL_ID;
+    if(!title||!content)return res.status(400).json({error:'أدخل العنوان والرسالة'});
+    if(!channelId||!discordToken())return res.status(503).json({error:'إعداد قناة الإعلان أو توكن Discord ناقص'});
+    if(!guild||guild!==guildId())return res.status(403).json({error:'السيرفر غير مصرح به'});
+    const job=await query("INSERT INTO broadcast_jobs(title,message,created_by,status,total_count) VALUES($1,$2,$3,'queued',0) RETURNING id",[title,content,owner.id]);
+    runBroadcastJob(job.rows[0].id,{title,content,channelId,actor:owner}).catch(error=>console.error('bot broadcast:',error.message));
+    res.status(202).json({message:'تم وضع الإعلان في قائمة الإرسال',job_id:job.rows[0].id});
+  }catch(error){console.error('bot broadcast:',error.message);res.status(500).json({error:'تعذر بدء البرودكاست'});}
+});
+router.post('/owner/broadcast',requireAuth,requireOwner,async(req,res)=>{
+  const title=String(req.body.title||'').trim(),content=String(req.body.content||'').trim(),channelId=process.env.DISCORD_ANNOUNCEMENT_CHANNEL_ID;
+  if(!title||!content)return res.status(400).json({error:'أدخل العنوان والرسالة'});
+  if(!channelId||!discordToken())return res.status(503).json({error:'إعداد قناة إعلان Discord ناقص'});
+  const job=await query("INSERT INTO broadcast_jobs(title,message,created_by,status,total_count) VALUES($1,$2,$3,'queued',0) RETURNING id",[title,content,req.user.id]);
+  runBroadcastJob(job.rows[0].id,{title,content,channelId,actor:req.user}).catch(error=>console.error('owner broadcast:',error.message));
+  res.status(202).json({message:'وُضع الإعلان في قائمة الإرسال',job_id:job.rows[0].id});
+});
 
 router.get('/chat',optionalAuth,async(req,res)=>{try{const roomId=String(req.query.room_id||'public');if(roomId!=='public'){if(!req.user)return res.status(401).json({error:'سجّل الدخول لعرض الغرفة'});const allowed=await query('SELECT 1 FROM community_room_members WHERE room_id=$1 AND user_id=$2',[roomId,req.user.id]);if(!allowed.rows.length)return res.status(403).json({error:'انضم إلى الغرفة أولًا'});}const {rows}=await query('SELECT id,room_id,sender_id,sender_name,content,type,created_at FROM messages WHERE room_id=$1 ORDER BY created_at DESC LIMIT 100',[roomId]);res.set('Cache-Control','private, no-store').json({messages:rows.reverse()});}catch(e){console.error('public chat get',e);res.status(500).json({error:'تعذر تحميل الشات'});}});
 router.post('/chat',requireAuth,async(req,res)=>{try{const content=String(req.body.content||'').trim(),roomId=String(req.body.room_id||'public');if(!content)return res.status(400).json({error:'اكتب رسالة'});if(content.length>2000)return res.status(400).json({error:'الرسالة طويلة'});if(roomId!=='public'){const allowed=await query('SELECT 1 FROM community_room_members WHERE room_id=$1 AND user_id=$2',[roomId,req.user.id]);if(!allowed.rows.length)return res.status(403).json({error:'انضم إلى الغرفة أولًا'});}const {rows}=await query('INSERT INTO messages(room_id,sender_id,sender_name,content,type) VALUES($1,$2,$3,$4,$5) RETURNING *',[roomId,req.user.id,req.user.username,content,'public']);res.status(201).json({message:rows[0]});}catch(e){console.error('public chat post',e);res.status(500).json({error:'تعذر إرسال الرسالة'});}});
@@ -181,21 +243,14 @@ router.patch('/owner/announcement',requireAuth,requireOwner,async(req,res)=>{
   await audit(req.user,'announcement_update','announcement',value); res.json({announcement:value});
 });
 router.get('/owner/stats',requireAuth,requireOwner,async(req,res)=>{
-  const [users,bots,rooms,messages,activeSessions]=await Promise.all([
+  try{const [users,bots,rooms,messages,activeSessions]=await Promise.all([
     query('SELECT COUNT(*)::int AS count FROM users'),
     query('SELECT COUNT(*)::int AS count FROM bots'),
     query('SELECT COUNT(*)::int AS count FROM cinema_rooms WHERE status IS DISTINCT FROM \'closed\''),
     query('SELECT COUNT(*)::int AS count FROM messages'),
     query('SELECT COUNT(*)::int AS count FROM games WHERE status IN (\'open\',\'waiting\',\'playing\')')
-  ]);
-  res.json({users:users.rows[0]?.count||0,bots:bots.rows[0]?.count||0,sessions:activeSessions.rows[0]?.count||0,messages:messages.rows[0]?.count||0,cinema:rooms.rows[0]?.count||0});
-});
-router.post('/owner/broadcast',requireAuth,requireOwner,async(req,res)=>{
-  const title=String(req.body.title||'').trim(); const content=String(req.body.content||'').trim(); if(!title||!content)return res.status(400).json({error:'أدخل العنوان والرسالة'});
-  const token=discordToken(),channelId=process.env.DISCORD_ANNOUNCEMENT_CHANNEL_ID; if(!token||!channelId)return res.status(503).json({error:'إعدادات Discord ناقصة: يلزم DISCORD_TOKEN و DISCORD_ANNOUNCEMENT_CHANNEL_ID'});
-  const job=await query('INSERT INTO broadcast_jobs(title,message,created_by,status,total_count) VALUES($1,$2,$3,\'queued\',0) RETURNING *',[title,content,req.user.id]);
-  res.status(202).json({message:'بدأ إرسال البرودكاست',job:job.rows[0]});
-  runBroadcastJob(job.rows[0].id,{title,content,channelId,actor:{id:req.user.id,username:req.user.username}}).catch(e=>console.error('broadcast job failed:',e));
+  ]);res.set('Cache-Control','private, no-store').json({users:users.rows[0]?.count||0,bots:bots.rows[0]?.count||0,sessions:activeSessions.rows[0]?.count||0,messages:messages.rows[0]?.count||0,cinema:rooms.rows[0]?.count||0});}
+  catch(error){console.error('owner stats:',error.message);res.status(503).json({error:'تعذر تحميل إحصائيات الأونر'});}
 });
 router.get('/owner/broadcast/jobs',requireAuth,requireOwner,async(req,res)=>{const {rows}=await query('SELECT * FROM broadcast_jobs ORDER BY created_at DESC LIMIT 20');res.json({jobs:rows});});
 router.get('/owner/bot-subscriptions',requireAuth,requireOwner,async(req,res)=>{
