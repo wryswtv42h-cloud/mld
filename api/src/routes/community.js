@@ -66,7 +66,7 @@ export async function resumeBroadcastJobs(){
   await query("UPDATE broadcast_jobs SET status='failed',failed_count=GREATEST(failed_count,1) WHERE status='running'");
   const {rows}=await query("SELECT id,title,message,created_by FROM broadcast_jobs WHERE status='queued' ORDER BY created_at");
   for(const job of rows){
-    const actor=(await query('SELECT id,username FROM users WHERE id=$1',[job.created_by])).rows[0];
+    const actor=(await query('SELECT id,username FROM users WHERE id::text=$1::text',[job.created_by])).rows[0];
     if(!actor){await query("UPDATE broadcast_jobs SET status='failed' WHERE id=$1",[job.id]);continue;}
     runBroadcastJob(job.id,{title:job.title,content:job.message,channelId,actor}).catch(error=>console.error('resume broadcast:',error.message));
   }
