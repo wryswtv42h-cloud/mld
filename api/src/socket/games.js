@@ -9,9 +9,9 @@ export function setupGameSocket(io,socket){
   if(!socket.user)return socket.emit('game:error',{error:'سجّل دخولك للعب'});
   const name=socket.user.username;
   const player={name,userId:socket.user?.id||null,isBot:false,socketId:socket.id};
-  let players=safeJson(session.players),spectators=safeJson(session.spectators);players=players.filter(p=>String(p.userId||'')!==String(socket.user.id));spectators=spectators.filter(p=>String(p.userId||'')!==String(socket.user.id));
-  const mustSpectate=asSpectator||session.status==='playing'||session.status==='finished'||players.length>=Number(session.max_players||4);
-  if(mustSpectate)spectators.push({...player,isHost:String(session.host_id)===String(socket.user.id)});else players.push({...player,isHost:String(session.host_id)===String(socket.user.id)});
+  let players=safeJson(session.players),spectators=safeJson(session.spectators);const existingPlayer=players.find(p=>String(p.userId||'')===String(socket.user.id)),existingSpectator=spectators.find(p=>String(p.userId||'')===String(socket.user.id));players=players.filter(p=>String(p.userId||'')!==String(socket.user.id));spectators=spectators.filter(p=>String(p.userId||'')!==String(socket.user.id));
+  const mustSpectate=asSpectator||session.status==='finished'||(session.status==='playing'&&!existingPlayer)||players.length>=Number(session.max_players||4);
+  if(existingPlayer&&session.status==='playing'&&!asSpectator)players.push({...existingPlayer,socketId:socket.id});else if(mustSpectate||existingSpectator)spectators.push({...player,isHost:String(session.host_id)===String(socket.user.id)});else players.push({...player,isHost:String(session.host_id)===String(socket.user.id)});
   await query('UPDATE games SET players=$1,spectators=$2 WHERE id=$3',[JSON.stringify(players),JSON.stringify(spectators),sessionId]);
   socket.join(room(sessionId));await emitGameUpdate(io,sessionId,{sessionId,players,spectators,state:session.state,status:session.status,gameType:session.type});
  }catch(e){console.error('game join',e);socket.emit('game:error',{error:'تعذر الانضمام للجلسة'})}});
