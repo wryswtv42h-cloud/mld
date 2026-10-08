@@ -1,7 +1,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import { query } from '../db.js';
-import { requireAuth, requireOwner, optionalAuth } from '../middleware/auth.js';
+import { requireAuth, requireOwner, requireAdmin, optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 const activeBroadcasts = new Set();
