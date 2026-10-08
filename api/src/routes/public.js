@@ -162,7 +162,7 @@ router.get('/members', async (req, res) => {
     const roleMap = new Map(roles.map(r => [r.id, r]));
     filtered.forEach(m => {
       m.importantRoles = m.roles.map(id => roleMap.get(id)).filter(Boolean)
-        .filter(r => !r.managed).sort((a,b) => (b.position||0) - (a.position||0)).slice(0, 5)
+        .filter(r => TOP_ROLE_IDS.has(String(r.id))).sort((a,b) => (b.position||0) - (a.position||0)).slice(0, 6)
         .map(r => ({ id: r.id, name: r.name, color: r.color }));
     });
     res.json({ members: filtered, total: cache.members.value.length });
@@ -171,15 +171,24 @@ router.get('/members', async (req, res) => {
   }
 });
 
-router.get('/roles', async (req, res) => {
+const TOP_ROLE_IDS = new Set(['1530712642384040027','1521187079336362024','1531109479264026706','1548732297669255259','1548732341185155103','1548732606508703744']);
+const ROLE_CAPABILITIES = {
+  '1530712642384040027':['إدارة كاملة للموقع والسيرفر','إدارة الحسابات والإعدادات والسجلات'],
+  '1521187079336362024':['مساندة الأونر وإدارة المجتمع','متابعة الشات والغرف'],
+  '1531109479264026706':['إدارة المجتمع والمبادرات','متابعة القروبات والأنشطة'],
+  '1548732297669255259':['إشراف متقدم على الشات والتذاكر','تهدئة النزاعات ورفع الحالات للأونر'],
+  '1548732341185155103':['إشراف على الشات والتذاكر','حذف المحتوى المخالف'],
+  '1548732606508703744':['مساعدة الأعضاء ومراقبة الشات','رفع البلاغات للمشرفين']
+};
+\nrouter.get('/roles', async (req, res) => {
   try {
     const [roles, members] = await Promise.all([getRoles(), getMembers()]);
     const counts = new Map();
     for (const m of members) for (const id of (m.roles || [])) counts.set(id, (counts.get(id) || 0) + 1);
     res.json({
-      roles: roles.filter(r => !r.managed && r.name !== '@everyone').sort((a,b)=>(b.position||0)-(a.position||0)).map(r => ({
+      roles: roles.filter(r => TOP_ROLE_IDS.has(String(r.id))).sort((a,b)=>(b.position||0)-(a.position||0)).map(r => ({
         id: r.id, name: r.name, color: r.hexColor || '#a86fdf',
-        membersCount: counts.get(r.id) || 0, permissions: []
+        membersCount: counts.get(r.id) || 0, permissions: ROLE_CAPABILITIES[r.id] || []
       }))
     });
   } catch (e) {
@@ -190,9 +199,9 @@ router.get('/roles', async (req, res) => {
 router.get('/roles/:id/members', async (req, res) => {
   try {
     const [roles, members] = await Promise.all([getRoles(), getMembers()]);
-    const role = roles.find(r => r.id === req.params.id);
+    const role = roles.find(r => TOP_ROLE_IDS.has(String(r.id)) && r.id === req.params.id);
     if (!role) return res.status(404).json({ error: 'Role not found' });
-    res.json({ role: { id: role.id, name: role.name, color: role.hexColor, membersCount: members.filter(m => m.roles?.includes(role.id)).length, permissions: [] }, members: members.filter(m => m.roles?.includes(role.id)).slice(0, 100).map(normalizeMember) });
+    res.json({ role: { id: role.id, name: role.name, color: role.hexColor, membersCount: members.filter(m => m.roles?.includes(role.id)).length, permissions: ROLE_CAPABILITIES[role.id] || [] }, members: members.filter(m => m.roles?.includes(role.id)).slice(0, 100).map(normalizeMember) });
   } catch (e) {
     res.status(503).json({ error: 'تعذر جلب أعضاء الرتبة' });
   }
