@@ -19,7 +19,7 @@ function normalize(row){
 router.get('/sessions',optionalAuth,async(req,res)=>{
   try{
     const {rows}=await query(`SELECT g.*,u.username host_name
-      FROM games g LEFT JOIN users u ON u.id=g.host_id
+      FROM games g LEFT JOIN users u ON u.id::text=g.host_id::text
       WHERE g.status IN ('open','waiting','playing')
       ORDER BY g.created_at DESC LIMIT 50`);
     res.json({sessions:rows.map(normalize)});
@@ -44,7 +44,7 @@ router.post('/sessions',requireAuth,async(req,res)=>{
 });
 
 router.get('/sessions/:id',optionalAuth,async(req,res)=>{
-  const {rows}=await query(`SELECT g.*,u.username host_name FROM games g LEFT JOIN users u ON u.id=g.host_id WHERE g.id=$1`,[req.params.id]);
+  const {rows}=await query(`SELECT g.*,u.username host_name FROM games g LEFT JOIN users u ON u.id::text=g.host_id::text WHERE g.id=$1`,[req.params.id]);
   if(!rows[0])return res.status(404).json({error:'الجلسة غير موجودة'});
   res.json({session:normalize(rows[0])});
 });
