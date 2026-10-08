@@ -40,7 +40,30 @@ const router = express.Router();
 const verificationCodes = new Map();
 
 // ===== تحقق Discord عبر رسالة خاصة من البوت =====
-router.get('/discord-suggestions', async (req,res)=>{\n  try { const q=String(req.query.q||'').trim(); if(q.length<2)return res.json({members:[]}); const token=process.env.DISCORD_TOKEN||process.env.DISCORD_BOT_TOKEN; const guildId=process.env.DISCORD_GUILD_ID; if(!token||!guildId)return res.json({members:[]}); const r=await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/search?query=${encodeURIComponent(q)}&limit=10`,{headers:{Authorization:`Bot ${token}`}}); if(!r.ok)return res.json({members:[]}); const members=await r.json(); return res.json({members:members.map(m=>({id:m.user?.id,username:m.user?.username,global_name:m.user?.global_name,avatar:m.user?.avatar})).filter(x=>x.username)}); } catch(e){ return res.json({members:[]}); }\n});\n\nrouter.post('/verify-discord', async (req, res) => {
+router.get('/discord-suggestions', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (q.length < 2) return res.json({ members: [] });
+    const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
+    const guildId = process.env.DISCORD_GUILD_ID;
+    if (!token || !guildId) return res.json({ members: [] });
+    const r = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/search?query=${encodeURIComponent(q)}&limit=10`, {
+      headers: { Authorization: `Bot ${token}` }
+    });
+    if (!r.ok) return res.json({ members: [] });
+    const members = await r.json();
+    return res.json({ members: members.map(m => ({
+      id: m.user?.id,
+      username: m.user?.username,
+      global_name: m.user?.global_name,
+      avatar: m.user?.avatar
+    })).filter(x => x.username) });
+  } catch (e) {
+    return res.json({ members: [] });
+  }
+});
+
+router.post('/verify-discord', async (req, res) => {
   try {
     const { discord_id } = req.body;
     if (!discord_id) return res.status(400).json({ error: 'أدخل Discord ID أو اسم المستخدم' });
