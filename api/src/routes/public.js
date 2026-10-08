@@ -180,7 +180,8 @@ const ROLE_CAPABILITIES = {
   '1548732341185155103':['إشراف على الشات والتذاكر','حذف المحتوى المخالف'],
   '1548732606508703744':['مساعدة الأعضاء ومراقبة الشات','رفع البلاغات للمشرفين']
 };
-\nrouter.get('/roles', async (req, res) => {
+
+router.get('/roles', async (req, res) => {
   try {
     const [roles, members] = await Promise.all([getRoles(), getMembers()]);
     const counts = new Map();
