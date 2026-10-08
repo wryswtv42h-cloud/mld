@@ -13,6 +13,7 @@ import botRoutes from './routes/bots.js';
 import gameRoutes from './routes/games.js';
 import publicRoutes from './routes/public.js';
 import communityRoutes from './routes/community.js';
+import discordSuggestionsRoutes from './routes/discord-suggestions.js';
 import { setupSocket } from './socket/index.js';
 
 dotenv.config();
@@ -57,6 +58,7 @@ app.use('/api/bots', botRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/community', communityRoutes);
+app.use('/api/auth/discord-suggestions', discordSuggestionsRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);
