@@ -219,10 +219,10 @@ router.post('/groups/:id/members/:memberId/status',requireAuth,requireOwner,asyn
 });
 
 router.get('/pigeon',requireAuth,async(req,res)=>{const {rows}=await query(`SELECT sm.id,sm.sender_id,sm.recipient_id,sm.content,sm.anonymous,sm.delivered,sm.created_at,
-  CASE WHEN sm.recipient_id=$1 AND sm.anonymous THEN NULL ELSE sender.username END AS sender_name,
+  CASE WHEN sm.recipient_id::text=$1::text AND sm.anonymous THEN NULL ELSE sender.username END AS sender_name,
   recipient.username AS recipient_name
-  FROM secret_messages sm LEFT JOIN users sender ON sender.id=sm.sender_id LEFT JOIN users recipient ON recipient.id=sm.recipient_id
-  WHERE sm.sender_id=$1 OR sm.recipient_id=$1 ORDER BY sm.created_at DESC LIMIT 100`,[req.user.id]);res.set('Cache-Control','private, no-store').json({messages:rows.reverse()});});
+  FROM secret_messages sm LEFT JOIN users sender ON sender.id::text=sm.sender_id::text LEFT JOIN users recipient ON recipient.id::text=sm.recipient_id::text
+  WHERE sm.sender_id::text=$1::text OR sm.recipient_id::text=$1::text ORDER BY sm.created_at DESC LIMIT 100`,[req.user.id]);res.set('Cache-Control','private, no-store').json({messages:rows.reverse()});});
 router.post('/pigeon',requireAuth,async(req,res)=>{const recipient=String(req.body.recipient_id||'').trim(),content=String(req.body.content||'').trim().slice(0,2000);if(!recipient||!content)return res.status(400).json({error:'أكمل الرسالة'});const target=await query('SELECT id,discord_id,username FROM users WHERE (id::text=$1 OR username=$1 OR discord_id=$1) AND id<>$2 LIMIT 1',[recipient,req.user.id]);if(!target.rows[0])return res.status(404).json({error:'المستلم غير موجود في حسابات الموقع'});const anonymous=!!req.body.anonymous;const {rows}=await query('INSERT INTO secret_messages(sender_id,recipient_id,content,anonymous) VALUES($1,$2,$3,$4) RETURNING id,sender_id,recipient_id,content,anonymous,delivered,created_at',[req.user.id,target.rows[0].id,content,anonymous]);const message=rows[0];res.status(202).json({message:{...message,recipient_name:target.rows[0].username,delivery_status:target.rows[0].discord_id?'queued':'saved'}});if(target.rows[0].discord_id)setImmediate(async()=>{try{const delivered=await dmDiscord(target.rows[0].discord_id,`**زاجل من ${anonymous?'مجهول':req.user.username}**\n${content}`);if(delivered)await query('UPDATE secret_messages SET delivered=TRUE WHERE id=$1',[message.id]);}catch(error){console.error('pigeon discord delivery:',error.message)}});});
 
 router.get('/cinema',async(req,res)=>{const {rows}=await query("SELECT * FROM cinema_rooms WHERE status IS DISTINCT FROM 'closed' ORDER BY created_at DESC");res.json({rooms:rows});});
@@ -268,7 +268,7 @@ router.post('/owner/bot-subscriptions/:botId',requireAuth,requireOwner,async(req
   res.json({subscription:rows[0]});
 });
 router.get('/owner/account/:id/private',requireAuth,requireOwner,async(req,res)=>{
-  const q=await query(`SELECT id,sender_id,recipient_id,content,created_at FROM pigeon_messages WHERE sender_id=$1 OR recipient_id=$1 ORDER BY created_at DESC LIMIT 500`,[req.params.id]);
+  const q=await query(`SELECT id,sender_id,recipient_id,content,anonymous,delivered,created_at FROM secret_messages WHERE sender_id::text=$1::text OR recipient_id::text=$1::text ORDER BY created_at DESC LIMIT 500`,[req.params.id]);
   res.json({messages:q.rows.reverse()});
 });
 
