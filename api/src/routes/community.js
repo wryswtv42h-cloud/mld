@@ -1,8 +1,9 @@
 import express from 'express';
 import { query } from '../db.js';
-import { requireAuth, requireOwner, requireAdmin } from '../middleware/auth.js';
+import { requireAuth, requireOwner, requireAdmin, optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
+const activeBroadcasts = new Set();
 const discordToken = () => process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
 const guildId = () => process.env.DISCORD_GUILD_ID;
 async function resolveDiscordId(value){
@@ -16,11 +17,45 @@ async function resolveDiscordId(value){
 }
 async function dmDiscord(discordId,content){
   if(!discordId||!discordToken()) return false;
-  const ch=await fetch('https://discord.com/api/v10/users/@me/channels',{method:'POST',headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json'},body:JSON.stringify({recipient_id:String(discordId)})});
+  const ch=await fetch('https://discord.com/api/v10/users/@me/channels',{method:'POST',headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json'},body:JSON.stringify({recipient_id:String(discordId)}),signal:AbortSignal.timeout(7000)});
   if(!ch.ok) return false;
   const channel=await ch.json();
-  const msg=await fetch('https://discord.com/api/v10/channels/'+channel.id+'/messages',{method:'POST',headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json'},body:JSON.stringify({content})});
+  const msg=await fetch('https://discord.com/api/v10/channels/'+channel.id+'/messages',{method:'POST',headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json'},body:JSON.stringify({content}),signal:AbortSignal.timeout(7000)});
   return msg.ok;
+}
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function sendDiscordChannelMessage(channelId,content){
+  for(let attempt=0;attempt<5;attempt++){
+    const response=await fetch('https://discord.com/api/v10/channels/'+encodeURIComponent(channelId)+'/messages',{method:'POST',headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json'},body:JSON.stringify({content,allowed_mentions:{parse:[]}}),signal:AbortSignal.timeout(15000)});
+    if(response.status===429){const limited=await response.json().catch(()=>({}));await pause(Math.max(250,Number(limited.retry_after||1)*1000));continue;}
+    if(!response.ok)throw new Error('تعذر الإرسال إلى قناة الإعلان (Discord '+response.status+')');
+    return response.json();
+  }
+  throw new Error('انتهت محاولات انتظار حد Discord');
+}
+async function runBroadcastJob(id,{title,content,channelId,actor}){
+  if(activeBroadcasts.has(String(id)))return;
+  activeBroadcasts.add(String(id));
+  try{
+    await query("UPDATE broadcast_jobs SET status='running' WHERE id=$1",[id]);
+    const message=await sendDiscordChannelMessage(channelId,`**${title}**\n${content}`);
+    await query("UPDATE broadcast_jobs SET status='completed',total_count=1,sent_count=1,failed_count=0 WHERE id=$1",[id]);
+    await audit(actor,'broadcast_sent',String(channelId),{title,message_id:message.id});
+  }catch(error){
+    console.error('broadcast job',id,error.message);
+    await query("UPDATE broadcast_jobs SET status='failed',failed_count=1 WHERE id=$1",[id]).catch(()=>{});
+  }finally{activeBroadcasts.delete(String(id));}
+}
+export async function resumeBroadcastJobs(){
+  const channelId=process.env.DISCORD_ANNOUNCEMENT_CHANNEL_ID;
+  if(!channelId)return;
+  await query("UPDATE broadcast_jobs SET status='failed',failed_count=GREATEST(failed_count,1) WHERE status='running'");
+  const {rows}=await query("SELECT id,title,message,created_by FROM broadcast_jobs WHERE status='queued' ORDER BY created_at");
+  for(const job of rows){
+    const actor=(await query('SELECT id,username FROM users WHERE id=$1',[job.created_by])).rows[0];
+    if(!actor){await query("UPDATE broadcast_jobs SET status='failed' WHERE id=$1",[job.id]);continue;}
+    runBroadcastJob(job.id,{title:job.title,content:job.message,channelId,actor}).catch(error=>console.error('resume broadcast:',error.message));
+  }
 }
 async function discordApi(path, options={}) {
   const r = await fetch('https://discord.com/api/v10'+path,{...options,headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json',...(options.headers||{})}});
@@ -48,8 +83,31 @@ router.patch('/settings/:key',requireAuth,requireOwner,async(req,res)=>{
 });
 router.get('/audit',requireAuth,requireOwner,async(req,res)=>{const {rows}=await query('SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 200');res.json({logs:rows});});
 
-router.get('/chat', async (req,res)=>{ try { const {rows}=await query("SELECT id,room_id,sender_id,sender_name,content,type,created_at FROM messages WHERE room_id='public' ORDER BY created_at DESC LIMIT 100"); res.json({messages:rows.reverse()}); } catch(e) { console.error('public chat get',e); res.status(500).json({error:'تعذر تحميل الشات'}); } });
-router.post('/chat', requireAuth, async (req,res)=>{ try { const content=String(req.body.content||'').trim(); if(!content)return res.status(400).json({error:'اكتب رسالة'}); if(content.length>2000)return res.status(400).json({error:'الرسالة طويلة'}); const {rows}=await query("INSERT INTO messages(room_id,sender_id,sender_name,content,type) VALUES('public',$1,$2,$3,'public') RETURNING *",[req.user.id,req.user.username,content]); res.json({message:rows[0]}); } catch(e) { console.error('public chat post',e); res.status(500).json({error:'تعذر إرسال الرسالة'}); } });
+router.get('/chat',optionalAuth,async(req,res)=>{try{const roomId=String(req.query.room_id||'public');if(roomId!=='public'){if(!req.user)return res.status(401).json({error:'سجّل الدخول لعرض الغرفة'});const allowed=await query('SELECT 1 FROM community_room_members WHERE room_id=$1 AND user_id=$2',[roomId,req.user.id]);if(!allowed.rows.length)return res.status(403).json({error:'انضم إلى الغرفة أولًا'});}const {rows}=await query('SELECT id,room_id,sender_id,sender_name,content,type,created_at FROM messages WHERE room_id=$1 ORDER BY created_at DESC LIMIT 100',[roomId]);res.set('Cache-Control','private, no-store').json({messages:rows.reverse()});}catch(e){console.error('public chat get',e);res.status(500).json({error:'تعذر تحميل الشات'});}});
+router.post('/chat',requireAuth,async(req,res)=>{try{const content=String(req.body.content||'').trim(),roomId=String(req.body.room_id||'public');if(!content)return res.status(400).json({error:'اكتب رسالة'});if(content.length>2000)return res.status(400).json({error:'الرسالة طويلة'});if(roomId!=='public'){const allowed=await query('SELECT 1 FROM community_room_members WHERE room_id=$1 AND user_id=$2',[roomId,req.user.id]);if(!allowed.rows.length)return res.status(403).json({error:'انضم إلى الغرفة أولًا'});}const {rows}=await query('INSERT INTO messages(room_id,sender_id,sender_name,content,type) VALUES($1,$2,$3,$4,$5) RETURNING *',[roomId,req.user.id,req.user.username,content,'public']);res.status(201).json({message:rows[0]});}catch(e){console.error('public chat post',e);res.status(500).json({error:'تعذر إرسال الرسالة'});}});
+
+router.get('/rooms',requireAuth,async(req,res)=>{
+  const {rows}=await query(`SELECT r.id,r.name,r.voice_name,r.is_private,r.created_at,COUNT(m.user_id)::int AS members,
+    EXISTS(SELECT 1 FROM community_room_members mine WHERE mine.room_id=r.id AND mine.user_id=$1) AS joined
+    FROM community_rooms r LEFT JOIN community_room_members m ON m.room_id=r.id
+    WHERE NOT r.is_private OR r.created_by=$1 OR EXISTS(SELECT 1 FROM community_room_members mine WHERE mine.room_id=r.id AND mine.user_id=$1)
+    GROUP BY r.id ORDER BY r.created_at DESC LIMIT 100`,[req.user.id]);
+  res.set('Cache-Control','private, no-store').json({rooms:rows});
+});
+router.post('/rooms',requireAuth,async(req,res)=>{
+  const name=String(req.body.name||'').trim().slice(0,60),voiceName=String(req.body.voice_name||'').trim().slice(0,60),isPrivate=!!req.body.is_private;
+  if(!name)return res.status(400).json({error:'اكتب اسم الغرفة'});
+  const {rows}=await query('INSERT INTO community_rooms(name,voice_name,is_private,created_by) VALUES($1,$2,$3,$4) RETURNING id,name,voice_name,is_private,created_at',[name,voiceName||null,isPrivate,req.user.id]);
+  await query('INSERT INTO community_room_members(room_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[rows[0].id,req.user.id]);
+  res.status(201).json({room:{...rows[0],members:1,joined:true}});
+});
+router.post('/rooms/:id/join',requireAuth,async(req,res)=>{
+  const room=await query('SELECT id,is_private,created_by FROM community_rooms WHERE id=$1',[req.params.id]);
+  if(!room.rows[0])return res.status(404).json({error:'الغرفة غير موجودة'});
+  if(room.rows[0].is_private&&String(room.rows[0].created_by)!==String(req.user.id))return res.status(403).json({error:'هذه غرفة خاصة'});
+  await query('INSERT INTO community_room_members(room_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[req.params.id,req.user.id]);
+  res.json({message:'انضممت إلى الغرفة'});
+});
 
 router.get('/reviews', async (req,res)=>{ const {rows}=await query('SELECT * FROM reviews ORDER BY created_at DESC LIMIT 100'); res.json({reviews:rows}); });
 router.post('/reviews', requireAuth, async (req,res)=>{ const content=String(req.body.content||'').trim(); const rating=Math.max(1,Math.min(5,Number(req.body.rating)||5)); if(!content)return res.status(400).json({error:'اكتب رأيك'}); const {rows}=await query('INSERT INTO reviews(user_id,username,content,rating) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,req.user.username,content,rating]); res.json({review:rows[0]}); });
@@ -97,12 +155,19 @@ router.post('/groups/:id/members/:memberId/status',requireAuth,requireOwner,asyn
   res.json({member:gm.rows[0]});
 });
 
-router.get('/pigeon',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM pigeon_messages WHERE sender_id=$1 OR recipient_id=$1 ORDER BY created_at DESC LIMIT 100',[req.user.id]);res.json({messages:rows.reverse()});});
-router.post('/pigeon',requireAuth,async(req,res)=>{const recipient=String(req.body.recipient_id||'').trim(),content=String(req.body.content||'').trim();if(!recipient||!content)return res.status(400).json({error:'أكمل الرسالة'});const {rows}=await query('INSERT INTO pigeon_messages(sender_id,recipient_id,content,anonymous) VALUES($1,$2,$3,$4) RETURNING *',[req.user.id,recipient,content,!!req.body.anonymous]);res.json({message:rows[0]});});
+router.get('/pigeon',requireAuth,async(req,res)=>{const {rows}=await query(`SELECT sm.id,sm.sender_id,sm.recipient_id,sm.content,sm.anonymous,sm.delivered,sm.created_at,
+  CASE WHEN sm.recipient_id=$1 AND sm.anonymous THEN NULL ELSE sender.username END AS sender_name,
+  recipient.username AS recipient_name
+  FROM secret_messages sm LEFT JOIN users sender ON sender.id=sm.sender_id LEFT JOIN users recipient ON recipient.id=sm.recipient_id
+  WHERE sm.sender_id=$1 OR sm.recipient_id=$1 ORDER BY sm.created_at DESC LIMIT 100`,[req.user.id]);res.set('Cache-Control','private, no-store').json({messages:rows.reverse()});});
+router.post('/pigeon',requireAuth,async(req,res)=>{const recipient=String(req.body.recipient_id||'').trim(),content=String(req.body.content||'').trim().slice(0,2000);if(!recipient||!content)return res.status(400).json({error:'أكمل الرسالة'});const target=await query('SELECT id,discord_id,username FROM users WHERE (id::text=$1 OR username=$1 OR discord_id=$1) AND id<>$2 LIMIT 1',[recipient,req.user.id]);if(!target.rows[0])return res.status(404).json({error:'المستلم غير موجود في حسابات الموقع'});const anonymous=!!req.body.anonymous;const {rows}=await query('INSERT INTO secret_messages(sender_id,recipient_id,content,anonymous) VALUES($1,$2,$3,$4) RETURNING id,sender_id,recipient_id,content,anonymous,delivered,created_at',[req.user.id,target.rows[0].id,content,anonymous]);const message=rows[0];res.status(202).json({message:{...message,recipient_name:target.rows[0].username,delivery_status:target.rows[0].discord_id?'queued':'saved'}});if(target.rows[0].discord_id)setImmediate(async()=>{try{const delivered=await dmDiscord(target.rows[0].discord_id,`**زاجل من ${anonymous?'مجهول':req.user.username}**\n${content}`);if(delivered)await query('UPDATE secret_messages SET delivered=TRUE WHERE id=$1',[message.id]);}catch(error){console.error('pigeon discord delivery:',error.message)}});});
 
 router.get('/cinema',async(req,res)=>{const {rows}=await query("SELECT * FROM cinema_rooms WHERE status IS DISTINCT FROM 'closed' ORDER BY created_at DESC");res.json({rooms:rows});});
 router.post('/cinema',requireAuth,async(req,res)=>{const title=String(req.body.title||'').trim(),media_url=String(req.body.media_url||'').trim();if(!title||!media_url)return res.status(400).json({error:'أدخل العنوان والرابط'});const {rows}=await query("INSERT INTO cinema_rooms(owner_id,title,media_url,status) VALUES($1,$2,$3,'open') RETURNING *",[req.user.id,title,media_url]);res.json({room:rows[0]});});
 router.post('/cinema/:id/close',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM cinema_rooms WHERE id=$1',[req.params.id]);if(!rows[0])return res.status(404).json({error:'الغرفة غير موجودة'});if(String(rows[0].owner_id)!==String(req.user.id)&&!req.user.is_owner)return res.status(403).json({error:'غير مصرح'});await query("UPDATE cinema_rooms SET status='closed' WHERE id=$1",[req.params.id]);res.json({message:'تم الإغلاق'});});
+router.get('/cinema/bots',requireAuth,async(req,res)=>{const {rows}=await query('SELECT * FROM cinema_bots WHERE active=true ORDER BY created_at DESC');res.json({bots:rows});});
+router.post('/cinema/bots',requireAuth,requireOwner,async(req,res)=>{const name=String(req.body.name||'').trim(),token=String(req.body.token||'').trim();if(!name||!token)return res.status(400).json({error:'أدخل اسم البوت والتوكن'});const r=await fetch('https://discord.com/api/v10/users/@me',{headers:{Authorization:'Bot '+token}});if(!r.ok)return res.status(400).json({error:'توكن البوت غير صالح'});const info=await r.json();const invite=`https://discord.com/api/oauth2/authorize?client_id=${info.id}&permissions=8&scope=bot%20applications.commands`;const {rows}=await query('INSERT INTO cinema_bots(name,token,bot_id,avatar,invite_url,active) VALUES($1,$2,$3,$4,$5,FALSE) RETURNING *',[name,token,info.id,info.avatar?`https://cdn.discordapp.com/avatars/${info.id}/${info.avatar}.png?size=128`:'/logo.svg.JPG',invite]);res.json({bot:rows[0]});});
+router.post('/cinema/bots/:id/toggle',requireAuth,requireOwner,async(req,res)=>{const q=await query('SELECT * FROM cinema_bots WHERE id=$1',[req.params.id]);if(!q.rows[0])return res.status(404).json({error:'بوت السينما غير موجود'});const active=!q.rows[0].active;await query('UPDATE cinema_bots SET active=$1 WHERE id=$2',[active,req.params.id]);res.json({message:active?'تم تشغيل البوت':'تم إيقاف البوت'});});
 
 router.patch('/tickets/:id/messages', requireAuth, async (req,res)=>{res.status(405).json({error:'استخدم POST لإرسال الرد'});});
 
@@ -115,27 +180,24 @@ router.patch('/owner/announcement',requireAuth,requireOwner,async(req,res)=>{
   await query("INSERT INTO site_settings(key,value,updated_at) VALUES('announcement',$1,NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()",[JSON.stringify(value)]);
   await audit(req.user,'announcement_update','announcement',value); res.json({announcement:value});
 });
-router.post('/owner/broadcast',requireAuth,requireOwner,async(req,res)=>{
-  const content=String(req.body.content||'').trim(); if(!content)return res.status(400).json({error:'اكتب رسالة البرودكاست'});
-  const token=discordToken(),guild=guildId(); if(!token||!guild)return res.status(500).json({error:'إعدادات Discord ناقصة'});
-  res.json({message:'بدأ إرسال البرودكاست للأعضاء'});
-  setImmediate(async()=>{
-    try{
-      let after='0',total=0;
-      for(let page=0;page<100;page++){
-        const members=await discordApi('/guilds/'+guild+'/members?limit=1000&after='+after);
-        if(!Array.isArray(members)||!members.length)break;
-        for(const m of members){
-          if(m.user?.bot)continue;
-          try{await dmDiscord(m.user.id,content);total++}catch{}
-        }
-        after=members[members.length-1].user.id;
-        if(members.length<1000)break;
-      }
-      await audit(req.user,'broadcast_sent','discord_guild',{content,total});
-    }catch(e){console.error('broadcast',e)}
-  });
+router.get('/owner/stats',requireAuth,requireOwner,async(req,res)=>{
+  const [users,bots,rooms,messages,activeSessions]=await Promise.all([
+    query('SELECT COUNT(*)::int AS count FROM users'),
+    query('SELECT COUNT(*)::int AS count FROM bots'),
+    query('SELECT COUNT(*)::int AS count FROM cinema_rooms WHERE status IS DISTINCT FROM \'closed\''),
+    query('SELECT COUNT(*)::int AS count FROM messages'),
+    query('SELECT COUNT(*)::int AS count FROM games WHERE status IN (\'open\',\'waiting\',\'playing\')')
+  ]);
+  res.json({users:users.rows[0]?.count||0,bots:bots.rows[0]?.count||0,sessions:activeSessions.rows[0]?.count||0,messages:messages.rows[0]?.count||0,cinema:rooms.rows[0]?.count||0});
 });
+router.post('/owner/broadcast',requireAuth,requireOwner,async(req,res)=>{
+  const title=String(req.body.title||'').trim(); const content=String(req.body.content||'').trim(); if(!title||!content)return res.status(400).json({error:'أدخل العنوان والرسالة'});
+  const token=discordToken(),channelId=process.env.DISCORD_ANNOUNCEMENT_CHANNEL_ID; if(!token||!channelId)return res.status(503).json({error:'إعدادات Discord ناقصة: يلزم DISCORD_TOKEN و DISCORD_ANNOUNCEMENT_CHANNEL_ID'});
+  const job=await query('INSERT INTO broadcast_jobs(title,message,created_by,status,total_count) VALUES($1,$2,$3,\'queued\',0) RETURNING *',[title,content,req.user.id]);
+  res.status(202).json({message:'بدأ إرسال البرودكاست',job:job.rows[0]});
+  runBroadcastJob(job.rows[0].id,{title,content,channelId,actor:{id:req.user.id,username:req.user.username}}).catch(e=>console.error('broadcast job failed:',e));
+});
+router.get('/owner/broadcast/jobs',requireAuth,requireOwner,async(req,res)=>{const {rows}=await query('SELECT * FROM broadcast_jobs ORDER BY created_at DESC LIMIT 20');res.json({jobs:rows});});
 router.get('/owner/bot-subscriptions',requireAuth,requireOwner,async(req,res)=>{
   const {rows}=await query(`SELECT b.id,b.name,b.avatar,b.guild_id,b.active,bs.id AS subscription_id,bs.started_at,bs.expires_at,bs.active AS subscription_active,bs.features
     FROM bots b LEFT JOIN LATERAL (SELECT * FROM bot_subscriptions WHERE bot_id=b.id ORDER BY expires_at DESC LIMIT 1) bs ON true ORDER BY b.created_at DESC`);

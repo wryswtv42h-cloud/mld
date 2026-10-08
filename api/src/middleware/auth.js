@@ -1,12 +1,29 @@
 import jwt from 'jsonwebtoken';
 import { query } from '../db.js';
 
+const memberCache = new Map();
+const pendingMembers = new Map();
 async function isCurrentMember(discordId) {
   const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
   const guildId = process.env.DISCORD_GUILD_ID;
   if (!token || !guildId || !discordId) return false;
-  const r = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${encodeURIComponent(discordId)}`, { headers: { Authorization: `Bot ${token}` } });
-  return r.ok;
+  const key = `${guildId}:${discordId}`;
+  const cached = memberCache.get(key);
+  if (cached && cached.expires > Date.now()) return cached.value;
+  if (pendingMembers.has(key)) return pendingMembers.get(key);
+  const check = fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${encodeURIComponent(discordId)}`, { headers: { Authorization: `Bot ${token}` }, signal: AbortSignal.timeout(5000) })
+    .then(response => {
+      const value = response.ok;
+      memberCache.set(key, { value, expires: Date.now() + (value ? 45_000 : 10_000) });
+      if (memberCache.size > 5000) {
+        for (const [entry, data] of memberCache) if (data.expires <= Date.now()) memberCache.delete(entry);
+      }
+      return value;
+    })
+    .catch(() => cached?.value && cached.expires + 60_000 > Date.now() ? cached.value : false)
+    .finally(() => pendingMembers.delete(key));
+  pendingMembers.set(key, check);
+  return check;
 }
 
 export async function requireAuth(req, res, next) {

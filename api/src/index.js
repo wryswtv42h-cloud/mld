@@ -13,6 +13,7 @@ import botRoutes from './routes/bots.js';
 import gameRoutes from './routes/games.js';
 import publicRoutes from './routes/public.js';
 import communityRoutes from './routes/community.js';
+import { resumeBroadcastJobs } from './routes/community.js';
 import discordSuggestionsRoutes from './routes/discord-suggestions.js';
 import { setupSocket } from './socket/index.js';
 
@@ -74,6 +75,7 @@ httpServer.listen(PORT, '0.0.0.0', async () => {
   try {
     await initDB();
     dbReady = true;
+    await resumeBroadcastJobs();
     console.log('✅ قاعدة البيانات جاهزة');
   } catch (err) {
     console.error('❌ فشل اتصال قاعدة البيانات:', err.message);

@@ -4,10 +4,11 @@ import { query } from '../db.js';
 const router = express.Router();
 
 const cache = {
-  guild: { value: null, at: 0 },
-  members: { value: [], at: 0 },
-  roles: { value: [], at: 0 }
+  guild: { value: null, at: 0, pending: null },
+  members: { value: [], at: 0, pending: null },
+  roles: { value: [], at: 0, pending: null }
 };
+const searchCache = new Map();
 
 let visits = 0;
 const visitorSeen = new Map();
@@ -25,7 +26,8 @@ async function ensureVisitStore(){
  })();
  return visitStoreReady;
 }
-const CACHE_TTL = 15000;
+const CACHE_TTL = 30000;
+const STALE_TTL = 5 * 60 * 1000;
 
 const guildId = () => process.env.DISCORD_GUILD_ID;
 const token = () => process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
@@ -40,42 +42,35 @@ async function discord(path) {
 
 async function getGuild() {
   if (cache.guild.value && Date.now() - cache.guild.at < CACHE_TTL) return cache.guild.value;
-  try {
-    const g = await discord('/guilds/' + guildId() + '?with_counts=true');
-    cache.guild = { value: g, at: Date.now() };
-    return g;
-  } catch (primaryError) {
-    // Discord bot tokens cannot use /users/@me/guilds; retry the guild endpoint without count hints.
-    try {
-      const full = await discord('/guilds/' + guildId());
-      cache.guild = { value: full, at: Date.now() };
-      return full;
-    } catch (fallbackError) {
-      throw primaryError;
-    }
-  }
+  if(cache.guild.pending)return cache.guild.pending;
+  cache.guild.pending=(async()=>{try{const g=await discord('/guilds/'+guildId()+'?with_counts=true');cache.guild={...cache.guild,value:g,at:Date.now()};return g}catch(primaryError){try{const full=await discord('/guilds/'+guildId());cache.guild={...cache.guild,value:full,at:Date.now()};return full}catch{if(cache.guild.value&&Date.now()-cache.guild.at<STALE_TTL)return cache.guild.value;throw primaryError}}})().finally(()=>{cache.guild.pending=null});
+  return cache.guild.pending;
 }
 
 async function getMembers() {
   if (cache.members.value.length && Date.now() - cache.members.at < CACHE_TTL) return cache.members.value;
-  const all = [];
-  let after = '0';
-  for (let i = 0; i < 10; i++) {
-    const batch = await discord('/guilds/' + guildId() + '/members?limit=1000&after=' + after);
-    if (!Array.isArray(batch) || !batch.length) break;
-    all.push(...batch);
-    if (batch.length < 1000) break;
-    after = batch[batch.length - 1].user.id;
-  }
-  cache.members = { value: all, at: Date.now() };
-  return all;
+  if(cache.members.pending)return cache.members.pending;
+  cache.members.pending=(async()=>{try{const all=[];let after='0';for(let i=0;i<10;i++){const batch=await discord('/guilds/'+guildId()+'/members?limit=1000&after='+after);if(!Array.isArray(batch)||!batch.length)break;all.push(...batch);if(batch.length<1000)break;after=batch[batch.length-1].user.id;}cache.members={...cache.members,value:all,at:Date.now()};return all}catch(error){if(cache.members.value.length&&Date.now()-cache.members.at<STALE_TTL)return cache.members.value;throw error}})().finally(()=>{cache.members.pending=null});
+  return cache.members.pending;
 }
 
 async function getRoles() {
   if (cache.roles.value.length && Date.now() - cache.roles.at < CACHE_TTL) return cache.roles.value;
-  const roles = await discord('/guilds/' + guildId() + '/roles');
-  cache.roles = { value: roles, at: Date.now() };
-  return roles;
+  if(cache.roles.pending)return cache.roles.pending;
+  cache.roles.pending=(async()=>{try{const roles=await discord('/guilds/'+guildId()+'/roles');cache.roles={...cache.roles,value:roles,at:Date.now()};return roles}catch(error){if(cache.roles.value.length&&Date.now()-cache.roles.at<STALE_TTL)return cache.roles.value;throw error}})().finally(()=>{cache.roles.pending=null});
+  return cache.roles.pending;
+}
+
+async function searchMembers(term){
+  const q=String(term||'').trim();
+  if(!q)return [];
+  const key=q.toLowerCase(),cached=searchCache.get(key);
+  if(cached&&cached.expires>Date.now())return cached.value;
+  const results=await discord('/guilds/'+guildId()+'/members/search?query='+encodeURIComponent(q)+'&limit=20');
+  const value=(Array.isArray(results)?results:[]).map(normalizeMember);
+  searchCache.set(key,{value,expires:Date.now()+10000});
+  if(searchCache.size>200){for(const [entry,item] of searchCache)if(item.expires<Date.now())searchCache.delete(entry);}
+  return value;
 }
 
 function normalizeMember(m) {
@@ -99,32 +94,17 @@ async function touchVisit(req) {
   if (now - last > VISITOR_TTL) {
     visits++;
     visitorSeen.set(key, now);
-    try { await query("INSERT INTO site_metrics (key, value) VALUES ('visits', 1) ON CONFLICT (key) DO UPDATE SET value = site_metrics.value + 1, updated_at = NOW()"); }
-    catch (e) { console.error('visit increment:', e); }
+    query("INSERT INTO site_metrics (key, value) VALUES ('visits', 1) ON CONFLICT (key) DO UPDATE SET value = site_metrics.value + 1, updated_at = NOW()")
+      .catch(e => console.error('visit increment:', e.message));
   }
 }
 
 router.get('/server', async (req, res) => {
   try {
-    await touchVisit(req);
+    void touchVisit(req);
     const g = await getGuild();
     let ownerId = /^\d{17,20}$/.test(String(process.env.OWNER_DISCORD_ID || '')) ? String(process.env.OWNER_DISCORD_ID) : null;
-    // Owner lookup must never make the public server counters fail.
-    if (!ownerId) {
-      try {
-        const members = await getMembers();
-        const wanted = String(process.env.OWNER_DISCORD_ID || 'w4px').toLowerCase();
-        const owner = members.find(m => String(m.user?.username || '').toLowerCase() === wanted || String(m.user?.global_name || '').toLowerCase() === wanted);
-        ownerId = owner?.user?.id || null;
-      } catch (ownerErr) {
-        console.error('owner lookup:', ownerErr.message);
-      }
-    }
-    let memberCount = g.approximate_member_count ?? g.member_count;
-    if (memberCount == null) {
-      try { memberCount = (await getMembers()).length; }
-      catch (countError) { console.error('member count fallback:', countError.message); }
-    }
+    const memberCount = g.approximate_member_count ?? g.member_count ?? (cache.members.value.length||null);
     res.json({
       id: g.id,
       name: g.name || 'MLD',
@@ -143,6 +123,17 @@ router.get('/server', async (req, res) => {
   }
 });
 
+router.get('/metrics',async(req,res)=>{
+  try{
+    const [users,messages,visitsRow]=await Promise.all([
+      query('SELECT COUNT(*)::int AS count FROM users'),
+      query('SELECT COUNT(*)::int AS count FROM messages'),
+      query("SELECT value FROM site_metrics WHERE key='visits' LIMIT 1")
+    ]);
+    res.set('Cache-Control','public, max-age=5, stale-while-revalidate=20').json({users:users.rows[0]?.count||0,messages:messages.rows[0]?.count||0,visits:Number(visitsRow.rows[0]?.value||visits)});
+  }catch(error){res.status(503).json({error:'تعذر جلب إحصائيات المجتمع'});}
+});
+
 router.get('/suggestions', async (req, res) => {
   try {
     const type = String(req.query.type || 'members');
@@ -155,8 +146,7 @@ router.get('/suggestions', async (req, res) => {
         : [];
       return res.json({ suggestions: out });
     }
-    const members = (await getMembers()).map(normalizeMember);
-    const out = members.filter(m => !q || String(m.name + ' ' + m.username + ' ' + m.id).toLowerCase().includes(q)).slice(0, 20);
+    const out=q?await searchMembers(q):(await getMembers()).slice(0,20).map(normalizeMember);
     res.json({ suggestions: out });
   } catch (e) {
     res.status(503).json({ error: 'تعذر جلب الاقتراحات', suggestions: [] });
@@ -165,11 +155,9 @@ router.get('/suggestions', async (req, res) => {
 
 router.get('/members', async (req, res) => {
   try {
-    const members = (await getMembers()).map(normalizeMember);
     const q = String(req.query.q || '').trim().toLowerCase();
-    const filtered = q
-      ? members.filter(m => (m.name + ' ' + m.username).toLowerCase().includes(q)).slice(0, 25)
-      : members.slice(0, 5);
+    const filtered = q?await searchMembers(q):(await getMembers()).slice(0,5).map(normalizeMember);
+    if(q)return res.json({members:filtered,total:filtered.length});
     const roles = await getRoles();
     const roleMap = new Map(roles.map(r => [r.id, r]));
     filtered.forEach(m => {
@@ -177,7 +165,7 @@ router.get('/members', async (req, res) => {
         .filter(r => !r.managed).sort((a,b) => (b.position||0) - (a.position||0)).slice(0, 5)
         .map(r => ({ id: r.id, name: r.name, color: r.color }));
     });
-    res.json({ members: filtered, total: members.length });
+    res.json({ members: filtered, total: cache.members.value.length });
   } catch (e) {
     res.status(503).json({ error: 'تعذر جلب الأعضاء', members: [], total: 0 });
   }
