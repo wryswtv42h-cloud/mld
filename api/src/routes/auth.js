@@ -233,7 +233,7 @@ router.post('/register', async (req, res) => {
   try {
     const username=String(req.body.username||'').trim(),password=String(req.body.password||''),discord_id=String(req.body.discord_id||'').trim(),verification_code=String(req.body.verification_code||'').trim(),registration_ticket=String(req.body.registration_ticket||'').trim();
     if (!username || !password || !discord_id) return res.status(400).json({ error: 'التسجيل يتطلب يوزر الموقع + الباسورد + التحقق من حساب ديسكورد' });
-    if (!/^[\\p{L}\\p{N}_.-]{2,24}$/u.test(username)) return res.status(400).json({ error: 'اسم المستخدم يجب أن يكون من 2 إلى 24 حرفًا أو رقمًا، ويسمح بـ _ . - فقط' });
+    if (username.length < 2 || username.length > 24 || /\s/.test(username)) return res.status(400).json({ error: 'اسم المستخدم يجب أن يكون من 2 إلى 24 حرفًا دون مسافات' });
     if (password.length < 8 || password.length > 128) return res.status(400).json({ error: 'كلمة المرور يجب أن تكون بين 8 و128 حرفًا' });
 
     const verifiedDiscordId = await resolveDiscordId(discord_id);
