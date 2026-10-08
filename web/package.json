@@ -1,0 +1,18 @@
+{
+  "name": "mld-web",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "echo \"static\"",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "serve": "^14.2.1",
+    "http-proxy": "^1.18.1"
+  },
+  "author": "فهد المطيري",
+  "license": "MLD",
+  "type": "module"
+}

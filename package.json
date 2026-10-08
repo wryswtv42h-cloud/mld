@@ -1,0 +1,15 @@
+{
+  "name": "mld",
+  "version": "1.0.0",
+  "description": "MLD - منصة بوتات ديسكورد",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "cd api && npm start",
+    "install:all": "cd api && npm install && cd ../web && npm install"
+  },
+  "author": "فهد المطيري",
+  "license": "MLD"
+}
