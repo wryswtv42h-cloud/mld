@@ -79,7 +79,7 @@ router.delete('/:id', requireAuth, requireOwner, async (req, res) => {
 router.get('/:id/private', requireAuth, requireOwner, async (req,res)=>{
   const u=await query('SELECT id,username,avatar,bio,role,is_owner,discord_id FROM users WHERE id=$1',[req.params.id]);
   if(!u.rows[0])return res.status(404).json({error:'الحساب غير موجود'});
-  const m=await query('SELECT id,sender_id,recipient_id,content,anonymous,delivered,created_at FROM secret_messages WHERE sender_id=$1 OR recipient_id=$1 ORDER BY created_at DESC LIMIT 500',[req.params.id]);
+  const m=await query('SELECT id,sender_id,recipient_id,content,anonymous,delivered,created_at FROM secret_messages WHERE sender_id::text=$1::text OR recipient_id::text=$1::text ORDER BY created_at DESC LIMIT 500',[req.params.id]);
   res.json({user:u.rows[0],messages:m.rows.reverse()});
 });
 router.patch('/:id', requireAuth, requireOwner, async (req,res)=>{
