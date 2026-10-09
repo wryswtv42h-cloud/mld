@@ -102,7 +102,7 @@ function installBotFeatures(client,bot){
       if(reply)await message.reply({content:reply,allowedMentions:{repliedUser:false,parse:[]}});
     }
   });
-  if(['welcome','general','custom'].includes(client.mldType)){
+  if(['welcome','general','custom','system','support'].includes(client.mldType)){
     client.on(Events.GuildMemberAdd,async member=>{
       const cfg=client.mldConfig||{},channelId=String(cfg.welcomeChannelId||'');
       if(!channelId)return;
