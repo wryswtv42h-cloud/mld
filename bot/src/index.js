@@ -41,7 +41,7 @@ function installBotFeatures(client,bot){
     const config=client.mldConfig||{},type=client.mldType||'general';
     const prefix=String(config.prefix||'!').slice(0,4);
     const content=String(message.content||'');
-    const words=String(config.blockedWords||'').split(/[\\n,،]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+    const words=String(config.blockedWords||'').split(/[\n,،]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
     const autoMod=type==='automod'||config.automodEnabled===true;
     if(autoMod){
       const linksOn=config.antiLinksEnabled===undefined?type==='automod':!!config.antiLinksEnabled;
@@ -62,7 +62,7 @@ function installBotFeatures(client,bot){
       }
     }
     if(!content.startsWith(prefix))return;
-    const [raw,...args]=content.slice(prefix.length).trim().split(/\\s+/),command=String(raw||'').toLowerCase();
+    const [raw,...args]=content.slice(prefix.length).trim().split(/\s+/),command=String(raw||'').toLowerCase();
     if(!command)return;
     if(command==='ping')return message.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
     if(command==='help') {
