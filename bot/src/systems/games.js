@@ -18,7 +18,7 @@ const questions = {
 };
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const normalize = s => String(s || '').toLowerCase().replace(/[ًٌٍَُِّْـ]/g,'').replace(/[؟?!.,،]/g,'').trim().replace(/\s+/g,' ');
-const enabled = (client, name) => { const list=client.mldConfig?.enabledGames; if(!Array.isArray(list)||!list.length)return true; const aliases={ 'فخ':['فخ','فخ / لغم'], 'المتجر':['المتجر','متجر'], 'فكك':['فكك','فكك'], 'حجره':['حجره','حجرة'] }; return (aliases[name]||[name]).some(x=>list.includes(x)); };
+const enabled = (client, name) => { const list=client.mldConfig?.enabledGames; if(!Array.isArray(list))return true; const aliases={ 'فخ':['فخ','فخ / لغم'], 'المتجر':['المتجر','متجر'], 'فكك':['فكك'], 'حجره':['حجره','حجرة'] }; return (aliases[name]||[name]).some(x=>list.includes(x)); };
 const safeReply = (message, content) => message.reply({content:String(content).slice(0,1800),allowedMentions:{parse:[]}}).catch(()=>{});
 async function ensureScores(pool) {
   if (!pool) return;
@@ -57,13 +57,15 @@ export function setupGames(client, pool) {
     if (!cmd) return;
     if (cmd==='help'||cmd==='ألعاب'||cmd==='العاب') return safeReply(message,'🎮 ألعاب ملاذ: '+GAME_NAMES.join(' • ')+'\nاكتب الأمر بعد '+prefix+' لبدء اللعبة. اكتب '+prefix+'توب لعرض المتصدرين.');
     if (cmd==='توب') {
+      if(!enabled(client,'توب'))return safeReply(message,'هذه اللعبة معطّلة من لوحة التحكم.');
       if(!pool)return safeReply(message,'لوحة النقاط غير متاحة الآن.');
       const q=await pool.query('SELECT user_id,points,wins FROM mld_discord_game_scores WHERE bot_id=$1 AND guild_id=$2 ORDER BY points DESC,wins DESC LIMIT 10',[String(client.mldBotId||client.user.id),message.guild.id]);
       return safeReply(message,q.rows.length?'🏆 **متصدرون الألعاب**\n'+q.rows.map((r,i)=>(i+1)+'. <@'+r.user_id+'> — '+r.points+' نقطة · '+r.wins+' فوز').join('\n'):'لا توجد نتائج بعد. ابدأ لعبة لتحجز مكانك!');
     }
-    if (cmd==='المتجر') return safeReply(message,'🛍️ متجر ألعاب ملاذ\n• 100 نقطة — لقب لاعب مميز (قريبًا)\n• نقاطك تُجمع عند الفوز بالألعاب. لا يتم خصم أي نقاط من حسابك هنا.');
+    if (cmd==='المتجر') { if(!enabled(client,'المتجر'))return safeReply(message,'هذه اللعبة معطّلة من لوحة التحكم.'); return safeReply(message,'🛍️ متجر ألعاب ملاذ\n• 100 نقطة — لقب لاعب مميز (قريبًا)\n• نقاطك تُجمع عند الفوز بالألعاب. لا يتم خصم أي نقاط من حسابك هنا.'); }
     if (cmd==='ايقاف') { client.mldGameRounds.delete(message.channel.id); return safeReply(message,'⏹️ تم إنهاء الجولة الحالية في هذه القناة.'); }
     if (cmd==='تحويل') {
+      if(!enabled(client,'تحويل'))return safeReply(message,'هذه اللعبة معطّلة من لوحة التحكم.');
       const target=message.mentions.users.first(), amount=Number(parts.find(x=>/^\d+$/.test(x)));
       if(!target||target.bot||target.id===message.author.id||!Number.isSafeInteger(amount)||amount<=0)return safeReply(message,'استخدم: '+prefix+'تحويل @عضو عدد_النقاط');
       if(!pool)return safeReply(message,'قاعدة النقاط غير متاحة الآن.');
