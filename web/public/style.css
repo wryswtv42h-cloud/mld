@@ -149,3 +149,12 @@ footer{width:min(1160px,calc(100% - 24px));margin:auto;padding:22px 0;border-top
 .bot-dashboard-card .bot-config-section{border-color:var(--line);background:var(--panel2);border-radius:16px}
 .bot-dashboard-card input:not([type=checkbox]),.bot-dashboard-card select,.bot-dashboard-card textarea{max-width:100%;min-width:0}
 @media(max-width:520px){.bot-command-switches{grid-template-columns:1fr}.bot-command-toggle{padding:11px 12px}}
+
+.bot-dashboard-card .bot-config-tabs{display:flex;gap:7px;flex-wrap:wrap;padding:12px 0}
+.bot-dashboard-card .bot-config-tabs button{border:1px solid var(--line);border-radius:999px;background:var(--panel2);color:var(--muted);padding:8px 13px;font:inherit;font-size:.85rem;cursor:pointer;transition:background .18s ease,color .18s ease,border-color .18s ease}
+.bot-dashboard-card .bot-config-tabs button.active{background:var(--pink);border-color:var(--pink);color:#25101f;font-weight:800}
+.bot-runtime-detail{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);margin:8px 0 14px}
+.bot-runtime-detail h4{margin:0 0 8px}
+.bot-runtime-detail p{margin:6px 0;overflow-wrap:anywhere}
+.bot-runtime-detail small{display:block;color:var(--muted);line-height:1.6}
+.bot-runtime-detail[hidden]{display:none!important}
