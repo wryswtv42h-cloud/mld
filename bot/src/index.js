@@ -14,6 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const { Pool } = pg;
 const pool = process.env.DATABASE_URL ? new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false},max:3}) : null;
 const userBotClients = new Map();
+const cinemaBotClients = new Map();
 const botKey = crypto.createHash('sha256').update(process.env.JWT_SECRET || 'mld').digest();
 function decryptToken(value){
   if(!String(value).startsWith('enc:')) return value;
@@ -77,6 +78,25 @@ async function syncUserBots(){
       catch(e){console.error(`❌ User bot ${bot.name} failed:`,e.message);await setBotRuntime(id,'error',e.message);try{c.destroy();}catch{}}
     }
   }catch(e){console.error('User bot sync:',e.message);}
+}
+
+async function syncCinemaBots(){
+  if(!pool)return;
+  try{
+    const {rows}=await pool.query('SELECT id,name,token,active FROM cinema_bots WHERE active=true AND token IS NOT NULL');
+    const wanted=new Set(rows.map(x=>String(x.id)));
+    for(const [id,client] of cinemaBotClients){
+      if(!wanted.has(id)){try{client.destroy();}catch{}cinemaBotClients.delete(id);await pool.query("UPDATE cinema_bots SET runtime_status='offline' WHERE id=$1",[id]).catch(()=>{});}
+    }
+    for(const bot of rows){
+      const id=String(bot.id);if(cinemaBotClients.has(id))continue;
+      const client=new Client({intents:[GatewayIntentBits.Guilds]});
+      client.once(Events.ClientReady,async()=>{console.log('🎬 Cinema bot online: '+bot.name+' ('+client.user.tag+')');await pool.query("UPDATE cinema_bots SET runtime_status='online',last_seen_at=NOW(),last_error=NULL WHERE id=$1",[id]).catch(()=>{});});
+      client.on('error',async err=>{console.error('Cinema bot '+bot.name+':',err.message);await pool.query("UPDATE cinema_bots SET runtime_status='error',last_error=$1 WHERE id=$2",[String(err.message).slice(0,500),id]).catch(()=>{});});
+      try{await client.login(decryptToken(bot.token));cinemaBotClients.set(id,client);}
+      catch(err){console.error('Cinema bot failed: '+bot.name,err.message);await pool.query("UPDATE cinema_bots SET runtime_status='error',last_error=$1 WHERE id=$2",[String(err.message).slice(0,500),id]).catch(()=>{});try{client.destroy();}catch{}}
+    }
+  }catch(err){console.error('Cinema bot sync:',err.message);}
 }
 
 const API_URL = String(process.env.API_URL || '').replace(/\/$/, '');
@@ -207,7 +227,7 @@ async function start() {
     await loadHandlers();
     client.once(Events.ClientReady, async () => await registerCommands());
     await client.login(process.env.DISCORD_TOKEN);
-    if (pool) { await syncUserBots(); setInterval(syncUserBots, 30000); }
+    if (pool) { await syncUserBots(); await syncCinemaBots(); setInterval(()=>{syncUserBots();syncCinemaBots();}, 30000); }
   } catch (err) {
     console.error('❌ فشل تشغيل البوت:', err.message);
     process.exit(1);
