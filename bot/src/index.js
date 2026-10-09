@@ -139,7 +139,7 @@ function installBotFeatures(client,bot){
             {id:member.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]},
             {id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels]}
           ];
-          if(cfg.adminRole&&/^\\d{17,20}$/.test(String(cfg.adminRole)))overwrites.push({id:String(cfg.adminRole),allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]});
+          if(cfg.adminRole&&/^\d{17,20}$/.test(String(cfg.adminRole)))overwrites.push({id:String(cfg.adminRole),allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]});
           ticket=await newState.guild.channels.create({name:('support-'+member.user.username).toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').slice(0,80)||('support-'+member.id.slice(-5)),type:ChannelType.GuildText,topic,permissionOverwrites:overwrites});
           await ticket.send({content:'🛡️ طلب دعم جديد من '+member.toString()+'. اشرح مشكلتك هنا وسيتمكن فريق الدعم من الرد.',allowedMentions:{users:[member.id]}});
         }
