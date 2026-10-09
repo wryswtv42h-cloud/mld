@@ -18,7 +18,7 @@ const questions = {
 };
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const normalize = s => String(s || '').toLowerCase().replace(/[ًٌٍَُِّْـ]/g,'').replace(/[؟?!.,،]/g,'').trim().replace(/\s+/g,' ');
-const enabled = (client, name) => !Array.isArray(client.mldConfig?.enabledGames) || !client.mldConfig.enabledGames.length || client.mldConfig.enabledGames.includes(name);
+const enabled = (client, name) => { const list=client.mldConfig?.enabledGames; if(!Array.isArray(list)||!list.length)return true; const aliases={ 'فخ':['فخ','فخ / لغم'], 'المتجر':['المتجر','متجر'], 'فكك':['فكك','فكك'], 'حجره':['حجره','حجرة'] }; return (aliases[name]||[name]).some(x=>list.includes(x)); };
 const safeReply = (message, content) => message.reply({content:String(content).slice(0,1800),allowedMentions:{parse:[]}}).catch(()=>{});
 async function ensureScores(pool) {
   if (!pool) return;
@@ -39,10 +39,11 @@ async function award(pool, client, message, points=10) {
 export function setupGames(client, pool) {
   if (pool) ensureScores(pool).catch(e=>console.error('Game score table:',e.message));
   client.mldGameRounds = new Map();
+  client.mldGameScoresReady = pool ? ensureScores(pool) : Promise.resolve();
   client.on(Events.MessageCreate, async message => {
     if (!message.guild || message.author.bot || client.mldType !== 'games') return;
     const cfg=client.mldConfig||{}, prefix=String(cfg.prefix||'!').slice(0,4), content=String(message.content||'').trim();
-    const round=client.mldGameRounds.get(message.channel.id);
+    await client.mldGameScoresReady.catch(()=>{});\n    const round=client.mldGameRounds.get(message.channel.id);
     if (round && Date.now()<round.expiresAt && round.userId!==message.author.id && normalize(content)===normalize(round.answer)) {
       client.mldGameRounds.delete(message.channel.id);
       const pts=Math.max(0,Math.min(100000,Number(cfg.gamePoints??10)||10));
@@ -68,7 +69,7 @@ export function setupGames(client, pool) {
       try{await db.query('BEGIN');const debit=await db.query('UPDATE mld_discord_game_scores SET points=points-$1,updated_at=NOW() WHERE bot_id=$2 AND guild_id=$3 AND user_id=$4 AND points >= $1 RETURNING points',[amount,String(client.mldBotId||client.user.id),message.guild.id,message.author.id]);if(!debit.rowCount){await db.query('ROLLBACK');return safeReply(message,'نقاطك غير كافية.');}await db.query('INSERT INTO mld_discord_game_scores(bot_id,guild_id,user_id,points) VALUES($1,$2,$3,$4) ON CONFLICT(bot_id,guild_id,user_id) DO UPDATE SET points=mld_discord_game_scores.points+$4,updated_at=NOW()',[String(client.mldBotId||client.user.id),message.guild.id,target.id,amount]);await db.query('COMMIT');return safeReply(message,'✅ حولت '+amount+' نقطة إلى '+target.username+'.');}catch(e){await db.query('ROLLBACK').catch(()=>{});throw e}finally{db.release()}
     }
     const aliases={'برا السالفة':'برا السالفة','روليت':'روليت','مافيا':'مافيا','كت':'كت','زر':'زر','حجره':'حجره','بومب':'بومب','تصويت':'تصويت','ايفنت':'ايفنت','اعلام':'اعلام','فكك':'فكك','ترتيب':'ترتيب','صحح':'صحح','جمع':'جمع','مفرد':'مفرد','حيوانات':'حيوانات','شركة':'شركة','ضرب':'ضرب','طرح':'طرح','ترجمة':'ترجمة','عواصم':'عواصم','اعكس':'اعكس','اسرع':'اسرع','حرف':'حرف','ادمج':'ادمج','هايد':'هايد','فخ':'فخ','اكس':'اكس','سالفة':'سالفة'};
-    const name=aliases[cmd]; if(!name)return;
+    const name=aliases[cmd] || (cmd==='برا'?'برا السالفة':null); if(!name)return;
     if(!enabled(client,name))return safeReply(message,'هذه اللعبة معطّلة من لوحة التحكم.');
     if(['زر','حجره'].includes(name)){const choices=['حجر 🪨','ورقة 📄','مقص ✂️'],bot=pick(choices),user=String(parts.join(' '));if(!user)return safeReply(message,'اختر: '+prefix+name+' حجر أو ورقة أو مقص');const map={'حجر':'حجر 🪨','ورقة':'ورقة 📄','مقص':'مقص ✂️','مقصّ':'مقص ✂️'};const p=map[user]||choices.find(x=>x.startsWith(user));if(!p)return safeReply(message,'اختيارك غير معروف. استخدم حجر أو ورقة أو مقص.');const win=p===bot?'تعادل':((p.startsWith('حجر')&&bot.startsWith('مقص'))||(p.startsWith('ورقة')&&bot.startsWith('حجر'))||(p.startsWith('مقص')&&bot.startsWith('ورقة')))?'فزت!':'خسرت!';if(win==='فزت!')await award(pool,client,message,Number(cfg.gamePoints??10)).catch(()=>{});return safeReply(message,'أنت: '+p+'\nأنا: '+bot+'\n'+win);}
     if(name==='روليت'){const n=Math.floor(Math.random()*6)+1;return safeReply(message,'🎲 روليت الحظ: '+n+' من 6 — '+(n===6?'ضربة حظ!':'جرّب مرة ثانية'));}
