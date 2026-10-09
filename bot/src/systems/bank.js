@@ -89,7 +89,13 @@ export function setupBank(client, pool) {
         const row = await ensure(userId);
         if (Number(row.loan) > 0) return message.reply('سدّد قرضك الحالي قبل طلب قرض جديد.');
         const due = Math.ceil(amount * (1 + loanRate / 100));
-        await pool.query('UPDATE mld_bot_bank SET balance=balance+$1,loan=$2,updated_at=NOW() WHERE bot_id=$3 AND guild_id=$4 AND user_id=$5', [amount,due,botId,guildId,userId]);
+        // Guard the write itself, not only the earlier read: two simultaneous
+        // loan commands must never credit the account twice.
+        const issued = await pool.query(
+          'UPDATE mld_bot_bank SET balance=balance+$1,loan=$2,updated_at=NOW() WHERE bot_id=$3 AND guild_id=$4 AND user_id=$5 AND loan=0 RETURNING loan',
+          [amount,due,botId,guildId,userId]
+        );
+        if (!issued.rowCount) return message.reply('لديك قرض قائم بالفعل. سدّده قبل طلب قرض جديد.');
         return message.reply('🏦 أودعنا **' + money(amount) + '** عملة. إجمالي السداد مع الفائدة (' + loanRate + '%): **' + money(due) + '**.');
       }
       if (cmd === 'سداد') {
