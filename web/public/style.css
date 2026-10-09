@@ -101,3 +101,33 @@ footer{width:min(1160px,calc(100% - 24px));margin:auto;padding:22px 0;border-top
 
 /* MLD cinema watch rooms and independent bot dashboards */
 .cinema-player{margin:18px 0;padding:clamp(14px,2vw,24px);background:linear-gradient(145deg,#251635,#100b17);border:1px solid var(--line);border-radius:20px}.cinema-player-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.cinema-player-head h2{margin:8px 0}.cinema-video{display:block;width:100%;max-height:72vh;aspect-ratio:16/9;background:#050407;border-radius:15px;object-fit:contain}.cinema-search{width:100%;padding:13px 15px;margin:8px 0 16px;border:1px solid var(--line);border-radius:12px;background:#110c19;color:#fff}.cinema-movie[hidden]{display:none!important}.cinema-poster{width:100%;height:240px;object-fit:cover;border-radius:12px;background:#20152b}.cinema-poster-placeholder{display:grid;place-items:center;font-size:54px;background:linear-gradient(135deg,#39234d,#171020)}.bot-dashboard{min-width:0;overflow-wrap:anywhere}.bot-dashboard .row{display:flex;align-items:center;justify-content:space-between;gap:8px}.bot-config{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}.bot-config summary{cursor:pointer;font-weight:800;color:var(--pink);padding:8px 0}.bot-dashboard textarea[name=commands_json]{font-family:ui-monospace,SFMono-Regular,monospace;direction:ltr;text-align:left;white-space:pre;min-height:150px}.bot-dashboard .form{margin-top:10px}.bot-dashboard .tag{white-space:nowrap}@media(max-width:600px){.cinema-poster{height:180px}.cinema-player-head{align-items:flex-start;flex-direction:column}}
+
+/* Bot dashboard: compact, responsive control surface */
+.bot-dashboard-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0;padding:16px}
+.bot-dashboard-summary>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.bot-dashboard-summary b{font-size:1.5rem;color:var(--pink);font-variant-numeric:tabular-nums}
+.bot-dashboard-summary span,.bot-dashboard-meta,.form-help{font-size:.84rem;color:var(--muted)}
+.bot-dashboard-card{display:flex;flex-direction:column;gap:14px;min-width:0}
+.bot-dashboard-head{display:flex;align-items:center;gap:12px}
+.bot-dashboard-head h3{margin:0 0 4px}
+.bot-dashboard-head p{margin:0 0 7px;overflow-wrap:anywhere}
+.bot-avatar{width:58px;height:58px;flex:0 0 58px;object-fit:cover;border-radius:18px;border:1px solid var(--line);background:var(--panel2)}
+.status-pill{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 9px;font-size:.76rem;font-weight:800;letter-spacing:.04em}
+.status-online{color:var(--green);background:#71e1a510}
+.status-offline{color:var(--muted);background:#ffffff08}
+.status-error{color:#ff7d91;background:#ff7d9110}
+.status-starting{color:#ffd783;background:#ffd78310}
+.bot-dashboard-meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+.bot-dashboard-actions{display:flex;flex-wrap:wrap;gap:8px}
+.bot-dashboard-actions .btn{flex:1 1 100px;text-align:center;text-decoration:none}
+.btn.danger{border-color:#ff718544;color:#ff9aaa}
+.bot-config-section{padding:14px;margin:10px 0;display:flex;flex-direction:column;gap:10px}
+.bot-config-section h3{margin:0}
+.bot-config-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:10px 0;color:var(--muted);font-size:.8rem}
+.bot-config-tabs span{border:1px solid var(--line);border-radius:999px;padding:5px 10px}
+.games-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.game-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:12px}
+.bot-dashboard-card details>summary{cursor:pointer;padding:12px;border-radius:12px;background:var(--panel2);font-weight:700}
+.bot-dashboard-card details[open]>summary{margin-bottom:12px}
+.bot-dashboard-card [hidden]{display:none!important}
+@media(max-width:520px){.bot-dashboard-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px}.bot-dashboard-summary b{font-size:1.2rem}.bot-avatar{width:48px;height:48px;flex-basis:48px;border-radius:14px}.games-list{grid-template-columns:1fr}.bot-dashboard-actions .btn{flex-basis:100%}}
