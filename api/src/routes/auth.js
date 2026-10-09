@@ -67,7 +67,7 @@ router.post('/bot/send-verification',requireBotSignature,async(req,res)=>{
 router.post('/send-verification-code',async(req,res)=>{
   try{
     const discordId=String(req.body.discord_id||'').trim();
-    if(!/^\\d{17,20}$/.test(discordId))return res.status(400).json({error:'اختر حسابك الصحيح من اقتراحات Discord أولاً'});
+    if(!/^\d{17,20}$/.test(discordId))return res.status(400).json({error:'اختر حسابك الصحيح من اقتراحات Discord أولاً'});
     const token=process.env.DISCORD_TOKEN||process.env.DISCORD_BOT_TOKEN,guildId=process.env.DISCORD_GUILD_ID;
     if(!token||!guildId)return res.status(503).json({error:'إعدادات Discord غير مكتملة'});
     await query("DELETE FROM verification_codes WHERE expires_at<NOW()");
