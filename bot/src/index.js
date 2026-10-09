@@ -24,9 +24,9 @@ function decryptToken(value){
   d.setAuthTag(Buffer.from(tag,'base64url'));
   return Buffer.concat([d.update(Buffer.from(data,'base64url')),d.final()]).toString('utf8');
 }
-async function setBotRuntime(id,status,error=null){
+async function setBotRuntime(id,status,error=null,ping=null){
   if(!pool)return;
-  try{await pool.query('UPDATE bots SET runtime_status=$1,last_seen_at=CASE WHEN $1=\'online\' THEN NOW() ELSE last_seen_at END,last_error=$2 WHERE id=$3',[status,error?String(error).slice(0,500):null,id]);}catch{}
+  try{await pool.query("UPDATE bots SET runtime_status=$1,last_seen_at=CASE WHEN $1='online' THEN NOW() ELSE last_seen_at END,last_error=$2,bot_ping=COALESCE($4,bot_ping) WHERE id=$3",[status,error?String(error).slice(0,500):null,id,Number.isFinite(Number(ping))&&Number(ping)>=0?Math.round(Number(ping)):null]);}catch{}
 }
 function installBotFeatures(client,bot){
   client.mldBotId=String(bot.id||client.user?.id||'');
@@ -162,11 +162,11 @@ async function syncUserBots(){
     }
     for(const bot of rows){
       const id=String(bot.id),settings=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
-      if(userBotClients.has(id)){const live=userBotClients.get(id);live.mldConfig=settings;live.mldType=bot.bot_type||'general';continue;}
+      if(userBotClients.has(id)){const live=userBotClients.get(id);live.mldConfig=settings;live.mldType=bot.bot_type||'general';await setBotRuntime(id,'online',null,live.ws?.ping);continue;}
       const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates]});
       c.mldBotId=id;
       installBotFeatures(c,bot);
-      c.once(Events.ClientReady,()=>{try{c.user.setPresence({activities:[{name:String(bot.watching||'MLD | فهد المطيري').slice(0,128),type:ActivityType.Watching}],status:'online'});}catch{}console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online');});
+      c.once(Events.ClientReady,()=>{try{c.user.setPresence({activities:[{name:String(bot.watching||'MLD | فهد المطيري').slice(0,128),type:ActivityType.Watching}],status:'online'});}catch{}console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online',null,c.ws?.ping);});
       c.on('error',e=>{console.error(`User bot ${bot.name}:`,e.message);setBotRuntime(id,'error',e.message);});
       try{await c.login(decryptToken(bot.token));userBotClients.set(id,c);}
       catch(e){console.error(`❌ User bot ${bot.name} failed:`,e.message);await setBotRuntime(id,'error',e.message);try{c.destroy();}catch{}}
