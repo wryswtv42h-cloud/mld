@@ -12,12 +12,21 @@ async function resolveTrack(input){
   if(!query)throw new Error('اكتب اسم المقطع أو رابطه.');
   let track;
   if(/^https?:\/\//i.test(query)){
-    if(/spotify\.com\//i.test(query))throw new Error('روابط Spotify المباشرة غير مدعومة للتشغيل الآن؛ اكتب اسم الأغنية والاسم الفني للبحث عنها.');
-    const info=await play.video_basic_info(query).catch(()=>null);
-    if(info?.video_details)track={title:info.video_details.title,url:info.video_details.url,duration:info.video_details.durationRaw,thumbnail:info.video_details.thumbnails?.[0]?.url};
-    else {
-      const results=await play.search(query,{limit:1});
-      track=results?.[0]&&{title:results[0].title,url:results[0].url,duration:results[0].durationRaw,thumbnail:results[0].thumbnails?.[0]?.url};
+    if(/spotify\.com\//i.test(query)){
+      const response=await fetch('https://open.spotify.com/oembed?url='+encodeURIComponent(query)).catch(()=>null);
+      const meta=response?.ok?await response.json().catch(()=>null):null;
+      if(!meta?.title)throw new Error('تعذر قراءة بيانات رابط Spotify؛ جرّب اسم الأغنية مع اسم الفنان.');
+      const results=await play.search(meta.title+' '+String(meta.author_name||''),{limit:1});
+      track=results?.[0]&&{title:meta.title+' — '+String(meta.author_name||''),url:results[0].url,duration:results[0].durationRaw,thumbnail:results[0].thumbnails?.[0]?.url};
+    }else if(/soundcloud\.com\//i.test(query)){
+      track={title:query,url:query,duration:'SoundCloud'};
+    }else{
+      const info=await play.video_basic_info(query).catch(()=>null);
+      if(info?.video_details)track={title:info.video_details.title,url:info.video_details.url,duration:info.video_details.durationRaw,thumbnail:info.video_details.thumbnails?.[0]?.url};
+      else {
+        const results=await play.search(query,{limit:1});
+        track=results?.[0]&&{title:results[0].title,url:results[0].url,duration:results[0].durationRaw,thumbnail:results[0].thumbnails?.[0]?.url};
+      }
     }
   }else{
     const results=await play.search(query,{limit:1});
