@@ -22,22 +22,59 @@ function decryptToken(value){
   d.setAuthTag(Buffer.from(tag,'base64url'));
   return Buffer.concat([d.update(Buffer.from(data,'base64url')),d.final()]).toString('utf8');
 }
+async function setBotRuntime(id,status,error=null){
+  if(!pool)return;
+  try{await pool.query('UPDATE bots SET runtime_status=$1,last_seen_at=CASE WHEN $1=\'online\' THEN NOW() ELSE last_seen_at END,last_error=$2 WHERE id=$3',[status,error?String(error).slice(0,500):null,id]);}catch{}
+}
+function installBotFeatures(client,bot){
+  client.mldConfig=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
+  client.mldType=bot.bot_type||'general';
+  client.on(Events.MessageCreate,async message=>{
+    if(!message.guild||message.author.bot)return;
+    const config=client.mldConfig||{},prefix=String(config.prefix||'!').slice(0,4);
+    if(!message.content.startsWith(prefix))return;
+    const [raw,...args]=message.content.slice(prefix.length).trim().split(/\s+/),command=String(raw||'').toLowerCase();
+    if(!command)return;
+    if(command==='ping')return message.reply('🏓 Pong! · MLD Bot online');
+    if(command==='help') {
+      const custom=Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false).map(x=>prefix+x.name+' — '+(x.description||'أمر مخصص')):[];
+      return message.reply('**أوامر '+client.user.username+'**\n'+[prefix+'ping — فحص الاتصال',prefix+'help — قائمة الأوامر',prefix+'server — معلومات السيرفر',...custom].join('\n').slice(0,1800));
+    }
+    if(command==='server')return message.reply('**'+message.guild.name+'**\nالأعضاء: '+message.guild.memberCount);
+    const custom=(Array.isArray(config.commands)?config.commands:[]).find(x=>x&&x.enabled!==false&&String(x.name||'').toLowerCase()===command);
+    if(custom){
+      const reply=String(custom.response||'').slice(0,1800).replaceAll('{user}',message.author.username).replaceAll('{server}',message.guild.name).replaceAll('{memberCount}',String(message.guild.memberCount)).replaceAll('{args}',args.join(' '));
+      if(reply)await message.reply({content:reply,allowedMentions:{repliedUser:false,parse:[]}});
+    }
+  });
+  if(client.mldType==='welcome'||client.mldType==='general'||client.mldType==='custom'){
+    client.on(Events.GuildMemberAdd,async member=>{
+      const cfg=client.mldConfig||{},channelId=String(cfg.welcomeChannelId||'');
+      if(!channelId)return;
+      const channel=member.guild.channels.cache.get(channelId);
+      if(!channel?.isTextBased())return;
+      const message=String(cfg.welcomeMessage||'ياهلا {user} في {server}!').replaceAll('{user}',member.toString()).replaceAll('{server}',member.guild.name).replaceAll('{memberCount}',String(member.guild.memberCount));
+      await channel.send({content:message.slice(0,1800),allowedMentions:{users:[member.id]} }).catch(()=>{});
+    });
+  }
+}
 async function syncUserBots(){
-  if(!pool) return;
+  if(!pool)return;
   try{
-    const {rows}=await pool.query('SELECT id,name,token,active FROM bots WHERE active=true AND locked=true');
+    const {rows}=await pool.query('SELECT id,name,token,active,bot_type,settings FROM bots WHERE active=true AND locked=true');
     const wanted=new Set(rows.map(x=>String(x.id)));
     for(const [id,client] of userBotClients){
-      if(!wanted.has(id)){try{client.destroy();}catch{} userBotClients.delete(id);}
+      if(!wanted.has(id)){try{client.destroy();}catch{}userBotClients.delete(id);await setBotRuntime(id,'offline');}
     }
     for(const bot of rows){
-      const id=String(bot.id);
-      if(userBotClients.has(id)) continue;
-      const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.DirectMessages]});
-      c.once(Events.ClientReady,()=>console.log(`🤖 User bot online: ${bot.name}`));
-      c.on('error',e=>console.error(`User bot ${bot.name}:`,e.message));
+      const id=String(bot.id),settings=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
+      if(userBotClients.has(id)){const live=userBotClients.get(id);live.mldConfig=settings;live.mldType=bot.bot_type||'general';continue;}
+      const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers]});
+      installBotFeatures(c,bot);
+      c.once(Events.ClientReady,()=>{console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online');});
+      c.on('error',e=>{console.error(`User bot ${bot.name}:`,e.message);setBotRuntime(id,'error',e.message);});
       try{await c.login(decryptToken(bot.token));userBotClients.set(id,c);}
-      catch(e){console.error(`❌ User bot ${bot.name} failed:`,e.message);try{c.destroy();}catch{}}
+      catch(e){console.error(`❌ User bot ${bot.name} failed:`,e.message);await setBotRuntime(id,'error',e.message);try{c.destroy();}catch{}}
     }
   }catch(e){console.error('User bot sync:',e.message);}
 }
