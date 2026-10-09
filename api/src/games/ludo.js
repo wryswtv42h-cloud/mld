@@ -36,7 +36,7 @@ export function handleLudoAction(state, playerName, action) {
     s.log.push(`${playerName} رما ${s.dice}`);
 
     // إذا ما فيه حركة ممكنة
-    const possible = s.tokens[playerName].some(t => t.pos + s.dice <= 56);
+    const possible = s.tokens[playerName].some(t => t.pos === -1 ? s.dice === 6 : t.pos + s.dice <= 56);
     if (!possible) {
       s.currentIndex = (s.currentIndex + 1) % s.players.length;
       s.dice = null;
@@ -44,24 +44,21 @@ export function handleLudoAction(state, playerName, action) {
   }
 
   if (action.type === 'move') {
-    if (!s.dice) return s;
-
-    const token = s.tokens[playerName][action.tokenIndex];
+    if (!Number.isInteger(action.tokenIndex) || !s.dice) return s;
+    const token = s.tokens[playerName]?.[action.tokenIndex];
     if (!token) return s;
 
-    // إذا في البيت وطلع 6
     if (token.pos === -1) {
-      if (s.dice === 6) {
-        token.pos = 0;
-        s.log.push(`${playerName} أخرج قطعة من البيت`);
-      }
+      if (s.dice !== 6) return s;
+      token.pos = 0;
+      s.log.push(`${playerName} أخرج قطعة من البيت`);
     } else {
-      token.pos += s.dice;
-      if (token.pos > 56) token.pos = 56;
+      const destination = token.pos + s.dice;
+      if (destination > 56) return s;
+      token.pos = destination;
       s.log.push(`${playerName} حرّك قطعة إلى ${token.pos}`);
     }
 
-    // فحص الفوز
     if (s.tokens[playerName].every(t => t.pos === 56)) {
       s.finished = true;
       s.winner = playerName;
