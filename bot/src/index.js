@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType, ActivityType } from 'discord.js';
+import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType, ActivityType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import http from 'http';
 import crypto from 'crypto';
 import pg from 'pg';
@@ -34,11 +34,46 @@ function installBotFeatures(client,bot){
   client.mldConfig=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
   client.mldType=bot.bot_type||'general';
   client.mldRecentMessages=new Map();
+  client.mldPendingApplications=new Map();
   const logToChannel=async(guild,channelId,text)=>{
     if(!channelId)return;
     const channel=guild.channels.cache.get(String(channelId));
     if(channel?.isTextBased())await channel.send({content:String(text).slice(0,1800),allowedMentions:{parse:[]}}).catch(()=>{});
   };
+  client.on(Events.MessageCreate,async message=>{
+    if(message.author.bot||message.guild||!client.mldPendingApplications.has(message.author.id))return;
+    const pending=client.mldPendingApplications.get(message.author.id);
+    if(Date.now()-pending.createdAt>30*60*1000){client.mldPendingApplications.delete(message.author.id);return message.reply('انتهت مهلة التقديم. ارجع للسيرفر واكتب !تقديم من جديد.').catch(()=>{});}
+    client.mldPendingApplications.delete(message.author.id);
+    try{
+      const guild=await client.guilds.fetch(pending.guildId),channel=guild.channels.cache.get(String(client.mldConfig?.applicationsChannelId||''));
+      if(!channel?.isTextBased())return message.reply('ما تم تحديد روم الطلبات في لوحة التحكم.').catch(()=>{});
+      const row=new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('mldapp:accept:'+pending.guildId+':'+message.author.id).setLabel('قبول').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId('mldapp:reject:'+pending.guildId+':'+message.author.id).setLabel('رفض').setStyle(ButtonStyle.Danger)
+      );
+      await channel.send({content:'📝 طلب تقديم جديد\nالعضو: <@'+message.author.id+'> ('+message.author.id+')\nالإجابة: '+String(message.content||'').slice(0,1500),components:[row],allowedMentions:{users:[message.author.id]}});
+      await message.reply('وصل تقديمك للإدارة بنجاح.').catch(()=>{});
+    }catch(e){console.error('Application submission:',e.message);await message.reply('تعذر إرسال التقديم، حاول لاحقًا.').catch(()=>{});}
+  });
+  client.on(Events.InteractionCreate,async interaction=>{
+    if(!interaction.isButton()||!interaction.customId.startsWith('mldapp:'))return;
+    const [,action,guildId,userId]=interaction.customId.split(':');
+    if(!interaction.guild||interaction.guild.id!==guildId)return interaction.reply({content:'هذا الزر تابع لسيرفر آخر.',ephemeral:true}).catch(()=>{});
+    if(!interaction.memberPermissions?.has(PermissionFlagsBits.ManageRoles)&&!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator))return interaction.reply({content:'تحتاج صلاحية إدارة الرتب لقبول أو رفض التقديم.',ephemeral:true}).catch(()=>{});
+    try{
+      const cfg=client.mldConfig||{};
+      if(action==='accept'&&/^\d{17,20}$/.test(String(cfg.juniorRoleId||''))){
+        const member=await interaction.guild.members.fetch(userId);
+        await member.roles.add(String(cfg.juniorRoleId),'قبول طلب تقديم من لوحة بوت MLD');
+      }else if(action==='accept'&&!cfg.juniorRoleId){
+        return interaction.reply({content:'حدد رتبة الجونيور في إعدادات البوت أولًا.',ephemeral:true});
+      }
+      await interaction.update({content:interaction.message.content+'\n\nالقرار: '+(action==='accept'?'مقبول بواسطة ':'مرفوض بواسطة ')+interaction.user.toString(),components:[]});
+      const user=await client.users.fetch(userId).catch(()=>null);
+      await user?.send(action==='accept'?'تم قبول طلبك في '+interaction.guild.name+'.':'تم رفض طلبك في '+interaction.guild.name+'.').catch(()=>{});
+    }catch(e){console.error('Application decision:',e.message);await interaction.reply({content:'تعذر تطبيق القرار. تحقق من رتبة البوت وصلاحياته.',ephemeral:true}).catch(()=>{});}
+  });
   client.on(Events.MessageCreate,async message=>{
     if(!message.guild||message.author.bot)return;
     const config=client.mldConfig||{},type=client.mldType||'general';
@@ -97,6 +132,39 @@ function installBotFeatures(client,bot){
         const amount=Number(args[0]);if(!Number.isInteger(amount)||amount<1||amount>100)return message.reply('حدد عددًا من 1 إلى 100: '+prefix+'clear 10');
         const deleted=await message.channel.bulkDelete(amount,true).catch(()=>null);if(!deleted)return message.reply('تعذر حذف الرسائل؛ قد تكون أقدم من 14 يومًا.');
         const note=await message.channel.send('تم حذف '+deleted.size+' رسالة.').catch(()=>null);if(note)setTimeout(()=>note.delete().catch(()=>{}),4000);return;
+      }
+    }
+    if(type==='applications'){
+      if(command==='تقديم'||command==='apply'){
+        if(!config.applicationsChannelId)return message.reply('الإدارة لم تحدد روم التقديمات في لوحة التحكم بعد.');
+        client.mldPendingApplications.set(message.author.id,{guildId:message.guild.id,createdAt:Date.now()});
+        try{await message.author.send('التقديم على رتبة في '+message.guild.name+'\nاكتب إجابتك على أسئلة التقديم في رسالة واحدة هنا، واذكر خبرتك وسبب رغبتك بالانضمام. لديك 30 دقيقة.');return message.reply('أرسلت لك رسالة التقديم في الخاص.')}catch{return message.reply('افتح الرسائل الخاصة من أعضاء السيرفر ثم أعد الأمر.');}
+      }
+      if(command==='طلباتي')return message.reply('للاستفسار عن حالة طلبك، راجع روم التقديمات أو تواصل مع الإدارة.');
+      if(command==='تذكرة'||command==='ticket'){
+        const supportRole=String(config.supportRoleId||'');
+        const overwrites=[{id:message.guild.id,deny:[PermissionFlagsBits.ViewChannel]},{id:message.author.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]},{id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels]}];
+        if(/^\d{17,20}$/.test(supportRole))overwrites.push({id:supportRole,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]});
+        const parent=message.guild.channels.cache.get(String(config.ticketsChannelId||''));
+        const channel=await message.guild.channels.create({name:'ticket-'+message.author.username.toLowerCase().replace(/[^a-z0-9-]/g,'-').slice(0,70)+'-'+message.author.id.slice(-4),type:ChannelType.GuildText,topic:'MLD_TICKET:'+message.author.id,permissionOverwrites:overwrites,parent:parent?.type===ChannelType.GuildCategory?parent.id:undefined}).catch(e=>{console.error('Ticket create:',e.message);return null});
+        if(!channel)return message.reply('تعذر إنشاء التذكرة. تأكد من صلاحية Manage Channels للبوت.');
+        await channel.send({content:'تذكرة '+message.author.toString()+' — اشرح طلبك هنا. استخدم '+prefix+'قفل لإغلاق التذكرة.',allowedMentions:{users:[message.author.id]}});
+        return message.reply('فتحت تذكرتك: '+channel.toString());
+      }
+      if(command==='قفل'||command==='close'){
+        if(!String(message.channel.topic||'').startsWith('MLD_TICKET:'))return message.reply('هذا الأمر يعمل داخل قناة تذكرة فقط.');
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageChannels)&&!String(message.channel.topic).endsWith(message.author.id))return message.reply('إغلاق التذكرة متاح لصاحبها أو الإدارة.');
+        const fetched=await message.channel.messages.fetch({limit:100}).catch(()=>null);
+        const transcript=fetched?[...fetched.values()].reverse().map(m=>'['+m.createdAt.toISOString()+'] '+m.author.tag+': '+String(m.content||'[مرفق]').replace(/\n/g,' ')).join('\n').slice(0,17000):'تعذر جمع الرسائل.';
+        const log=message.guild.channels.cache.get(String(config.ticketsChannelId||config.applicationsChannelId||''));
+        if(log?.isTextBased()&&log.id!==message.channel.id)await log.send({content:'Transcript '+message.channel.name+'\n'+transcript,allowedMentions:{parse:[]}}).catch(()=>{});
+        await message.channel.permissionOverwrites.edit(message.guild.id,{ViewChannel:false}).catch(()=>{});
+        return message.channel.send('أُغلقت التذكرة وحُفظ نص المحادثة في روم السجلات إن كان مضبوطًا.');
+      }
+      if(command==='إضافة'||command==='add'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageChannels))return message.reply('الأمر للإدارة داخل التذكرة.');
+        const target=message.mentions.members.first();if(!target||!String(message.channel.topic||'').startsWith('MLD_TICKET:'))return message.reply('استخدم الأمر داخل تذكرة مع منشن العضو.');
+        await message.channel.permissionOverwrites.edit(target.id,{ViewChannel:true,SendMessages:true,ReadMessageHistory:true});return message.reply('أُضيف '+target.toString()+' إلى التذكرة.');
       }
     }
     const custom=(Array.isArray(config.commands)?config.commands:[]).find(x=>x&&x.enabled!==false&&String(x.name||'').toLowerCase()===command);
