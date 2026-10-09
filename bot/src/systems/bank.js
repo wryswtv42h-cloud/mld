@@ -30,7 +30,7 @@ export function setupBank(client, pool) {
     const cfg = client.mldConfig || {};
     const prefix = String(cfg.prefix || '!').slice(0, 4);
     if (!message.content.startsWith(prefix)) return;
-    const [raw, ...args] = message.content.slice(prefix.length).trim().split(/\\s+/);
+    const [raw, ...args] = message.content.slice(prefix.length).trim().split(/\s+/);
     const cmd = String(raw || '').toLowerCase();
     const aliases = new Set(['رصيد','فلوس','يومي','تحويل','قرض','سداد','تبرع','استثمار','صندوق','تداول']);
     if (!aliases.has(cmd)) return;
@@ -48,7 +48,7 @@ export function setupBank(client, pool) {
       const r = await pool.query('SELECT balance,loan,investments,last_daily FROM mld_bot_bank WHERE bot_id=$1 AND guild_id=$2 AND user_id=$3', [botId,guildId,uid]);
       return r.rows[0];
     };
-    const amount = integer(args.find(x => /^\\d+$/.test(x)), -1);
+    const amount = integer(args.find(x => /^\d+$/.test(x)), -1);
     try {
       await ensure(userId);
       if (cmd === 'رصيد' || cmd === 'فلوس') {
