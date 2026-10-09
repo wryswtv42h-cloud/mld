@@ -30,25 +30,79 @@ async function setBotRuntime(id,status,error=null){
 function installBotFeatures(client,bot){
   client.mldConfig=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
   client.mldType=bot.bot_type||'general';
+  client.mldRecentMessages=new Map();
+  const logToChannel=async(guild,channelId,text)=>{
+    if(!channelId)return;
+    const channel=guild.channels.cache.get(String(channelId));
+    if(channel?.isTextBased())await channel.send({content:String(text).slice(0,1800),allowedMentions:{parse:[]}}).catch(()=>{});
+  };
   client.on(Events.MessageCreate,async message=>{
     if(!message.guild||message.author.bot)return;
-    const config=client.mldConfig||{},prefix=String(config.prefix||'!').slice(0,4);
-    if(!message.content.startsWith(prefix))return;
-    const [raw,...args]=message.content.slice(prefix.length).trim().split(/\s+/),command=String(raw||'').toLowerCase();
+    const config=client.mldConfig||{},type=client.mldType||'general';
+    const prefix=String(config.prefix||'!').slice(0,4);
+    const content=String(message.content||'');
+    const words=String(config.blockedWords||'').split(/[\\n,،]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+    const autoMod=type==='automod'||config.automodEnabled===true;
+    if(autoMod){
+      const linksOn=config.antiLinksEnabled===undefined?type==='automod':!!config.antiLinksEnabled;
+      const spamOn=config.antiSpamEnabled===undefined?type==='automod':!!config.antiSpamEnabled;
+      const linkPattern=/(https?:\\/\\/|discord\\.gg\\/|www\\.)/i;
+      const key=message.channel.id+':'+message.author.id,now=Date.now();
+      const history=(client.mldRecentMessages.get(key)||[]).filter(t=>now-t<8000);history.push(now);client.mldRecentMessages.set(key,history);
+      const blockedWord=words.some(w=>w&&content.toLowerCase().includes(w));
+      const blockedLink=linksOn&&linkPattern.test(content);
+      const spam=spamOn&&history.length>=5;
+      if(blockedWord||blockedLink||spam){
+        await message.delete().catch(()=>{});
+        const reason=blockedWord?'كلمة ممنوعة':blockedLink?'رابط غير مسموح':'تكرار الرسائل (سبام)';
+        const notice=await message.channel.send({content:'⚠️ '+message.author.toString()+' تم حذف رسالتك: '+reason+'.',allowedMentions:{users:[message.author.id]}}).catch(()=>null);
+        if(notice)setTimeout(()=>notice.delete().catch(()=>{}),5000);
+        await logToChannel(message.guild,config.modLogChannelId,'🛡️ إجراء حماية تلقائي: '+reason+' | العضو '+message.author.tag+' | القناة #'+message.channel.name);
+        return;
+      }
+    }
+    if(!content.startsWith(prefix))return;
+    const [raw,...args]=content.slice(prefix.length).trim().split(/\\s+/),command=String(raw||'').toLowerCase();
     if(!command)return;
-    if(command==='ping')return message.reply('🏓 Pong! · MLD Bot online');
+    if(command==='ping')return message.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
     if(command==='help') {
       const custom=Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false).map(x=>prefix+x.name+' — '+(x.description||'أمر مخصص')):[];
-      return message.reply('**أوامر '+client.user.username+'**\n'+[prefix+'ping — فحص الاتصال',prefix+'help — قائمة الأوامر',prefix+'server — معلومات السيرفر',...custom].join('\n').slice(0,1800));
+      const moderation=type==='moderation'||type==='automod'?'\\n'+[prefix+'warn @عضو السبب',prefix+'kick @عضو السبب',prefix+'ban @عضو السبب',prefix+'clear 10'].join('\\n'):'';
+      return message.reply({content:'**أوامر '+client.user.username+'**\\n'+[prefix+'ping — فحص الاتصال',prefix+'help — قائمة الأوامر',prefix+'server — معلومات السيرفر',...custom].join('\\n').concat(moderation).slice(0,1800),allowedMentions:{parse:[]}});
     }
-    if(command==='server')return message.reply('**'+message.guild.name+'**\nالأعضاء: '+message.guild.memberCount);
+    if(command==='server')return message.reply({content:'**'+message.guild.name+'**\\nالأعضاء: '+message.guild.memberCount,allowedMentions:{parse:[]}});
+    if(type==='moderation'||type==='automod'){
+      const target=message.mentions.members.first();
+      const reason=args.slice(1).join(' ').slice(0,400)||'لم يذكر سبب';
+      if(command==='warn'){
+        if(!message.member.permissions.has('ModerateMembers'))return message.reply('تحتاج صلاحية Timeout Members لتنفيذ الأمر.');
+        if(!target)return message.reply('استخدم الأمر هكذا: '+prefix+'warn @عضو السبب');
+        await logToChannel(message.guild,config.modLogChannelId,'⚠️ تنبيه إداري (غير دائم) للعضو '+target.user.tag+' بواسطة '+message.author.tag+' | '+reason);
+        return message.reply({content:'تم تسجيل التنبيه في سجل الإدارة. هذا التنبيه إشعار فقط ولا يُحفظ كعقوبة دائمة.',allowedMentions:{parse:[]}});
+      }
+      if(command==='kick'||command==='ban'){
+        const permission=command==='kick'?'KickMembers':'BanMembers';
+        if(!message.member.permissions.has(permission))return message.reply('ما عندك صلاحية تنفيذ هذا الإجراء.');
+        if(!message.guild.members.me?.permissions.has(permission))return message.reply('البوت يحتاج صلاحية '+(command==='kick'?'Kick Members':'Ban Members')+'.');
+        if(!target)return message.reply('اذكر العضو المطلوب.');
+        if(target.id===message.author.id||target.id===client.user.id)return message.reply('ما تقدر تستخدم الأمر على نفسك أو البوت.');
+        try{if(command==='kick')await target.kick(reason);else await target.ban({reason});await logToChannel(message.guild,config.modLogChannelId,'🔨 '+(command==='kick'?'طرد':'حظر')+' العضو '+target.user.tag+' بواسطة '+message.author.tag+' | '+reason);return message.reply({content:'تم '+(command==='kick'?'طرد':'حظر')+' العضو بنجاح.',allowedMentions:{parse:[]}});}catch{return message.reply('تعذر تنفيذ الإجراء. تحقق من ترتيب الرتب وصلاحيات البوت.');}
+      }
+      if(command==='clear'){
+        if(!message.member.permissions.has('ManageMessages'))return message.reply('تحتاج صلاحية إدارة الرسائل.');
+        if(!message.guild.members.me?.permissions.has('ManageMessages'))return message.reply('البوت يحتاج صلاحية إدارة الرسائل.');
+        const amount=Number(args[0]);if(!Number.isInteger(amount)||amount<1||amount>100)return message.reply('حدد عددًا من 1 إلى 100: '+prefix+'clear 10');
+        const deleted=await message.channel.bulkDelete(amount,true).catch(()=>null);if(!deleted)return message.reply('تعذر حذف الرسائل؛ قد تكون أقدم من 14 يومًا.');
+        const note=await message.channel.send('تم حذف '+deleted.size+' رسالة.').catch(()=>null);if(note)setTimeout(()=>note.delete().catch(()=>{}),4000);return;
+      }
+    }
     const custom=(Array.isArray(config.commands)?config.commands:[]).find(x=>x&&x.enabled!==false&&String(x.name||'').toLowerCase()===command);
     if(custom){
       const reply=String(custom.response||'').slice(0,1800).replaceAll('{user}',message.author.username).replaceAll('{server}',message.guild.name).replaceAll('{memberCount}',String(message.guild.memberCount)).replaceAll('{args}',args.join(' '));
       if(reply)await message.reply({content:reply,allowedMentions:{repliedUser:false,parse:[]}});
     }
   });
-  if(client.mldType==='welcome'||client.mldType==='general'||client.mldType==='custom'){
+  if(['welcome','general','custom'].includes(client.mldType)){
     client.on(Events.GuildMemberAdd,async member=>{
       const cfg=client.mldConfig||{},channelId=String(cfg.welcomeChannelId||'');
       if(!channelId)return;
@@ -56,6 +110,14 @@ function installBotFeatures(client,bot){
       if(!channel?.isTextBased())return;
       const message=String(cfg.welcomeMessage||'ياهلا {user} في {server}!').replaceAll('{user}',member.toString()).replaceAll('{server}',member.guild.name).replaceAll('{memberCount}',String(member.guild.memberCount));
       await channel.send({content:message.slice(0,1800),allowedMentions:{users:[member.id]} }).catch(()=>{});
+    });
+    client.on(Events.GuildMemberRemove,async member=>{
+      const cfg=client.mldConfig||{},channelId=String(cfg.leaveChannelId||'');
+      if(!channelId)return;
+      const channel=member.guild.channels.cache.get(channelId);
+      if(!channel?.isTextBased())return;
+      const message=String(cfg.leaveMessage||'{user} غادر السيرفر.').replaceAll('{user}',member.user?.username||'عضو').replaceAll('{server}',member.guild.name).replaceAll('{memberCount}',String(member.guild.memberCount));
+      await channel.send({content:message.slice(0,1800),allowedMentions:{parse:[]} }).catch(()=>{});
     });
   }
 }
