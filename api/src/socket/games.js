@@ -22,7 +22,7 @@ export function setupGameSocket(io,socket){
   const host=s.players?.[0]?.name||name;const isHost=String(s.host_id||'')===String(socket.user.id)||(!s.host_id&&host===name);
   if(!isHost&&!socket.user?.is_owner)return socket.emit('game:error',{error:'صاحب الجلسة أو الأونر فقط'});
   const cfg=getGameConfig(s.type);if(!cfg)return socket.emit('game:error',{error:'اللعبة غير مدعومة'});
-  const activePlayers=safeJson(s.players).filter(p=>p.userId||p.name).map(p=>({...p}));const state=await initGame(s.type,activePlayers);await query('UPDATE games SET state=$1,status=$2 WHERE id=$3',[JSON.stringify(state),'playing',sessionId]);
+  const activePlayers=safeJson(s.players).filter(p=>p.userId&&p.isBot!==true).map(p=>({...p,isBot:false}));if(activePlayers.length<cfg.min)return socket.emit('game:error',{error:'تحتاج اللعبة إلى '+cfg.min+' لاعبين حقيقيين على الأقل قبل البدء'});const state=await initGame(s.type,activePlayers);await query('UPDATE games SET state=$1,status=$2 WHERE id=$3',[JSON.stringify(state),'playing',sessionId]);
   await emitGameUpdate(io,sessionId,{sessionId,players:activePlayers,spectators:safeJson(s.spectators),state,status:'playing',gameType:s.type});
  }catch(e){console.error('game start',e);socket.emit('game:error',{error:e.message||'تعذر بدء اللعبة'})}});
  socket.on('game:action',async({sessionId,action}={})=>{try{
