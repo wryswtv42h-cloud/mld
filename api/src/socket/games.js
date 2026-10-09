@@ -53,7 +53,7 @@ async function startBotLoop(io,sessionId,gameType){
  const timer=setInterval(async()=>{
   try{
    const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const session=rows[0];
-   if(!session||session.status!=='playing'){clearInterval(timer);botLoops.delete(sessionId);return}
+   if(!session||session.status!=='playing'||!Array.isArray(session.state?.botPlayers)||session.state.botPlayers.length===0){clearInterval(timer);botLoops.delete(sessionId);return}
    const result=await tickGame(gameType,session.state);
    if(!result.changed)return;
    const status=result.state?.finished?'finished':'playing';
