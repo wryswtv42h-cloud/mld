@@ -4,16 +4,12 @@ import { query } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 const router=express.Router();
 const BOT_TYPES=[
-{id:'system',name:'⚙️ سستم',desc:'إدارة السيرفر والترحيب والسجلات'},
-{id:'games',name:'🎮 ألعاب',desc:'أوامر الألعاب'},
-{id:'bank',name:'💰 بنك',desc:'الرصيد والتحويلات'},
-{id:'applications',name:'📝 تقديمات',desc:'نظام التقديمات'},
-{id:'tickets',name:'🎫 تيكت',desc:'المساعدة والتذاكر'},
-{id:'broadcast',name:'📢 برودكاست',desc:'إعلانات ورسائل'},
-{id:'support',name:'🛡️ دعم فني 24/7',desc:'الترحيب وتوجيه طلبات الدعم'},
-{id:'cinema',name:'🎬 أفلام',desc:'روابط السينما'},
-{id:'music',name:'🎵 ميوزك',desc:'أوامر الموسيقى'},
-{id:'general',name:'⭐ عام',desc:'ping وhelp وinfo'}
+{id:'system',name:'⚙️ بوت السستم',desc:'الترحيب والسجلات وأدوات إدارة السيرفر'},
+{id:'applications',name:'📝 التقديمات + التيكت',desc:'طلبات التقديم والتذاكر في بوت واحد'},
+{id:'games',name:'🎮 بوت الألعاب',desc:'ألعاب وأوامر تفاعلية داخل Discord'},
+{id:'bank',name:'💰 بوت البنك',desc:'إعدادات الاقتصاد والرصيد والقروض'},
+{id:'support',name:'🛡️ بوت الدعم 24/7',desc:'رومات الدعم ورسائل الترحيب ومنشن الإدارة'},
+{id:'music',name:'🎵 بوت الميوزك',desc:'إعدادات قائمة التشغيل والصوت'}
 ];
 const VALID_TYPES=new Set([...BOT_TYPES.map(x=>x.id),'welcome','moderation','automod','leveling','economy','suggestions','custom']);
 router.get('/types',(req,res)=>res.json({types:BOT_TYPES}));
