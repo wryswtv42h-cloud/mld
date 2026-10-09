@@ -63,6 +63,36 @@ router.post('/bot/send-verification',requireBotSignature,async(req,res)=>{
   }catch(error){console.error('bot verification send:',error.message);return res.status(500).json({error:'تعذر إرسال كود التحقق'});}
 });
 
+
+router.post('/send-verification-code',async(req,res)=>{
+  try{
+    const discordId=String(req.body.discord_id||'').trim();
+    if(!/^\\d{17,20}$/.test(discordId))return res.status(400).json({error:'اختر حسابك الصحيح من اقتراحات Discord أولاً'});
+    const token=process.env.DISCORD_TOKEN||process.env.DISCORD_BOT_TOKEN,guildId=process.env.DISCORD_GUILD_ID;
+    if(!token||!guildId)return res.status(503).json({error:'إعدادات Discord غير مكتملة'});
+    await query("DELETE FROM verification_codes WHERE expires_at<NOW()");
+    const member=await fetch('https://discord.com/api/v10/guilds/'+guildId+'/members/'+discordId,{headers:{Authorization:'Bot '+token},signal:AbortSignal.timeout(7000)});
+    if(!member.ok)return res.status(403).json({error:'لازم تكون عضوًا في سيرفر MLD'});
+    const linked=await query('SELECT id FROM users WHERE discord_id=$1 LIMIT 1',[discordId]);
+    if(linked.rows[0])return res.status(409).json({error:'حساب Discord هذا مرتبط بحساب موقع بالفعل'});
+    const previous=await query('SELECT created_at FROM verification_codes WHERE discord_id=$1',[discordId]);
+    if(previous.rows[0]&&Date.now()-new Date(previous.rows[0].created_at).getTime()<60000)return res.status(429).json({error:'انتظر دقيقة قبل طلب كود جديد'});
+    const code=crypto.randomInt(100000,1000000).toString();
+    await query(`INSERT INTO verification_codes(discord_id,code_hash,expires_at,attempts,confirmed_at,registration_ticket_hash)
+      VALUES($1,$2,NOW()+INTERVAL '10 minutes',0,NULL,NULL)
+      ON CONFLICT(discord_id) DO UPDATE SET code_hash=EXCLUDED.code_hash,expires_at=EXCLUDED.expires_at,attempts=0,confirmed_at=NULL,registration_ticket_hash=NULL,created_at=NOW()`,
+      [discordId,hashVerificationCode(discordId,code)]);
+    try{
+      const dm=await fetch('https://discord.com/api/v10/users/@me/channels',{method:'POST',headers:{Authorization:'Bot '+token,'Content-Type':'application/json'},body:JSON.stringify({recipient_id:discordId}),signal:AbortSignal.timeout(7000)});
+      if(!dm.ok)throw new Error('تعذر فتح الخاص في Discord؛ فعّل الرسائل الخاصة');
+      const channel=await dm.json();
+      const sent=await fetch('https://discord.com/api/v10/channels/'+channel.id+'/messages',{method:'POST',headers:{Authorization:'Bot '+token,'Content-Type':'application/json'},body:JSON.stringify({content:'🔐 كود التحقق الخاص بتسجيل MLD هو: **'+code+'**\nصالح لمدة 10 دقائق. أدخله في الموقع لإكمال إنشاء الحساب، ولا تشاركه مع أحد.'}),signal:AbortSignal.timeout(7000)});
+      if(!sent.ok)throw new Error('تعذر إرسال الكود إلى الخاص');
+    }catch(error){await query('DELETE FROM verification_codes WHERE discord_id=$1',[discordId]).catch(()=>{});return res.status(502).json({error:error.message||'تعذر إرسال كود التحقق'});}
+    return res.json({message:'أرسلنا كود التحقق إلى الخاص في Discord. أدخله هنا خلال 10 دقائق.'});
+  }catch(error){console.error('website verification send:',error.message);return res.status(500).json({error:'تعذر إرسال كود التحقق الآن'});}
+});
+
 // ===== تحقق Discord عبر رسالة خاصة من البوت =====
 router.get('/discord-suggestions', async (req, res) => {
   try {
@@ -242,8 +272,8 @@ router.post('/register', async (req, res) => {
     let rows,hash;
     try{
       await connection.query('BEGIN');
-      const pending=await connection.query('SELECT code_hash,expires_at,confirmed_at,registration_ticket_hash FROM verification_codes WHERE discord_id=$1 FOR UPDATE',[String(verifiedDiscordId)]);
-      if(!pending.rows[0]||new Date(pending.rows[0].expires_at).getTime()<Date.now())throw Object.assign(new Error('انتهت صلاحية التحقق؛ أعد /verify send'),{status:400});
+      const pending=await connection.query('SELECT code_hash,expires_at,attempts,confirmed_at,registration_ticket_hash FROM verification_codes WHERE discord_id=$1 FOR UPDATE',[String(verifiedDiscordId)]);
+      if(!pending.rows[0]||new Date(pending.rows[0].expires_at).getTime()<Date.now())throw Object.assign(new Error('انتهت صلاحية الكود؛ اضغط إرسال كود التحقق واطلب كودًا جديدًا'),{status:400});
       if(Number(pending.rows[0].attempts)>=5)throw Object.assign(new Error('تجاوزت عدد محاولات التحقق. اطلب كودًا جديدًا'),{status:429});
       if(pending.rows[0].confirmed_at){
         if(!registration_ticket||!pending.rows[0].registration_ticket_hash)throw Object.assign(new Error('أكمل التحقق عبر بوت MLD وأدخل تذكرة التسجيل'),{status:400});
@@ -252,7 +282,7 @@ router.post('/register', async (req, res) => {
       }else{
         const supplied=Buffer.from(hashVerificationCode(verifiedDiscordId,String(verification_code||'')),'hex'),expected=Buffer.from(pending.rows[0].code_hash,'hex');
         if(supplied.length!==expected.length||!crypto.timingSafeEqual(supplied,expected)){
-          throw Object.assign(new Error('أرسل كود التحقق عبر رسالة Discord أو استخدم /verify confirm في البوت'),{status:422});
+          throw Object.assign(new Error('كود التحقق غير صحيح؛ تأكد من الأرقام وحاول مرة أخرى'),{status:422});
         }
       }
       hash=await bcrypt.hash(password,10);
