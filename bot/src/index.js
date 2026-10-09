@@ -46,7 +46,7 @@ function installBotFeatures(client,bot){
     if(autoMod){
       const linksOn=config.antiLinksEnabled===undefined?type==='automod':!!config.antiLinksEnabled;
       const spamOn=config.antiSpamEnabled===undefined?type==='automod':!!config.antiSpamEnabled;
-      const linkPattern=/(https?:\/\/|discord\.gg\/|www\.)/i;
+      const linkPattern=/(https?:|discord\.gg|www\.)/i;
       const key=message.channel.id+':'+message.author.id,now=Date.now();
       const history=(client.mldRecentMessages.get(key)||[]).filter(t=>now-t<8000);history.push(now);client.mldRecentMessages.set(key,history);
       const blockedWord=words.some(w=>w&&content.toLowerCase().includes(w));
