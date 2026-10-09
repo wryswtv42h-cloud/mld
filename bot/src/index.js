@@ -8,6 +8,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { setupBank, ensureBankTable } from './systems/bank.js';
 import { setupGames } from './systems/games.js';
+import { setupMusic } from './systems/music.js';
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ function installBotFeatures(client,bot){
   client.mldBotId=String(bot.id||client.user?.id||'');
   setupBank(client,pool);
   setupGames(client,pool);
+  setupMusic(client);
   client.mldConfig=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
   client.mldType=bot.bot_type||'general';
   client.mldRecentMessages=new Map();
