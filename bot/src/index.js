@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
+import { setupBank, ensureBankTable } from './systems/bank.js';
 
 dotenv.config();
 
@@ -28,6 +29,8 @@ async function setBotRuntime(id,status,error=null){
   try{await pool.query('UPDATE bots SET runtime_status=$1,last_seen_at=CASE WHEN $1=\'online\' THEN NOW() ELSE last_seen_at END,last_error=$2 WHERE id=$3',[status,error?String(error).slice(0,500):null,id]);}catch{}
 }
 function installBotFeatures(client,bot){
+  client.mldBotId=String(bot.id||client.user?.id||'');
+  setupBank(client,pool);
   client.mldConfig=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
   client.mldType=bot.bot_type||'general';
   client.mldRecentMessages=new Map();
@@ -160,6 +163,7 @@ async function syncUserBots(){
       const id=String(bot.id),settings=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
       if(userBotClients.has(id)){const live=userBotClients.get(id);live.mldConfig=settings;live.mldType=bot.bot_type||'general';continue;}
       const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates]});
+      c.mldBotId=id;
       installBotFeatures(c,bot);
       c.once(Events.ClientReady,()=>{console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online');});
       c.on('error',e=>{console.error(`User bot ${bot.name}:`,e.message);setBotRuntime(id,'error',e.message);});
@@ -313,6 +317,7 @@ async function loadHandlers() {
 async function start() {
   try {
     setupStatsTracking(client);
+    if(pool) await ensureBankTable(pool);
     await loadHandlers();
     client.once(Events.ClientReady, async () => await registerCommands());
     await client.login(process.env.DISCORD_TOKEN);
