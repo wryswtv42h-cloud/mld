@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events, REST, Routes } from 'discord.js';
+import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType } from 'discord.js';
 import http from 'http';
 import crypto from 'crypto';
 import pg from 'pg';
@@ -120,6 +120,33 @@ function installBotFeatures(client,bot){
       await channel.send({content:message.slice(0,1800),allowedMentions:{parse:[]} }).catch(()=>{});
     });
   }
+  if(client.mldType==='support'){
+    client.on(Events.VoiceStateUpdate,async(oldState,newState)=>{
+      if(oldState.channelId||!newState.channelId)return;
+      const member=newState.member,room=newState.channel,cfg=client.mldConfig||{};
+      if(!member||member.user.bot||!Array.isArray(cfg.supportRooms)||!cfg.supportRooms.map(String).includes(String(room.id)))return;
+      const greet=String(cfg.greetMessage||'أهلاً {user}! انتظر دقائق وبيجيك أداري.').replaceAll('{user}',member.displayName||member.user.username).replaceAll('{server}',newState.guild.name).slice(0,1500);
+      try{if(room.isTextBased())await room.send({content:greet,allowedMentions:{parse:[]}});}catch(e){console.error('Support greeting:',e.message);}
+      try{
+        if(cfg.mentionAdmin&&cfg.adminRole&&room.isTextBased())await room.send({content:'<@&'+String(cfg.adminRole).replace(/[^0-9]/g,'')+'> يوجد عضو يحتاج الدعم.',allowedMentions:{roles:[String(cfg.adminRole)]}});
+      }catch(e){console.error('Support mention:',e.message);}
+      try{
+        const topic='MLD_SUPPORT:'+member.id;
+        let ticket=newState.guild.channels.cache.find(ch=>ch.type===ChannelType.GuildText&&ch.topic===topic);
+        if(!ticket){
+          const overwrites=[
+            {id:newState.guild.id,deny:[PermissionFlagsBits.ViewChannel]},
+            {id:member.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]},
+            {id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels]}
+          ];
+          if(cfg.adminRole&&/^\\d{17,20}$/.test(String(cfg.adminRole)))overwrites.push({id:String(cfg.adminRole),allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]});
+          ticket=await newState.guild.channels.create({name:('support-'+member.user.username).toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').slice(0,80)||('support-'+member.id.slice(-5)),type:ChannelType.GuildText,topic,permissionOverwrites:overwrites});
+          await ticket.send({content:'🛡️ طلب دعم جديد من '+member.toString()+'. اشرح مشكلتك هنا وسيتمكن فريق الدعم من الرد.',allowedMentions:{users:[member.id]}});
+        }
+      }catch(e){console.error('Support ticket:',e.message);}
+    });
+  }
+
 }
 async function syncUserBots(){
   if(!pool)return;
@@ -132,7 +159,7 @@ async function syncUserBots(){
     for(const bot of rows){
       const id=String(bot.id),settings=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
       if(userBotClients.has(id)){const live=userBotClients.get(id);live.mldConfig=settings;live.mldType=bot.bot_type||'general';continue;}
-      const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers]});
+      const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates]});
       installBotFeatures(c,bot);
       c.once(Events.ClientReady,()=>{console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online');});
       c.on('error',e=>{console.error(`User bot ${bot.name}:`,e.message);setBotRuntime(id,'error',e.message);});
