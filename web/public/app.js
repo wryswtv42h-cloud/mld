@@ -40,6 +40,36 @@ const storyBank=[
 ];
 let gameSocket=null,gameSessionId=null,currentGamePayload=null;
 async function loadGameSessions(){try{const d=await api("/api/games/sessions");const el=$("#gameSessions");if(!el)return;el.innerHTML=(d.sessions||[]).map(s=>'<article class="panel session-card"><div><b>'+esc(s.name||s.type)+'</b><small>'+esc(s.type)+' · '+esc(s.status)+' · '+(s.players||[]).length+'/'+s.max_players+' لاعبين</small></div><button class="btn" data-game-join="'+esc(s.id)+'">دخول</button></article>').join("")||'<div class="empty">لا توجد غرف مفتوحة حاليًا.</div>';}catch{const el=$("#gameSessions");if(el)el.innerHTML='<div class="empty">تعذر تحميل غرف الألعاب.</div>';}}
+function cinemaSocketConnect(){
+ if(cinemaSocket||!window.io)return;
+ cinemaSocket=window.io({auth:{token:state.token||''}});
+ cinemaSocket.on("cinema:state",data=>{
+  if(String(data.roomId)!==String(activeCinemaRoom))return;
+  const video=$("#cinemaVideo");if(!video)return;
+  cinemaApplyingRemote=true;
+  if(Number.isFinite(Number(data.playbackTime))&&Math.abs(video.currentTime-Number(data.playbackTime))>2)video.currentTime=Number(data.playbackTime);
+  if(data.isPlaying&&video.paused)video.play().catch(()=>{});
+  if(!data.isPlaying&&!video.paused)video.pause();
+  setTimeout(()=>{cinemaApplyingRemote=false},500);
+ });
+ cinemaSocket.on("cinema:error",data=>toast(data?.error||"تعذرت مزامنة السينما"));
+}
+function openCinemaWatchRoom(roomId,title,url,ownerId){
+ activeCinemaRoom=String(roomId);
+ const player=$("#cinemaPlayer");if(!player)return;
+ const canControl=!!state.user&&(String(ownerId)===String(state.user.id)||!!state.user.is_owner);
+ player.innerHTML='<div class="cinema-player-head"><div><span class="tag">LIVE · MLD CINEMA</span><h2>'+esc(title)+'</h2><p class="muted">'+(canControl?'أنت مضيف الغرفة؛ تحكم بالتشغيل والإيقاف.':'المشاهدة متزامنة مع المضيف.')+'</p></div></div><video id="cinemaVideo" class="cinema-video" src="'+esc(url)+'" '+(canControl?'controls':'controlslist="nodownload"')+' playsinline preload="metadata"></video><p class="form-help">تعمل المزامنة مع روابط الفيديو المباشرة المدعومة في المتصفح. استخدم محتوى تملك حق عرضه.</p>';
+ cinemaSocketConnect();
+ cinemaSocket?.emit("cinema:join",{roomId:activeCinemaRoom});
+ const video=$("#cinemaVideo");
+ if(video&&canControl){
+  const send=(type)=>{if(cinemaApplyingRemote)return;cinemaSocket?.emit("cinema:sync",{roomId:activeCinemaRoom,type,time:video.currentTime})};
+  video.addEventListener("play",()=>send("play"));
+  video.addEventListener("pause",()=>send("pause"));
+  video.addEventListener("seeked",()=>send("seek"));
+ }
+ player.scrollIntoView({behavior:"smooth",block:"start"});
+}
 function gameSocketConnect(){
  if(gameSocket||!window.io||!state.token)return;
  gameSocket=window.io({auth:{token:state.token}});
