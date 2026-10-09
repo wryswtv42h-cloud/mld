@@ -7,6 +7,7 @@ import { readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { setupBank, ensureBankTable } from './systems/bank.js';
+import { setupGames } from './systems/games.js';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ async function setBotRuntime(id,status,error=null,ping=null){
 function installBotFeatures(client,bot){
   client.mldBotId=String(bot.id||client.user?.id||'');
   setupBank(client,pool);
+  setupGames(client,pool);
   client.mldConfig=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
   client.mldType=bot.bot_type||'general';
   client.mldRecentMessages=new Map();
