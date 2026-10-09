@@ -109,11 +109,11 @@ function installBotFeatures(client,bot){
     if(command==='ping')return message.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
     if(command==='help') {
       const custom=Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false).map(x=>prefix+x.name+' — '+(x.description||'أمر مخصص')):[];
-      const moderation=type==='moderation'||type==='automod'?'\\n'+[prefix+'warn @عضو السبب',prefix+'kick @عضو السبب',prefix+'ban @عضو السبب',prefix+'clear 10'].join('\\n'):'';
+      const moderation=['moderation','automod','system'].includes(type)?'\\n'+[prefix+'warn @عضو السبب',prefix+'kick @عضو السبب',prefix+'ban @عضو السبب',prefix+'clear 10',prefix+'userinfo @عضو',prefix+'avatar @عضو',prefix+'membercount',prefix+'say نص',prefix+'slowmode ثواني',prefix+'lock',prefix+'unlock',prefix+'timeout @عضو دقائق',prefix+'untimeout @عضو',prefix+'nick @عضو الاسم',prefix+'roleadd @عضو @رتبة',prefix+'roleremove @عضو @رتبة',prefix+'poll سؤال',prefix+'announce #روم نص'].join('\\n'):'';
       return message.reply({content:'**أوامر '+client.user.username+'**\\n'+[prefix+'ping — فحص الاتصال',prefix+'help — قائمة الأوامر',prefix+'server — معلومات السيرفر',...custom].join('\\n').concat(moderation).slice(0,1800),allowedMentions:{parse:[]}});
     }
     if(command==='server')return message.reply({content:'**'+message.guild.name+'**\\nالأعضاء: '+message.guild.memberCount,allowedMentions:{parse:[]}});
-    if(type==='moderation'||type==='automod'){
+    if(['moderation','automod','system'].includes(type)){
       const target=message.mentions.members.first();
       const reason=args.slice(1).join(' ').slice(0,400)||'لم يذكر سبب';
       if(command==='warn'){
@@ -136,6 +136,61 @@ function installBotFeatures(client,bot){
         const amount=Number(args[0]);if(!Number.isInteger(amount)||amount<1||amount>100)return message.reply('حدد عددًا من 1 إلى 100: '+prefix+'clear 10');
         const deleted=await message.channel.bulkDelete(amount,true).catch(()=>null);if(!deleted)return message.reply('تعذر حذف الرسائل؛ قد تكون أقدم من 14 يومًا.');
         const note=await message.channel.send('تم حذف '+deleted.size+' رسالة.').catch(()=>null);if(note)setTimeout(()=>note.delete().catch(()=>{}),4000);return;
+      }
+      if(command==='membercount'||command==='members')return message.reply({content:'👥 عدد أعضاء السيرفر: **'+message.guild.memberCount+'**',allowedMentions:{parse:[]}});
+      if(command==='userinfo'||command==='avatar'){
+        const user=message.mentions.users.first()||message.author;
+        if(command==='avatar')return message.reply({content:user.displayAvatarURL({size:1024,extension:'png'}),allowedMentions:{parse:[]}});
+        const member=await message.guild.members.fetch(user.id).catch(()=>null);
+        const roles=member?[...member.roles.cache.values()].filter(r=>r.id!==message.guild.id).sort((a,b)=>b.position-a.position).slice(0,8).map(r=>r.name).join('، '):'—';
+        return message.reply({content:'👤 **'+user.tag+'**\nالمعرّف: '+user.id+'\nانضم: '+(member?.joinedAt?.toLocaleDateString('ar-SA')||'—')+'\nالرتب: '+(roles||'لا توجد رتب إضافية'),allowedMentions:{parse:[]}});
+      }
+      if(command==='say'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageMessages))return message.reply('تحتاج صلاحية إدارة الرسائل.');
+        const text=args.join(' ').slice(0,1800);if(!text)return message.reply('اكتب النص بعد الأمر.');
+        await message.delete().catch(()=>{});return message.channel.send({content:text,allowedMentions:{parse:[]}});
+      }
+      if(command==='slowmode'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageChannels))return message.reply('تحتاج صلاحية إدارة القنوات.');
+        const seconds=Number(args[0]);if(!Number.isInteger(seconds)||seconds<0||seconds>21600)return message.reply('حدد مدة من 0 إلى 21600 ثانية.');
+        await message.channel.setRateLimitPerUser(seconds,'إعداد البوت');
+        return message.reply('🐢 تم ضبط وضع البطء على '+seconds+' ثانية.');
+      }
+      if(command==='lock'||command==='unlock'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageChannels))return message.reply('تحتاج صلاحية إدارة القنوات.');
+        await message.channel.permissionOverwrites.edit(message.guild.id,{SendMessages:command==='lock'?false:null});
+        return message.reply(command==='lock'?'🔒 تم قفل الكتابة في القناة.':'🔓 تم فتح الكتابة في القناة.');
+      }
+      if(command==='timeout'||command==='untimeout'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ModerateMembers))return message.reply('تحتاج صلاحية Timeout Members.');
+        const target=message.mentions.members.first();if(!target)return message.reply('اذكر العضو المطلوب.');
+        if(command==='untimeout'){await target.timeout(null,'إزالة المهلة بواسطة '+message.author.tag);return message.reply('تم إلغاء المهلة عن العضو.');}
+        const minutes=Number(args.find(x=>/^\d+$/.test(x)));if(!Number.isInteger(minutes)||minutes<1||minutes>40320)return message.reply('حدد مدة من دقيقة إلى 40320 دقيقة.');
+        await target.timeout(minutes*60000,args.slice(1).filter(x=>!/^\d+$/.test(x)).join(' ').slice(0,400)||'بواسطة '+message.author.tag);
+        return message.reply('⏳ تم تقييد '+target.user.tag+' لمدة '+minutes+' دقيقة.');
+      }
+      if(command==='nick'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageNicknames))return message.reply('تحتاج صلاحية إدارة الألقاب.');
+        const target=message.mentions.members.first(),nick=args.slice(1).join(' ').slice(0,32);if(!target||!nick)return message.reply('استخدم: '+prefix+'nick @عضو الاسم الجديد');
+        await target.setNickname(nick,'تعديل من بوت MLD');return message.reply('تم تعديل لقب العضو.');
+      }
+      if(command==='roleadd'||command==='roleremove'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('تحتاج صلاحية إدارة الرتب.');
+        const target=message.mentions.members.first(),role=message.mentions.roles.first();if(!target||!role)return message.reply('استخدم: '+prefix+command+' @عضو @رتبة');
+        if(role.id===message.guild.id||role.position>=message.guild.members.me.roles.highest.position)return message.reply('رتبة البوت يجب أن تكون أعلى من الرتبة المستهدفة.');
+        if(command==='roleadd')await target.roles.add(role,'تعديل من بوت MLD');else await target.roles.remove(role,'تعديل من بوت MLD');
+        return message.reply((command==='roleadd'?'أُضيفت':'أُزيلت')+' رتبة '+role.name+' '+(command==='roleadd'?'إلى':'من')+' '+target.user.tag+'.');
+      }
+      if(command==='poll'){
+        const question=args.join(' ').slice(0,1000);if(!question)return message.reply('استخدم: '+prefix+'poll سؤال التصويت');
+        const poll=await message.reply({content:'📊 **تصويت**\n'+question,allowedMentions:{parse:[]}});
+        await Promise.all([poll.react('👍').catch(()=>{}),poll.react('👎').catch(()=>{})]);return;
+      }
+      if(command==='announce'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageMessages))return message.reply('تحتاج صلاحية إدارة الرسائل.');
+        const channel=message.mentions.channels.first(),text=message.content.slice(message.content.indexOf('announce')+8).replace(/<#[0-9]+>/,'').trim().slice(0,1800);
+        if(!channel?.isTextBased()||!text)return message.reply('استخدم: '+prefix+'announce #روم نص الإعلان');
+        await channel.send({content:text,allowedMentions:{parse:[]}});return message.reply('تم إرسال الإعلان.');
       }
     }
     if(type==='applications'){
