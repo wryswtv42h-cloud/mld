@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType, ActivityType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType, ActivityType, ActionRowBuilder, ButtonBuilder, ButtonStyle, Partials } from 'discord.js';
 import http from 'http';
 import crypto from 'crypto';
 import pg from 'pg';
@@ -231,7 +231,7 @@ async function syncUserBots(){
     for(const bot of rows){
       const id=String(bot.id),settings=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
       if(userBotClients.has(id)){const live=userBotClients.get(id);live.mldConfig=settings;live.mldType=bot.bot_type||'general';await setBotRuntime(id,'online',null,live.ws?.ping);continue;}
-      const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates]});
+      const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.DirectMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates],partials:[Partials.Channel]});
       c.mldBotId=id;
       installBotFeatures(c,bot);
       c.once(Events.ClientReady,()=>{try{c.user.setPresence({activities:[{name:String(bot.watching||'MLD | فهد المطيري').slice(0,128),type:ActivityType.Watching}],status:'online'});}catch{}console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online',null,c.ws?.ping);});
