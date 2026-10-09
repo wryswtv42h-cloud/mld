@@ -39,11 +39,12 @@ async function award(pool, client, message, points=10) {
 export function setupGames(client, pool) {
   if (pool) ensureScores(pool).catch(e=>console.error('Game score table:',e.message));
   client.mldGameRounds = new Map();
+  client.mldXO = new Map();
   client.mldGameScoresReady = pool ? ensureScores(pool) : Promise.resolve();
   client.on(Events.MessageCreate, async message => {
     if (!message.guild || message.author.bot || client.mldType !== 'games') return;
     const cfg=client.mldConfig||{}, prefix=String(cfg.prefix||'!').slice(0,4), content=String(message.content||'').trim();
-    await client.mldGameScoresReady.catch(()=>{});
+    if(pool){try{await client.mldGameScoresReady}catch(e){console.error('Game score table unavailable:',e.message);return safeReply(message,'نظام النقاط غير متاح مؤقتًا. حاول لاحقًا.')}}
     const round=client.mldGameRounds.get(message.channel.id);
     if (round && Date.now()<round.expiresAt && round.userId!==message.author.id && normalize(content)===normalize(round.answer)) {
       client.mldGameRounds.delete(message.channel.id);
@@ -77,13 +78,36 @@ export function setupGames(client, pool) {
     if(name==='مافيا')return safeReply(message,'🕵️ مافيا: اجمع 4 لاعبين على الأقل ثم ابدأ التصويت. هذه الجولة السريعة تختار دورك: **'+pick(['مدني','طبيب','محقق','مافيا'])+'**. للتجربة الجماعية اكتب '+prefix+'تصويت <موضوع>.');
     if(name==='كت')return safeReply(message,'⚡ كت: '+pick(['تحدّ صديقك بسباق سرعة','اذكر 5 أشياء تبدأ بحرف م','اكتب أطول كلمة تعرفها خلال 10 ثوانٍ'])+'!');
     if(name==='بومب')return safeReply(message,'💣 بومب! '+pick(['مرّت القنبلة بسلام!','انفجرت عندك! حظ أوفر.','نجوت بفارق ثانية!']));
-    if(name==='تصويت')return safeReply(message,'📊 تصويت سريع: '+(parts.join(' ')||'هل نبدأ لعبة جديدة؟')+'\n👍 = مع · 👎 = ضد (أضف التفاعلات يدويًا).');
+    if(name==='تصويت'){const poll=await message.reply({content:'📊 **تصويت ملاذ**\n'+(parts.join(' ')||'هل نبدأ لعبة جديدة؟')+'\nصوّت بالتفاعل أدناه.',allowedMentions:{parse:[]}});await Promise.all([poll.react('👍').catch(()=>{}),poll.react('👎').catch(()=>{})]);return;}
     if(name==='ايفنت')return safeReply(message,'🎉 إيفنت ملاذ: '+pick(['سباق أسرع إجابة','تحدي الألغاز','جولة حظ','تحدي معلومات عامة'])+' — اكتب '+prefix+'اسرع للبدء.');
     if(name==='سالفة')return safeReply(message,'📖 سالفة: '+pick(['دخل عضو جديد وقال: عندي سؤال… ثم نسي السؤال!','كان فيه لاعب يفوز دائمًا، لين اكتشف أنه يلعب لحاله.','دخلت القطة اجتماع الإدارة وطلبت صلاحية مشرف.'])+'\nكمّل القصة بردك!');
     if(name==='برا السالفة')return safeReply(message,'🕵️ برا السالفة: كل الموجودين يختارون كلمة سرّية في الخاص، وواحد يختار كلمة مختلفة. ناقشوا التلميحات ثم صوّتوا على المشتبه به. اكتب '+prefix+'تصويت <اسم العضو>.');
     if(name==='هايد')return safeReply(message,'🙈 هايد: '+pick(['اختبأت خلف الستارة!','وجدت مخبأ سريًا تحت الطاولة.','انكشف مكانك! الجولة القادمة أفضل.']));
     if(name==='فخ')return safeReply(message,'⚠️ فخ: '+pick(['نجوت من اللغم! +10 نقاط معنوية.','وقعت في الفخ! حاول مجددًا.','اكتشفت الفخ قبل أن ينفجر.']));
-    if(name==='اكس')return safeReply(message,'❌⭕ اكس: لعبة XO التفاعلية متعددة الأدوار ستحتاج غرفة مخصصة؛ ابدأ الآن بتحدي صديق: '+prefix+'اكس @عضو.');
+    if(name==='اكس'){
+      let game=client.mldXO.get(message.channel.id);
+      if(!game){
+        const opponent=message.mentions.users.first();
+        if(!opponent||opponent.bot||opponent.id===message.author.id)return safeReply(message,'ابدأ تحدي XO هكذا: '+prefix+'اكس @الخصم');
+        game={players:[message.author.id,opponent.id],symbols:{[message.author.id]:'❌',[opponent.id]:'⭕'},turn:message.author.id,board:Array(9).fill('')};
+        client.mldXO.set(message.channel.id,game);
+        const board=game.board.map((v,i)=>v||String(i+1)+'️⃣').reduce((out,v,i)=>out+(i%3===0?'\n':' | ')+v,'');
+        return safeReply(message,'❌⭕ **بدأت XO!**\n'+opponent.toString()+' تحدّاك. يبدأ '+message.author.toString()+'.\n'+board+'\nاكتب '+prefix+'اكس رقم الخانة (1–9).');
+      }
+      if(!game.players.includes(message.author.id))return;
+      if(game.turn!==message.author.id)return safeReply(message,'انتظر دور خصمك.');
+      const cell=Number(parts[0]);
+      if(!Number.isInteger(cell)||cell<1||cell>9)return safeReply(message,'اختر خانة من 1 إلى 9: '+prefix+'اكس 5');
+      if(game.board[cell-1])return safeReply(message,'الخانة مأخوذة، اختر خانة ثانية.');
+      game.board[cell-1]=game.symbols[message.author.id];
+      const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      const won=lines.some(line=>line.every(i=>game.board[i]===game.symbols[message.author.id]));
+      const board=game.board.map((v,i)=>v||String(i+1)+'️⃣').reduce((out,v,i)=>out+(i%3===0?'\n':' | ')+v,'');
+      if(won){client.mldXO.delete(message.channel.id);await award(pool,client,message,Math.max(0,Number(cfg.gamePoints??10)||10)).catch(()=>{});return safeReply(message,'🏆 فاز '+message.author.toString()+'!\n'+board);}
+      if(game.board.every(Boolean)){client.mldXO.delete(message.channel.id);return safeReply(message,'🤝 تعادل!\n'+board);}
+      game.turn=game.players.find(id=>id!==message.author.id);
+      return safeReply(message,board+'\nدور <@'+game.turn+'> ('+game.symbols[game.turn]+').');
+    }
     if(name==='اسرع'){const q=pick([['كم 7 × 8؟','56'],['عاصمة اليابان؟','طوكيو'],['كم يومًا في الأسبوع؟','7'],['كم 15 - 6؟','9']]);client.mldGameRounds.set(message.channel.id,{answer:q[1],userId:message.author.id,expiresAt:Date.now()+45000});return safeReply(message,'⚡ أول إجابة صحيحة تربح! '+q[0]+' (45 ثانية)');}
     if(name==='ضرب'||name==='طرح'){const a=Math.floor(Math.random()*20)+1,b=Math.floor(Math.random()*20)+1,ans=name==='ضرب'?a*b:a-b;client.mldGameRounds.set(message.channel.id,{answer:String(ans),userId:message.author.id,expiresAt:Date.now()+45000});return safeReply(message,'🧠 حل بسرعة: '+a+(name==='ضرب'?' × ':' − ')+b+' = ؟ (45 ثانية)');}
     if(questions[name]){const q=pick(questions[name]);client.mldGameRounds.set(message.channel.id,{answer:q[1],userId:message.author.id,expiresAt:Date.now()+45000});return safeReply(message,'🧩 '+q[0]+' (45 ثانية)');}
