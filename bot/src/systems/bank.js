@@ -81,7 +81,7 @@ export function setupBank(client, pool) {
           if (!debit.rowCount) { await db.query('ROLLBACK'); return message.reply('❌ رصيدك ما يكفي لهذا التحويل.'); }
           await db.query('UPDATE mld_bot_bank SET balance=balance+$1,updated_at=NOW() WHERE bot_id=$2 AND guild_id=$3 AND user_id=$4', [amount,botId,guildId,target.id]);
           await db.query('COMMIT');
-          return message.reply('✅ تم تحويل **' + money(amount) + '** عملة إلى ' + target.toString() + '.', {allowedMentions:{users:[target.id]}});
+          return message.reply({content:'✅ تم تحويل **' + money(amount) + '** عملة إلى ' + target.toString() + '.',allowedMentions:{users:[target.id]}});
         } catch (e) { await db.query('ROLLBACK').catch(()=>{}); throw e; } finally { db.release(); }
       }
       if (cmd === 'قرض') {
