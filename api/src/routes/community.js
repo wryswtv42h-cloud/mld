@@ -50,37 +50,77 @@ async function dmDiscord(discordId,content){
   return msg.ok;
 }
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-async function sendDiscordChannelMessage(channelId,content){
-  for(let attempt=0;attempt<5;attempt++){
-    const response=await fetch('https://discord.com/api/v10/channels/'+encodeURIComponent(messageChannel.id)+'/messages',{method:'POST',headers:{Authorization:'Bot '+discordToken(),'Content-Type':'application/json'},body:JSON.stringify({content,allowed_mentions:{parse:[]}}),signal:AbortSignal.timeout(15000)});
-    if(response.status===429){const limited=await response.json().catch(()=>({}));await pause(Math.max(250,Number(limited.retry_after||1)*1000));continue;}
-    if(!response.ok)throw new Error('تعذر الإرسال إلى قناة الإعلان (Discord '+response.status+')');
-    return response.json();
+async function discordRequest(url,options={},attempts=8){
+  for(let attempt=0;attempt<attempts;attempt++){
+    const response=await fetch(url,{...options,signal:AbortSignal.timeout(20000)});
+    if(response.status===429){
+      const limited=await response.json().catch(()=>({}));
+      await pause(Math.max(500,Number(limited.retry_after||1)*1000));
+      continue;
+    }
+    if(response.status>=500&&attempt<attempts-1){await pause(Math.min(1000*(attempt+1),5000));continue;}
+    return response;
   }
-  throw new Error('انتهت محاولات انتظار حد Discord');
+  throw new Error('تجاوز Discord حد المحاولات المسموح');
 }
-async function runBroadcastJob(id,{title,content,channelId,actor}){
+async function getGuildMembersForBroadcast(){
+  const all=[];let after='0';
+  for(;;){
+    const response=await discordRequest('https://discord.com/api/v10/guilds/'+encodeURIComponent(guildId())+'/members?limit=1000&after='+after,{headers:{Authorization:'Bot '+discordToken()}});
+    if(!response.ok)throw new Error('تعذر جلب أعضاء السيرفر (Discord '+response.status+'). تحقق من تفعيل Server Members Intent وصلاحيات البوت.');
+    const batch=await response.json();
+    if(!Array.isArray(batch)||!batch.length)break;
+    all.push(...batch.filter(m=>m.user&&!m.user.bot));
+    if(batch.length<1000)break;
+    after=batch[batch.length-1].user.id;
+  }
+  return all;
+}
+async function sendBroadcastDm(member,{title,content}){
+  const headers={Authorization:'Bot '+discordToken(),'Content-Type':'application/json'};
+  const channelResponse=await discordRequest('https://discord.com/api/v10/users/@me/channels',{method:'POST',headers,body:JSON.stringify({recipient_id:String(member.user.id)})});
+  if(!channelResponse.ok)return false;
+  const channel=await channelResponse.json();
+  const messageResponse=await discordRequest('https://discord.com/api/v10/channels/'+channel.id+'/messages',{
+    method:'POST',headers,
+    body:JSON.stringify({embeds:[{title:String(title).slice(0,256),description:String(content).slice(0,4000),color:0xff9cde,footer:{text:'MLD Community · إعلان رسمي'}}],allowed_mentions:{parse:[]}})
+  });
+  return messageResponse.ok;
+}
+async function runBroadcastJob(id,{title,content,actor}){
   if(activeBroadcasts.has(String(id)))return;
   activeBroadcasts.add(String(id));
   try{
-    await query("UPDATE broadcast_jobs SET status='running' WHERE id=$1",[id]);
-    const message=await sendDiscordChannelMessage(channelId,`**${title}**\n${content}`);
-    await query("UPDATE broadcast_jobs SET status='completed',total_count=1,sent_count=1,failed_count=0 WHERE id=$1",[id]);
-    await audit(actor,'broadcast_sent',String(channelId),{title,message_id:message.id});
+    await query("UPDATE broadcast_jobs SET status='running',sent_count=0,failed_count=0 WHERE id=$1",[id]);
+    const members=await getGuildMembersForBroadcast();
+    await query('UPDATE broadcast_jobs SET total_count=$2 WHERE id=$1',[id,members.length]);
+    let sent=0,failed=0,processed=0;
+    for(const member of members){
+      try{if(await sendBroadcastDm(member,{title,content}))sent++;else failed++;}
+      catch(error){failed++;console.warn('broadcast DM failed for member',member.user.id,error.message);}
+      processed++;
+      // Persist progress so the owner dashboard never claims a message was delivered without counting it.
+      if(processed%5===0||processed===members.length){
+        await query("UPDATE broadcast_jobs SET status='running',sent_count=$2,failed_count=$3,total_count=$4 WHERE id=$1",[id,sent,failed,members.length]);
+      }
+      await pause(1100);
+    }
+    const status=failed===0?'completed':sent===0?'failed':'completed_with_errors';
+    await query('UPDATE broadcast_jobs SET status=$2,sent_count=$3,failed_count=$4,total_count=$5 WHERE id=$1',[id,status,sent,failed,members.length]);
+    await audit(actor,'broadcast_sent',String(id),{title,total:members.length,sent,failed,status});
   }catch(error){
     console.error('broadcast job',id,error.message);
-    await query("UPDATE broadcast_jobs SET status='failed',failed_count=1 WHERE id=$1",[id]).catch(()=>{});
+    await query("UPDATE broadcast_jobs SET status='failed',failed_count=GREATEST(failed_count,1) WHERE id=$1",[id]).catch(()=>{});
   }finally{activeBroadcasts.delete(String(id));}
 }
 export async function resumeBroadcastJobs(){
-  const channelId=process.env.DISCORD_ANNOUNCEMENT_CHANNEL_ID;
-  if(!channelId)return;
+  if(!discordToken()||!guildId())return;
   await query("UPDATE broadcast_jobs SET status='failed',failed_count=GREATEST(failed_count,1) WHERE status='running'");
   const {rows}=await query("SELECT id,title,message,created_by FROM broadcast_jobs WHERE status='queued' ORDER BY created_at");
   for(const job of rows){
     const actor=(await query('SELECT id,username FROM users WHERE id::text=$1::text',[job.created_by])).rows[0];
     if(!actor){await query("UPDATE broadcast_jobs SET status='failed' WHERE id=$1",[job.id]);continue;}
-    runBroadcastJob(job.id,{title:job.title,content:job.message,channelId,actor}).catch(error=>console.error('resume broadcast:',error.message));
+    runBroadcastJob(job.id,{title:job.title,content:job.message,actor}).catch(error=>console.error('resume broadcast:',error.message));
   }
 }
 async function discordApi(path, options={}) {
@@ -140,22 +180,24 @@ router.post('/bot/room',requireBotSignature,async(req,res)=>{
 router.post('/bot/broadcast',requireBotSignature,async(req,res)=>{
   try{
     const owner=await botUser(req.body.discord_id);if(!owner||!isPlatformOwner(owner))return res.status(403).json({error:'البرودكاست محصور بأونر MLD'});
-    const guild=String(req.body.discord_guild_id||''),title=String(req.body.title||'').trim(),content=String(req.body.content||'').trim(),channelId=process.env.DISCORD_ANNOUNCEMENT_CHANNEL_ID;
+    const guild=String(req.body.discord_guild_id||''),title=String(req.body.title||'').trim(),content=String(req.body.content||'').trim();
     if(!title||!content)return res.status(400).json({error:'أدخل العنوان والرسالة'});
-    if(!channelId||!discordToken())return res.status(503).json({error:'إعداد قناة الإعلان أو توكن Discord ناقص'});
+    if(title.length>256||content.length>4000)return res.status(400).json({error:'العنوان أو الرسالة أطول من المسموح'});
+    if(!discordToken()||!guildId())return res.status(503).json({error:'إعدادات بوت Discord ناقصة'});
     if(!guild||guild!==guildId())return res.status(403).json({error:'السيرفر غير مصرح به'});
     const job=await query("INSERT INTO broadcast_jobs(title,message,created_by,status,total_count) VALUES($1,$2,$3,'queued',0) RETURNING id",[title,content,owner.id]);
-    runBroadcastJob(job.rows[0].id,{title,content,channelId,actor:owner}).catch(error=>console.error('bot broadcast:',error.message));
-    res.status(202).json({message:'تم وضع الإعلان في قائمة الإرسال',job_id:job.rows[0].id});
+    runBroadcastJob(job.rows[0].id,{title,content,actor:owner}).catch(error=>console.error('bot broadcast:',error.message));
+    res.status(202).json({message:'بدأ تجهيز البرودكاست الخاص وإرساله للأعضاء بالتدريج؛ ستظهر أعداد الإرسال والفشل في لوحة الأونر',job_id:job.rows[0].id});
   }catch(error){console.error('bot broadcast:',error.message);res.status(500).json({error:'تعذر بدء البرودكاست'});}
 });
 router.post('/owner/broadcast',requireAuth,requireOwner,async(req,res)=>{
-  const title=String(req.body.title||'').trim(),content=String(req.body.content||'').trim(),channelId=process.env.DISCORD_ANNOUNCEMENT_CHANNEL_ID;
+  const title=String(req.body.title||'').trim(),content=String(req.body.content||'').trim();
   if(!title||!content)return res.status(400).json({error:'أدخل العنوان والرسالة'});
-  if(!channelId||!discordToken())return res.status(503).json({error:'إعداد قناة إعلان Discord ناقص'});
+  if(title.length>256||content.length>4000)return res.status(400).json({error:'العنوان أو الرسالة أطول من المسموح'});
+  if(!discordToken()||!guildId())return res.status(503).json({error:'إعدادات بوت Discord ناقصة'});
   const job=await query("INSERT INTO broadcast_jobs(title,message,created_by,status,total_count) VALUES($1,$2,$3,'queued',0) RETURNING id",[title,content,req.user.id]);
-  runBroadcastJob(job.rows[0].id,{title,content,channelId,actor:req.user}).catch(error=>console.error('owner broadcast:',error.message));
-  res.status(202).json({message:'وُضع الإعلان في قائمة الإرسال',job_id:job.rows[0].id});
+  runBroadcastJob(job.rows[0].id,{title,content,actor:req.user}).catch(error=>console.error('owner broadcast:',error.message));
+  res.status(202).json({message:'بدأ إرسال البرودكاست الخاص للأعضاء بالتدريج؛ تابع العدد المرسل والمتعذر في لوحة الأونر',job_id:job.rows[0].id});
 });
 
 router.get('/chat',optionalAuth,async(req,res)=>{try{const roomId=String(req.query.room_id||'public');if(roomId!=='public'){if(!req.user)return res.status(401).json({error:'سجّل الدخول لعرض الغرفة'});const allowed=await query('SELECT 1 FROM community_room_members WHERE room_id=$1 AND user_id=$2',[roomId,req.user.id]);if(!allowed.rows.length)return res.status(403).json({error:'انضم إلى الغرفة أولًا'});}const {rows}=await query(`SELECT m.id,m.room_id,m.sender_id,m.sender_name,m.content,m.type,m.reply_to,m.deleted_at,m.created_at,u.avatar,u.role,u.is_owner,reply.content AS reply_content,reply.sender_name AS reply_sender FROM messages m LEFT JOIN users u ON u.id::text=m.sender_id::text LEFT JOIN messages reply ON reply.id::text=m.reply_to::text WHERE m.room_id=$1 ORDER BY m.created_at DESC LIMIT 100`,[roomId]);res.set('Cache-Control','private, no-store').json({messages:rows.reverse()});}catch(e){console.error('public chat get',e);res.status(500).json({error:'تعذر تحميل الشات'});}});
