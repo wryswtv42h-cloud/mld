@@ -131,3 +131,21 @@ footer{width:min(1160px,calc(100% - 24px));margin:auto;padding:22px 0;border-top
 .bot-dashboard-card details[open]>summary{margin-bottom:12px}
 .bot-dashboard-card [hidden]{display:none!important}
 @media(max-width:520px){.bot-dashboard-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px}.bot-dashboard-summary b{font-size:1.2rem}.bot-avatar{width:48px;height:48px;flex-basis:48px;border-radius:14px}.games-list{grid-template-columns:1fr}.bot-dashboard-actions .btn{flex-basis:100%}}
+
+
+/* Bot controls: readable command switches and calmer settings cards */
+.bot-command-switches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:10px 0 14px}
+.bot-command-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);cursor:pointer;min-width:0}
+.bot-command-toggle>span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.bot-command-toggle b{overflow-wrap:anywhere}
+.bot-command-toggle small{color:var(--muted);font-size:.8rem;overflow-wrap:anywhere}
+.bot-command-toggle input[type=checkbox]{appearance:none;position:relative;width:42px;height:24px;flex:0 0 42px;border-radius:999px;background:#7775;border:1px solid var(--line);cursor:pointer;transition:background .18s ease}
+.bot-command-toggle input[type=checkbox]:after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .18s ease}
+.bot-command-toggle input[type=checkbox]:checked{background:var(--pink);border-color:var(--pink)}
+.bot-command-toggle input[type=checkbox]:checked:after{transform:translateX(18px)}
+.bot-advanced-commands{border:1px solid var(--line);border-radius:12px;padding:10px}
+.bot-advanced-commands>summary{cursor:pointer;font-weight:700;color:var(--muted)}
+.bot-dashboard-card .bot-config-tabs span{background:var(--panel2)}
+.bot-dashboard-card .bot-config-section{border-color:var(--line);background:var(--panel2);border-radius:16px}
+.bot-dashboard-card input:not([type=checkbox]),.bot-dashboard-card select,.bot-dashboard-card textarea{max-width:100%;min-width:0}
+@media(max-width:520px){.bot-command-switches{grid-template-columns:1fr}.bot-command-toggle{padding:11px 12px}}
