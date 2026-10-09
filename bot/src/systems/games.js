@@ -43,7 +43,8 @@ export function setupGames(client, pool) {
   client.on(Events.MessageCreate, async message => {
     if (!message.guild || message.author.bot || client.mldType !== 'games') return;
     const cfg=client.mldConfig||{}, prefix=String(cfg.prefix||'!').slice(0,4), content=String(message.content||'').trim();
-    await client.mldGameScoresReady.catch(()=>{});\n    const round=client.mldGameRounds.get(message.channel.id);
+    await client.mldGameScoresReady.catch(()=>{});
+    const round=client.mldGameRounds.get(message.channel.id);
     if (round && Date.now()<round.expiresAt && round.userId!==message.author.id && normalize(content)===normalize(round.answer)) {
       client.mldGameRounds.delete(message.channel.id);
       const pts=Math.max(0,Math.min(100000,Number(cfg.gamePoints??10)||10));
