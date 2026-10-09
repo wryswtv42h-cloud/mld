@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType } from 'discord.js';
+import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType, ActivityType } from 'discord.js';
 import http from 'http';
 import crypto from 'crypto';
 import pg from 'pg';
@@ -155,7 +155,7 @@ function installBotFeatures(client,bot){
 async function syncUserBots(){
   if(!pool)return;
   try{
-    const {rows}=await pool.query('SELECT id,name,token,active,bot_type,settings FROM bots WHERE active=true AND locked=true');
+    const {rows}=await pool.query('SELECT id,name,token,active,bot_type,settings,watching FROM bots WHERE active=true AND locked=true');
     const wanted=new Set(rows.map(x=>String(x.id)));
     for(const [id,client] of userBotClients){
       if(!wanted.has(id)){try{client.destroy();}catch{}userBotClients.delete(id);await setBotRuntime(id,'offline');}
@@ -166,7 +166,7 @@ async function syncUserBots(){
       const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates]});
       c.mldBotId=id;
       installBotFeatures(c,bot);
-      c.once(Events.ClientReady,()=>{console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online');});
+      c.once(Events.ClientReady,()=>{try{c.user.setPresence({activities:[{name:String(bot.watching||'MLD | فهد المطيري').slice(0,128),type:ActivityType.Watching}],status:'online'});}catch{}console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online');});
       c.on('error',e=>{console.error(`User bot ${bot.name}:`,e.message);setBotRuntime(id,'error',e.message);});
       try{await c.login(decryptToken(bot.token));userBotClients.set(id,c);}
       catch(e){console.error(`❌ User bot ${bot.name} failed:`,e.message);await setBotRuntime(id,'error',e.message);try{c.destroy();}catch{}}
@@ -322,7 +322,7 @@ async function start() {
     await loadHandlers();
     client.once(Events.ClientReady, async () => await registerCommands());
     await client.login(process.env.DISCORD_TOKEN);
-    if (pool) { await syncUserBots(); await syncCinemaBots(); setInterval(()=>{syncUserBots();syncCinemaBots();}, 30000); }
+    if (pool) { await syncUserBots(); await syncCinemaBots(); setInterval(()=>{syncUserBots();syncCinemaBots();}, 10000); }
   } catch (err) {
     console.error('❌ فشل تشغيل البوت:', err.message);
     process.exit(1);
