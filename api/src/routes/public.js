@@ -50,7 +50,10 @@ async function getGuild() {
 async function getMembers() {
   if (cache.members.value.length && Date.now() - cache.members.at < CACHE_TTL) return cache.members.value;
   if(cache.members.pending)return cache.members.pending;
-  cache.members.pending=(async()=>{try{const all=[];let after='0';for(let i=0;i<10;i++){const batch=await discord('/guilds/'+guildId()+'/members?limit=1000&after='+after);if(!Array.isArray(batch)||!batch.length)break;all.push(...batch);if(batch.length<1000)break;after=batch[batch.length-1].user.id;}cache.members={...cache.members,value:all,at:Date.now()};return all}catch(error){if(cache.members.value.length&&Date.now()-cache.members.at<STALE_TTL)return cache.members.value;throw error}})().finally(()=>{cache.members.pending=null});
+  cache.members.pending=(async()=>{try{const all=[];let after='0';
+    for(;;){const batch=await discord('/guilds/'+guildId()+'/members?limit=1000&after='+after);if(!Array.isArray(batch)||!batch.length)break;all.push(...batch);if(batch.length<1000)break;after=batch[batch.length-1].user.id;}
+    cache.members={...cache.members,value:all,at:Date.now()};return all;
+  }catch(error){if(cache.members.value.length&&Date.now()-cache.members.at<STALE_TTL)return cache.members.value;throw error}})().finally(()=>{cache.members.pending=null});
   return cache.members.pending;
 }
 
@@ -155,20 +158,13 @@ router.get('/suggestions', async (req, res) => {
 
 router.get('/members', async (req, res) => {
   try {
-    const q = String(req.query.q || '').trim().toLowerCase();
-    const filtered = q?await searchMembers(q):(await getMembers()).slice(0,5).map(normalizeMember);
-    if(q)return res.json({members:filtered,total:filtered.length});
-    const roles = await getRoles();
-    const roleMap = new Map(roles.map(r => [r.id, r]));
-    filtered.forEach(m => {
-      m.importantRoles = m.roles.map(id => roleMap.get(id)).filter(Boolean)
-        .filter(r => TOP_ROLE_IDS.has(String(r.id))).sort((a,b) => (b.position||0) - (a.position||0)).slice(0, 6)
-        .map(r => ({ id: r.id, name: r.name, color: r.color }));
-    });
-    res.json({ members: filtered, total: cache.members.value.length });
-  } catch (e) {
-    res.status(503).json({ error: 'تعذر جلب الأعضاء', members: [], total: 0 });
-  }
+    const q=String(req.query.q||'').trim().toLowerCase();
+    if(q){const found=await searchMembers(q);return res.set('Cache-Control','public, max-age=5').json({members:found,total:found.length,hasMore:false});}
+    const all=(await getMembers()).map(normalizeMember),roles=await getRoles(),roleMap=new Map(roles.map(r=>[r.id,r]));
+    all.forEach(m=>{m.importantRoles=m.roles.map(id=>roleMap.get(id)).filter(Boolean).filter(r=>TOP_ROLE_IDS.has(String(r.id))).sort((a,b)=>(b.position||0)-(a.position||0)).slice(0,6).map(r=>({id:r.id,name:r.name,color:r.color}));});
+    const offset=Math.max(0,Math.floor(Number(req.query.offset)||0)),limit=Math.max(1,Math.min(200,Math.floor(Number(req.query.limit)||100)));
+    res.set('Cache-Control','public, max-age=5').json({members:all.slice(offset,offset+limit),total:all.length,offset,limit,hasMore:offset+limit<all.length});
+  }catch(e){console.error('public members:',e.message);res.status(503).json({error:'تعذر جلب الأعضاء',members:[],total:0,hasMore:false});}
 });
 
 const TOP_ROLE_IDS = new Set(['1530712642384040027','1521187079336362024','1531109479264026706','1548732297669255259','1548732341185155103','1548732606508703744']);
@@ -183,29 +179,18 @@ const ROLE_CAPABILITIES = {
 
 router.get('/roles', async (req, res) => {
   try {
-    const [roles, members] = await Promise.all([getRoles(), getMembers()]);
-    const counts = new Map();
-    for (const m of members) for (const id of (m.roles || [])) counts.set(id, (counts.get(id) || 0) + 1);
-    res.json({
-      roles: roles.filter(r => TOP_ROLE_IDS.has(String(r.id))).sort((a,b)=>(b.position||0)-(a.position||0)).map(r => ({
-        id: r.id, name: r.name, color: r.hexColor || '#a86fdf',
-        membersCount: counts.get(r.id) || 0, permissions: ROLE_CAPABILITIES[r.id] || []
-      }))
-    });
-  } catch (e) {
-    res.status(503).json({ error: 'تعذر جلب الرتب', roles: [] });
-  }
+    const [roles,members]=await Promise.all([getRoles(),getMembers()]),counts=new Map();
+    for(const m of members)for(const id of (m.roles||[]))counts.set(id,(counts.get(id)||0)+1);
+    res.set('Cache-Control','public, max-age=5').json({roles:roles.filter(r=>r.id!==guildId()).sort((a,b)=>(b.position||0)-(a.position||0)).map(r=>({id:r.id,name:r.name,color:r.hexColor||'#a86fdf',position:r.position||0,membersCount:counts.get(r.id)||0,permissions:ROLE_CAPABILITIES[r.id]||[]}))});
+  }catch(e){console.error('public roles:',e.message);res.status(503).json({error:'تعذر جلب الرتب',roles:[]});}
 });
-
-router.get('/roles/:id/members', async (req, res) => {
-  try {
-    const [roles, members] = await Promise.all([getRoles(), getMembers()]);
-    const role = roles.find(r => TOP_ROLE_IDS.has(String(r.id)) && r.id === req.params.id);
-    if (!role) return res.status(404).json({ error: 'Role not found' });
-    res.json({ role: { id: role.id, name: role.name, color: role.hexColor, membersCount: members.filter(m => m.roles?.includes(role.id)).length, permissions: ROLE_CAPABILITIES[role.id] || [] }, members: members.filter(m => m.roles?.includes(role.id)).slice(0, 100).map(normalizeMember) });
-  } catch (e) {
-    res.status(503).json({ error: 'تعذر جلب أعضاء الرتبة' });
-  }
+router.get('/roles/:id/members', async (req,res)=>{
+  try{
+    const [roles,members]=await Promise.all([getRoles(),getMembers()]),role=roles.find(r=>r.id===req.params.id&&r.id!==guildId());
+    if(!role)return res.status(404).json({error:'الرتبة غير موجودة'});
+    const matching=members.filter(m=>(m.roles||[]).includes(role.id)),offset=Math.max(0,Math.floor(Number(req.query.offset)||0)),limit=Math.max(1,Math.min(200,Math.floor(Number(req.query.limit)||100)));
+    res.set('Cache-Control','public, max-age=5').json({role:{id:role.id,name:role.name,color:role.hexColor||'#a86fdf',membersCount:matching.length,permissions:ROLE_CAPABILITIES[role.id]||[]},members:matching.slice(offset,offset+limit).map(normalizeMember),total:matching.length,offset,limit,hasMore:offset+limit<matching.length});
+  }catch(e){console.error('role members:',e.message);res.status(503).json({error:'تعذر جلب أعضاء الرتبة'});}
 });
 
 router.post('/track', async (req, res) => {
