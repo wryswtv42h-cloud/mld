@@ -129,9 +129,10 @@ function installBotFeatures(client,bot){
       const member=newState.member,room=newState.channel,cfg=client.mldConfig||{};
       if(!member||member.user.bot||!Array.isArray(cfg.supportRooms)||!cfg.supportRooms.map(String).includes(String(room.id)))return;
       const greet=String(cfg.greetMessage||'أهلاً {user}! انتظر دقائق وبيجيك أداري.').replaceAll('{user}',member.displayName||member.user.username).replaceAll('{server}',newState.guild.name).slice(0,1500);
-      try{if(room.isTextBased())await room.send({content:greet,allowedMentions:{parse:[]}});}catch(e){console.error('Support greeting:',e.message);}
+      const textRoom=newState.guild.channels.cache.get(String(cfg.supportTextChannelId||''))||null;
+      try{if(textRoom?.isTextBased())await textRoom.send({content:'🔊 دخل '+member.toString()+' روم الدعم الصوتي.\\n'+greet,allowedMentions:{users:[member.id],parse:[]}});}catch(e){console.error('Support greeting:',e.message);}
       try{
-        if(cfg.mentionAdmin&&cfg.adminRole&&room.isTextBased())await room.send({content:'<@&'+String(cfg.adminRole).replace(/[^0-9]/g,'')+'> يوجد عضو يحتاج الدعم.',allowedMentions:{roles:[String(cfg.adminRole)]}});
+        if(cfg.mentionAdmin&&cfg.adminRole&&textRoom?.isTextBased())await textRoom.send({content:'<@&'+String(cfg.adminRole).replace(/[^0-9]/g,'')+'> يوجد عضو يحتاج الدعم.',allowedMentions:{roles:[String(cfg.adminRole)]}});
       }catch(e){console.error('Support mention:',e.message);}
       try{
         const topic='MLD_SUPPORT:'+member.id;
