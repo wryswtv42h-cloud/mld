@@ -76,9 +76,14 @@ export function setupMusic(client){
   client.mldMusicQueues=queues;
   client.on(Events.MessageCreate,async message=>{
     if(!message.guild||message.author.bot||!['music','allinone'].includes(client.mldType))return;
-    const cfg=client.mldConfig||{},prefix=String(cfg.prefix||'!').slice(0,4);
-    const text=String(message.content||'').trim();if(!text.startsWith(prefix))return;
-    const [cmd,...args]=text.slice(prefix.length).trim().split(/\s+/),arg=args.join(' ');
+    const cfg=client.mldConfig||{},prefix=String(cfg.prefixes?.music||cfg.prefix||'!').slice(0,4);
+    const text=String(message.content||'').trim(),hasPrefix=text.startsWith(prefix),commandText=hasPrefix?text.slice(prefix.length).trim():text;
+    const [rawCmd,...args]=commandText.split(/\s+/),rawCommand=String(rawCmd||'').toLowerCase(),arg=args.join(' ');
+    const commandSettings=cfg.commandSettings&&typeof cfg.commandSettings==='object'?cfg.commandSettings:{};
+    const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===rawCommand));
+    if(!hasPrefix&&!(cfg.shortcutsEnabled===true&&coreAlias))return;
+    const cmd=String(coreAlias?.[0]||rawCommand).toLowerCase();
+    if(commandSettings[cmd]?.enabled===false)return safe(message,'هذا الأمر معطّل من لوحة التحكم.');
     const controls=new Set(['شغل','شغّل','play','وقف','stop','التالي','skip','قائمة','queue','تكرار','repeat','خلط','shuffle','إيقاف-مؤقت','pause','استئناف','resume','صوت','volume']);
     if(!controls.has(cmd))return;
     try{
