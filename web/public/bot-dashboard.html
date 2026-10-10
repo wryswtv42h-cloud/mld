@@ -38,6 +38,7 @@
  <form id="settingsForm" class="settings-layout">
  <article class="panel form-panel"><div class="panel-heading"><div><h3>الإعدادات الأساسية</h3><p class="muted">تغييراتك تُحفظ في قاعدة البيانات وتصل للبوت تلقائيًا.</p></div></div>
  <label class="field">بادئة الأوامر <input name="prefix" maxlength="4" value="!" required><small>مثال: ! أو -</small></label>
+ <div class="two-col prefix-split"><label class="field">بادئة الألعاب <input name="gamesPrefix" maxlength="4" value="?" placeholder="?"><small>للألعاب فقط، مثل ?اكس</small></label><label class="field">بادئة البنك <input name="bankPrefix" maxlength="4" value="$" placeholder="$"><small>لأوامر البنك فقط، مثل $رصيد</small></label></div><p class="hint">كل بوت يحتفظ بإعداداته الخاصة. إذا تركت بادئة الألعاب أو البنك فارغة، يستخدم البادئة الأساسية.</p>
  <label class="switch-row"><span><b>تشغيل الاختصارات بدون بادئة</b><small>يسمح بكتابة اسم الأمر المخصص مباشرة، مثل hello بدل !hello. لا يشمل الأوامر المدمجة.</small></span><input type="checkbox" name="shortcutsEnabled"></label>
  <div class="panel inner-panel"><h3>🧪 إذا كان البوت لا يرد في Discord</h3><p class="muted">اختبر /ping أولًا. إذا استجاب للأوامر التي تبدأ بـ / ولم يستجب لـ !ping، افتح Discord Developer Portal ← تطبيق البوت ← Bot ← Privileged Gateway Intents، فعّل Message Content Intent ثم احفظ وأعد تشغيل البوت. هذه صلاحية لا يستطيع الموقع تفعيلها نيابةً عنك.</p></div>
  <div class="type-settings" data-type="support" hidden><h3>🛡️ الدعم 24/7</h3><label class="field">رومات الدعم الصوتية <select name="supportRooms" id="supportRooms" multiple size="5"></select><small>اختر الرومات الصوتية التي يبدأ عند دخولها طلب الدعم.</small></label><label class="field">روم إرسال التنبيه والتذكرة <select name="supportTextChannelId" id="supportTextChannelId"><option value="">اختر رومًا نصيًا</option></select></label><label class="field">الجملة الترحيبية <textarea name="greetMessage" rows="3" maxlength="1000" placeholder="أهلاً {user}! انتظر دقائق وبيجيك أداري."></textarea><small>يمكن استخدام {user} و {server}.</small></label><label class="field">رتبة الإدارة <select name="adminRole" id="adminRole"><option value="">اختر رتبة</option></select></label><label class="switch-row"><span><b>منشن الإدارة</b><small>تنبيه الرتبة عند وصول طلب دعم جديد</small></span><input type="checkbox" name="mentionAdmin"></label></div>
@@ -69,5 +70,5 @@
 </section>
 <footer class="footer"><span>MLD · COMMUNITY</span><span>لوحة تحكم آمنة • تتحدث الحالة تلقائيًا</span></footer>
 </main>
-<script src="/bot-dashboard.js?v=20261011-command-manager1" defer></script>
+<script src="/bot-dashboard.js?v=20261011-split-prefix2" defer></script>
 </body></html>
