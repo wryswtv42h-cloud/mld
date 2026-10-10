@@ -123,6 +123,9 @@ export async function ensureAuditLogRooms(client) {
       const name=('📚・لوقات-'+group).slice(0,90);
       let cat=existing.get(name);
       if(!cat)cat=await guild.channels.create({name,type:ChannelType.GuildCategory,permissionOverwrites:[{id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},...(cfg.adminRole&&guild.roles.cache.has(String(cfg.adminRole))?[{id:String(cfg.adminRole),allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.ReadMessageHistory]}]:[]),{id:me.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.ReadMessageHistory]}],reason:'إعداد نظام لوقات MLD'});
+      await cat.permissionOverwrites.edit(guild.roles.everyone.id,{ViewChannel:false});
+      if(cfg.adminRole&&guild.roles.cache.has(String(cfg.adminRole)))await cat.permissionOverwrites.edit(String(cfg.adminRole),{ViewChannel:true,ReadMessageHistory:true});
+      await cat.permissionOverwrites.edit(me.id,{ViewChannel:true,SendMessages:true,EmbedLinks:true,ReadMessageHistory:true});
       categories.set(group,cat);
     }
     if(!client.mldAuditLogChannels)client.mldAuditLogChannels=new Map();
@@ -130,6 +133,9 @@ export async function ensureAuditLogRooms(client) {
       const type=AUDIT_LOG_TYPES.find(t=>t.id===id),name=('・'+id.replace(/_/g,'-')).slice(0,90);
       let channel=existing.get(name);
       if(!channel)channel=await guild.channels.create({name,type:ChannelType.GuildText,parent:categories.get(type.group)?.id,permissionOverwrites:[{id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},...(cfg.adminRole&&guild.roles.cache.has(String(cfg.adminRole))?[{id:String(cfg.adminRole),allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.ReadMessageHistory]}]:[]),{id:me.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.ReadMessageHistory]}],topic:'لوق '+type.label+' | MLD',reason:'إنشاء روم لوق من لوحة MLD'});
+      await channel.permissionOverwrites.edit(guild.roles.everyone.id,{ViewChannel:false});
+      if(cfg.adminRole&&guild.roles.cache.has(String(cfg.adminRole)))await channel.permissionOverwrites.edit(String(cfg.adminRole),{ViewChannel:true,ReadMessageHistory:true});
+      await channel.permissionOverwrites.edit(me.id,{ViewChannel:true,SendMessages:true,EmbedLinks:true,ReadMessageHistory:true});
       client.mldAuditLogChannels.set(guild.id+':'+id,channel.id);createdChannels[id]=channel.id;created++;
     }
   }
