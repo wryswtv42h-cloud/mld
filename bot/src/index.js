@@ -323,8 +323,12 @@ function installBotFeatures(client,bot){
     if(!message.guild||message.author.bot)return;
     try {
     const config=client.mldConfig||{},type=client.mldType||'general';
-    const prefix=String((type==='games'?config.prefixes?.games:['bank','economy'].includes(type)?config.prefixes?.bank:config.prefix)||'!').slice(0,4);
     const content=String(message.content||'');
+    const defaultPrefix=String(config.prefix||'!').slice(0,4)||'!';
+    const prefixMap=Object.fromEntries(['games','bank','system','protection','moderation','broadcast','pigeon','tickets','streak','rooms','chat'].map(key=>[key,String(config.prefixes?.[key]||'').trim().slice(0,4)]));
+    const allPrefixes=[...new Set([defaultPrefix,...Object.values(prefixMap).filter(Boolean)])].sort((a,b)=>b.length-a.length);
+    const matchedPrefix=allPrefixes.find(value=>content.startsWith(value))||'';
+    let prefix=matchedPrefix||defaultPrefix;
     if(/^(?:help|مساعدة|هيلب)$/i.test(content.trim()))return message.reply({...buildUserHelpPayload(client,message.author.id),allowedMentions:{parse:[]}}).catch(()=>{});
     const words=String(config.blockedWords||'').split(/[\n,،]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
     const autoMod=type==='automod'||config.automodEnabled===true;
@@ -362,15 +366,29 @@ function installBotFeatures(client,bot){
       await writeRuntimeLog(client.mldBotId,message.author.id,'bot.message_content_intent_missing',{guildId:message.guild.id,channelId:message.channel.id});
       return message.reply('أنا متصل، لكن Discord لا يرسل محتوى الرسائل لي. فعّل Message Content Intent من Discord Developer Portal ثم Bot ثم Privileged Gateway Intents، وبعدها أعد تشغيل البوت. إلى ذلك الوقت جرّب أوامر /ping و/help.').catch(()=>{});
     }
-    if(!commandSource.startsWith(prefix)&&!mentionCommand&&!isCustomShortcut)return;
+    if(!matchedPrefix&&!mentionCommand&&!isCustomShortcut)return;
     const receivedCommand=String(commandSource.split(/\s+/)[0]||'').toLowerCase().slice(0,40);
     void writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_received',{command:receivedCommand,guildId:message.guild.id,channelId:message.channel.id,source:mentionCommand?'mention':isCustomShortcut?'shortcut':'prefix',contentLength:content.length});
-    const commandText=commandSource.startsWith(prefix)?commandSource.slice(prefix.length).trim():commandSource;
+    const commandText=matchedPrefix?commandSource.slice(matchedPrefix.length).trim():commandSource;
     const [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();
     const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===command));
     if(coreAlias)command=coreAlias[0];
     const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));
     if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','id','معرف','banner','بنر','profile','ملفي','بروفايل','myinv','دعواتي','topinv','توبدعوات','user','مستخدم','unban','فكحظر','allbans','قائمةالمحظورين','rolecreate','انشاءرتبة','roledelete','حذفرتبة','move','moveme','rooms','الغرفالصوتية','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
+    const prefixCategory=(name)=>{
+      const key=String(name||'').toLowerCase();
+      if(['سالفة','برا','براالسالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس','المتجر','تحويل','ايقاف','xo','game','games'].includes(key))return 'games';
+      if(['رصيد','فلوس','يومي','تحويل','تبرع','قرض','سداد','استثمار','صندوق','تداول','bank','balance','daily'].includes(key))return 'bank';
+      if(['تذكرة','ticket','قفل','close','إضافة','add','تقديم','apply','طلباتي','tickets'].includes(key))return 'tickets';
+      if(['رومخاص','روماتخاصة','شاتخاص','خاص','rooms','private','privateroom','privatemessage'].includes(key))return 'rooms';
+      if(['ستريك','streak','streaks'].includes(key))return 'streak';
+      if(['زاجل','pigeon','broadcast','برودكاست','نشر','announce','اعلان'].includes(key))return key==='announce'||key==='اعلان'||key==='broadcast'||key==='برودكاست'?'broadcast':'pigeon';
+      if(['حماية','حمايه','anti','antilink','antispam','automod','فلتر','منعروابط'].includes(key))return 'protection';
+      if(['warn','kick','ban','clear','slowmode','lock','unlock','timeout','untimeout','mute','unmute','nick','roleadd','roleremove','rolecreate','roledelete','unban','allbans','move'].includes(key))return 'moderation';
+      if(['شات','chat','روم','room','الغرف','غرف'].includes(key))return 'chat';
+      return 'system';
+    };
+    prefix=prefixMap[prefixCategory(command)]||defaultPrefix;
     if(!command)return;
     const commandPolicy=commandSettings[command];
     if(commandPolicy?.enabled===false)return message.reply('هذا الأمر معطل من لوحة التحكم.');
