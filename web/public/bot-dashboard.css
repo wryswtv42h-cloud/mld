@@ -33,3 +33,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(max-width:850px){.tabs{top:72px}.games-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.tabs{top:66px;gap:4px}.tab{padding:10px 11px}.notice{top:70px}.games-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.game-switch{padding:9px;font-size:.82rem}.stat-card:hover,.command-card:hover,.log-row:hover{transform:none}.topbar{padding-top:max(10px,env(safe-area-inset-top))}.shell{padding-bottom:env(safe-area-inset-bottom)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Audit trail controls and outcome cues */
+.log-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.log-actions button{white-space:nowrap}
+.log-actor{display:block;color:var(--muted);font-size:.72rem;margin-top:6px;overflow-wrap:anywhere}
+.log-denied .log-symbol{background:#ff829c18;color:#ff9aaf}
+.log-automod .log-symbol{background:#ffcf831c;color:#ffcf83}
+.log-start .log-symbol{background:#72e6b018;color:var(--green)}
+.log-stop .log-symbol{background:#ff829c18;color:#ff9aaf}
+.command-controls{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+.command-delete{border:1px solid #ff829c44;background:#ff829c10;color:#ffb2c0;border-radius:9px;padding:6px 9px;font-size:.75rem}
+.command-delete:hover{background:#ff829c20;border-color:#ff829c88}
+.log-row{min-width:0}
+.log-body p{line-height:1.75}
+@media(max-width:560px){.log-actions{width:100%}.log-actions button{flex:1}.command-controls{gap:6px}.command-delete{padding:6px 7px}}
