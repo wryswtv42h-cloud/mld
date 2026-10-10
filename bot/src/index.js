@@ -51,16 +51,40 @@ async function writeRuntimeLog(botId,actorId,action,details={}){
 // Only informational commands are registered as slash commands by design.
 // Moderation, protection, games, economy, and system commands use the configured prefix.
 const reservedUserSlashCommands=new Set(['help','ping','server','serverinfo','botinfo']);
-function buildUserBotSlashCommands(){
-  return [
+function buildUserBotSlashCommands(source={}) {
+  const config=source?.mldConfig||source?.settings||source||{};
+  const base=[
+    {name:'help',description:'دليل أوامر البوت'},
     {name:'ping',description:'فحص اتصال البوت'},
-    {name:'serverinfo',description:'معلومات السيرفر الحالي'},
-    {name:'botinfo',description:'معلومات البوت ومدة تشغيله'}
+    {name:'server',description:'معلومات السيرفر الحالي'},
+    {name:'serverinfo',description:'بطاقة معلومات السيرفر'},
+    {name:'membercount',description:'عدد أعضاء السيرفر'},
+    {name:'channelcount',description:'عدد قنوات السيرفر'},
+    {name:'botinfo',description:'معلومات البوت ومدة تشغيله'},
+    {name:'servericon',description:'رابط صورة السيرفر'},
+    {name:'roles',description:'عرض رتب السيرفر'},
+    {name:'roll',description:'رمي نرد',options:[{name:'max',description:'الحد الأعلى للنتيجة',type:4,required:false,min_value:2,max_value:1000000}]},
+    {name:'random',description:'رقم عشوائي بين حدين',options:[{name:'min',description:'الحد الأدنى',type:4,required:true},{name:'max',description:'الحد الأعلى',type:4,required:true}]},
+    {name:'coinflip',description:'رمي عملة'},
+    {name:'eightball',description:'اسأل سؤالًا واحصل على إجابة',options:[{name:'question',description:'السؤال',type:3,required:true}]},
+    {name:'joke',description:'نكتة عشوائية'},
+    {name:'uptime',description:'مدة تشغيل البوت'},
+    {name:'avatar',description:'عرض صورة عضو',options:[{name:'user',description:'العضو (اختياري)',type:6,required:false}]},
+    {name:'userinfo',description:'معلومات عضو',options:[{name:'user',description:'العضو (اختياري)',type:6,required:false}]},
+    {name:'ticket',description:'فتح تذكرة دعم'},
+    {name:'apply',description:'بدء طلب تقديم'}
   ];
+  const reserved=new Set(base.map(x=>x.name));
+  const custom=(Array.isArray(config.commands)?config.commands:[]).filter(x=>x&&x.enabled!==false).map(x=>{
+    const name=String(x.name||'').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,32);
+    if(!name||reserved.has(name))return null;
+    return {name,description:String(x.description||('أمر مخصص: '+name)).replace(/\s+/g,' ').slice(0,100)||('أمر مخصص: '+name),options:[{name:'args',description:'مدخلات اختيارية للأمر',type:3,required:false}]};
+  }).filter(Boolean);
+  return [...base,...custom].slice(0,100);
 }
 async function registerUserBotSlashCommands(client,bot){
   if(!client.user||!/^[0-9]{17,20}$/.test(String(bot.guild_id||'')))return;
-  const body=buildUserBotSlashCommands();
+  const body=buildUserBotSlashCommands(bot.settings||{});
   const signature=JSON.stringify(body);
   if(client.mldSlashSignature===signature)return;
   try{
