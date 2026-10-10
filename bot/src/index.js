@@ -332,7 +332,7 @@ function installBotFeatures(client,bot){
     if(!command)return;
     await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_used',{command,guildId:message.guild.id,channelId:message.channel.id});
     const requiredPermission={
-      kick:PermissionFlagsBits.KickMembers,ban:PermissionFlagsBits.BanMembers,clear:PermissionFlagsBits.ManageMessages,say:PermissionFlagsBits.ManageMessages,
+      kick:PermissionFlagsBits.KickMembers,ban:PermissionFlagsBits.BanMembers,unban:PermissionFlagsBits.BanMembers,'فكحظر':PermissionFlagsBits.BanMembers,allbans:PermissionFlagsBits.BanMembers,'قائمةالمحظورين':PermissionFlagsBits.BanMembers,clear:PermissionFlagsBits.ManageMessages,say:PermissionFlagsBits.ManageMessages,
       announce:PermissionFlagsBits.ManageMessages,slowmode:PermissionFlagsBits.ManageChannels,lock:PermissionFlagsBits.ManageChannels,unlock:PermissionFlagsBits.ManageChannels,
       timeout:PermissionFlagsBits.ModerateMembers,untimeout:PermissionFlagsBits.ModerateMembers,warn:PermissionFlagsBits.ModerateMembers,
       nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite
@@ -580,6 +580,19 @@ function installBotFeatures(client,bot){
         await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_warn',{guildId:message.guild.id,channelId:message.channel.id,targetId:target.id,reason});
         await logToChannel(message.guild,config.modLogChannelId,'⚠️ تنبيه إداري (غير دائم) للعضو '+target.user.tag+' بواسطة '+message.author.tag+' | '+reason);
         return message.reply({content:'تم تسجيل التنبيه في سجل الإدارة. هذا التنبيه إشعار فقط ولا يُحفظ كعقوبة دائمة.',allowedMentions:{parse:[]}});
+      }
+      if(command==='unban'||command==='فكحظر'){
+        if(!message.member.permissions.has(PermissionFlagsBits.BanMembers))return message.reply('تحتاج صلاحية حظر الأعضاء لفك الحظر.');
+        if(!message.guild.members.me?.permissions.has(PermissionFlagsBits.BanMembers))return message.reply('البوت يحتاج صلاحية حظر الأعضاء.');
+        const userId=String(args[0]||'').replace(/[<@!>]/g,'');
+        if(!/^\d{17,20}$/.test(userId))return message.reply('استخدم: '+prefix+'unban معرّف_العضو [السبب]');
+        const unbanReason=args.slice(1).join(' ').slice(0,400)||'تم فك الحظر بواسطة '+message.author.tag;
+        try{await message.guild.bans.remove(userId,unbanReason);await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_unban',{guildId:message.guild.id,targetId:userId,reason:unbanReason});await logToChannel(message.guild,config.modLogChannelId,'♻️ فك حظر المعرّف '+userId+' بواسطة '+message.author.tag+' | '+unbanReason);return message.reply({content:'تم فك الحظر بنجاح عن المعرّف `'+userId+'`.',allowedMentions:{parse:[]}});}catch{return message.reply('تعذر فك الحظر. تأكد أن المعرّف محظور وأن صلاحيات البوت صحيحة.');}
+      }
+      if(command==='allbans'||command==='قائمةالمحظورين'){
+        if(!message.member.permissions.has(PermissionFlagsBits.BanMembers))return message.reply('تحتاج صلاحية حظر الأعضاء لعرض القائمة.');
+        if(!message.guild.members.me?.permissions.has(PermissionFlagsBits.BanMembers))return message.reply('البوت يحتاج صلاحية حظر الأعضاء.');
+        try{const bans=await message.guild.bans.fetch();const entries=[...bans.values()].slice(0,40).map((entry,index)=>'**'+(index+1)+'.** '+(entry.user.tag||entry.user.username)+' (`'+entry.user.id+'`)'+(entry.reason?' — '+entry.reason.slice(0,100):''));const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('🔨 قائمة المحظورين').setDescription(entries.join('\n').slice(0,4000)||'قائمة الحظر فارغة.').setFooter({text:'عدد المحظورين: '+bans.size+' · يعرض أول 40'}).setTimestamp();return message.reply({embeds:[embed],allowedMentions:{parse:[]}});}catch{return message.reply('تعذر جلب قائمة المحظورين. تحقق من صلاحيات البوت.');}
       }
       if(command==='kick'||command==='ban'){
         const permission=command==='kick'?'KickMembers':'BanMembers';
