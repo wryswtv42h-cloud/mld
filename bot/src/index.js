@@ -78,6 +78,32 @@ async function registerUserBotSlashCommands(client,bot){
   }
 }
 function installBotFeatures(client,bot){
+  // Unify user-facing bot responses into MLD embeds without changing command logic.
+  const toMldEmbedPayload=(input)=>{
+    const payload=typeof input==='string'?{content:input}:input&&typeof input==='object'?{...input}:{content:String(input??'')};
+    if(payload.content&&!payload.embeds?.length){
+      const embed=new EmbedBuilder().setColor(0xff9cde).setDescription(String(payload.content).slice(0,4000)).setFooter({text:'MLD · مجتمع ملاذ'}).setTimestamp();
+      payload.embeds=[embed];
+      delete payload.content;
+    }
+    return payload;
+  };
+  // Register these wrappers before command listeners so their replies are styled consistently.
+  client.on(Events.MessageCreate,message=>{
+    if(message.author?.bot||message.__mldEmbedReplyWrapped)return;
+    const originalReply=message.reply.bind(message);
+    message.reply=(payload,...args)=>originalReply(toMldEmbedPayload(payload),...args);
+    Object.defineProperty(message,'__mldEmbedReplyWrapped',{value:true});
+  });
+  client.on(Events.InteractionCreate,interaction=>{
+    if(!interaction.isChatInputCommand()&&!interaction.isButton()&&!interaction.isModalSubmit())return;
+    for(const method of ['reply','followUp','editReply','update']){
+      const original=interaction[method]?.bind(interaction);
+      if(!original||interaction['__mldWrapped_'+method])continue;
+      interaction[method]=(payload,...args)=>original(toMldEmbedPayload(payload),...args);
+      Object.defineProperty(interaction,'__mldWrapped_'+method,{value:true});
+    }
+  });
   client.mldBotId=String(bot.id||client.user?.id||'');
   setupBank(client,pool);
   setupGames(client,pool);
