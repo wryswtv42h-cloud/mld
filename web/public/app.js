@@ -1,4 +1,7 @@
 (()=>{"use strict";
+// Keep action buttons from accidentally submitting their surrounding forms (a common cause of iPhone page refreshes).
+document.addEventListener("click",event=>{const button=event.target instanceof Element?event.target.closest("button"):null;if(!button||button.hasAttribute("type"))return;const hasDataAction=[...button.attributes].some(attr=>attr.name.startsWith("data-"));if(hasDataAction)button.type="button";},true);
+
 // Prevent accidental browser navigation from any dynamic form. The app's submit
 // handlers still run; this only blocks native full-page form submission.
 document.addEventListener("submit",event=>{
