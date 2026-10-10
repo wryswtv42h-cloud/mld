@@ -4,6 +4,31 @@
 document.addEventListener("submit",event=>{
   if(event.target instanceof HTMLFormElement) event.preventDefault();
 },true);
+document.addEventListener("click",async event=>{
+  const button=event.target.closest("#saveAnnouncement");
+  if(!button)return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const form=button.closest("#announcementForm");
+  if(!form)return;
+  if(button.disabled)return;
+  const original=button.textContent;
+  button.disabled=true;
+  button.textContent="جارٍ الحفظ…";
+  try{
+    const data={
+      text:String(form.elements.text?.value||"").trim(),
+      color:String(form.elements.color?.value||"#ff9cde"),
+      enabled:!!form.elements.enabled?.checked
+    };
+    if(!data.text)throw new Error("اكتب نص الإعلان أولًا");
+    const result=await api("/api/community/owner/announcement",{method:"PATCH",body:JSON.stringify(data)});
+    toast(result.message||"تم حفظ الإعلان");
+    await renderAnnouncement();
+  }catch(error){toast(error.message||"تعذر حفظ الإعلان");}
+  finally{if(button.isConnected){button.disabled=false;button.textContent=original;}}
+},true);
+
 document.addEventListener("submit",async event=>{
   const form=event.target;
   if(!(form instanceof HTMLFormElement)||!["botForm","announcementForm"].includes(form.id))return;
@@ -223,7 +248,7 @@ const cinemaBotHtml=cinemaBots.map(b=>'<article class="panel owner-row"><div><b>
 const cinemaMovieHtml=cinemaMovies.map(m=>'<article class="panel owner-row"><div><b>'+esc(m.title)+'</b><small>'+esc(m.type)+' · '+esc(m.video_url||'')+'</small></div><button class="btn danger" data-owner-cinema-movie-delete="'+esc(m.id)+'">حذف</button></article>').join('')||'<div class="empty">لا توجد أفلام أو مسلسلات.</div>';
 const logHtml=(audit.logs||[]).slice(0,60).map(x=>'<article class="ticketRow"><b>'+esc(x.action)+'</b><span>'+esc(x.actor_name||"")+' · '+esc(x.target||"")+' · '+esc(new Date(x.created_at).toLocaleString("ar-EG"))+'</span></article>').join("")||'<div class="empty">لا توجد سجلات.</div>';
 return box("لوحة الأونر","مركز التحكم الشامل في الحسابات والمحتوى والغرف والألعاب والبوتات والإعدادات",'<nav class="owner-console-nav" aria-label="أقسام لوحة الأونر"><button type="button" data-owner-jump="overview">نظرة عامة</button><button type="button" data-owner-jump="announcement">الإعلانات</button><button type="button" data-owner-jump="accounts">الحسابات</button><button type="button" data-owner-jump="games">الألعاب</button><button type="button" data-owner-jump="groups">القروبات</button><button type="button" data-owner-jump="tickets">التذاكر</button><button type="button" data-owner-jump="applications">التقديمات</button><button type="button" data-owner-jump="cinema">السينما</button><button type="button" data-owner-jump="bots">البوتات</button><button type="button" data-owner-jump="settings">الإعدادات</button><button type="button" data-owner-jump="inbox">زاجل</button><button type="button" data-owner-jump="audit">سجل التدقيق</button></nav><div id="owner-overview" class="owner-overview"><div class="stats"><div class="panel stat"><b>'+stats.users+'</b><small>الحسابات</small></div><div class="panel stat"><b>'+stats.bots+'</b><small>البوتات</small></div><div class="panel stat"><b>'+stats.cinema+'</b><small>غرف السينما</small></div><div class="panel stat"><b>'+stats.sessions+'</b><small>جلسات الألعاب</small></div><div class="panel stat"><b>'+stats.messages+'</b><small>الرسائل</small></div></div></div>'+
-'<section id="owner-announcement" data-owner-section="announcement" class="panel owner-section"><h2>📢 الإعلان وشريط الموقع</h2><form id="announcementForm" class="form"><input name="text" maxlength="500" placeholder="نص الإعلان الذي يظهر أعلى الموقع" value="'+esc(ann.text||"")+'" required><label>لون الشريط</label><input name="color" type="color" value="'+esc(/^#[0-9a-f]{6}$/i.test(ann.color||"")?ann.color:"#ff9cdc")+'"><label><input name="enabled" type="checkbox" '+(ann.enabled===false?"":"checked")+'> إظهار الإعلان</label><button class="btn primary">حفظ الإعلان</button></form><form id="ownerBroadcastForm" class="form"><h3>إرسال إعلان إلى Discord</h3><input name="title" placeholder="عنوان الإعلان" required><textarea name="content" placeholder="نص الإعلان" required></textarea><button class="btn primary">إرسال عبر بوت MLD</button></form><div id="ownerBroadcastJobs">'+(jobs.jobs||[]).slice(0,10).map(job=>'<div class="ticketRow"><b>'+esc(job.title)+'</b><span>'+esc(job.status)+' · '+Number(job.sent_count||0)+' أُرسل · '+Number(job.failed_count||0)+' فشل</span></div>').join("")+'</div></section>'+
+'<section id="owner-announcement" data-owner-section="announcement" class="panel owner-section"><h2>📢 الإعلان وشريط الموقع</h2><form id="announcementForm" class="form"><input name="text" maxlength="500" placeholder="نص الإعلان الذي يظهر أعلى الموقع" value="'+esc(ann.text||"")+'" required><label>لون الشريط</label><input name="color" type="color" value="'+esc(/^#[0-9a-f]{6}$/i.test(ann.color||"")?ann.color:"#ff9cdc")+'"><label><input name="enabled" type="checkbox" '+(ann.enabled===false?"":"checked")+'> إظهار الإعلان</label><button class="btn primary" type="button" id="saveAnnouncement">حفظ الإعلان</button></form><form id="ownerBroadcastForm" class="form"><h3>إرسال إعلان إلى Discord</h3><input name="title" placeholder="عنوان الإعلان" required><textarea name="content" placeholder="نص الإعلان" required></textarea><button class="btn primary">إرسال عبر بوت MLD</button></form><div id="ownerBroadcastJobs">'+(jobs.jobs||[]).slice(0,10).map(job=>'<div class="ticketRow"><b>'+esc(job.title)+'</b><span>'+esc(job.status)+' · '+Number(job.sent_count||0)+' أُرسل · '+Number(job.failed_count||0)+' فشل</span></div>').join("")+'</div></section>'+
 '<section id="owner-accounts" data-owner-section="accounts" class="panel owner-section"><h2>👥 إدارة الحسابات والصلاحيات</h2><p class="muted">تعيين أو إزالة الإداريين، الحظر، وحذف الحسابات. الأونر محمي من التعديل والحذف.</p><div class="owner-list">'+accountsHtml+'</div></section>'+
 '<section id="owner-games" data-owner-section="games" class="panel owner-section"><h2>🎮 إدارة جلسات الألعاب</h2>'+gameHtml+'</section>'+
 '<section id="owner-groups" data-owner-section="groups" class="panel owner-section"><h2>🧩 إدارة القروبات وطلبات الانضمام</h2>'+groupHtml+'</section>'+
