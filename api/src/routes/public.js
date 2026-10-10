@@ -277,7 +277,8 @@ router.get('/member/:id', async (req, res) => {
     if (!m) return res.status(404).json({ error: 'Member not found' });
     const n = normalizeMember(m);
     const ds = await statsForMember(req.params.id);
-    res.json({ ...n, rank: 'عضو', stats: {
+    const linkedProfile = await query('SELECT username,avatar,bio,occupation,role,is_owner FROM users WHERE discord_id=$1 AND COALESCE(banned,FALSE)=FALSE ORDER BY is_owner DESC,created_at ASC LIMIT 1',[req.params.id]);
+    res.json({ ...n, siteProfile: linkedProfile.rows[0] || null, rank: 'عضو', stats: {
       messages: Number(ds.messages || 0),
       mentionsReceived: Number(ds.mentions_received || 0),
       mentionsSent: Number(ds.mentions_sent || 0),
