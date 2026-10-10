@@ -6,7 +6,6 @@ member_leave|خروج الأعضاء|guildMemberRemove|الأعضاء|📤
 member_update|تغييرات الأعضاء|guildMemberUpdate|الأعضاء|👤
 member_nickname|تغيير الألقاب|guildMemberUpdate|الأعضاء|✏️
 member_roles|إضافة وإزالة الرتب|guildMemberUpdate|الأعضاء|🎭
-member_avatar|تغييرات الملف الشخصي|guildMemberUpdate|الأعضاء|🖼️
 member_ban|حظر عضو|guildBanAdd|الإشراف|🔨
 member_unban|فك حظر عضو|guildBanRemove|الإشراف|🔓
 member_timeout|المهلة الزمنية|guildMemberUpdate|الإشراف|⏳
