@@ -43,7 +43,7 @@ export function setupGames(client, pool) {
   client.mldGameScoresReady = pool ? ensureScores(pool) : Promise.resolve();
   client.on(Events.MessageCreate, async message => {
     if (!message.guild || message.author.bot || !['games','allinone'].includes(client.mldType)) return;
-    const cfg=client.mldConfig||{}, prefix=String(cfg.prefix||'!').slice(0,4), content=String(message.content||'').trim();
+    const cfg=client.mldConfig||{}, prefix=String(cfg.prefixes?.games||cfg.prefix||'!').slice(0,4), content=String(message.content||'').trim();
     if(pool){try{await client.mldGameScoresReady}catch(e){console.error('Game score table unavailable:',e.message);return safeReply(message,'نظام النقاط غير متاح مؤقتًا. حاول لاحقًا.')}}
     const round=client.mldGameRounds.get(message.channel.id);
     if (round && Date.now()<round.expiresAt && round.userId!==message.author.id && normalize(content)===normalize(round.answer)) {
