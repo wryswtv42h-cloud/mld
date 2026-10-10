@@ -90,7 +90,7 @@ async function registerUserBotSlashCommands(client,bot){
 }
 
 function buildUserHelpPayload(client, ownerId, selected='general') {
-  const config=client.mldConfig||{},type=client.mldType||'general',prefix=String(config.prefix||'!').slice(0,4);
+  const config=client.mldConfig||{},type=client.mldType||'general',prefix=String((type==='games'?config.prefixes?.games:type==='bank'?config.prefixes?.bank:config.prefix)||'!').slice(0,4);
   const categories=[
     {value:'general',label:'الأوامر العامة',emoji:'✨',desc:'معلومات السيرفر وأدوات يومية',rows:[['ping','فحص الاتصال'],['server','معلومات السيرفر'],['serverinfo','بطاقة السيرفر'],['membercount','عدد الأعضاء'],['channelcount','عدد القنوات'],['uptime','مدة تشغيل البوت'],['avatar','الصورة الشخصية'],['userinfo','معلومات عضو'],['roles','عرض الرتب'],['roll','رمي نرد'],['random','رقم عشوائي'],['coinflip','عملة'],['eightball','سؤال وجواب'],['joke','نكتة']]},
     {value:'admin',label:'الإدارة والإشراف',emoji:'🛡️',desc:'أوامر إدارة السيرفر المتاحة حسب نوع البوت',rows:[['warn @عضو السبب','تنبيه عضو'],['kick @عضو السبب','طرد عضو'],['ban @عضو السبب','حظر عضو'],['clear 10','حذف رسائل'],['slowmode 5','تحديد سرعة الرسائل'],['lock','قفل القناة'],['unlock','فتح القناة'],['timeout @عضو دقائق','تقييد عضو'],['untimeout @عضو','إلغاء التقييد'],['nick @عضو الاسم','تغيير لقب'],['roleadd @عضو @رتبة','إضافة رتبة'],['roleremove @عضو @رتبة','إزالة رتبة'],['poll سؤال','تصويت'],['announce #روم نص','إعلان']]},
@@ -373,7 +373,7 @@ function installBotFeatures(client,bot){
       if(!message.member.permissions.has(PermissionFlagsBits.ManageGuild))return message.reply('تحتاج صلاحية إدارة السيرفر لتغيير البادئة.');
       const nextPrefix=String(args[0]||'').trim();
       if(!nextPrefix||nextPrefix.length>4||/\s/.test(nextPrefix))return message.reply('استخدم: '+prefix+'setprefix ! (من 1 إلى 4 رموز بدون مسافات).');
-      const next={...config,prefix:nextPrefix};
+      const next=type==='games'?{...config,prefixes:{...(config.prefixes||{}),games:nextPrefix}}:type==='bank'?{...config,prefixes:{...(config.prefixes||{}),bank:nextPrefix}}:{...config,prefix:nextPrefix};
       try{if(pool)await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);client.mldConfig=next;return message.reply('✅ تم تغيير بادئة الأوامر إلى: `'+nextPrefix+'`');}
       catch(error){console.error('Prefix save:',error.message);return message.reply('تعذر حفظ البادئة. حاول مرة ثانية.');}
     }
