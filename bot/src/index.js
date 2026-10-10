@@ -40,7 +40,7 @@ async function writeRuntimeLog(botId,actorId,action,details={}){
     await pool.query("INSERT INTO bot_logs(bot_id,actor_id,action,details) VALUES($1,$2,$3,$4)",[String(botId),String(actorId||''),String(action).slice(0,100),JSON.stringify(details)]);
   }catch(e){console.error('Bot audit log:',e.message);auditTableReady=null;}
 }
-const reservedUserSlashCommands=new Set(['help','ping','server','membercount','uptime','avatar','userinfo','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke']);
+const reservedUserSlashCommands=new Set(['help','ping','server','membercount','uptime','avatar','userinfo','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','ticket','apply']);
 function buildUserBotSlashCommands(client){
   const commands=[
     {name:'help',description:'عرض دليل أوامر البوت'},
@@ -60,6 +60,8 @@ function buildUserBotSlashCommands(client){
     {name:'eightball',description:'إجابة عشوائية عن سؤال',options:[{type:3,name:'question',description:'اكتب سؤالك',required:true,max_length:500}]},
     {name:'joke',description:'نكتة عشوائية خفيفة'}
   ];
+  if(['tickets','applications','allinone'].includes(client.mldType))commands.push({name:'ticket',description:'فتح تذكرة دعم خاصة'});
+  if(['applications','allinone'].includes(client.mldType))commands.push({name:'apply',description:'بدء طلب التقديم عبر الخاص'});
   const commandSettings=client.mldConfig?.commandSettings&&typeof client.mldConfig.commandSettings==='object'?client.mldConfig.commandSettings:{};
   for(let i=commands.length-1;i>=0;i--)if(commandSettings[commands[i].name]?.enabled===false)commands.splice(i,1);
   const seen=new Set(commands.map(x=>x.name));
@@ -90,7 +92,7 @@ async function registerUserBotSlashCommands(client,bot){
 }
 
 function buildUserHelpPayload(client, ownerId, selected='general') {
-  const config=client.mldConfig||{},type=client.mldType||'general',prefix=String((type==='games'?config.prefixes?.games:type==='bank'?config.prefixes?.bank:config.prefix)||'!').slice(0,4);
+  const config=client.mldConfig||{},type=client.mldType||'general',prefix=String((type==='games'?config.prefixes?.games:['bank','economy'].includes(type)?config.prefixes?.bank:config.prefix)||'!').slice(0,4);
   const categories=[
     {value:'general',label:'الأوامر العامة',emoji:'✨',desc:'معلومات السيرفر وأدوات يومية',rows:[['ping','فحص الاتصال'],['server','معلومات السيرفر'],['serverinfo','بطاقة السيرفر'],['membercount','عدد الأعضاء'],['channelcount','عدد القنوات'],['uptime','مدة تشغيل البوت'],['avatar','الصورة الشخصية'],['userinfo','معلومات عضو'],['roles','عرض الرتب'],['roll','رمي نرد'],['random','رقم عشوائي'],['coinflip','عملة'],['eightball','سؤال وجواب'],['joke','نكتة'],['id','معلومات المعرّف'],['banner','عرض بنر الحساب'],['profile','الملف الشخصي'],['myinv','دعواتي'],['topinv','أعلى الدعوات'],['user','بطاقة عضو'],['serverinfo','معلومات السيرفر']]},
     {value:'admin',label:'الإدارة والإشراف',emoji:'🛡️',desc:'أوامر إدارة السيرفر المتاحة حسب نوع البوت',rows:[['warn @عضو السبب','تنبيه عضو'],['kick @عضو السبب','طرد عضو'],['ban @عضو السبب','حظر عضو'],['clear 10','حذف رسائل'],['slowmode 5','تحديد سرعة الرسائل'],['lock','قفل القناة'],['unlock','فتح القناة'],['timeout @عضو دقائق','تقييد عضو'],['untimeout @عضو','إلغاء التقييد'],['nick @عضو الاسم','تغيير لقب'],['roleadd @عضو @رتبة','إضافة رتبة'],['roleremove @عضو @رتبة','إزالة رتبة'],['poll سؤال','تصويت'],['announce #روم نص','إعلان'],['unban معرّف','فك الحظر'],['allbans','قائمة المحظورين'],['rolecreate اسم #RRGGBB','إنشاء رتبة'],['roledelete @رتبة','حذف رتبة'],['mute @عضو','كتم صوتي'],['unmute @عضو','فك الكتم الصوتي'],['move @عضو #روم','نقل عضو صوتيًا'],['rooms','قائمة الرومات الصوتية']]},
@@ -180,6 +182,24 @@ function installBotFeatures(client,bot){
         const memberRoleIds=interaction.member?.roles?.cache?[...interaction.member.roles.cache.keys()]:(Array.isArray(interaction.member?.roles)?interaction.member.roles:[]);
         if(allowedSlashRoles.length&&interaction.guild?.ownerId!==interaction.user.id&&!allowedSlashRoles.some(roleId=>memberRoleIds.includes(String(roleId))))return interaction.reply({content:'ما عندك رتبة تسمح لك باستخدام هذا الأمر.',ephemeral:true});
         if(name==='ping')return interaction.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
+        if(name==='ticket'){
+          if(!interaction.guild)return interaction.reply({content:'هذا الأمر يعمل داخل السيرفر فقط.',ephemeral:true});
+          const cfg=client.mldConfig||{},supportRole=String(cfg.supportRoleId||'');
+          const overwrites=[{id:interaction.guild.id,deny:[PermissionFlagsBits.ViewChannel]},{id:interaction.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]},{id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels]}];
+          if(/^\d{17,20}$/.test(supportRole))overwrites.push({id:supportRole,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]});
+          const parent=interaction.guild.channels.cache.get(String(cfg.ticketsChannelId||''));
+          const channel=await interaction.guild.channels.create({name:'ticket-'+interaction.user.username.toLowerCase().replace(/[^a-z0-9-]/g,'-').slice(0,70)+'-'+interaction.user.id.slice(-4),type:ChannelType.GuildText,topic:'MLD_TICKET:'+interaction.user.id,permissionOverwrites:overwrites,parent:parent?.type===ChannelType.GuildCategory?parent.id:undefined}).catch(error=>{console.error('Slash ticket create:',error.message);return null});
+          if(!channel)return interaction.reply({content:'تعذر إنشاء التذكرة. تأكد من صلاحية Manage Channels للبوت.',ephemeral:true});
+          await channel.send({content:'تذكرة '+interaction.user.toString()+' — اشرح طلبك هنا. استخدم أمر قفل لإغلاق التذكرة.',allowedMentions:{users:[interaction.user.id]}});
+          return interaction.reply({content:'فتحت تذكرتك: '+channel.toString(),ephemeral:true,allowedMentions:{parse:[]}});
+        }
+        if(name==='apply'){
+          if(!interaction.guild||!['applications','allinone'].includes(client.mldType))return interaction.reply({content:'أمر التقديم غير مفعّل لهذا النوع من البوتات.',ephemeral:true});
+          if(!client.mldConfig?.applicationsChannelId)return interaction.reply({content:'الإدارة لم تحدد روم التقديمات في لوحة التحكم بعد.',ephemeral:true});
+          client.mldPendingApplications.set(interaction.user.id,{guildId:interaction.guild.id,createdAt:Date.now()});
+          try{await interaction.user.send('التقديم على رتبة في '+interaction.guild.name+'\nاكتب إجابتك على أسئلة التقديم في رسالة واحدة هنا، واذكر خبرتك وسبب رغبتك بالانضمام. لديك 30 دقيقة.');return interaction.reply({content:'أرسلت لك رسالة التقديم في الخاص.',ephemeral:true});}
+          catch{client.mldPendingApplications.delete(interaction.user.id);return interaction.reply({content:'افتح الرسائل الخاصة من أعضاء السيرفر ثم أعد الأمر.',ephemeral:true});}
+        }
         if(name==='help'){
           return interaction.reply({...buildUserHelpPayload(client,interaction.user.id),ephemeral:true});
         }
@@ -274,9 +294,10 @@ function installBotFeatures(client,bot){
       const page=Number(pageRaw)||1,prefix=String(client.mldConfig?.prefix||'!').slice(0,4),config=client.mldConfig||{},type=client.mldType||'general';
       const rows=[['ping','فحص الاتصال'],['help [رقم]','دليل الأوامر'],['server','معلومات السيرفر'],['membercount','عدد الأعضاء'],['members','اختصار عدد الأعضاء'],['userinfo @عضو','معلومات عضو'],['avatar [@عضو]','الصورة الشخصية']];
       if(['moderation','automod','system','allinone'].includes(type))rows.push(['warn @عضو السبب','تنبيه'],['kick @عضو السبب','طرد'],['ban @عضو السبب','حظر'],['clear 10','حذف رسائل'],['say نص','إرسال نص'],['slowmode ثواني','بطء القناة'],['lock','قفل الكتابة'],['unlock','فتح الكتابة'],['timeout @عضو دقائق','تقييد'],['untimeout @عضو','إلغاء التقييد'],['nick @عضو الاسم','تغيير لقب'],['roleadd @عضو @رتبة','إضافة رتبة'],['roleremove @عضو @رتبة','إزالة رتبة'],['poll سؤال','تصويت'],['announce #روم نص','إعلان']);
-      if(['applications','allinone'].includes(type))rows.push(['تقديم','بدء التقديم'],['apply','اختصار التقديم'],['طلباتي','متابعة الطلب'],['تذكرة','إنشاء تذكرة'],['ticket','اختصار التذكرة'],['قفل','إغلاق التذكرة'],['إضافة @عضو','إضافة عضو للتذكرة']);
+      if(['applications','allinone'].includes(type))rows.push(['تقديم','بدء التقديم'],['apply','اختصار التقديم'],['طلباتي','متابعة الطلب']);
+      if(['tickets','applications','allinone'].includes(type))rows.push(['تذكرة','إنشاء تذكرة'],['ticket','اختصار التذكرة'],['قفل','إغلاق التذكرة'],['إضافة @عضو','إضافة عضو للتذكرة']);
       if(['games','allinone'].includes(type))rows.push(...['سالفة','برا السالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس','المتجر','تحويل','ايقاف'].map(n=>[n,'لعبة أو أمر نقاط']));
-      if(['bank','allinone'].includes(type))rows.push(...[['رصيد','عرض الرصيد'],['فلوس','اختصار الرصيد'],['يومي','مكافأة يومية'],['تحويل @عضو مبلغ','تحويل رصيد'],['تبرع @عضو مبلغ','التبرع'],['قرض','طلب قرض'],['سداد','سداد قرض'],['استثمار','استثمار'],['صندوق','الصندوق'],['تداول','التداول']]);
+      if(['bank','economy','allinone'].includes(type))rows.push(...[['رصيد','عرض الرصيد'],['فلوس','اختصار الرصيد'],['يومي','مكافأة يومية'],['تحويل @عضو مبلغ','تحويل رصيد'],['تبرع @عضو مبلغ','التبرع'],['قرض','طلب قرض'],['سداد','سداد قرض'],['استثمار','استثمار'],['صندوق','الصندوق'],['تداول','التداول']]);
       if(['music','allinone'].includes(type))rows.push(...[['شغل اسم/رابط','تشغيل مقطع'],['وقف','إيقاف'],['التالي','تخطي'],['قائمة','قائمة التشغيل'],['تكرار','التكرار'],['خلط','خلط القائمة'],['إيقاف-مؤقت','إيقاف مؤقت'],['استئناف','استئناف'],['صوت 70','الصوت']]);
       rows.push(...(Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false).map(x=>[String(x.name),String(x.description||'أمر مخصص')]):[]));
       const size=6,total=Math.max(1,Math.ceil(rows.length/size)),p2=Math.max(1,Math.min(total,page)),items=rows.slice((p2-1)*size,p2*size);
@@ -306,7 +327,7 @@ function installBotFeatures(client,bot){
     if(!message.guild||message.author.bot)return;
     try {
     const config=client.mldConfig||{},type=client.mldType||'general';
-    const prefix=String((type==='games'?config.prefixes?.games:type==='bank'?config.prefixes?.bank:config.prefix)||'!').slice(0,4);
+    const prefix=String((type==='games'?config.prefixes?.games:['bank','economy'].includes(type)?config.prefixes?.bank:config.prefix)||'!').slice(0,4);
     const content=String(message.content||'');
     if(/^(?:help|مساعدة|هيلب)$/i.test(content.trim()))return message.reply({...buildUserHelpPayload(client,message.author.id),allowedMentions:{parse:[]}}).catch(()=>{});
     const words=String(config.blockedWords||'').split(/[\n,،]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
@@ -753,13 +774,13 @@ function installBotFeatures(client,bot){
         await channel.send({content:text,allowedMentions:{parse:[]}});return message.reply('تم إرسال الإعلان.');
       }
     }
-    if(['applications','allinone'].includes(type)){
-      if(command==='تقديم'||command==='apply'){
+    if(['applications','tickets','allinone'].includes(type)){
+      if(['applications','allinone'].includes(type)&&(command==='تقديم'||command==='apply')){
         if(!config.applicationsChannelId)return message.reply('الإدارة لم تحدد روم التقديمات في لوحة التحكم بعد.');
         client.mldPendingApplications.set(message.author.id,{guildId:message.guild.id,createdAt:Date.now()});
         try{await message.author.send('التقديم على رتبة في '+message.guild.name+'\nاكتب إجابتك على أسئلة التقديم في رسالة واحدة هنا، واذكر خبرتك وسبب رغبتك بالانضمام. لديك 30 دقيقة.');return message.reply('أرسلت لك رسالة التقديم في الخاص.')}catch{return message.reply('افتح الرسائل الخاصة من أعضاء السيرفر ثم أعد الأمر.');}
       }
-      if(command==='طلباتي')return message.reply('للاستفسار عن حالة طلبك، راجع روم التقديمات أو تواصل مع الإدارة.');
+      if(['applications','allinone'].includes(type)&&command==='طلباتي')return message.reply('للاستفسار عن حالة طلبك، راجع روم التقديمات أو تواصل مع الإدارة.');
       if(command==='تذكرة'||command==='ticket'){
         const supportRole=String(config.supportRoleId||'');
         const overwrites=[{id:message.guild.id,deny:[PermissionFlagsBits.ViewChannel]},{id:message.author.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]},{id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels]}];
