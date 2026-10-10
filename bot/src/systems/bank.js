@@ -28,7 +28,7 @@ export function setupBank(client, pool) {
   client.on(Events.MessageCreate, async message => {
     if (!message.guild || message.author.bot || !['bank','allinone'].includes(client.mldType)) return;
     const cfg = client.mldConfig || {};
-    const prefix = String(cfg.prefix || '!').slice(0, 4);
+    const prefix = String(cfg.prefixes?.bank || cfg.prefix || '!').slice(0, 4);
     if (!message.content.startsWith(prefix)) return;
     const [raw, ...args] = message.content.slice(prefix.length).trim().split(/\s+/);
     const cmd = String(raw || '').toLowerCase();
