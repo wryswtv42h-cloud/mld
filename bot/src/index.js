@@ -10,6 +10,7 @@ import { setupBank, ensureBankTable } from './systems/bank.js';
 import { setupGames } from './systems/games.js';
 import { setupMusic } from './systems/music.js';
 import { setupAuditLogs, ensureAuditLogRooms } from './systems/audit-logs.js';
+import { setupPrivateRooms } from './systems/private-rooms.js';
 
 dotenv.config();
 
@@ -128,6 +129,7 @@ function installBotFeatures(client,bot){
   client.mldConfig=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
   client.mldType=bot.bot_type||'general';
   setupAuditLogs(client);
+  setupPrivateRooms(client);
   client.mldRecentMessages=new Map();
   client.mldPendingApplications=new Map();
   const logToChannel=async(guild,channelId,text)=>{
