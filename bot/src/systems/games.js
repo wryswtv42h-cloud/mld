@@ -55,7 +55,7 @@ export function setupGames(client, pool) {
     if (!content.startsWith(prefix)) return;
     const parts=content.slice(prefix.length).trim().split(/\s+/), cmd=String(parts.shift()||'');
     if (!cmd) return;
-    if (cmd==='help'||cmd==='ألعاب'||cmd==='العاب') return safeReply(message,'🎮 ألعاب ملاذ: '+GAME_NAMES.join(' • ')+'\nاكتب الأمر بعد '+prefix+' لبدء اللعبة. اكتب '+prefix+'توب لعرض المتصدرين.');
+    if (cmd==='ألعاب'||cmd==='العاب') return safeReply(message,'🎮 ألعاب ملاذ: '+GAME_NAMES.join(' • ')+'\nاكتب الأمر بعد '+prefix+' لبدء اللعبة. اكتب '+prefix+'توب لعرض المتصدرين.');
     if (cmd==='توب') {
       if(!enabled(client,'توب'))return safeReply(message,'هذه اللعبة معطّلة من لوحة التحكم.');
       if(!pool)return safeReply(message,'لوحة النقاط غير متاحة الآن.');
