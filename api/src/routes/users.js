@@ -23,7 +23,7 @@ router.get('/me', requireAuth, (req, res) => {
 router.patch('/me', requireAuth, async (req, res) => {
   try {
     const { avatar, bio, username, occupation } = req.body;
-    if (username !== undefined && (!/^[\\p{L}\\p{N}_. -]{2,32}$/u.test(String(username).trim()))) return res.status(400).json({ error: 'اسم المستخدم يجب أن يكون من 2 إلى 32 حرفًا' });
+    if (username !== undefined) { const cleanUsername=String(username).trim(); const usernamePattern=req.user.is_owner ? /^[\p{L}\p{N}_. -]{1,32}$/u : /^[\p{L}\p{N}_. -]{2,32}$/u; if (!usernamePattern.test(cleanUsername)) return res.status(400).json({ error: req.user.is_owner ? 'اسم المستخدم يجب أن يكون من حرف إلى 32 حرفًا' : 'اسم المستخدم يجب أن يكون من 2 إلى 32 حرفًا' }); }
     if (bio !== undefined && String(bio).length > 500) return res.status(400).json({ error: 'النبذة لا تتجاوز 500 حرف' });
     if (occupation !== undefined && String(occupation).length > 80) return res.status(400).json({ error: 'المهنة لا تتجاوز 80 حرفًا' });
     if (avatar !== undefined && String(avatar).length > 1000) return res.status(400).json({ error: 'رابط الصورة طويل جدًا' });
