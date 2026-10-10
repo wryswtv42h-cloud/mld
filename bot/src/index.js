@@ -64,7 +64,7 @@ function buildUserBotSlashCommands(client){
   for(const item of (Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[])){
     const name=String(item?.name||'').toLowerCase();
     if(item?.enabled===false||!/^[-a-z0-9_]{1,32}$/.test(name)||seen.has(name))continue;
-    commands.push({name,description:String(item.description||'أمر مخصص').trim().slice(0,100)||'أمر مخصص'});
+    commands.push({name,description:String(item.description||'أمر مخصص').trim().slice(0,100)||'أمر مخصص',options:[{type:3,name:'args',description:'نص اختياري للأمر',required:false,max_length:500}]});
     seen.add(name);
     if(commands.length>=100)break;
   }
@@ -221,7 +221,7 @@ function installBotFeatures(client,bot){
         }
         const custom=(Array.isArray(config.commands)?config.commands:[]).find(x=>x&&x.enabled!==false&&String(x.name||'').toLowerCase()===name);
         if(custom){
-          const reply=String(custom.response||'').slice(0,1800).replaceAll('{user}',interaction.user.username).replaceAll('{server}',interaction.guild?.name||'Discord').replaceAll('{memberCount}',String(interaction.guild?.memberCount||0)).replaceAll('{args}','');
+          const reply=String(custom.response||'').slice(0,1800).replaceAll('{user}',interaction.user.username).replaceAll('{server}',interaction.guild?.name||'Discord').replaceAll('{memberCount}',String(interaction.guild?.memberCount||0)).replaceAll('{args}',String(interaction.options.getString('args')||''));
           return interaction.reply({content:reply||'تم تنفيذ الأمر.',allowedMentions:{parse:[]}});
         }
         return interaction.reply({content:'الأمر غير متاح حاليًا. استخدم /help.',ephemeral:true});
