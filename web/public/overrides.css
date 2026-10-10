@@ -440,3 +440,6 @@ body[data-page="bots"] #app .bot-audit-create { display:flex; align-items:center
 body[data-page="bots"] #app .bot-audit-create input { accent-color:#ff9cde; }
 @media(max-width:760px){ body[data-page="bots"] #app .bot-audit-log-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:420px){ body[data-page="bots"] #app .bot-audit-log-grid { grid-template-columns:1fr; } }
+
+/* Per-page maintenance controls in the owner console */
+.page-lock-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}.page-lock-item{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid rgba(255,156,222,.2);border-radius:14px;background:rgba(255,255,255,.025);min-width:0}.page-lock-option{display:flex;align-items:center;gap:9px;font-weight:700}.page-lock-option input{width:18px;height:18px;accent-color:#ff9cde}.page-lock-item textarea{width:100%;min-height:58px;resize:vertical;border:1px solid rgba(255,156,222,.2);border-radius:10px;padding:9px;background:rgba(0,0,0,.15);color:inherit;font:inherit;font-size:.9rem}
