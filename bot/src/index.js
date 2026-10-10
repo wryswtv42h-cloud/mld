@@ -30,6 +30,15 @@ async function setBotRuntime(id,status,error=null,ping=null){
   if(!pool)return;
   try{await pool.query("UPDATE bots SET runtime_status=$1,last_seen_at=CASE WHEN $1='online' THEN NOW() ELSE last_seen_at END,last_error=$2,bot_ping=COALESCE($4,bot_ping) WHERE id=$3",[status,error?String(error).slice(0,500):null,id,Number.isFinite(Number(ping))&&Number(ping)>=0?Math.round(Number(ping)):null]);}catch{}
 }
+let auditTableReady=null;
+async function writeRuntimeLog(botId,actorId,action,details={}){
+  if(!pool||!botId)return;
+  try{
+    if(!auditTableReady)auditTableReady=pool.query("CREATE TABLE IF NOT EXISTS bot_logs (id BIGSERIAL PRIMARY KEY, bot_id UUID NOT NULL, actor_id TEXT, action TEXT NOT NULL, details JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())");
+    await auditTableReady;
+    await pool.query("INSERT INTO bot_logs(bot_id,actor_id,action,details) VALUES($1,$2,$3,$4)",[String(botId),String(actorId||''),String(action).slice(0,100),JSON.stringify(details)]);
+  }catch(e){console.error('Bot audit log:',e.message);auditTableReady=null;}
+}
 function installBotFeatures(client,bot){
   client.mldBotId=String(bot.id||client.user?.id||'');
   setupBank(client,pool);
@@ -97,6 +106,7 @@ function installBotFeatures(client,bot){
       if(blockedWord||blockedLink||spam){
         await message.delete().catch(()=>{});
         const reason=blockedWord?'كلمة ممنوعة':blockedLink?'رابط غير مسموح':'تكرار الرسائل (سبام)';
+        await writeRuntimeLog(client.mldBotId,message.author.id,'bot.automod_action',{guildId:message.guild.id,channelId:message.channel.id,reason});
         const notice=await message.channel.send({content:'⚠️ '+message.author.toString()+' تم حذف رسالتك: '+reason+'.',allowedMentions:{users:[message.author.id]}}).catch(()=>null);
         if(notice)setTimeout(()=>notice.delete().catch(()=>{}),5000);
         await logToChannel(message.guild,config.modLogChannelId,'🛡️ إجراء حماية تلقائي: '+reason+' | العضو '+message.author.tag+' | القناة #'+message.channel.name);
@@ -106,6 +116,7 @@ function installBotFeatures(client,bot){
     if(!content.startsWith(prefix))return;
     const [raw,...args]=content.slice(prefix.length).trim().split(/\s+/),command=String(raw||'').toLowerCase();
     if(!command)return;
+    await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_used',{command,guildId:message.guild.id,channelId:message.channel.id});
     const requiredPermission={
       kick:PermissionFlagsBits.KickMembers,ban:PermissionFlagsBits.BanMembers,clear:PermissionFlagsBits.ManageMessages,say:PermissionFlagsBits.ManageMessages,
       announce:PermissionFlagsBits.ManageMessages,slowmode:PermissionFlagsBits.ManageChannels,lock:PermissionFlagsBits.ManageChannels,unlock:PermissionFlagsBits.ManageChannels,
@@ -113,9 +124,9 @@ function installBotFeatures(client,bot){
       nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,command:PermissionFlagsBits.ManageGuild
     }[command];
     if(requiredPermission){
-      if(!message.member.permissions.has(requiredPermission))return message.reply('ما عندك صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');
+      if(!message.member.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_member_permission'});return message.reply('ما عندك صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
       const botMember=message.guild.members.me;
-      if(!botMember?.permissions.has(requiredPermission))return message.reply('البوت نفسه يحتاج صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');
+      if(!botMember?.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_bot_permission'});return message.reply('البوت نفسه يحتاج صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
     }
     if(command==='ping')return message.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
             if(command==='help') {
