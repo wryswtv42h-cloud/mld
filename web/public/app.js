@@ -10,6 +10,21 @@ document.addEventListener("click",event=>{const button=event.target instanceof E
 document.addEventListener("submit",event=>{
   if(event.target instanceof HTMLFormElement) event.preventDefault();
 },true);
+document.addEventListener("click",event=>{
+  const option=event.target instanceof Element?event.target.closest("[data-user-option]"):null;
+  if(!option)return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const wrap=option.closest(".user-picker");
+  const input=wrap?.querySelector("[data-user-picker-input]");
+  const hidden=wrap?.querySelector("[data-user-picker-id]");
+  if(!wrap||!input||!hidden)return;
+  hidden.value=option.dataset.userId||"";
+  input.value=option.dataset.userLabel||option.dataset.userName||"";
+  input.dataset.selectedUser=hidden.value;
+  const list=wrap.querySelector("[data-user-suggestions]");
+  if(list)list.replaceChildren();
+},true);
 document.addEventListener("click",event=>{const button=event.target instanceof Element?event.target.closest("[data-action=\"close-page-lock\"]"):null;if(!button)return;event.preventDefault();event.stopImmediatePropagation();go(state.previousPage||"home");},true);
 document.addEventListener("click",async event=>{
   const addButton=event.target.closest("#addBot");
