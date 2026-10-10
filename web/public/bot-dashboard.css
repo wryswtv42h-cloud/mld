@@ -49,3 +49,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .log-row{min-width:0}
 .log-body p{line-height:1.75}
 @media(max-width:560px){.log-actions{width:100%}.log-actions button{flex:1}.command-controls{gap:6px}.command-delete{padding:6px 7px}}
+
+.audit-setup{margin-top:18px;padding:18px;border:1px solid rgba(168,111,223,.28);background:linear-gradient(135deg,rgba(168,111,223,.08),rgba(255,156,222,.045));}
+.audit-setup h3{margin:0 0 8px}.audit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0}
+.audit-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 18px}
+.audit-option{display:flex;align-items:center;gap:9px;min-height:42px;padding:9px 11px;border:1px solid var(--border,rgba(255,255,255,.1));border-radius:12px;background:rgba(255,255,255,.025);cursor:pointer}
+.audit-option:has(input:checked){border-color:rgba(255,156,222,.65);background:rgba(255,156,222,.09)}
+.audit-option input{accent-color:#ff9cde;flex:0 0 auto}.audit-option span{font-size:13px;line-height:1.5}
+@media(max-width:900px){.audit-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.audit-options{grid-template-columns:1fr}.audit-option{min-height:40px}}
