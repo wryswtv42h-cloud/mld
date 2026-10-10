@@ -45,6 +45,11 @@ export function setupGames(client, pool) {
   client.on(Events.MessageCreate, async message => {
     if (!message.guild || message.author.bot || !['games','allinone'].includes(client.mldType)) return;
     const cfg=client.mldConfig||{}, prefix=String(cfg.prefixes?.games||cfg.prefix||'!').slice(0,4), content=String(message.content||'').trim();
+    const hasPrefix=content.startsWith(prefix), commandText=hasPrefix?content.slice(prefix.length).trim():content;
+    const [rawGameCommand]=commandText.split(/\s+/), commandSettings=cfg.commandSettings&&typeof cfg.commandSettings==='object'?cfg.commandSettings:{};
+    const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===String(rawGameCommand||'').toLowerCase()));
+    if(!hasPrefix&&!(cfg.shortcutsEnabled===true&&coreAlias))return;
+    if(commandSettings[coreAlias?.[0]||String(rawGameCommand||'')]?.enabled===false)return safeReply(message,'هذا الأمر معطّل من لوحة التحكم.');
     if(pool){try{await client.mldGameScoresReady}catch(e){console.error('Game score table unavailable:',e.message);return safeReply(message,'نظام النقاط غير متاح مؤقتًا. حاول لاحقًا.')}}
     const round=client.mldGameRounds.get(message.channel.id);
     if (round && Date.now()<round.expiresAt && round.userId!==message.author.id && normalize(content)===normalize(round.answer)) {
@@ -53,8 +58,7 @@ export function setupGames(client, pool) {
       await award(pool,client,message,pts).catch(()=>{});
       return safeReply(message,'🎉 إجابة صحيحة يا '+message.member.displayName+'! ربحت **'+pts+'** نقطة.');
     }
-    if (!content.startsWith(prefix)) return;
-    const parts=content.slice(prefix.length).trim().split(/\s+/), cmd=String(parts.shift()||'');
+    const parts=commandText.split(/\s+/); let cmd=String(parts.shift()||''); if(coreAlias)cmd=coreAlias[0];
     if (!cmd) return;
     if (cmd==='ألعاب'||cmd==='العاب') return safeReply(message,'🎮 ألعاب ملاذ: '+GAME_NAMES.join(' • ')+'\nاكتب الأمر بعد '+prefix+' لبدء اللعبة. اكتب '+prefix+'توب لعرض المتصدرين.');
     if (cmd==='توب') {
