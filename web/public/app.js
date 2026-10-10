@@ -453,15 +453,23 @@ document.addEventListener("click",async event=>{
   if(document.body.dataset.page!=="bots")return;
   const preview=target.closest("#previewBotToken");
   const check=target.closest("#checkBotGuild");
+  const diagnostics=target.closest("[data-bot-diagnostics]");
   const addBot=target.closest("#addBot");
   const toggle=target.closest("[data-bot-toggle]");
   const remove=target.closest("[data-bot-delete]");
-  if(!preview&&!check&&!addBot&&!toggle&&!remove)return;
+  if(!preview&&!check&&!diagnostics&&!addBot&&!toggle&&!remove)return;
   event.preventDefault();event.stopImmediatePropagation();
-  const button=preview||check||addBot||toggle||remove;
+  const button=preview||check||diagnostics||addBot||toggle||remove;
   if(button.disabled)return;
   const original=button.textContent;
   try{
+    if(diagnostics){
+      button.disabled=true;button.textContent="جارٍ الفحص…";
+      const d=await api("/api/bots/"+encodeURIComponent(diagnostics.dataset.botDiagnostics)+"/diagnostics");
+      const lines=(d.checks||[]).map(item=>(item.ok===true?"✅":item.ok===false?"❌":"⚠️")+" "+item.label+"\n"+item.detail);
+      alert((d.summary||"نتيجة فحص البوت")+(lines.length?"\n\n"+lines.join("\n\n"):""));
+      return;
+    }
     if(preview||check){
       const form=button.closest("#botForm");
       if(!form)throw new Error("تعذر العثور على نموذج البوت");
