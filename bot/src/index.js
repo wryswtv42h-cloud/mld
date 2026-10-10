@@ -145,6 +145,7 @@ function installBotFeatures(client,bot){
   });
   client.on(Events.MessageCreate,async message=>{
     if(!message.guild||message.author.bot)return;
+    try {
     const config=client.mldConfig||{},type=client.mldType||'general';
     const prefix=String(config.prefix||'!').slice(0,4);
     const content=String(message.content||'');
@@ -169,15 +170,23 @@ function installBotFeatures(client,bot){
         return;
       }
     }
-    if(!content.startsWith(prefix))return;
-    const [raw,...args]=content.slice(prefix.length).trim().split(/\s+/);let command=String(raw||'').toLowerCase();const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));if(aliasMatch&&!['help','ping','server','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
+    const mentionPrefix=client.user?new RegExp('^<@!?'+client.user.id+'>\\s*'):null;
+    const mentionMatch=mentionPrefix?content.match(mentionPrefix):null;
+    const mentionCommand=!!mentionMatch;
+    const commandSource=mentionMatch?content.slice(mentionMatch[0].length).trim():content;
+    if(!commandSource.startsWith(prefix)&&!mentionCommand){
+      if(message.mentions.has(client.user)&&!content.trim())return message.reply('أنا متصل، لكن قراءة أوامر البادئة تحتاج تفعيل Message Content Intent من Discord Developer Portal.').catch(()=>{});
+      return;
+    }
+    const commandText=commandSource.startsWith(prefix)?commandSource.slice(prefix.length).trim():commandSource;
+    const [raw,...args]=commandText.split(/\\s+/);let command=String(raw||'').toLowerCase();const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));if(aliasMatch&&!['help','ping','server','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
     if(!command)return;
     await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_used',{command,guildId:message.guild.id,channelId:message.channel.id});
     const requiredPermission={
       kick:PermissionFlagsBits.KickMembers,ban:PermissionFlagsBits.BanMembers,clear:PermissionFlagsBits.ManageMessages,say:PermissionFlagsBits.ManageMessages,
       announce:PermissionFlagsBits.ManageMessages,slowmode:PermissionFlagsBits.ManageChannels,lock:PermissionFlagsBits.ManageChannels,unlock:PermissionFlagsBits.ManageChannels,
       timeout:PermissionFlagsBits.ModerateMembers,untimeout:PermissionFlagsBits.ModerateMembers,warn:PermissionFlagsBits.ModerateMembers,
-      nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,command:PermissionFlagsBits.ManageGuild
+      nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite
     }[command];
     if(requiredPermission){
       if(!message.member.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_member_permission'});return message.reply('ما عندك صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
@@ -185,6 +194,60 @@ function installBotFeatures(client,bot){
       if(!botMember?.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_bot_permission'});return message.reply('البوت نفسه يحتاج صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
     }
     if(command==='ping')return message.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
+    if(command==='prefix'||command==='بادئة')
+      return message.reply({content:'🔧 بادئة أوامري الحالية: `'+prefix+'`\nجرّب: `'+prefix+'help` أو `'+prefix+'ping`',allowedMentions:{parse:[]}});
+    if(command==='setprefix'||command==='تغييرالبادئة'){
+      if(!message.member.permissions.has(PermissionFlagsBits.ManageGuild))return message.reply('تحتاج صلاحية إدارة السيرفر لتغيير البادئة.');
+      const nextPrefix=String(args[0]||'').trim();
+      if(!nextPrefix||nextPrefix.length>4||/\\s/.test(nextPrefix))return message.reply('استخدم: '+prefix+'setprefix ! (من 1 إلى 4 رموز بدون مسافات).');
+      const next={...config,prefix:nextPrefix};
+      try{if(pool)await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);client.mldConfig=next;return message.reply('✅ تم تغيير بادئة الأوامر إلى: `'+nextPrefix+'`');}
+      catch(error){console.error('Prefix save:',error.message);return message.reply('تعذر حفظ البادئة. حاول مرة ثانية.');}
+    }
+    if(command==='uptime'||command==='مدةالتشغيل'){
+      const seconds=Math.max(0,Math.floor((Date.now()-(client.readyTimestamp||Date.now()))/1000));
+      const days=Math.floor(seconds/86400),hours=Math.floor(seconds%86400/3600),minutes=Math.floor(seconds%3600/60),secs=seconds%60;
+      return message.reply({content:'⏱️ مدة تشغيل البوت: '+days+' يوم، '+hours+' ساعة، '+minutes+' دقيقة، '+secs+' ثانية.',allowedMentions:{parse:[]}});
+    }
+    if(command==='botinfo'||command==='معلوماتالبوت'){
+      const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('🤖 '+client.user.username).setThumbnail(client.user.displayAvatarURL({size:256})).addFields(
+        {name:'المعرّف',value:client.user.id,inline:true},
+        {name:'السيرفرات المتصلة',value:String(client.guilds.cache.size),inline:true},
+        {name:'البادئة',value:'`'+prefix+'`',inline:true},
+        {name:'مدة التشغيل',value:Math.floor((Date.now()-(client.readyTimestamp||Date.now()))/1000)+' ثانية',inline:true}
+      ).setTimestamp();
+      return message.reply({embeds:[embed],allowedMentions:{parse:[]}});
+    }
+    if(command==='joined'||command==='انضممت'){
+      const member=message.mentions.members.first()||message.member;
+      return message.reply({content:'📅 '+member.toString()+' انضم إلى السيرفر '+(member.joinedTimestamp?'<t:'+Math.floor(member.joinedTimestamp/1000)+':R>':'في وقت غير معروف')+'.',allowedMentions:{users:[member.id]}});
+    }
+    if(command==='boosts'||command==='التعزيزات'){
+      return message.reply({content:'🚀 تعزيزات السيرفر: **'+message.guild.premiumSubscriptionCount+'** · مستوى التعزيز: **'+message.guild.premiumTier+'**',allowedMentions:{parse:[]}});
+    }
+    if(command==='emojis'||command==='الايموجيات'||command==='إيموجيات'){
+      const emojis=[...message.guild.emojis.cache.values()];
+      return message.reply({content:'😄 **إيموجيات السيرفر ('+emojis.length+')**\n'+(emojis.slice(0,45).map(e=>e.toString()).join(' ')||'ما فيه إيموجيات مخصصة.')+(emojis.length>45?'\n… والباقي أكثر من 45.':''),allowedMentions:{parse:[]}});
+    }
+    if(command==='roleinfo'||command==='معلوماترتبة'){
+      const role=message.mentions.roles.first()||message.guild.roles.cache.get(args[0])||message.guild.roles.cache.find(r=>r.name.toLowerCase()===args.join(' ').toLowerCase());
+      if(!role)return message.reply('منشن الرتبة أو اكتب معرّفها. مثال: '+prefix+'roleinfo @الرتبة');
+      return message.reply({content:'🎭 **'+role.name+'**\nالمعرّف: `'+role.id+'`\nالأعضاء: **'+role.members.size+'**\nاللون: **'+(role.hexColor||'#000000')+'**\nالترتيب: **'+role.position+'**',allowedMentions:{parse:[]}});
+    }
+    if(command==='channelinfo'||command==='معلوماتروم'){
+      const channel=message.mentions.channels.first()||message.guild.channels.cache.get(args[0])||message.channel;
+      return message.reply({content:'📚 **'+channel.name+'**\nالمعرّف: `'+channel.id+'`\nالنوع: **'+String(channel.type)+'**\nتاريخ الإنشاء: <t:'+Math.floor(channel.createdTimestamp/1000)+':D>',allowedMentions:{parse:[]}});
+    }
+    if(command==='random'||command==='عشوائي'){
+      const min=Number(args[0]),max=Number(args[1]);
+      if(!Number.isFinite(min)||!Number.isFinite(max)||min>max||Math.abs(max-min)>100000000)return message.reply('استخدم: '+prefix+'random 1 100');
+      return message.reply({content:'🎲 النتيجة: **'+(Math.floor(Math.random()*(max-min+1))+min)+'**',allowedMentions:{parse:[]}});
+    }
+    if(command==='invite'||command==='رابط'){
+      if(!message.member.permissions.has(PermissionFlagsBits.CreateInstantInvite))return message.reply('تحتاج صلاحية إنشاء دعوة.');
+      const invite=await message.channel.createInvite({maxAge:3600,maxUses:0,unique:true,reason:'طلب دعوة عبر أمر البوت'});
+      return message.reply({content:'🔗 رابط دعوة صالح لمدة ساعة: '+invite.url,allowedMentions:{parse:[]}});
+    }
             if(command==='help') {
       const rows=[['ping','فحص اتصال البوت','الجميع'],['help [رقم]','دليل الأوامر التفاعلي','الجميع'],['server','معلومات السيرفر','الجميع'],['membercount','عدد الأعضاء','الجميع'],['members','اختصار عدد الأعضاء','الجميع'],['userinfo @عضو','معلومات عضو ورتبه','الجميع'],['avatar [@عضو]','رابط الصورة الشخصية','الجميع'],['serverinfo','بطاقة معلومات السيرفر','الجميع'],['servericon','أيقونة السيرفر','الجميع'],['roles','قائمة الرتب','الجميع'],['channelcount','عدد القنوات','الجميع'],['roll [عدد]','رمي نرد','الجميع'],['coinflip','صورة أو كتابة','الجميع'],['8ball سؤال','إجابة عشوائية','الجميع'],['choose خيار | خيار','اختيار عشوائي','الجميع'],['poll سؤال','تصويت بتفاعلات','الجميع'],['invite','إنشاء رابط دعوة','CreateInstantInvite'],['joke','نكتة عشوائية','الجميع'],['hug @عضو','حضن عضو','الجميع'],['slap @عضو','مزحة خفيفة','الجميع']];
       if(['applications','allinone'].includes(type))rows.push(['تقديم','بدء التقديم عبر الخاص','الجميع'],['apply','اختصار التقديم','الجميع'],['طلباتي','إرشادات متابعة الطلب','الجميع'],['تذكرة','إنشاء تذكرة خاصة','الجميع'],['ticket','اختصار إنشاء تذكرة','الجميع'],['قفل','إغلاق التذكرة','صاحب التذكرة أو ManageChannels'],['close','اختصار إغلاق التذكرة','صاحب التذكرة أو ManageChannels'],['إضافة @عضو','إضافة عضو للتذكرة','ManageChannels'],['add @عضو','اختصار التقديم','ManageChannels']);
@@ -449,6 +512,10 @@ function installBotFeatures(client,bot){
     if(custom){
       const reply=String(custom.response||'').slice(0,1800).replaceAll('{user}',message.author.username).replaceAll('{server}',message.guild.name).replaceAll('{memberCount}',String(message.guild.memberCount)).replaceAll('{args}',args.join(' '));
       if(reply)await message.reply({content:reply,allowedMentions:{repliedUser:false,parse:[]}});
+    }
+    } catch(error) {
+      console.error('Prefix command handler:',error?.stack||error);
+      await message.reply('صار خطأ أثناء تنفيذ الأمر. جرّب مرة ثانية أو راجع سجل البوت من اللوحة.').catch(()=>{});
     }
   });
   if(['welcome','general','custom','system','support','allinone'].includes(client.mldType)){
