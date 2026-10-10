@@ -207,7 +207,7 @@ router.delete('/chat/:id',requireAuth,async(req,res)=>{try{const found=await que
 router.get('/owner/rooms',requireAuth,requireOwner,async(req,res)=>{const {rows}=await query('SELECT r.*,COUNT(m.user_id)::int AS members FROM community_rooms r LEFT JOIN community_room_members m ON m.room_id=r.id GROUP BY r.id ORDER BY r.created_at DESC LIMIT 200');res.set('Cache-Control','private, no-store').json({rooms:rows});});
 router.delete('/owner/rooms/:id',requireAuth,requireOwner,async(req,res)=>{const room=(await query('SELECT * FROM community_rooms WHERE id=$1',[req.params.id])).rows[0];if(!room)return res.status(404).json({error:'الغرفة غير موجودة'});for(const id of [room.discord_voice_channel_id,room.discord_text_channel_id,room.discord_category_id])if(id&&discordToken())await fetch('https://discord.com/api/v10/channels/'+id,{method:'DELETE',headers:{Authorization:'Bot '+discordToken()}}).catch(()=>{});await query('DELETE FROM community_rooms WHERE id=$1',[room.id]);await audit(req.user,'room_deleted',String(room.id),{name:room.name});res.json({message:'تم حذف الغرفة'});});
 router.get('/rooms',requireAuth,async(req,res)=>{
-  const {rows}=await query(`SELECT r.id,r.name,r.voice_name,r.is_private,r.created_at,COUNT(m.user_id)::int AS members,
+  const {rows}=await query(`SELECT r.id,r.name,r.voice_name,r.is_private,r.created_by,r.created_at,COUNT(m.user_id)::int AS members,
     EXISTS(SELECT 1 FROM community_room_members mine WHERE mine.room_id=r.id AND mine.user_id=$1) AS joined
     FROM community_rooms r LEFT JOIN community_room_members m ON m.room_id=r.id
     WHERE NOT r.is_private OR r.created_by=$1 OR EXISTS(SELECT 1 FROM community_room_members mine WHERE mine.room_id=r.id AND mine.user_id=$1)
@@ -224,9 +224,47 @@ router.post('/rooms',requireAuth,async(req,res)=>{
 router.post('/rooms/:id/join',requireAuth,async(req,res)=>{
   const room=await query('SELECT id,is_private,created_by FROM community_rooms WHERE id=$1',[req.params.id]);
   if(!room.rows[0])return res.status(404).json({error:'الغرفة غير موجودة'});
-  if(room.rows[0].is_private&&String(room.rows[0].created_by)!==String(req.user.id))return res.status(403).json({error:'هذه غرفة خاصة'});
+  if(room.rows[0].is_private){
+    const member=await query('SELECT 1 FROM community_room_members WHERE room_id=$1 AND user_id=$2',[req.params.id,req.user.id]);
+    if(String(room.rows[0].created_by)!==String(req.user.id)&&!member.rows.length)return res.status(403).json({error:'هذه غرفة خاصة؛ اطلب من مالكها إضافتك'});
+  }
   await query('INSERT INTO community_room_members(room_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[req.params.id,req.user.id]);
   res.json({message:'انضممت إلى الغرفة'});
+});
+router.get('/rooms/:id/members',requireAuth,async(req,res)=>{
+  const room=(await query('SELECT id,name,is_private,created_by FROM community_rooms WHERE id=$1',[req.params.id])).rows[0];
+  if(!room)return res.status(404).json({error:'الغرفة غير موجودة'});
+  const mine=await query('SELECT 1 FROM community_room_members WHERE room_id=$1 AND user_id=$2',[room.id,req.user.id]);
+  if(!mine.rows.length&&!req.user.is_owner&&!['admin','owner'].includes(String(req.user.role||'').toLowerCase()))return res.status(403).json({error:'ما عندك صلاحية لعرض أعضاء الغرفة'});
+  const {rows}=await query(`SELECT u.id,u.username,u.avatar,u.role,u.is_owner,m.joined_at
+    FROM community_room_members m JOIN users u ON u.id::text=m.user_id
+    WHERE m.room_id=$1 ORDER BY (m.user_id=$2) DESC,u.username ASC`,[room.id,room.created_by]);
+  res.set('Cache-Control','private, no-store').json({room,members:rows,canManage:String(room.created_by)===String(req.user.id)||!!req.user.is_owner||['admin','owner'].includes(String(req.user.role||'').toLowerCase())});
+});
+router.post('/rooms/:id/members',requireAuth,async(req,res)=>{
+  const room=(await query('SELECT id,name,is_private,created_by FROM community_rooms WHERE id=$1',[req.params.id])).rows[0];
+  if(!room)return res.status(404).json({error:'الغرفة غير موجودة'});
+  const canManage=String(room.created_by)===String(req.user.id)||!!req.user.is_owner||['admin','owner'].includes(String(req.user.role||'').toLowerCase());
+  if(!canManage)return res.status(403).json({error:'إضافة الأعضاء متاحة لمالك الغرفة والإدارة فقط'});
+  const username=String(req.body.username||'').trim().replace(/^@/,'').slice(0,64);
+  if(!username)return res.status(400).json({error:'اكتب اسم مستخدم الموقع'});
+  const target=(await query('SELECT id,username,avatar FROM users WHERE LOWER(username)=LOWER($1) LIMIT 1',[username])).rows[0];
+  if(!target)return res.status(404).json({error:'ما لقينا حساب موقع بهذا الاسم'});
+  await query('INSERT INTO community_room_members(room_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[room.id,String(target.id)]);
+  await audit(req.user,'room_member_added',String(room.id),{room:room.name,member:target.username});
+  res.status(201).json({message:'تمت إضافة '+target.username+' إلى الغرفة',member:target});
+});
+router.delete('/rooms/:id/members/:userId',requireAuth,async(req,res)=>{
+  const room=(await query('SELECT id,name,created_by FROM community_rooms WHERE id=$1',[req.params.id])).rows[0];
+  if(!room)return res.status(404).json({error:'الغرفة غير موجودة'});
+  const targetId=String(req.params.userId),isSelf=targetId===String(req.user.id);
+  const canManage=String(room.created_by)===String(req.user.id)||!!req.user.is_owner||['admin','owner'].includes(String(req.user.role||'').toLowerCase());
+  if(!isSelf&&!canManage)return res.status(403).json({error:'ما عندك صلاحية لإزالة هذا العضو'});
+  if(targetId===String(room.created_by))return res.status(400).json({error:'مالك الغرفة لا يمكن إخراجه؛ احذف الغرفة إذا أردت إنهاءها'});
+  const target=(await query('SELECT username FROM users WHERE id::text=$1',[targetId])).rows[0];
+  await query('DELETE FROM community_room_members WHERE room_id=$1 AND user_id=$2',[room.id,targetId]);
+  await audit(req.user,isSelf?'room_member_left':'room_member_removed',String(room.id),{room:room.name,member:target?.username||targetId});
+  res.json({message:isSelf?'غادرت الغرفة':'تم إخراج العضو من الغرفة'});
 });
 
 router.get('/reviews', async (req,res)=>{ const {rows}=await query('SELECT * FROM reviews ORDER BY created_at DESC LIMIT 100'); res.json({reviews:rows}); });
