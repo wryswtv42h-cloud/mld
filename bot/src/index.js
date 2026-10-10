@@ -470,8 +470,11 @@ function installBotFeatures(client,bot){
     if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','id','معرف','banner','بنر','profile','ملفي','بروفايل','myinv','دعواتي','topinv','توبدعوات','user','مستخدم','unban','فكحظر','allbans','قائمةالمحظورين','rolecreate','انشاءرتبة','roledelete','حذفرتبة','move','moveme','rooms','الغرفالصوتية','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
     const prefixCategory=(name)=>{
       const key=String(name||'').toLowerCase();
-      if(['سالفة','برا','براالسالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس','المتجر','تحويل','ايقاف','xo','game','games'].includes(key))return 'games';
-      if(['رصيد','فلوس','يومي','تحويل','تبرع','قرض','سداد','استثمار','صندوق','تداول','bank','balance','daily'].includes(key))return 'bank';
+      // "تحويل" exists in both the game points system and the bank. Choose the
+      // matching prefix for the bot type instead of letting the first list win.
+      if(key==='تحويل')return type==='games'?'games':'bank';
+      if(['سالفة','برا','براالسالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس','المتجر','ايقاف','xo','game','games'].includes(key))return 'games';
+      if(['رصيد','فلوس','يومي','تبرع','قرض','سداد','استثمار','صندوق','تداول','bank','balance','daily'].includes(key))return 'bank';
       if(['تذكرة','ticket','قفل','close','إضافة','add','تقديم','apply','طلباتي','tickets'].includes(key))return 'tickets';
       if(['رومخاص','روماتخاصة','شاتخاص','خاص','rooms','private','privateroom','privatemessage'].includes(key))return 'rooms';
       if(['ستريك','streak','streaks'].includes(key))return 'streak';
