@@ -60,6 +60,7 @@ function buildUserBotSlashCommands(client){
     {name:'eightball',description:'إجابة عشوائية عن سؤال',options:[{type:3,name:'question',description:'اكتب سؤالك',required:true,max_length:500}]},
     {name:'joke',description:'نكتة عشوائية خفيفة'}
   ];
+  const disabled=new Set((Array.isArray(client.mldConfig?.disabledCommands)?client.mldConfig.disabledCommands:[]).map(x=>String(x).toLowerCase()));
   const seen=new Set(commands.map(x=>x.name));
   for(const item of (Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[])){
     const name=String(item?.name||'').toLowerCase();
@@ -68,7 +69,7 @@ function buildUserBotSlashCommands(client){
     seen.add(name);
     if(commands.length>=100)break;
   }
-  return commands.slice(0,100);
+  return commands.filter(x=>!disabled.has(String(x.name).toLowerCase())).slice(0,100);
 }
 async function registerUserBotSlashCommands(client,bot){
   if(!client.user||!/^\d{17,20}$/.test(String(bot.guild_id||'')))return;
