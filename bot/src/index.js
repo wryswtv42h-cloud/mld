@@ -227,6 +227,99 @@ function installBotFeatures(client,bot){
       catch(e){console.error('Command settings save:',e.message);return message.reply('تعذر حفظ الإعدادات في قاعدة البيانات.');}
     }
     if(command==='server')return message.reply({content:'**'+message.guild.name+'**\\nالأعضاء: '+message.guild.memberCount,allowedMentions:{parse:[]}});
+
+    // Common prefix commands are available for every user bot, not only selected bot types.
+    if(['membercount','members','عدد','عددالأعضاء'].includes(command))
+      return message.reply({content:'👥 عدد أعضاء **'+message.guild.name+'**: **'+message.guild.memberCount+'**',allowedMentions:{parse:[]}});
+    if(['userinfo','whois','معلومات','معلوماتي'].includes(command)){
+      const user=message.mentions.users.first()||message.author;
+      const member=await message.guild.members.fetch(user.id).catch(()=>null);
+      const roles=member?[...member.roles.cache.values()].filter(r=>r.id!==message.guild.id).sort((a,b)=>b.position-a.position).slice(0,12).map(r=>r.toString()).join('، '):'—';
+      const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('👤 معلومات العضو').setThumbnail(user.displayAvatarURL({size:256})).addFields(
+        {name:'الاسم',value:String(user.tag||user.username).slice(0,100),inline:true},
+        {name:'المعرّف',value:user.id,inline:true},
+        {name:'تاريخ إنشاء الحساب',value:'<t:'+Math.floor(user.createdTimestamp/1000)+':D>',inline:true},
+        {name:'تاريخ دخول السيرفر',value:member?.joinedTimestamp?'<t:'+Math.floor(member.joinedTimestamp/1000)+':D>':'غير معروف',inline:true},
+        {name:'الرتب',value:roles.slice(0,1000)||'لا توجد رتب إضافية'}
+      ).setTimestamp();
+      return message.reply({embeds:[embed],allowedMentions:{parse:[]}});
+    }
+    if(['avatar','pfp','صورة','افتار'].includes(command)){
+      const user=message.mentions.users.first()||message.author;
+      return message.reply({content:'🖼️ صورة '+user.username+': '+user.displayAvatarURL({size:1024,extension:'png'}),allowedMentions:{parse:[]}});
+    }
+    if(['servericon','أيقونة','ايقونة'].includes(command)){
+      const icon=message.guild.iconURL({size:1024});
+      return message.reply({content:icon?'🖼️ أيقونة السيرفر: '+icon:'هذا السيرفر ما عنده أيقونة.',allowedMentions:{parse:[]}});
+    }
+    if(['serverinfo','معلوماتالسيرفر'].includes(command)){
+      const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('🌌 '+message.guild.name).setThumbnail(message.guild.iconURL({size:256})).addFields(
+        {name:'المالك',value:'<@'+message.guild.ownerId+'>',inline:true},
+        {name:'الأعضاء',value:String(message.guild.memberCount),inline:true},
+        {name:'القنوات',value:String(message.guild.channels.cache.size),inline:true},
+        {name:'الرتب',value:String(message.guild.roles.cache.size),inline:true},
+        {name:'تاريخ الإنشاء',value:'<t:'+Math.floor(message.guild.createdTimestamp/1000)+':D>',inline:true},
+        {name:'المعرّف',value:message.guild.id,inline:true}
+      ).setTimestamp();
+      return message.reply({embeds:[embed],allowedMentions:{parse:[]}});
+    }
+    if(['roles','الرتب'].includes(command)){
+      const roles=[...message.guild.roles.cache.values()].filter(r=>r.id!==message.guild.id).sort((a,b)=>b.position-a.position);
+      return message.reply({content:'🎭 **رتب السيرفر ('+roles.length+')**\\n'+(roles.slice(0,35).map(r=>'• '+r.name+' — '+r.members.size+' عضو').join('\\n')||'لا توجد رتب')+(roles.length>35?'\\n… وباقي الرتب':'') ,allowedMentions:{parse:[]}});
+    }
+    if(['channelcount','القنوات'].includes(command))
+      return message.reply({content:'📚 عدد قنوات السيرفر: **'+message.guild.channels.cache.size+'**',allowedMentions:{parse:[]}});
+    if(['roll','dice','نرد'].includes(command)){
+      const max=Math.max(2,Math.min(1000000,Number(args[0])||6));
+      return message.reply({content:'🎲 النتيجة: **'+(Math.floor(Math.random()*max)+1)+'** (من 1 إلى '+max+')',allowedMentions:{parse:[]}});
+    }
+    if(['coinflip','عملة','عملة'].includes(command))
+      return message.reply({content:'🪙 '+(Math.random()<0.5?'صورة':'كتابة')+'!',allowedMentions:{parse:[]}});
+    if(['8ball','سؤال'].includes(command)){
+      if(!args.length)return message.reply('اكتب سؤالك بعد الأمر.');
+      const answers=['أكيد! ✨','غالبًا نعم.','الوضع مبشّر.','ممكن جدًا.','خلنا نشوف 😄','مو واضح للحين.','غالبًا لا.','جرّب مرة ثانية لاحقًا.'];
+      return message.reply({content:'🔮 '+answers[Math.floor(Math.random()*answers.length)],allowedMentions:{parse:[]}});
+    }
+    if(['choose','اختيار'].includes(command)){
+      const options=args.join(' ').split(/[|،,]/).map(x=>x.trim()).filter(Boolean);
+      if(options.length<2)return message.reply('استخدم: '+prefix+'choose خيار 1 | خيار 2');
+      return message.reply({content:'🎯 أختار لك: **'+options[Math.floor(Math.random()*options.length)].slice(0,180)+'**',allowedMentions:{parse:[]}});
+    }
+    if(['poll','تصويت'].includes(command)){
+      const question=args.join(' ').slice(0,900);
+      if(!question)return message.reply('استخدم: '+prefix+'poll سؤال التصويت');
+      const poll=await message.reply({content:'📊 **تصويت المجتمع**\\n'+question,allowedMentions:{parse:[]}});
+      await Promise.all([poll.react('👍').catch(()=>{}),poll.react('👎').catch(()=>{}),poll.react('🤷').catch(()=>{})]);
+      return;
+    }
+    if(['say','قل'].includes(command)){
+      if(!message.member.permissions.has(PermissionFlagsBits.ManageMessages))return message.reply('تحتاج صلاحية إدارة الرسائل.');
+      const text=args.join(' ').slice(0,1800);if(!text)return message.reply('اكتب النص بعد الأمر.');
+      await message.delete().catch(()=>{});
+      return message.channel.send({content:text,allowedMentions:{parse:[]}});
+    }
+    if(['embed','إيمبد','امبد'].includes(command)){
+      if(!message.member.permissions.has(PermissionFlagsBits.ManageMessages))return message.reply('تحتاج صلاحية إدارة الرسائل.');
+      const parts=message.content.slice(prefix.length).trim().replace(/^\\S+\\s*/,'').split('|').map(x=>x.trim());
+      if(!parts[0]||!parts[1])return message.reply('استخدم: '+prefix+'embed عنوان | وصف');
+      const embed=new EmbedBuilder().setColor(0xff9cde).setTitle(parts[0].slice(0,256)).setDescription(parts.slice(1).join(' | ').slice(0,3500)).setFooter({text:'MLD · '+message.guild.name}).setTimestamp();
+      return message.channel.send({embeds:[embed],allowedMentions:{parse:[]}});
+    }
+    if(['invite','رابط'].includes(command)){
+      if(!message.member.permissions.has(PermissionFlagsBits.CreateInstantInvite))return message.reply('تحتاج صلاحية إنشاء دعوات.');
+      const invite=await message.channel.createInvite({maxAge:3600,maxUses:0,unique:true,reason:'طلب دعوة عبر أمر البوت'}).catch(()=>null);
+      return message.reply(invite?'🔗 رابط الدعوة (صالح ساعة): '+invite.url:'تعذر إنشاء الدعوة؛ تحقق من صلاحيات البوت.');
+    }
+    if(['joke','نكتة','نكت'].includes(command)){
+      const jokes=['مرة مبرمج راح ينام… أخذ معه وضع السكون 😴','قال البوت: عندي شخصية مستقلة… بس تنتظر تحديث الإعدادات. 🤖','واحد قال: آخر جولة! اللعبة قالت: شفناك أمس تقولها. 🎮','ليش البوت ما يضيع؟ لأنه حافظ الـprefix. 😂'];
+      return message.reply({content:jokes[Math.floor(Math.random()*jokes.length)],allowedMentions:{parse:[]}});
+    }
+    if(['hug','حضن','صفعة','slap'].includes(command)){
+      const target=message.mentions.members.first();
+      if(!target)return message.reply('منشن العضو أولًا.');
+      return message.channel.send({content:(['hug','حضن'].includes(command)?'🫂 ':'👋 ')+message.author.toString()+( ['hug','حضن'].includes(command)?' حضن ':' عطى صفعة خفيفة لـ ')+target.toString(),allowedMentions:{users:[message.author.id,target.id]}});
+    }
+
     if(['moderation','automod','system','allinone'].includes(type)){
       const target=message.mentions.members.first();
       const reason=args.slice(1).join(' ').slice(0,400)||'لم يذكر سبب';
