@@ -136,3 +136,12 @@ html,body{min-height:100%;touch-action:pan-y}body{isolation:isolate}.ambient,.he
 .command-card .compact-switch span{font-size:12px;color:var(--muted)}
 .command-card small.hint{display:block;margin-top:8px}
 @media(max-width:650px){.command-card .two-col{grid-template-columns:1fr}.command-card .command-top{align-items:flex-start;gap:8px}.command-card .command-title{min-width:0;overflow-wrap:anywhere}}
+
+
+/* Command center category controls */
+.command-groups{display:flex;flex-wrap:wrap;gap:.55rem;margin:0 0 1rem;padding:.65rem;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:18px;background:rgba(20,13,28,.72)}
+.command-groups button{appearance:none;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:12px;padding:.72rem 1rem;background:rgba(255,255,255,.035);color:var(--text,#fff8ff);font:inherit;font-weight:700;cursor:pointer;transition:transform .16s ease,background .16s ease,border-color .16s ease}
+.command-groups button:hover{transform:translateY(-1px);border-color:var(--pink,#ff9cde)}
+.command-groups button.active{background:linear-gradient(120deg,rgba(255,156,222,.2),rgba(168,111,223,.22));border-color:var(--pink,#ff9cde);box-shadow:0 0 0 1px rgba(255,156,222,.1) inset}
+.prefix-split{margin-top:.75rem}
+@media(max-width:560px){.command-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.command-groups button:first-child{grid-column:1/-1}.prefix-split{grid-template-columns:1fr}}
