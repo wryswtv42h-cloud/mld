@@ -1,4 +1,7 @@
 (()=>{'use strict';
+// Prevent implicit action buttons from submitting forms and refreshing the control center on mobile.
+document.addEventListener("click",event=>{const button=event.target instanceof Element?event.target.closest("button"):null;if(!button||button.hasAttribute("type"))return;const hasDataAction=[...button.attributes].some(attr=>attr.name.startsWith("data-"));if(hasDataAction)button.type="button";},true);
+
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const token=(()=>{try{return localStorage.getItem('mld_token')||''}catch{return''}})();
 const API=(window.MLD_API_URL||'').replace(/\/$/,'');
