@@ -443,3 +443,15 @@ body[data-page="bots"] #app .bot-audit-create input { accent-color:#ff9cde; }
 
 /* Per-page maintenance controls in the owner console */
 .page-lock-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}.page-lock-item{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid rgba(255,156,222,.2);border-radius:14px;background:rgba(255,255,255,.025);min-width:0}.page-lock-option{display:flex;align-items:center;gap:9px;font-weight:700}.page-lock-option input{width:18px;height:18px;accent-color:#ff9cde}.page-lock-item textarea{width:100%;min-height:58px;resize:vertical;border:1px solid rgba(255,156,222,.2);border-radius:10px;padding:9px;background:rgba(0,0,0,.15);color:inherit;font:inherit;font-size:.9rem}
+
+
+/* MLD command control center */
+body[data-page="bots"] #app .bot-core-command-settings { display:grid; gap:12px; margin:16px 0; padding:16px; }
+body[data-page="bots"] #app .bot-core-command-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+body[data-page="bots"] #app .bot-core-command-row { display:grid; grid-template-columns:minmax(0,1fr); gap:7px; padding:11px; border:1px solid rgba(255,156,222,.18); border-radius:12px; background:rgba(255,255,255,.025); }
+body[data-page="bots"] #app .bot-core-command-row > label { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; column-gap:8px; row-gap:3px; }
+body[data-page="bots"] #app .bot-core-command-row > label input { grid-row:span 2; accent-color:#ff9cde; }
+body[data-page="bots"] #app .bot-core-command-row > label span { font-weight:700; }
+body[data-page="bots"] #app .bot-core-command-row > label small { opacity:.65; direction:ltr; text-align:right; }
+body[data-page="bots"] #app .bot-core-command-row > input { width:100%; min-width:0; }
+@media(max-width:640px){ body[data-page="bots"] #app .bot-core-command-grid { grid-template-columns:1fr; } }
