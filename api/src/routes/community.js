@@ -146,7 +146,7 @@ router.patch('/settings/:key',requireAuth,requireOwner,async(req,res)=>{
   if(req.params.key==='page_locks'){
     const value=req.body.value;
     if(!value||typeof value!=='object'||Array.isArray(value)||!value.pages||typeof value.pages!=='object'||Array.isArray(value.pages))return res.status(400).json({error:'إعدادات قفل الصفحات غير صحيحة'});
-    const pages={};for(const [key,entry] of Object.entries(value.pages).slice(0,40)){const page=String(key).replace(/[^a-z0-9_-]/gi,'').slice(0,40);if(page)pages[page]={enabled:!!entry?.enabled};}
+    const pages={};for(const [key,entry] of Object.entries(value.pages).slice(0,40)){const page=String(key).replace(/[^a-z0-9_-]/gi,'').slice(0,40);if(page)pages[page]={enabled:!!entry?.enabled,message:String(entry?.message||'').trim().slice(0,500)};}
     const safe={pages,message:String(value.message||'هذه الصفحة مغلقة مؤقتًا من إدارة مجتمع ملاذ.').trim().slice(0,500)};
     await query('INSERT INTO site_settings(key,value,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()',[req.params.key,JSON.stringify(safe)]);
   }else{
