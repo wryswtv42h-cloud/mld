@@ -145,3 +145,48 @@ html,body{min-height:100%;touch-action:pan-y}body{isolation:isolate}.ambient,.he
 .command-groups button.active{background:linear-gradient(120deg,rgba(255,156,222,.2),rgba(168,111,223,.22));border-color:var(--pink,#ff9cde);box-shadow:0 0 0 1px rgba(255,156,222,.1) inset}
 .prefix-split{margin-top:.75rem}
 @media(max-width:560px){.command-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.command-groups button:first-child{grid-column:1/-1}.prefix-split{grid-template-columns:1fr}}
+
+
+/* MLD Bot Control Center — refreshed command-station layout */
+:root{--bg:#100918;--panel:#1b1226;--panel2:#251633;--line:rgba(255,255,255,.105);--pink:#ff9cde;--purple:#a86fdf;--text:#fff8ff;--muted:#c4b3ce}
+body{background:radial-gradient(900px 520px at 88% -8%,rgba(168,111,223,.22),transparent 62%),radial-gradient(680px 480px at -5% 28%,rgba(255,156,222,.13),transparent 68%),linear-gradient(145deg,#100918,#140c1d 48%,#0d0713);background-attachment:fixed}
+.topbar{background:rgba(16,9,24,.88);border-bottom-color:rgba(255,156,222,.14);box-shadow:0 12px 38px rgba(0,0,0,.16)}
+.brand img{border-radius:14px;box-shadow:0 0 0 4px rgba(255,156,222,.06)}
+.shell{width:min(1440px,calc(100% - 32px));margin:22px auto 52px}
+#app:not([hidden]){display:grid;grid-template-columns:238px minmax(0,1fr);gap:16px;align-items:start}
+#app>.hero{grid-column:1/-1;width:100%;border-radius:26px;background:linear-gradient(115deg,rgba(255,156,222,.09),rgba(168,111,223,.1) 52%,rgba(255,255,255,.025)),rgba(27,18,38,.93);border-color:rgba(255,156,222,.16);box-shadow:0 22px 70px rgba(0,0,0,.24)}
+#app>.hero:after{content:"";position:absolute;inset:auto -4% -90px 34%;height:140px;background:radial-gradient(ellipse,rgba(168,111,223,.2),transparent 70%);pointer-events:none}
+#app>.tabs{grid-column:1;grid-row:2 / span 2;position:sticky;top:94px;display:flex;flex-direction:column;align-items:stretch;overflow:visible;padding:10px;gap:6px;border-radius:22px;background:rgba(27,18,38,.83);border-color:rgba(255,255,255,.09);box-shadow:0 16px 45px rgba(0,0,0,.18)}
+#app>.tabs .tab{width:100%;text-align:right;display:flex;align-items:center;gap:10px;justify-content:flex-start;border-radius:13px;padding:13px 14px;color:#cdbdd8;white-space:normal}
+#app>.tabs .tab.active{background:linear-gradient(105deg,rgba(255,156,222,.19),rgba(168,111,223,.15));color:#fff8ff;box-shadow:inset -3px 0 var(--pink),inset 0 0 0 1px rgba(255,156,222,.12)}
+#app>.tab-panel{grid-column:2;grid-row:2;min-width:0}
+#app>.tab-panel .section-heading{padding:6px 2px 12px;border-bottom:1px solid rgba(255,255,255,.07)}
+.panel,.stat-card{border-color:rgba(255,255,255,.085);box-shadow:0 15px 45px rgba(0,0,0,.16)}
+.panel{background:linear-gradient(145deg,rgba(36,23,49,.96),rgba(24,14,34,.96))}
+.stat-card{background:linear-gradient(145deg,rgba(42,27,57,.96),rgba(27,17,39,.96));border-radius:20px}
+.inner-panel,.form-panel,.add-command{border-radius:20px}
+.command-groups{position:sticky;top:86px;z-index:4;background:rgba(20,12,29,.96);backdrop-filter:blur(14px);box-shadow:0 10px 28px rgba(0,0,0,.16)}
+.command-groups button{min-height:44px}
+.command-card{border-radius:18px;margin-bottom:11px}
+.command-card:hover{border-color:rgba(255,156,222,.22)}
+.command-title>b{color:#fff8ff}
+input:focus,textarea:focus,select:focus{outline:2px solid rgba(255,156,222,.65);outline-offset:1px}
+.footer{grid-column:1/-1}
+@media(max-width:850px){
+ #app:not([hidden]){grid-template-columns:minmax(0,1fr);gap:12px}
+ #app>.hero{grid-column:1;grid-row:1}
+ #app>.tabs{grid-column:1;grid-row:2;position:sticky;top:76px;flex-direction:row;overflow:auto;align-items:stretch;z-index:12;padding:7px;border-radius:16px}
+ #app>.tabs .tab{width:auto;flex:0 0 auto;justify-content:center;text-align:center;white-space:nowrap;padding:11px 13px}
+ #app>.tabs .tab.active{box-shadow:inset 0 -3px var(--pink),inset 0 0 0 1px rgba(255,156,222,.12)}
+ #app>.tab-panel{grid-column:1;grid-row:3}
+ .command-groups{top:132px}
+}
+@media(max-width:560px){
+ .shell{width:calc(100% - 18px);margin:12px auto 30px}
+ #app>.hero{padding:17px;border-radius:20px}
+ #app>.hero .avatar-wrap img{width:68px;height:68px;border-radius:20px}
+ .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .overview-grid{grid-template-columns:1fr}
+ .command-groups{top:128px;gap:6px}
+ .command-groups button{padding:.65rem .55rem}
+}
