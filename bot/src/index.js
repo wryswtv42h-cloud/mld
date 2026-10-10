@@ -342,6 +342,31 @@ function installBotFeatures(client,bot){
       const botMember=message.guild.members.me;
       if(!botMember?.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_bot_permission'});return message.reply('البوت نفسه يحتاج صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
     }
+    if(command==='id'||command==='معرف'){
+      const member=message.mentions.members.first()||message.member;
+      const u=member.user;
+      return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🪪 معلومات المعرّف').setThumbnail(u.displayAvatarURL({size:256})).addFields({name:'العضو',value:u.tag||u.username,inline:true},{name:'معرّف Discord',value:'`'+u.id+'`',inline:true},{name:'تاريخ إنشاء الحساب',value:'<t:'+Math.floor(u.createdTimestamp/1000)+':F>'})],allowedMentions:{parse:[]}});
+    }
+    if(command==='banner'||command==='بنر'){
+      const user=message.mentions.users.first()||message.author;
+      const full=await client.users.fetch(user.id,{force:true}).catch(()=>user);
+      const url=full.bannerURL?.({size:1024,extension:'png'})||null;
+      if(!url)return message.reply('ما عند هذا الحساب بنر ظاهر.');
+      return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🖼️ بنر '+(full.tag||full.username)).setImage(url).setURL(url)],allowedMentions:{parse:[]}});
+    }
+    if(command==='profile'||command==='ملفي'||command==='بروفايل'){
+      const member=message.mentions.members.first()||message.member;
+      const u=member.user;
+      const roles=member.roles.cache.filter(r=>r.id!==message.guild.id).sort((a,b)=>b.position-a.position).map(r=>r.toString());
+      const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('👤 الملف الشخصي').setThumbnail(u.displayAvatarURL({size:256})).addFields(
+        {name:'الاسم',value:member.displayName||u.username,inline:true},
+        {name:'المعرّف',value:'`'+u.id+'`',inline:true},
+        {name:'انضم للسيرفر',value:member.joinedTimestamp?'<t:'+Math.floor(member.joinedTimestamp/1000)+':R>':'غير معروف',inline:true},
+        {name:'الحساب منذ',value:'<t:'+Math.floor(u.createdTimestamp/1000)+':D>',inline:true},
+        {name:'الرتب',value:roles.slice(0,12).join('، ')||'لا توجد رتب إضافية',inline:false}
+      ).setTimestamp();
+      return message.reply({embeds:[embed],allowedMentions:{parse:[]}});
+    }
     if(command==='ping')return message.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
     if(command==='prefix'||command==='بادئة')
       return message.reply({content:'🔧 بادئة أوامري الحالية: `'+prefix+'`\nجرّب: `'+prefix+'help` أو `'+prefix+'ping`',allowedMentions:{parse:[]}});
