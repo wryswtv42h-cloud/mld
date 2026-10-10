@@ -11,6 +11,12 @@ export async function execute(interaction) {
     }
     if (interaction.isModalSubmit()) return;
   }
+  if (interaction.isStringSelectMenu?.() && interaction.customId === 'mld_help_category') {
+    try { await interaction.client.commands.get('help')?.handleHelpSelect?.(interaction); }
+    catch (error) { console.error('خطأ في قائمة المساعدة:', error); if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'تعذر تحميل القسم، جرّب مرة أخرى.', ephemeral: true }).catch(() => {}); }
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) return;
 
   const command = interaction.client.commands.get(interaction.commandName);
