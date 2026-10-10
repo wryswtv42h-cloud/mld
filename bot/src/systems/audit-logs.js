@@ -129,7 +129,7 @@ export async function ensureAuditLogRooms(client) {
     for(const id of selected) {
       const type=AUDIT_LOG_TYPES.find(t=>t.id===id),name=('・'+id.replace(/_/g,'-')).slice(0,90);
       let channel=existing.get(name);
-      if(!channel)channel=await guild.channels.create({name,type:ChannelType.GuildText,parent:categories.get(type.group)?.id,topic:'لوق '+type.label+' | MLD',reason:'إنشاء روم لوق من لوحة MLD'});
+      if(!channel)channel=await guild.channels.create({name,type:ChannelType.GuildText,parent:categories.get(type.group)?.id,permissionOverwrites:[{id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},{id:me.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.ReadMessageHistory]}],topic:'لوق '+type.label+' | MLD',reason:'إنشاء روم لوق من لوحة MLD'});
       client.mldAuditLogChannels.set(guild.id+':'+id,channel.id);createdChannels[id]=channel.id;created++;
     }
   }
