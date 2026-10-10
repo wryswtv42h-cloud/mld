@@ -203,3 +203,15 @@ input:focus,textarea:focus,select:focus{outline:2px solid rgba(255,156,222,.65);
 .diagnostic-row.manual{border-color:rgba(255,209,102,.2)}.diagnostic-row.manual .diagnostic-icon{color:#ffd166;background:rgba(255,209,102,.1)}
 #diagnoseBtn:disabled{opacity:.65;cursor:wait}
 @media(max-width:650px){.diagnostics-list{grid-template-columns:1fr}.diagnostics-panel .panel-heading{align-items:flex-start;flex-direction:column}.diagnostics-panel .panel-heading button{width:100%}}
+
+
+.identity-editor{display:grid;gap:10px;margin-top:16px}
+.identity-editor .field{display:grid;gap:7px}
+.identity-editor input[type="file"]{width:100%;max-width:100%;padding:10px}
+.identity-editor button{width:100%;min-height:44px}
+.identity-editor .divider-line{height:1px;background:var(--line);margin:14px 0}
+.identity-editor h4{margin:0}
+.identity-editor .notice{overflow-wrap:anywhere}
+.identity-editor .notice.locked{border-color:rgba(255,107,125,.35);color:var(--red)}
+.identity-editor .notice.good{border-color:rgba(95,240,177,.35);color:var(--green)}
+.profile-banner-preview{display:block;width:100%;max-height:180px;object-fit:cover;border-radius:14px;border:1px solid var(--line)}
