@@ -423,3 +423,8 @@ body[data-page="owner"] #app .owner-section select { min-height:44px; }
  body[data-page="owner"] #app .owner-overview .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
  body[data-page="owner"] #app .owner-section { padding:15px; }
 }
+
+
+/* Independent MLD profile controls */
+.profile-edit-field{display:grid;gap:10px;padding:16px;margin:12px 0;border:1px solid rgba(255,156,222,.22);border-radius:16px;background:rgba(255,255,255,.025)}
+.profile-banner-preview{display:block;width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid rgba(255,156,222,.2)}
