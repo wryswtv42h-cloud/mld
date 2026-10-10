@@ -367,6 +367,30 @@ function installBotFeatures(client,bot){
       ).setTimestamp();
       return message.reply({embeds:[embed],allowedMentions:{parse:[]}});
     }
+    if(command==='myinv'||command==='دعواتي'){
+      try{
+        const invites=await message.guild.invites.fetch();
+        const mine=invites.filter(inv=>inv.inviter?.id===message.author.id);
+        const total=mine.reduce((sum,inv)=>sum+(inv.uses||0),0);
+        const lines=mine.sort((a,b)=>(b.uses||0)-(a.uses||0)).first(10).map(inv=>'• '+inv.url+' — **'+(inv.uses||0)+'** استخدام');
+        return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🔗 دعواتك').setDescription('إجمالي الاستخدامات المسجلة: **'+total+'**\nعدد روابط الدعوة: **'+mine.size+'**\n\n'+(lines.join('\n')||'ما عندك روابط دعوة مسجلة.')).setFooter({text:'MLD · مجتمع ملاذ'})],allowedMentions:{parse:[]}});
+      }catch{return message.reply('ما قدرت أقرأ الدعوات. تأكد أن البوت عنده صلاحية إدارة السيرفر.');}
+    }
+    if(command==='topinv'||command==='توبدعوات'){
+      try{
+        const invites=await message.guild.invites.fetch();
+        const totals=new Map();
+        for(const inv of invites.values())if(inv.inviter)totals.set(inv.inviter.id,(totals.get(inv.inviter.id)||0)+(inv.uses||0));
+        const sorted=[...totals.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10);
+        const lines=await Promise.all(sorted.map(async([id,uses,i])=>{const u=await client.users.fetch(id).catch(()=>null);return '**'+(sorted.findIndex(x=>x[0]===id)+1)+'.** '+(u?.username||'عضو')+' — **'+uses+'** دعوة';}));
+        return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🏆 أعلى الدعوات').setDescription(lines.join('\n')||'ما فيه بيانات دعوات مسجلة.').setFooter({text:'MLD · مجتمع ملاذ'})],allowedMentions:{parse:[]}});
+      }catch{return message.reply('ما قدرت أقرأ الدعوات. تأكد من صلاحيات البوت.');}
+    }
+    if(command==='user'||command==='مستخدم'){
+      const member=message.mentions.members.first()||message.guild.members.cache.get(args[0])||message.member;
+      const u=member.user;
+      return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('👤 بطاقة العضو').setThumbnail(u.displayAvatarURL({size:256})).addFields({name:'الاسم',value:member.displayName||u.username,inline:true},{name:'الحساب',value:'<@'+u.id+'>',inline:true},{name:'الرتب',value:member.roles.cache.filter(r=>r.id!==message.guild.id).map(r=>r.toString()).slice(0,10).join('، ')||'لا توجد',inline:false},{name:'انضم للسيرفر',value:member.joinedTimestamp?'<t:'+Math.floor(member.joinedTimestamp/1000)+':R>':'غير معروف',inline:true})],allowedMentions:{parse:[]}});
+    }
     if(command==='ping')return message.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
     if(command==='prefix'||command==='بادئة')
       return message.reply({content:'🔧 بادئة أوامري الحالية: `'+prefix+'`\nجرّب: `'+prefix+'help` أو `'+prefix+'ping`',allowedMentions:{parse:[]}});
