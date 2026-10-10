@@ -22,16 +22,20 @@ router.get('/me', requireAuth, (req, res) => {
 // ===== تعديل بروفايلي =====
 router.patch('/me', requireAuth, async (req, res) => {
   try {
-    const { avatar, bio, username, occupation } = req.body;
+    const { avatar, banner_url, bio, username, occupation } = req.body;
     if (username !== undefined) { const cleanUsername=String(username).trim(); const usernamePattern=req.user.is_owner ? /^[\p{L}\p{N}_. -]{1,32}$/u : /^[\p{L}\p{N}_. -]{2,32}$/u; if (!usernamePattern.test(cleanUsername)) return res.status(400).json({ error: req.user.is_owner ? 'اسم المستخدم يجب أن يكون من حرف إلى 32 حرفًا' : 'اسم المستخدم يجب أن يكون من 2 إلى 32 حرفًا' }); }
     if (bio !== undefined && String(bio).length > 500) return res.status(400).json({ error: 'النبذة لا تتجاوز 500 حرف' });
     if (occupation !== undefined && String(occupation).length > 80) return res.status(400).json({ error: 'المهنة لا تتجاوز 80 حرفًا' });
     if (avatar !== undefined && String(avatar).length > 1000) return res.status(400).json({ error: 'رابط الصورة طويل جدًا' });
+    if (banner_url !== undefined && String(banner_url).length > 1000) return res.status(400).json({ error: 'رابط البنر طويل جدًا' });
 
     if (username && username !== req.user.username) {
       const exists = await query('SELECT id FROM users WHERE username = $1', [username]);
       if (exists.rows[0]) return res.status(400).json({ error: 'الاسم مستخدم' });
       await query('UPDATE users SET username = $1 WHERE id = $2', [username, req.user.id]);
+    }
+    if (banner_url !== undefined) {
+      await query('UPDATE users SET banner_url = $1 WHERE id = $2', [banner_url, req.user.id]);
     }
     if (avatar !== undefined) {
       await query('UPDATE users SET avatar = $1 WHERE id = $2', [avatar, req.user.id]);
