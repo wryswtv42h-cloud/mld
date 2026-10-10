@@ -293,3 +293,7 @@ footer{width:min(1160px,calc(100% - 24px));margin:auto;padding:22px 0;border-top
 /* Reliable account tap target on mobile */
 .actions .user-label{background:transparent;border:0;padding:8px 10px;color:var(--muted);font-size:13px;min-height:40px;touch-action:manipulation;}
 #menuBtn{position:relative;z-index:61;min-width:44px;min-height:44px;touch-action:manipulation;}
+
+/* Owner question editor */
+.question-manager{display:grid;gap:12px;padding:16px;margin:14px 0;border:1px solid var(--line);border-radius:16px;background:var(--panel2)}
+.question-manager h3{margin:0}.question-list{display:grid;gap:10px}.question-editor-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.question-editor-row input{min-width:0;width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}.question-add-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.question-add-form input{min-width:0;width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}.question-manager [data-question-save]{justify-self:start}.question-manager .btn{white-space:nowrap}@media(max-width:520px){.question-editor-row,.question-add-form{grid-template-columns:1fr}.question-editor-row .btn,.question-add-form .btn{width:100%}}
