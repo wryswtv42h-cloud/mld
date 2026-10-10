@@ -172,7 +172,7 @@ function installBotFeatures(client,bot){
     if(interaction.isChatInputCommand()){
       try{
         const config=client.mldConfig||{},name=interaction.commandName;
-        await writeRuntimeLog(client.mldBotId,interaction.user?.id,'bot.slash_command_received',{command:name,guildId:interaction.guildId||null});
+        void writeRuntimeLog(client.mldBotId,interaction.user?.id,'bot.slash_command_received',{command:name,guildId:interaction.guildId||null});
         const prefix=String(config.prefix||'!').slice(0,4);
         const commandSettings=config.commandSettings&&typeof config.commandSettings==='object'?config.commandSettings:{};
         const slashCustom=(Array.isArray(config.commands)?config.commands:[]).find(x=>x&&String(x.name||'').toLowerCase()===name);
@@ -276,7 +276,7 @@ function installBotFeatures(client,bot){
         return interaction.reply({content:'الأمر غير متاح حاليًا. استخدم /help.',ephemeral:true});
       }catch(error){
         console.error('User bot slash command:',error?.stack||error);
-        await writeRuntimeLog(client.mldBotId,interaction.user?.id,'bot.slash_command_error',{command:interaction.commandName||'unknown',guildId:interaction.guildId||null,error:String(error?.message||error).slice(0,240)}).catch(()=>{});
+        void writeRuntimeLog(client.mldBotId,interaction.user?.id,'bot.slash_command_error',{command:interaction.commandName||'unknown',guildId:interaction.guildId||null,error:String(error?.message||error).slice(0,240)});
         const payload={content:'صار خطأ أثناء تنفيذ الأمر. حاول مرة ثانية.',ephemeral:true};
         if(interaction.replied||interaction.deferred)return interaction.followUp(payload).catch(()=>{});
         return interaction.reply(payload).catch(()=>{});
@@ -368,7 +368,7 @@ function installBotFeatures(client,bot){
     }
     if(!commandSource.startsWith(prefix)&&!mentionCommand&&!isCustomShortcut)return;
     const receivedCommand=String(commandSource.split(/\s+/)[0]||'').toLowerCase().slice(0,40);
-    await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_received',{command:receivedCommand,guildId:message.guild.id,channelId:message.channel.id,source:mentionCommand?'mention':isCustomShortcut?'shortcut':'prefix',contentLength:content.length});
+    void writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_received',{command:receivedCommand,guildId:message.guild.id,channelId:message.channel.id,source:mentionCommand?'mention':isCustomShortcut?'shortcut':'prefix',contentLength:content.length});
     const commandText=commandSource.startsWith(prefix)?commandSource.slice(prefix.length).trim():commandSource;
     const [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();
     const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===command));
