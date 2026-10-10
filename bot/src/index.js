@@ -60,6 +60,8 @@ function buildUserBotSlashCommands(client){
     {name:'eightball',description:'إجابة عشوائية عن سؤال',options:[{type:3,name:'question',description:'اكتب سؤالك',required:true,max_length:500}]},
     {name:'joke',description:'نكتة عشوائية خفيفة'}
   ];
+  const commandSettings=client.mldConfig?.commandSettings&&typeof client.mldConfig.commandSettings==='object'?client.mldConfig.commandSettings:{};
+  for(let i=commands.length-1;i>=0;i--)if(commandSettings[commands[i].name]?.enabled===false)commands.splice(i,1);
   const seen=new Set(commands.map(x=>x.name));
   for(const item of (Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[])){
     const name=String(item?.name||'').toLowerCase();
@@ -169,6 +171,13 @@ function installBotFeatures(client,bot){
       try{
         const config=client.mldConfig||{},name=interaction.commandName;
         const prefix=String(config.prefix||'!').slice(0,4);
+        const commandSettings=config.commandSettings&&typeof config.commandSettings==='object'?config.commandSettings:{};
+        const slashCustom=(Array.isArray(config.commands)?config.commands:[]).find(x=>x&&String(x.name||'').toLowerCase()===name);
+        const slashPolicy=commandSettings[name]||slashCustom||{};
+        if(slashPolicy.enabled===false)return interaction.reply({content:'هذا الأمر معطل من لوحة التحكم.',ephemeral:true});
+        const allowedSlashRoles=Array.isArray(slashPolicy.allowedRoleIds)?slashPolicy.allowedRoleIds:[];
+        const memberRoleIds=interaction.member?.roles?.cache?[...interaction.member.roles.cache.keys()]:(Array.isArray(interaction.member?.roles)?interaction.member.roles:[]);
+        if(allowedSlashRoles.length&&interaction.guild?.ownerId!==interaction.user.id&&!allowedSlashRoles.some(roleId=>memberRoleIds.includes(String(roleId))))return interaction.reply({content:'ما عندك رتبة تسمح لك باستخدام هذا الأمر.',ephemeral:true});
         if(name==='ping')return interaction.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
         if(name==='help'){
           return interaction.reply({...buildUserHelpPayload(client,interaction.user.id),ephemeral:true});
@@ -325,7 +334,9 @@ function installBotFeatures(client,bot){
     const commandSource=mentionMatch?content.slice(mentionMatch[0].length).trim():content;
     const shortcutWord=String(commandSource.split(/\s+/)[0]||'').toLowerCase();
     const shortcutsEnabled=client.mldConfig?.shortcutsEnabled===true;
-    const isCustomShortcut=shortcutsEnabled&&(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).some(item=>item&&item.enabled!==false&&(String(item.name||'').toLowerCase()===shortcutWord||(Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===shortcutWord))));
+    const commandSettings=client.mldConfig?.commandSettings&&typeof client.mldConfig.commandSettings==='object'?client.mldConfig.commandSettings:{};
+    const configuredShortcut=Object.values(commandSettings).some(item=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===shortcutWord));
+    const isCustomShortcut=shortcutsEnabled&&(configuredShortcut||(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).some(item=>item&&item.enabled!==false&&(String(item.name||'').toLowerCase()===shortcutWord||(Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===shortcutWord)))));
     // If Discord's privileged Message Content Intent is disabled, ordinary message
     // content arrives empty. A direct mention is still detectable, so explain the fix.
     if(!commandSource.trim()&&message.mentions.has(client.user)){
@@ -334,9 +345,16 @@ function installBotFeatures(client,bot){
     }
     if(!commandSource.startsWith(prefix)&&!mentionCommand&&!isCustomShortcut)return;
     const commandText=commandSource.startsWith(prefix)?commandSource.slice(prefix.length).trim():commandSource;
-    const [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
+    const [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();
+    const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===command));
+    if(coreAlias)command=coreAlias[0];
+    const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));
+    if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
     if(!command)return;
-    await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_used',{command,guildId:message.guild.id,channelId:message.channel.id});
+    const commandPolicy=commandSettings[command];
+    if(commandPolicy?.enabled===false)return message.reply('هذا الأمر معطل من لوحة التحكم.');
+    const allowedCoreRoles=Array.isArray(commandPolicy?.allowedRoleIds)?commandPolicy.allowedRoleIds:[];
+    if(allowedCoreRoles.length&&message.author.id!==message.guild.ownerId&&!allowedCoreRoles.some(roleId=>message.member.roles.cache.has(String(roleId))))return message.reply('ما عندك رتبة تسمح لك باستخدام هذا الأمر.');
     const requiredPermission={
       kick:PermissionFlagsBits.KickMembers,ban:PermissionFlagsBits.BanMembers,clear:PermissionFlagsBits.ManageMessages,say:PermissionFlagsBits.ManageMessages,
       announce:PermissionFlagsBits.ManageMessages,slowmode:PermissionFlagsBits.ManageChannels,lock:PermissionFlagsBits.ManageChannels,unlock:PermissionFlagsBits.ManageChannels,
@@ -652,8 +670,10 @@ function installBotFeatures(client,bot){
         await message.channel.permissionOverwrites.edit(target.id,{ViewChannel:true,SendMessages:true,ReadMessageHistory:true});return message.reply('أُضيف '+target.toString()+' إلى التذكرة.');
       }
     }
-    const custom=(Array.isArray(config.commands)?config.commands:[]).find(x=>x&&x.enabled!==false&&String(x.name||'').toLowerCase()===command);
+    const custom=(Array.isArray(config.commands)?config.commands:[]).find(x=>x&&x.enabled!==false&&(String(x.name||'').toLowerCase()===command||(Array.isArray(x.aliases)&&x.aliases.some(alias=>String(alias).toLowerCase()===command))));
     if(custom){
+      const allowedRoles=Array.isArray(custom.allowedRoleIds)?custom.allowedRoleIds:[];
+      if(allowedRoles.length&&message.author.id!==message.guild.ownerId&&!allowedRoles.some(roleId=>message.member.roles.cache.has(String(roleId))))return message.reply('ما عندك رتبة تسمح لك باستخدام هذا الأمر.');
       const reply=String(custom.response||'').slice(0,1800).replaceAll('{user}',message.author.username).replaceAll('{server}',message.guild.name).replaceAll('{memberCount}',String(message.guild.memberCount)).replaceAll('{args}',args.join(' '));
       if(reply)await message.reply({content:reply,allowedMentions:{repliedUser:false,parse:[]}});
     }
