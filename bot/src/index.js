@@ -323,13 +323,19 @@ function installBotFeatures(client,bot){
     const mentionMatch=mentionPrefix?content.match(mentionPrefix):null;
     const mentionCommand=!!mentionMatch;
     const commandSource=mentionMatch?content.slice(mentionMatch[0].length).trim():content;
-    if(!commandSource.startsWith(prefix)&&!mentionCommand){
+    const hasPrefix=commandSource.startsWith(prefix)||mentionCommand;
+    const firstWord=String(commandSource.split(/\s+/)[0]||'').toLowerCase();
+    const noPrefixCustom=!hasPrefix?(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&x.noPrefix===true&&(String(x.name||'').toLowerCase()===firstWord||(Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===firstWord)))):null;
+    if(!hasPrefix&&!noPrefixCustom){
       if(message.mentions.has(client.user)&&!content.trim())return message.reply('أنا متصل، لكن قراءة أوامر البادئة تحتاج تفعيل Message Content Intent من Discord Developer Portal.').catch(()=>{});
       return;
     }
-    const commandText=commandSource.startsWith(prefix)?commandSource.slice(prefix.length).trim():commandSource;
+    const commandText=hasPrefix?(commandSource.startsWith(prefix)?commandSource.slice(prefix.length).trim():commandSource):commandSource;
     const [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
+    if(noPrefixCustom)command=String(noPrefixCustom.name||command).toLowerCase();
     if(!command)return;
+    const disabledCommands=Array.isArray(client.mldConfig?.disabledCommands)?client.mldConfig.disabledCommands.map(x=>String(x).toLowerCase()):[];
+    if(disabledCommands.includes(command)||disabledCommands.includes(String(raw||'').toLowerCase()))return message.reply('هذا الأمر معطّل حاليًا من لوحة تحكم البوت.');
     await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_used',{command,guildId:message.guild.id,channelId:message.channel.id});
     const requiredPermission={
       kick:PermissionFlagsBits.KickMembers,ban:PermissionFlagsBits.BanMembers,unban:PermissionFlagsBits.BanMembers,'فكحظر':PermissionFlagsBits.BanMembers,allbans:PermissionFlagsBits.BanMembers,'قائمةالمحظورين':PermissionFlagsBits.BanMembers,clear:PermissionFlagsBits.ManageMessages,say:PermissionFlagsBits.ManageMessages,
