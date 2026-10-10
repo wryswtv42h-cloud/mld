@@ -78,11 +78,11 @@ function installBotFeatures(client,bot){
       if(interaction.user.id!==ownerId&&!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild))return interaction.reply({content:'هذه القائمة تخص عضوًا آخر. استخدم أمر help لفتح قائمتك.',ephemeral:true}).catch(()=>{});
       const page=Number(pageRaw)||1,prefix=String(client.mldConfig?.prefix||'!').slice(0,4),config=client.mldConfig||{},type=client.mldType||'general';
       const rows=[['ping','فحص الاتصال'],['help [رقم]','دليل الأوامر'],['server','معلومات السيرفر'],['membercount','عدد الأعضاء'],['members','اختصار عدد الأعضاء'],['userinfo @عضو','معلومات عضو'],['avatar [@عضو]','الصورة الشخصية']];
-      if(['moderation','automod','system'].includes(type))rows.push(['warn @عضو السبب','تنبيه'],['kick @عضو السبب','طرد'],['ban @عضو السبب','حظر'],['clear 10','حذف رسائل'],['say نص','إرسال نص'],['slowmode ثواني','بطء القناة'],['lock','قفل الكتابة'],['unlock','فتح الكتابة'],['timeout @عضو دقائق','تقييد'],['untimeout @عضو','إلغاء التقييد'],['nick @عضو الاسم','تغيير لقب'],['roleadd @عضو @رتبة','إضافة رتبة'],['roleremove @عضو @رتبة','إزالة رتبة'],['poll سؤال','تصويت'],['announce #روم نص','إعلان']);
-      if(type==='applications')rows.push(['تقديم','بدء التقديم'],['apply','اختصار التقديم'],['طلباتي','متابعة الطلب'],['تذكرة','إنشاء تذكرة'],['ticket','اختصار التذكرة'],['قفل','إغلاق التذكرة'],['إضافة @عضو','إضافة عضو للتذكرة']);
-      if(type==='games')rows.push(...['سالفة','برا السالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس','المتجر','تحويل','ايقاف'].map(n=>[n,'لعبة أو أمر نقاط']));
-      if(type==='bank')rows.push(...[['رصيد','عرض الرصيد'],['فلوس','اختصار الرصيد'],['يومي','مكافأة يومية'],['تحويل @عضو مبلغ','تحويل رصيد'],['تبرع @عضو مبلغ','التبرع'],['قرض','طلب قرض'],['سداد','سداد قرض'],['استثمار','استثمار'],['صندوق','الصندوق'],['تداول','التداول']]);
-      if(type==='music')rows.push(...[['شغل اسم/رابط','تشغيل مقطع'],['وقف','إيقاف'],['التالي','تخطي'],['قائمة','قائمة التشغيل'],['تكرار','التكرار'],['خلط','خلط القائمة'],['إيقاف-مؤقت','إيقاف مؤقت'],['استئناف','استئناف'],['صوت 70','الصوت']]);
+      if(['moderation','automod','system','allinone'].includes(type))rows.push(['warn @عضو السبب','تنبيه'],['kick @عضو السبب','طرد'],['ban @عضو السبب','حظر'],['clear 10','حذف رسائل'],['say نص','إرسال نص'],['slowmode ثواني','بطء القناة'],['lock','قفل الكتابة'],['unlock','فتح الكتابة'],['timeout @عضو دقائق','تقييد'],['untimeout @عضو','إلغاء التقييد'],['nick @عضو الاسم','تغيير لقب'],['roleadd @عضو @رتبة','إضافة رتبة'],['roleremove @عضو @رتبة','إزالة رتبة'],['poll سؤال','تصويت'],['announce #روم نص','إعلان']);
+      if(['applications','allinone'].includes(type))rows.push(['تقديم','بدء التقديم'],['apply','اختصار التقديم'],['طلباتي','متابعة الطلب'],['تذكرة','إنشاء تذكرة'],['ticket','اختصار التذكرة'],['قفل','إغلاق التذكرة'],['إضافة @عضو','إضافة عضو للتذكرة']);
+      if(['games','allinone'].includes(type))rows.push(...['سالفة','برا السالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس','المتجر','تحويل','ايقاف'].map(n=>[n,'لعبة أو أمر نقاط']));
+      if(['bank','allinone'].includes(type))rows.push(...[['رصيد','عرض الرصيد'],['فلوس','اختصار الرصيد'],['يومي','مكافأة يومية'],['تحويل @عضو مبلغ','تحويل رصيد'],['تبرع @عضو مبلغ','التبرع'],['قرض','طلب قرض'],['سداد','سداد قرض'],['استثمار','استثمار'],['صندوق','الصندوق'],['تداول','التداول']]);
+      if(['music','allinone'].includes(type))rows.push(...[['شغل اسم/رابط','تشغيل مقطع'],['وقف','إيقاف'],['التالي','تخطي'],['قائمة','قائمة التشغيل'],['تكرار','التكرار'],['خلط','خلط القائمة'],['إيقاف-مؤقت','إيقاف مؤقت'],['استئناف','استئناف'],['صوت 70','الصوت']]);
       rows.push(...(Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false).map(x=>[String(x.name),String(x.description||'أمر مخصص')]):[]));
       const size=6,total=Math.max(1,Math.ceil(rows.length/size)),p2=Math.max(1,Math.min(total,page)),items=rows.slice((p2-1)*size,p2*size);
       const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('📚 دليل أوامر '+client.user.username).setDescription(items.map(([n,d],i)=>'**'+((p2-1)*size+i+1)+'. '+prefix+n+'**\n'+d).join('\n\n')).setFooter({text:'MLD · صفحة '+p2+' من '+total+' · '+rows.length+' مدخلًا'}).setTimestamp();
@@ -151,11 +151,11 @@ function installBotFeatures(client,bot){
     if(command==='ping')return message.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
             if(command==='help') {
       const rows=[['ping','فحص اتصال البوت','الجميع'],['help [رقم]','دليل الأوامر التفاعلي','الجميع'],['server','معلومات السيرفر','الجميع'],['membercount','عدد الأعضاء','الجميع'],['members','اختصار عدد الأعضاء','الجميع'],['userinfo @عضو','معلومات عضو ورتبه','الجميع'],['avatar [@عضو]','رابط الصورة الشخصية','الجميع']];
-      if(type==='applications')rows.push(['تقديم','بدء التقديم عبر الخاص','الجميع'],['apply','اختصار التقديم','الجميع'],['طلباتي','إرشادات متابعة الطلب','الجميع'],['تذكرة','إنشاء تذكرة خاصة','الجميع'],['ticket','اختصار إنشاء تذكرة','الجميع'],['قفل','إغلاق التذكرة','صاحب التذكرة أو ManageChannels'],['close','اختصار إغلاق التذكرة','صاحب التذكرة أو ManageChannels'],['إضافة @عضو','إضافة عضو للتذكرة','ManageChannels'],['add @عضو','اختصار التقديم','ManageChannels']);
-      if(['moderation','automod','system'].includes(type))rows.push(['warn @عضو السبب','تسجيل تنبيه غير دائم','ModerateMembers'],['kick @عضو السبب','طرد عضو','KickMembers'],['ban @عضو السبب','حظر عضو','BanMembers'],['clear 10','حذف رسائل حديثة','ManageMessages'],['say نص','إرسال نص باسم البوت','ManageMessages'],['slowmode ثواني','تغيير بطء القناة','ManageChannels'],['lock','قفل الكتابة','ManageChannels'],['unlock','فتح الكتابة','ManageChannels'],['timeout @عضو دقائق','تقييد عضو','ModerateMembers'],['untimeout @عضو','إزالة التقييد','ModerateMembers'],['nick @عضو الاسم','تغيير لقب عضو','ManageNicknames'],['roleadd @عضو @رتبة','إضافة رتبة','ManageRoles'],['roleremove @عضو @رتبة','إزالة رتبة','ManageRoles'],['poll سؤال','إنشاء تصويت','الجميع'],['announce #روم نص','إرسال إعلان','ManageMessages']);
-      if(type==='games')rows.push(...['سالفة','برا السالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس','المتجر','تحويل','ايقاف'].map(n=>[n,'لعبة أو أمر نقاط','حسب إعداد الألعاب']));
-      if(type==='bank')rows.push(...[['رصيد','عرض رصيدك','الجميع'],['فلوس','اختصار الرصيد','الجميع'],['يومي','المكافأة اليومية','الجميع'],['تحويل @عضو مبلغ','تحويل رصيد','الرصيد الكافي'],['تبرع @عضو مبلغ','التبرع','الرصيد الكافي'],['قرض','طلب قرض','حسب إعداد البنك'],['سداد','سداد القرض','الرصيد الكافي'],['استثمار','استثمار الرصيد','الجميع'],['صندوق','عرض الصندوق','الجميع'],['تداول','التداول','الجميع']]);
-      if(type==='music')rows.push(...[['شغل اسم/رابط','تشغيل مقطع','روم صوتي'],['وقف','إيقاف الموسيقى','نفس الروم الصوتي'],['التالي','تخطي المقطع','نفس الروم الصوتي'],['قائمة','عرض قائمة التشغيل','الجميع'],['تكرار','تبديل التكرار','نفس الروم الصوتي'],['خلط','خلط القائمة','نفس الروم الصوتي'],['إيقاف-مؤقت','إيقاف مؤقت','نفس الروم الصوتي'],['استئناف','استئناف التشغيل','نفس الروم الصوتي'],['صوت 70','تغيير الصوت','نفس الروم الصوتي']]);
+      if(['applications','allinone'].includes(type))rows.push(['تقديم','بدء التقديم عبر الخاص','الجميع'],['apply','اختصار التقديم','الجميع'],['طلباتي','إرشادات متابعة الطلب','الجميع'],['تذكرة','إنشاء تذكرة خاصة','الجميع'],['ticket','اختصار إنشاء تذكرة','الجميع'],['قفل','إغلاق التذكرة','صاحب التذكرة أو ManageChannels'],['close','اختصار إغلاق التذكرة','صاحب التذكرة أو ManageChannels'],['إضافة @عضو','إضافة عضو للتذكرة','ManageChannels'],['add @عضو','اختصار التقديم','ManageChannels']);
+      if(['moderation','automod','system','allinone'].includes(type))rows.push(['warn @عضو السبب','تسجيل تنبيه غير دائم','ModerateMembers'],['kick @عضو السبب','طرد عضو','KickMembers'],['ban @عضو السبب','حظر عضو','BanMembers'],['clear 10','حذف رسائل حديثة','ManageMessages'],['say نص','إرسال نص باسم البوت','ManageMessages'],['slowmode ثواني','تغيير بطء القناة','ManageChannels'],['lock','قفل الكتابة','ManageChannels'],['unlock','فتح الكتابة','ManageChannels'],['timeout @عضو دقائق','تقييد عضو','ModerateMembers'],['untimeout @عضو','إزالة التقييد','ModerateMembers'],['nick @عضو الاسم','تغيير لقب عضو','ManageNicknames'],['roleadd @عضو @رتبة','إضافة رتبة','ManageRoles'],['roleremove @عضو @رتبة','إزالة رتبة','ManageRoles'],['poll سؤال','إنشاء تصويت','الجميع'],['announce #روم نص','إرسال إعلان','ManageMessages']);
+      if(['games','allinone'].includes(type))rows.push(...['سالفة','برا السالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس','المتجر','تحويل','ايقاف'].map(n=>[n,'لعبة أو أمر نقاط','حسب إعداد الألعاب']));
+      if(['bank','allinone'].includes(type))rows.push(...[['رصيد','عرض رصيدك','الجميع'],['فلوس','اختصار الرصيد','الجميع'],['يومي','المكافأة اليومية','الجميع'],['تحويل @عضو مبلغ','تحويل رصيد','الرصيد الكافي'],['تبرع @عضو مبلغ','التبرع','الرصيد الكافي'],['قرض','طلب قرض','حسب إعداد البنك'],['سداد','سداد القرض','الرصيد الكافي'],['استثمار','استثمار الرصيد','الجميع'],['صندوق','عرض الصندوق','الجميع'],['تداول','التداول','الجميع']]);
+      if(['music','allinone'].includes(type))rows.push(...[['شغل اسم/رابط','تشغيل مقطع','روم صوتي'],['وقف','إيقاف الموسيقى','نفس الروم الصوتي'],['التالي','تخطي المقطع','نفس الروم الصوتي'],['قائمة','عرض قائمة التشغيل','الجميع'],['تكرار','تبديل التكرار','نفس الروم الصوتي'],['خلط','خلط القائمة','نفس الروم الصوتي'],['إيقاف-مؤقت','إيقاف مؤقت','نفس الروم الصوتي'],['استئناف','استئناف التشغيل','نفس الروم الصوتي'],['صوت 70','تغيير الصوت','نفس الروم الصوتي']]);
       rows.push(['command list','إدارة الأوامر المخصصة','ManageGuild'],['command add | الاسم | الوصف | الرد','إضافة أمر مخصص','ManageGuild'],['command edit | الاسم | الرد','تعديل أمر مخصص','ManageGuild'],['command toggle | الاسم','تفعيل أو تعطيل أمر','ManageGuild'],['command delete | الاسم','حذف أمر مخصص','ManageGuild']);
       rows.push(...(Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false&&/^[a-z0-9_-]{1,32}$/i.test(String(x.name||''))).map(x=>[String(x.name),String(x.description||'أمر مخصص'),'حسب إعداد الأمر']):[]));
       const pageSize=6,total=Math.max(1,Math.ceil(rows.length/pageSize)),p=Math.max(1,Math.min(total,Number(args[0])||1)),items=rows.slice((p-1)*pageSize,p*pageSize);
@@ -191,7 +191,7 @@ function installBotFeatures(client,bot){
       catch(e){console.error('Command settings save:',e.message);return message.reply('تعذر حفظ الإعدادات في قاعدة البيانات.');}
     }
     if(command==='server')return message.reply({content:'**'+message.guild.name+'**\\nالأعضاء: '+message.guild.memberCount,allowedMentions:{parse:[]}});
-    if(['moderation','automod','system'].includes(type)){
+    if(['moderation','automod','system','allinone'].includes(type)){
       const target=message.mentions.members.first();
       const reason=args.slice(1).join(' ').slice(0,400)||'لم يذكر سبب';
       if(command==='warn'){
@@ -283,7 +283,7 @@ function installBotFeatures(client,bot){
         await channel.send({content:text,allowedMentions:{parse:[]}});return message.reply('تم إرسال الإعلان.');
       }
     }
-    if(type==='applications'){
+    if(['applications','allinone'].includes(type)){
       if(command==='تقديم'||command==='apply'){
         if(!config.applicationsChannelId)return message.reply('الإدارة لم تحدد روم التقديمات في لوحة التحكم بعد.');
         client.mldPendingApplications.set(message.author.id,{guildId:message.guild.id,createdAt:Date.now()});
@@ -322,7 +322,7 @@ function installBotFeatures(client,bot){
       if(reply)await message.reply({content:reply,allowedMentions:{repliedUser:false,parse:[]}});
     }
   });
-  if(['welcome','general','custom','system','support'].includes(client.mldType)){
+  if(['welcome','general','custom','system','support','allinone'].includes(client.mldType)){
     client.on(Events.GuildMemberAdd,async member=>{
       const cfg=client.mldConfig||{},channelId=String(cfg.welcomeChannelId||'');
       if(!channelId)return;
@@ -340,7 +340,7 @@ function installBotFeatures(client,bot){
       await channel.send({content:message.slice(0,1800),allowedMentions:{parse:[]} }).catch(()=>{});
     });
   }
-  if(client.mldType==='support'){
+  if(['support','allinone'].includes(client.mldType)){
     client.on(Events.VoiceStateUpdate,async(oldState,newState)=>{
       if(oldState.channelId||!newState.channelId)return;
       const member=newState.member,room=newState.channel,cfg=client.mldConfig||{};
