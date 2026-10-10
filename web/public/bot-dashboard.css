@@ -124,3 +124,15 @@ input:focus,select:focus,textarea:focus { outline:none;box-shadow:0 0 0 3px rgba
 
 /* Mobile controls: decorative layers must never intercept taps */
 html,body{min-height:100%;touch-action:pan-y}body{isolation:isolate}.ambient,.hero:before,.stat-card:after{pointer-events:none!important}.shell,.topbar,.hero,.tabs,.tab-panel,.panel,.form-panel,.section-heading,.commands-list,.logs-list,.settings-layout{position:relative}.tabs,.tab,.primary-btn,.secondary-btn,.danger-btn,.ghost-btn,.icon-btn,button,a,summary,input,select,textarea{touch-action:manipulation}.tabs{z-index:2}.tab-panel.active{z-index:1}.tab-panel button,.tab-panel a,.tab-panel input,.tab-panel select,.tab-panel textarea,.tab-panel summary{position:relative;z-index:2;pointer-events:auto!important;min-height:40px}.tab-panel [hidden],[hidden]{display:none!important}.tab-panel:before,.tab-panel:after,.panel:before,.panel:after{pointer-events:none!important}.notice{position:relative;z-index:5}@media(max-width:640px){.tabs{position:sticky;top:76px;z-index:10;background:rgba(25,16,37,.98);backdrop-filter:blur(16px);-webkit-overflow-scrolling:touch}.tab{padding:12px 15px;min-height:44px}.hero-actions>*{min-height:44px}.section-heading{align-items:flex-start;flex-direction:column}.section-heading>*{max-width:100%}}
+
+/* 2026-10-11 command manager: visible, responsive command cards and role controls. */
+.command-card{display:block!important;position:relative;min-width:0;overflow:visible}
+.builtin-command{border:1px solid rgba(255,255,255,.1);background:linear-gradient(145deg,rgba(255,156,222,.07),rgba(177,140,255,.04)),var(--panel)}
+.command-card .two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.command-card .field{display:grid;gap:7px;min-width:0}
+.command-card input:not([type=checkbox]),.command-card textarea,.command-card select{width:100%;min-width:0;max-width:100%;border:1px solid var(--line);border-radius:12px;background:#120c1b;color:var(--text);padding:10px}
+.command-card select[multiple]{min-height:92px}
+.command-card .compact-switch{display:flex;align-items:center;gap:9px}
+.command-card .compact-switch span{font-size:12px;color:var(--muted)}
+.command-card small.hint{display:block;margin-top:8px}
+@media(max-width:650px){.command-card .two-col{grid-template-columns:1fr}.command-card .command-top{align-items:flex-start;gap:8px}.command-card .command-title{min-width:0;overflow-wrap:anywhere}}
