@@ -168,6 +168,8 @@ function installBotFeatures(client,bot){
     if(interaction.isChatInputCommand()){
       try{
         const config=client.mldConfig||{},name=interaction.commandName;
+        const disabledCommands=Array.isArray(config.disabledCommands)?config.disabledCommands.map(x=>String(x).toLowerCase()):[];
+        if(disabledCommands.includes(name))return interaction.reply({content:'هذا الأمر معطّل حاليًا من لوحة تحكم البوت.',ephemeral:true,allowedMentions:{parse:[]}});
         const prefix=String(config.prefix||'!').slice(0,4);
         if(name==='ping')return interaction.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
         if(name==='help'){
