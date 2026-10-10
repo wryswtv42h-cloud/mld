@@ -29,6 +29,33 @@ document.addEventListener("click",async event=>{
   finally{if(button.isConnected){button.disabled=false;button.textContent=original;}}
 },true);
 
+document.addEventListener("click",async event=>{
+  const button=event.target.closest('#botForm button[type="submit"]');
+  if(!button)return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const form=button.closest("#botForm");
+  if(!form||button.disabled)return;
+  const original=button.textContent;
+  button.disabled=true;
+  button.textContent="جارٍ إضافة البوت…";
+  try{
+    const guildId=String(form.elements.guild_id?.value||"").trim();
+    if(form.dataset.verifiedGuildId!==guildId)throw new Error("تحقق من التوكن أولًا ثم تحقق من السيرفر والصلاحيات قبل الإضافة");
+    const data=Object.fromEntries(new FormData(form));
+    const result=await api("/api/bots",{method:"POST",body:JSON.stringify(data)});
+    toast(result.message||"تمت إضافة البوت بنجاح");
+    form.reset();
+    delete form.dataset.verifiedGuildId;
+    const out=form.querySelector("#previewBotTokenResult");
+    const guildOut=form.querySelector("#botGuildCheckResult");
+    if(out)out.textContent="";
+    if(guildOut)guildOut.textContent="";
+    try{await render()}catch(refreshError){console.error("Bot added but list refresh failed:",refreshError);toast("تمت إضافة البوت، لكن تعذر تحديث القائمة. أعد فتح صفحة البوتات.");}
+  }catch(error){toast(error.message||"تعذر إضافة البوت");}
+  finally{if(button.isConnected){button.disabled=false;button.textContent=original;}}
+},true);
+
 document.addEventListener("submit",async event=>{
   const form=event.target;
   if(!(form instanceof HTMLFormElement)||!["botForm","announcementForm"].includes(form.id))return;
