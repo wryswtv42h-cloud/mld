@@ -16,7 +16,7 @@ router.get('/types',(req,res)=>res.json({types:BOT_TYPES}));
 const DT=()=>process.env.DISCORD_TOKEN||process.env.DISCORD_BOT_TOKEN;
 const KEY=crypto.createHash('sha256').update(process.env.JWT_SECRET||'mld').digest();
 function enc(v){const iv=crypto.randomBytes(12),c=crypto.createCipheriv('aes-256-gcm',KEY,iv),x=Buffer.concat([c.update(v,'utf8'),c.final()]);return 'enc:'+iv.toString('base64url')+':'+c.getAuthTag().toString('base64url')+':'+x.toString('base64url')}
-async function da(path,token=DT()){const r=await fetch('https://discord.com/api/v10'+path,{headers:{Authorization:'Bot '+token}});let d={};try{d=await r.json()}catch{}return {ok:r.ok,d}}
+async function da(path,token=DT()){try{const r=await fetch('https://discord.com/api/v10'+path,{headers:{Authorization:'Bot '+token},signal:AbortSignal.timeout(5000)});let d={};try{d=await r.json()}catch{}return {ok:r.ok,d}}catch(e){console.warn('Discord API timeout/error:',path,e.message);return {ok:false,d:{message:e.message}}}}
 async function adminInGuild(uid,gid){const u=await query('SELECT discord_id FROM users WHERE id=$1',[uid]),did=u.rows[0]?.discord_id;if(!did||!gid||!DT())return false;const m=await da('/guilds/'+gid+'/members/'+did);if(!m.ok)return false;const rr=await da('/guilds/'+gid+'/roles');if(!rr.ok)return false;const ids=new Set(m.d.roles||[]);let p=BigInt((rr.d.find(x=>String(x.id)===String(gid))||{}).permissions||'0');for(const r of rr.d)if(ids.has(String(r.id)))p|=BigInt(r.permissions||'0');return (p&8n)===8n}
 async function can(req,gid){return !!req.user?.is_owner||await adminInGuild(req.user.id,gid)}
 async function inspectGuildForUser(guildId,botToken,userId){
