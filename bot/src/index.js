@@ -40,16 +40,25 @@ async function writeRuntimeLog(botId,actorId,action,details={}){
     await pool.query("INSERT INTO bot_logs(bot_id,actor_id,action,details) VALUES($1,$2,$3,$4)",[String(botId),String(actorId||''),String(action).slice(0,100),JSON.stringify(details)]);
   }catch(e){console.error('Bot audit log:',e.message);auditTableReady=null;}
 }
-const reservedUserSlashCommands=new Set(['help','ping','server','membercount','uptime','avatar','userinfo']);
+const reservedUserSlashCommands=new Set(['help','ping','server','membercount','uptime','avatar','userinfo','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke']);
 function buildUserBotSlashCommands(client){
   const commands=[
     {name:'help',description:'عرض دليل أوامر البوت'},
     {name:'ping',description:'فحص الاتصال وسرعة استجابة البوت'},
     {name:'server',description:'عرض معلومات السيرفر الحالي'},
+    {name:'serverinfo',description:'بطاقة معلومات السيرفر'},
+    {name:'servericon',description:'عرض أيقونة السيرفر'},
     {name:'membercount',description:'عرض عدد أعضاء السيرفر'},
+    {name:'channelcount',description:'عرض عدد القنوات'},
+    {name:'roles',description:'عرض أبرز رتب السيرفر'},
     {name:'uptime',description:'عرض مدة تشغيل البوت'},
     {name:'avatar',description:'عرض الصورة الشخصية',options:[{type:6,name:'user',description:'العضو المطلوب (اختياري)',required:false}]},
-    {name:'userinfo',description:'عرض معلومات عضو',options:[{type:6,name:'user',description:'العضو المطلوب (اختياري)',required:false}]}
+    {name:'userinfo',description:'عرض معلومات عضو',options:[{type:6,name:'user',description:'العضو المطلوب (اختياري)',required:false}]},
+    {name:'roll',description:'رمي نرد بعدد أوجه تختاره',options:[{type:4,name:'max',description:'أعلى رقم (2 إلى 1000000)',required:false,min_value:2,max_value:1000000}]},
+    {name:'random',description:'اختيار رقم عشوائي بين حدين',options:[{type:4,name:'min',description:'الحد الأدنى',required:true,min_value:-100000000,max_value:100000000},{type:4,name:'max',description:'الحد الأعلى',required:true,min_value:-100000000,max_value:100000000}]},
+    {name:'coinflip',description:'رمي قطعة نقدية'},
+    {name:'eightball',description:'إجابة عشوائية عن سؤال',options:[{type:3,name:'question',description:'اكتب سؤالك',required:true,max_length:500}]},
+    {name:'joke',description:'نكتة عشوائية خفيفة'}
   ];
   const seen=new Set(commands.map(x=>x.name));
   for(const item of (Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[])){
@@ -152,6 +161,51 @@ function installBotFeatures(client,bot){
         if(name==='membercount'){
           if(!interaction.guild)return interaction.reply({content:'هذا الأمر يعمل داخل السيرفر فقط.',ephemeral:true});
           return interaction.reply({content:'👥 عدد أعضاء **'+interaction.guild.name+'**: **'+interaction.guild.memberCount+'**',allowedMentions:{parse:[]}});
+        }
+        if(name==='serverinfo'){
+          if(!interaction.guild)return interaction.reply({content:'هذا الأمر يعمل داخل السيرفر فقط.',ephemeral:true});
+          const g=interaction.guild;
+          const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('🌌 '+g.name).setThumbnail(g.iconURL({size:256})).addFields(
+            {name:'المالك',value:'<@'+g.ownerId+'>',inline:true},
+            {name:'الأعضاء',value:String(g.memberCount),inline:true},
+            {name:'القنوات',value:String(g.channels.cache.size),inline:true},
+            {name:'الرتب',value:String(g.roles.cache.size),inline:true},
+            {name:'تاريخ الإنشاء',value:'<t:'+Math.floor(g.createdTimestamp/1000)+':D>',inline:true},
+            {name:'المعرّف',value:g.id,inline:true}
+          ).setFooter({text:'MLD · مجتمع ملاذ'}).setTimestamp();
+          return interaction.reply({embeds:[embed],allowedMentions:{parse:[]}});
+        }
+        if(name==='servericon'){
+          if(!interaction.guild)return interaction.reply({content:'هذا الأمر يعمل داخل السيرفر فقط.',ephemeral:true});
+          const url=interaction.guild.iconURL({size:1024});
+          return interaction.reply({content:url?'🖼️ أيقونة السيرفر: '+url:'السيرفر لا يملك أيقونة.' ,allowedMentions:{parse:[]}});
+        }
+        if(name==='channelcount'){
+          if(!interaction.guild)return interaction.reply({content:'هذا الأمر يعمل داخل السيرفر فقط.',ephemeral:true});
+          return interaction.reply({content:'📚 عدد قنوات السيرفر: **'+interaction.guild.channels.cache.size+'**',allowedMentions:{parse:[]}});
+        }
+        if(name==='roles'){
+          if(!interaction.guild)return interaction.reply({content:'هذا الأمر يعمل داخل السيرفر فقط.',ephemeral:true});
+          const roles=[...interaction.guild.roles.cache.values()].filter(r=>r.id!==interaction.guild.id).sort((a,b)=>b.position-a.position);
+          return interaction.reply({content:'🎭 **رتب السيرفر ('+roles.length+')**\\n'+(roles.slice(0,25).map(r=>'• '+r.name+' — '+r.members.size+' عضو').join('\\n')||'لا توجد رتب إضافية.'),allowedMentions:{parse:[]}});
+        }
+        if(name==='roll'){
+          const max=Math.max(2,Math.min(1000000,Number(interaction.options.getInteger('max')||6)));
+          return interaction.reply({content:'🎲 النتيجة: **'+(Math.floor(Math.random()*max)+1)+'** (من 1 إلى '+max+')',allowedMentions:{parse:[]}});
+        }
+        if(name==='random'){
+          const min=interaction.options.getInteger('min'),max=interaction.options.getInteger('max');
+          if(min>max||max-min>100000000)return interaction.reply({content:'الحد الأعلى يجب أن يكون أكبر من أو يساوي الحد الأدنى، والفارق لا يتجاوز 100 مليون.',ephemeral:true});
+          return interaction.reply({content:'🎲 النتيجة العشوائية: **'+(Math.floor(Math.random()*(max-min+1))+min)+'**',allowedMentions:{parse:[]}});
+        }
+        if(name==='coinflip')return interaction.reply({content:'🪙 النتيجة: **'+(Math.random()<0.5?'صورة':'كتابة')+'**',allowedMentions:{parse:[]}});
+        if(name==='eightball'){
+          const answers=['أكيد! ✨','غالبًا نعم.','الوضع مبشّر.','ممكن جدًا.','خلنا نشوف 😄','مو واضح للحين.','غالبًا لا.','جرّب مرة ثانية لاحقًا.'];
+          return interaction.reply({content:'🔮 **السؤال:** '+interaction.options.getString('question')+'\\n**الإجابة:** '+answers[Math.floor(Math.random()*answers.length)],allowedMentions:{parse:[]}});
+        }
+        if(name==='joke'){
+          const jokes=['مرة واحد قال للبوت: أنت ذكي؟ قال: على حسب الاتصال. 😂','واحد دخل يلعب جولة وحدة، رجع بعد ثلاث ساعات يقول آخر جولة. 😭','قالوا له ليش ما تفوز؟ قال: أنا جاي أرفع المعنويات. 😎'];
+          return interaction.reply({content:jokes[Math.floor(Math.random()*jokes.length)],allowedMentions:{parse:[]}});
         }
         if(name==='uptime'){
           const seconds=Math.max(0,Math.floor((Date.now()-(client.readyTimestamp||Date.now()))/1000));
