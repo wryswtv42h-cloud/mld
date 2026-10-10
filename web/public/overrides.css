@@ -352,3 +352,15 @@ body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .empty {
  body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .inlineForm { display:grid;grid-template-columns:1fr; }
 }
 @media(prefers-reduced-motion:reduce) { body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app * { transition:none!important;animation:none!important; } }
+
+/* Private-room member controls */
+.ig-room-row{display:flex;align-items:stretch;gap:6px;min-width:0}
+.ig-room-row .ig-room{flex:1;min-width:0}
+.ig-room-row .ig-room.active{border-color:rgba(255,156,222,.42);background:rgba(255,156,222,.09)}
+.ig-room-manage{flex:0 0 38px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.035);color:var(--text,#fff);cursor:pointer}
+.ig-room-manage:hover{border-color:rgba(255,156,222,.45);background:rgba(255,156,222,.1)}
+.room-members-list{display:grid;gap:9px;margin:14px 0}
+.room-member-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.035)}
+.room-member-row span{display:grid;gap:3px;min-width:0}
+.room-member-row small{color:var(--muted,#aaa);font-size:12px}
+.room-member-row .btn{flex:0 0 auto}
