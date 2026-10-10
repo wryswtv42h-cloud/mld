@@ -253,3 +253,18 @@ footer{width:min(1160px,calc(100% - 24px));margin:auto;padding:22px 0;border-top
 .bot-log-row code{font-size:.72rem;color:#e8d5f8;white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:520px){.bot-dashboard-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:9px}.bot-dashboard-summary>div{padding:10px 7px}.bot-dashboard-summary span{font-size:.69rem}.bot-live-stat-grid{grid-template-columns:1fr}.bot-avatar{width:54px;height:54px;flex-basis:54px}}
 @media(prefers-reduced-motion:reduce){.bot-dashboard-card,.bot-dashboard-actions .btn,.status-online:before{animation:none!important;transition:none!important}}
+
+/* Owner private inbox */
+.owner-inbox-grid{display:grid;grid-template-columns:minmax(220px,.72fr) minmax(0,1.6fr);gap:16px;margin-top:16px;align-items:start}
+.owner-inbox-grid>aside,.owner-inbox-grid>div{min-width:0;padding:14px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,#ff9cde0b,#a86fdf0b)}
+.owner-inbox-grid h3{margin:4px 0 12px}
+.owner-inbox-people{display:grid;gap:8px;max-height:460px;overflow:auto}
+.owner-inbox-people .owner-row{display:grid;gap:5px;width:100%;text-align:right;cursor:pointer;padding:12px;border:1px solid var(--line);border-radius:13px;background:#ffffff05;color:var(--text)}
+.owner-inbox-people .owner-row:hover{border-color:#ff9cde80;background:#ff9cde0b}
+.owner-inbox-people small{color:var(--muted)}
+#ownerPigeonConversation{display:grid;gap:8px;max-height:480px;overflow:auto;margin-top:10px}
+#ownerPigeonConversation [hidden]{display:none!important}
+#ownerDmForm{padding:12px;border:1px solid var(--line);border-radius:15px;background:#ffffff04;margin-bottom:16px}
+#ownerDmForm textarea{width:100%;resize:vertical}
+@media(max-width:720px){.owner-inbox-grid{grid-template-columns:1fr}.owner-inbox-people{grid-template-columns:repeat(2,minmax(0,1fr));max-height:240px}.owner-inbox-people .owner-row{min-width:0}}
+@media(max-width:420px){.owner-inbox-people{grid-template-columns:1fr}}
