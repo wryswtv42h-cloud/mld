@@ -175,7 +175,7 @@ router.patch('/:id/identity',requireAuth,async(req,res)=>{
   const banner=imageData(body.bannerDataUrl,'البنر');if(banner)discordPayload.banner=banner;
   if(body.watching!==undefined){
    const subscription=await subInfo(bot.id),features=subscription?.features&&typeof subscription.features==='object'?subscription.features:{};
-   const canChange=req.user.is_owner||!!subscription&&(features.all===true||features.watching===true);
+   const canChange=!!subscription&&(features.all===true||features.watching===true);
    if(!canChange)return res.status(403).json({error:'تعديل Watching يحتاج اشتراكًا فعّالًا يمنح هذه الميزة. تواصل مع الأونر لتفعيل الاشتراك.'});
    const watching=String(body.watching||'').trim().slice(0,128);
    if(!watching)return res.status(400).json({error:'اكتب نص Watching'});
