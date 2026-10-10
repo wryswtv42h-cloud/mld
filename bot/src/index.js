@@ -48,27 +48,26 @@ async function writeRuntimeLog(botId,actorId,action,details={}){
     await pool.query("INSERT INTO bot_logs(bot_id,actor_id,action,details) VALUES($1,$2,$3,$4)",[String(botId),String(actorId||''),String(action).slice(0,100),JSON.stringify(details)]);
   }catch(e){console.error('Bot audit log:',e.message);auditTableReady=null;}
 }
+// Only informational commands are registered as slash commands by design.
+// Moderation, protection, games, economy, and system commands use the configured prefix.
 const reservedUserSlashCommands=new Set(['help','ping','server','serverinfo','botinfo']);
-function buildUserBotSlashCommands(client){
-  const builtins=[
+function buildUserBotSlashCommands(){
+  return [
     {name:'ping',description:'فحص اتصال البوت'},
     {name:'serverinfo',description:'معلومات السيرفر الحالي'},
     {name:'botinfo',description:'معلومات البوت ومدة تشغيله'}
   ];
-  const config=client.mldConfig&&typeof client.mldConfig==='object'?client.mldConfig:{};
-  const commandSettings=config.commandSettings&&typeof config.commandSettings==='object'?config.commandSettings:{};
-  return builtins.filter(command=>commandSettings[command.name]?.enabled!==false);
 }
 async function registerUserBotSlashCommands(client,bot){
-  if(!client.user||!/^\d{17,20}$/.test(String(bot.guild_id||'')))return;
-  const body=buildUserBotSlashCommands(client);
+  if(!client.user||!/^[0-9]{17,20}$/.test(String(bot.guild_id||'')))return;
+  const body=buildUserBotSlashCommands();
   const signature=JSON.stringify(body);
   if(client.mldSlashSignature===signature)return;
   try{
     const rest=new REST({version:'10'}).setToken(decryptToken(bot.token));
     await rest.put(Routes.applicationGuildCommands(client.user.id,String(bot.guild_id)),{body});
     client.mldSlashSignature=signature;
-    console.log(`✅ User bot slash commands registered: ${bot.name} ${body.length}`);
+    console.log(`✅ User bot informational slash commands registered: ${bot.name} ${body.length}`);
     await writeRuntimeLog(bot.id,'system','bot.slash_commands_registered',{count:body.length,guildId:String(bot.guild_id)});
   }catch(error){
     console.error(`User bot ${bot.name} slash registration:`,error.message);
