@@ -26,7 +26,7 @@ export async function ensureBankTable(pool) {
 export function setupBank(client, pool) {
   if (!pool) return;
   client.on(Events.MessageCreate, async message => {
-    if (!message.guild || message.author.bot || client.mldType !== 'bank') return;
+    if (!message.guild || message.author.bot || !['bank','allinone'].includes(client.mldType)) return;
     const cfg = client.mldConfig || {};
     const prefix = String(cfg.prefix || '!').slice(0, 4);
     if (!message.content.startsWith(prefix)) return;
