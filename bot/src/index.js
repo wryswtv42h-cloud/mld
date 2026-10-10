@@ -323,7 +323,7 @@ function installBotFeatures(client,bot){
     const mentionMatch=mentionPrefix?content.match(mentionPrefix):null;
     const mentionCommand=!!mentionMatch;
     const commandSource=mentionMatch?content.slice(mentionMatch[0].length).trim():content;
-    const shortcutWord=String(commandSource.split(/\\s+/)[0]||'').toLowerCase();
+    const shortcutWord=String(commandSource.split(/\s+/)[0]||'').toLowerCase();
     const shortcutsEnabled=client.mldConfig?.shortcutsEnabled===true;
     const isCustomShortcut=shortcutsEnabled&&(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).some(item=>item&&item.enabled!==false&&(String(item.name||'').toLowerCase()===shortcutWord||(Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===shortcutWord))));
     if(!commandSource.startsWith(prefix)&&!mentionCommand&&!isCustomShortcut){
