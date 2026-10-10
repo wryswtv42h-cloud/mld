@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType, ActivityType, ActionRowBuilder, ButtonBuilder, ButtonStyle, Partials, EmbedBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType, ActivityType, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, Partials, EmbedBuilder } from 'discord.js';
 import http from 'http';
 import crypto from 'crypto';
 import pg from 'pg';
@@ -86,6 +86,27 @@ async function registerUserBotSlashCommands(client,bot){
     await writeRuntimeLog(bot.id,'system','bot.slash_registration_failed',{error:error.message,guildId:String(bot.guild_id)});
   }
 }
+
+function buildUserHelpPayload(client, ownerId, selected='general') {
+  const config=client.mldConfig||{},type=client.mldType||'general',prefix=String(config.prefix||'!').slice(0,4);
+  const categories=[
+    {value:'general',label:'الأوامر العامة',emoji:'✨',desc:'معلومات السيرفر وأدوات يومية',rows:[['ping','فحص الاتصال'],['server','معلومات السيرفر'],['serverinfo','بطاقة السيرفر'],['membercount','عدد الأعضاء'],['channelcount','عدد القنوات'],['uptime','مدة تشغيل البوت'],['avatar','الصورة الشخصية'],['userinfo','معلومات عضو'],['roles','عرض الرتب'],['roll','رمي نرد'],['random','رقم عشوائي'],['coinflip','عملة'],['eightball','سؤال وجواب'],['joke','نكتة']]},
+    {value:'admin',label:'الإدارة والإشراف',emoji:'🛡️',desc:'أوامر إدارة السيرفر المتاحة حسب نوع البوت',rows:[['warn @عضو السبب','تنبيه عضو'],['kick @عضو السبب','طرد عضو'],['ban @عضو السبب','حظر عضو'],['clear 10','حذف رسائل'],['slowmode 5','تحديد سرعة الرسائل'],['lock','قفل القناة'],['unlock','فتح القناة'],['timeout @عضو دقائق','تقييد عضو'],['untimeout @عضو','إلغاء التقييد'],['nick @عضو الاسم','تغيير لقب'],['roleadd @عضو @رتبة','إضافة رتبة'],['roleremove @عضو @رتبة','إزالة رتبة'],['poll سؤال','تصويت'],['announce #روم نص','إعلان']]},
+    {value:'welcome',label:'الترحيب والسجلات',emoji:'👋',desc:'إعدادات الترحيب والمغادرة واللوقات',rows:[['welcome','رسالة الترحيب'],['logs','معلومات السجلات'],['مغادرة','رسالة المغادرة']]},
+    {value:'tickets',label:'التذاكر والتقديمات',emoji:'🎫',desc:'التذاكر وطلبات التقديم',rows:[['تذكرة','إنشاء تذكرة'],['ticket','اختصار التذكرة'],['تقديم','بدء التقديم'],['apply','اختصار التقديم'],['طلباتي','متابعة الطلب'],['قفل','إغلاق التذكرة'],['إضافة @عضو','إضافة عضو للتذكرة']]},
+    {value:'games',label:'الألعاب',emoji:'🎮',desc:'ألعاب وتحديات داخل Discord',rows:['سالفة','برا السالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس'].map(n=>[n,'لعبة أو أمر نقاط'])},
+    {value:'economy',label:'الاقتصاد والبنك',emoji:'💰',desc:'الرصيد والمكافآت والتحويلات',rows:[['رصيد','عرض الرصيد'],['فلوس','اختصار الرصيد'],['يومي','مكافأة يومية'],['تحويل @عضو مبلغ','تحويل رصيد'],['قرض','طلب قرض'],['سداد','سداد قرض'],['استثمار','استثمار'],['صندوق','الصندوق'],['تداول','التداول']]},
+    {value:'music',label:'الموسيقى',emoji:'🎵',desc:'التحكم بالتشغيل وقائمة الانتظار',rows:[['شغل اسم/رابط','تشغيل مقطع'],['وقف','إيقاف'],['التالي','تخطي'],['قائمة','قائمة التشغيل'],['تكرار','تكرار المقطع'],['خلط','خلط القائمة'],['إيقاف-مؤقت','إيقاف مؤقت'],['استئناف','استئناف'],['صوت 70','مستوى الصوت']]},
+    {value:'custom',label:'أوامري المخصصة',emoji:'🧩',desc:'الأوامر التي أضفتها من لوحة التحكم',rows:(Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false).map(x=>[String(x.name),String(x.description||'أمر مخصص')]):[])}
+  ];
+  const visible=categories.filter(c=>c.value==='general'||c.value==='custom'||(c.value==='admin'&&['moderation','automod','system','allinone'].includes(type))||(c.value==='welcome'&&['welcome','system','allinone'].includes(type))||(c.value==='tickets'&&['tickets','applications','allinone'].includes(type))||(c.value==='games'&&['games','allinone'].includes(type))||(c.value==='economy'&&['bank','economy','allinone'].includes(type))||(c.value==='music'&&['music','allinone'].includes(type)));
+  const cat=visible.find(x=>x.value===selected)||visible[0];
+  const lines=(cat.rows.length?cat.rows:[['لا توجد أوامر مخصصة','أضف أوامر من لوحة التحكم ثم احفظها.']]).slice(0,35).map(([n,d],i)=>'**'+(i+1)+'. '+(String(n).startsWith('/')?n:prefix+n)+'**\n'+d);
+  const embed=new EmbedBuilder().setColor(0xff9cde).setTitle(cat.emoji+' '+cat.label).setDescription(cat.desc+'\n\n'+lines.join('\n\n')).setFooter({text:'MLD · '+cat.rows.length+' أمرًا/مدخلًا · اختر قسمًا من القائمة'}).setTimestamp();
+  const menu=new StringSelectMenuBuilder().setCustomId('mldhelpselect:'+ownerId).setPlaceholder('اختر قسم الأوامر…').addOptions(visible.map(c=>({label:c.label,value:c.value,emoji:c.emoji,description:c.desc.slice(0,100),default:c.value===cat.value})));
+  return {embeds:[embed],components:[new ActionRowBuilder().addComponents(menu)],allowedMentions:{parse:[]}};
+}
+
 function installBotFeatures(client,bot){
   // Unify user-facing bot responses into MLD embeds without changing command logic.
   const toMldEmbedPayload=(input)=>{
@@ -150,9 +171,7 @@ function installBotFeatures(client,bot){
         const prefix=String(config.prefix||'!').slice(0,4);
         if(name==='ping')return interaction.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
         if(name==='help'){
-          const names=['/ping','/server','/membercount','/uptime','/avatar','/userinfo',...(Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false&&/^[-a-z0-9_]{1,32}$/i.test(String(x.name||''))).map(x=>'/'+x.name):[])];
-          const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('📚 أوامر '+client.user.username).setDescription(names.slice(0,50).map(x=>'• '+x).join('\n')).setFooter({text:'MLD · تقدر تستخدم أوامر / أو البادئة '+prefix}).setTimestamp();
-          return interaction.reply({embeds:[embed],allowedMentions:{parse:[]}});
+          return interaction.reply({...buildUserHelpPayload(client,interaction.user.id),ephemeral:true});
         }
         if(name==='server'){
           if(!interaction.guild)return interaction.reply({content:'هذا الأمر يعمل داخل السيرفر فقط.',ephemeral:true});
@@ -231,6 +250,11 @@ function installBotFeatures(client,bot){
         if(interaction.replied||interaction.deferred)return interaction.followUp(payload).catch(()=>{});
         return interaction.reply(payload).catch(()=>{});
       }
+    }
+    if(interaction.isStringSelectMenu?.()&&interaction.customId.startsWith('mldhelpselect:')){
+      const ownerId=interaction.customId.split(':')[1];
+      if(interaction.user.id!==ownerId&&!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild))return interaction.reply({content:'هذه القائمة تخص عضوًا آخر. استخدم /help لفتح قائمتك.',ephemeral:true}).catch(()=>{});
+      return interaction.update(buildUserHelpPayload(client,ownerId,interaction.values?.[0]||'general')).catch(()=>{});
     }
     if(!interaction.isButton())return;
     if(interaction.customId.startsWith('mldhelp:')){
