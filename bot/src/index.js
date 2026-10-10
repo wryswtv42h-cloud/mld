@@ -180,6 +180,7 @@ function installBotFeatures(client,bot){
         if(!message.member.permissions.has('ModerateMembers'))return message.reply('تحتاج صلاحية Timeout Members لتنفيذ الأمر.');
         if(!target)return message.reply('استخدم الأمر هكذا: '+prefix+'warn @عضو السبب');
         if(message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تنبه عضو رتبته مساوية أو أعلى من رتبتك.');
+        await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_warn',{guildId:message.guild.id,channelId:message.channel.id,targetId:target.id,reason});
         await logToChannel(message.guild,config.modLogChannelId,'⚠️ تنبيه إداري (غير دائم) للعضو '+target.user.tag+' بواسطة '+message.author.tag+' | '+reason);
         return message.reply({content:'تم تسجيل التنبيه في سجل الإدارة. هذا التنبيه إشعار فقط ولا يُحفظ كعقوبة دائمة.',allowedMentions:{parse:[]}});
       }
@@ -191,14 +192,14 @@ function installBotFeatures(client,bot){
         if(target.id===message.author.id||target.id===client.user.id)return message.reply('ما تقدر تستخدم الأمر على نفسك أو البوت.');
         if(message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تستهدف عضو رتبته مساوية أو أعلى من رتبتك.');
         if(target.roles.highest.position>=message.guild.members.me.roles.highest.position)return message.reply('رتبة البوت يجب أن تكون أعلى من رتبة العضو المستهدف.');
-        try{if(command==='kick')await target.kick(reason);else await target.ban({reason});await logToChannel(message.guild,config.modLogChannelId,'🔨 '+(command==='kick'?'طرد':'حظر')+' العضو '+target.user.tag+' بواسطة '+message.author.tag+' | '+reason);return message.reply({content:'تم '+(command==='kick'?'طرد':'حظر')+' العضو بنجاح.',allowedMentions:{parse:[]}});}catch{return message.reply('تعذر تنفيذ الإجراء. تحقق من ترتيب الرتب وصلاحيات البوت.');}
+        try{if(command==='kick')await target.kick(reason);else await target.ban({reason});await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_'+command,{guildId:message.guild.id,channelId:message.channel.id,targetId:target.id,reason});await logToChannel(message.guild,config.modLogChannelId,'🔨 '+(command==='kick'?'طرد':'حظر')+' العضو '+target.user.tag+' بواسطة '+message.author.tag+' | '+reason);return message.reply({content:'تم '+(command==='kick'?'طرد':'حظر')+' العضو بنجاح.',allowedMentions:{parse:[]}});}catch{return message.reply('تعذر تنفيذ الإجراء. تحقق من ترتيب الرتب وصلاحيات البوت.');}
       }
       if(command==='clear'){
         if(!message.member.permissions.has('ManageMessages'))return message.reply('تحتاج صلاحية إدارة الرسائل.');
         if(!message.guild.members.me?.permissions.has('ManageMessages'))return message.reply('البوت يحتاج صلاحية إدارة الرسائل.');
         const amount=Number(args[0]);if(!Number.isInteger(amount)||amount<1||amount>100)return message.reply('حدد عددًا من 1 إلى 100: '+prefix+'clear 10');
         const deleted=await message.channel.bulkDelete(amount,true).catch(()=>null);if(!deleted)return message.reply('تعذر حذف الرسائل؛ قد تكون أقدم من 14 يومًا.');
-        const note=await message.channel.send('تم حذف '+deleted.size+' رسالة.').catch(()=>null);if(note)setTimeout(()=>note.delete().catch(()=>{}),4000);return;
+        await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_clear',{guildId:message.guild.id,channelId:message.channel.id,deleted:deleted.size});const note=await message.channel.send('تم حذف '+deleted.size+' رسالة.').catch(()=>null);if(note)setTimeout(()=>note.delete().catch(()=>{}),4000);return;
       }
       if(command==='membercount'||command==='members')return message.reply({content:'👥 عدد أعضاء السيرفر: **'+message.guild.memberCount+'**',allowedMentions:{parse:[]}});
       if(command==='userinfo'||command==='avatar'){
@@ -229,9 +230,10 @@ function installBotFeatures(client,bot){
         const target=message.mentions.members.first();if(!target)return message.reply('اذكر العضو المطلوب.');
         if(message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تستهدف عضو رتبته مساوية أو أعلى من رتبتك.');
         if(target.roles.highest.position>=message.guild.members.me.roles.highest.position)return message.reply('رتبة البوت يجب أن تكون أعلى من رتبة العضو المستهدف.');
-        if(command==='untimeout'){await target.timeout(null,'إزالة المهلة بواسطة '+message.author.tag);return message.reply('تم إلغاء المهلة عن العضو.');}
+        if(command==='untimeout'){await target.timeout(null,'إزالة المهلة بواسطة '+message.author.tag);await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_untimeout',{guildId:message.guild.id,channelId:message.channel.id,targetId:target.id});return message.reply('تم إلغاء المهلة عن العضو.');}
         const minutes=Number(args.find(x=>/^\d+$/.test(x)));if(!Number.isInteger(minutes)||minutes<1||minutes>40320)return message.reply('حدد مدة من دقيقة إلى 40320 دقيقة.');
         await target.timeout(minutes*60000,args.slice(1).filter(x=>!/^\d+$/.test(x)).join(' ').slice(0,400)||'بواسطة '+message.author.tag);
+        await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_timeout',{guildId:message.guild.id,channelId:message.channel.id,targetId:target.id,minutes});
         return message.reply('⏳ تم تقييد '+target.user.tag+' لمدة '+minutes+' دقيقة.');
       }
       if(command==='nick'){
@@ -239,7 +241,7 @@ function installBotFeatures(client,bot){
         const target=message.mentions.members.first(),nick=args.slice(1).join(' ').slice(0,32);if(!target||!nick)return message.reply('استخدم: '+prefix+'nick @عضو الاسم الجديد');
         if(message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تعدل لقب عضو رتبته مساوية أو أعلى من رتبتك.');
         if(target.roles.highest.position>=message.guild.members.me.roles.highest.position)return message.reply('رتبة البوت يجب أن تكون أعلى من رتبة العضو المستهدف.');
-        await target.setNickname(nick,'تعديل من بوت MLD');return message.reply('تم تعديل لقب العضو.');
+        await target.setNickname(nick,'تعديل من بوت MLD');await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_nick',{guildId:message.guild.id,channelId:message.channel.id,targetId:target.id,nick});return message.reply('تم تعديل لقب العضو.');
       }
       if(command==='roleadd'||command==='roleremove'){
         if(!message.member.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('تحتاج صلاحية إدارة الرتب.');
@@ -248,6 +250,7 @@ function installBotFeatures(client,bot){
         if(message.guild.ownerId!==message.author.id&&role.position>=message.member.roles.highest.position)return message.reply('ما تقدر تعدل رتبة مساوية أو أعلى من رتبتك.');
         if(message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تعدل على عضو رتبته مساوية أو أعلى من رتبتك.');
         if(command==='roleadd')await target.roles.add(role,'تعديل من بوت MLD');else await target.roles.remove(role,'تعديل من بوت MLD');
+        await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_'+command,{guildId:message.guild.id,channelId:message.channel.id,targetId:target.id,roleId:role.id,roleName:role.name});
         return message.reply((command==='roleadd'?'أُضيفت':'أُزيلت')+' رتبة '+role.name+' '+(command==='roleadd'?'إلى':'من')+' '+target.user.tag+'.');
       }
       if(command==='poll'){
