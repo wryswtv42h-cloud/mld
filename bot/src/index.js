@@ -83,6 +83,7 @@ function installBotFeatures(client,bot){
         return interaction.reply({content:'حدد رتبة الجونيور في إعدادات البوت أولًا.',ephemeral:true});
       }
       await interaction.update({content:interaction.message.content+'\n\nالقرار: '+(action==='accept'?'مقبول بواسطة ':'مرفوض بواسطة ')+interaction.user.toString(),components:[]});
+      await writeRuntimeLog(client.mldBotId,interaction.user.id,'bot.application_decision',{guildId,userId,decision:action});
       const user=await client.users.fetch(userId).catch(()=>null);
       await user?.send(action==='accept'?'تم قبول طلبك في '+interaction.guild.name+'.':'تم رفض طلبك في '+interaction.guild.name+'.').catch(()=>{});
     }catch(e){console.error('Application decision:',e.message);await interaction.reply({content:'تعذر تطبيق القرار. تحقق من رتبة البوت وصلاحياته.',ephemeral:true}).catch(()=>{});}
