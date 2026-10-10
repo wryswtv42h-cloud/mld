@@ -279,3 +279,76 @@ footer nav a { display: inline-flex; align-items: center; justify-content: cente
   .cards, .stats { grid-template-columns: 1fr; }
   .auth-tabs { grid-template-columns: 1fr; }
 }
+
+
+/* MLD EXPERIENCE REFRESH — applies to inner pages only; approved home and general chat remain untouched. */
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app { position:relative; isolation:isolate; }
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app::before {
+ content:"";position:absolute;z-index:-1;inset:-18px -12px auto;height:280px;pointer-events:none;
+ background:radial-gradient(ellipse at 85% 5%,rgba(177,140,255,.15),transparent 55%),radial-gradient(ellipse at 12% 30%,rgba(255,156,222,.11),transparent 48%);
+}
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app > .pagePanel,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app > .panel,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .pagePanel {
+ border:1px solid rgba(255,255,255,.105);background:linear-gradient(145deg,rgba(37,25,55,.96),rgba(20,14,31,.96));
+ border-radius:24px;box-shadow:0 22px 70px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.035);
+}
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app h1 { letter-spacing:-.035em;line-height:1.22;text-wrap:balance; }
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app h2 { letter-spacing:-.025em; }
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .sectionTitle,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .section-heading { position:relative;padding-bottom:12px;margin-bottom:18px; }
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .sectionTitle::after,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .section-heading::after {
+ content:"";position:absolute;bottom:0;right:0;width:74px;height:3px;border-radius:8px;
+ background:linear-gradient(90deg,var(--pink),var(--purple),transparent);
+}
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .cards,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .stats,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .ownerGrid { gap:14px; }
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .card,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .stat,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .ticketRow,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .memberCard,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .roleCard {
+ border:1px solid rgba(255,255,255,.085);background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));box-shadow:0 10px 28px rgba(0,0,0,.12);
+}
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .card:hover,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .ticketRow:hover,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .memberCard:hover,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .roleCard:hover {
+ transform:translateY(-3px);border-color:rgba(255,156,222,.3);box-shadow:0 16px 36px rgba(0,0,0,.2),0 0 0 1px rgba(255,156,222,.035);
+}
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .btn,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app button.primary,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app button[type="submit"] {
+ border-radius:13px;font-weight:750;transition:transform .16s ease,border-color .16s ease,filter .16s ease,box-shadow .16s ease;
+}
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .btn.primary,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .primary { box-shadow:0 8px 24px rgba(255,156,222,.12); }
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app input:not([type=checkbox]):not([type=radio]):not([type=range]),
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app select,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app textarea {
+ min-height:45px;border:1px solid rgba(255,255,255,.11);border-radius:13px;background:rgba(10,7,17,.55);transition:border-color .16s ease,box-shadow .16s ease;
+}
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app input:focus,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app select:focus,
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app textarea:focus { border-color:rgba(255,156,222,.65);box-shadow:0 0 0 3px rgba(255,156,222,.09); }
+body[data-page="owner"] #app .pagePanel,body[data-page="admin"] #app .pagePanel {
+ border-color:rgba(177,140,255,.22);background:linear-gradient(145deg,rgba(37,24,57,.98),rgba(16,11,25,.98));
+}
+body[data-page="owner"] #app .stat b,body[data-page="admin"] #app .stat b {
+ background:linear-gradient(110deg,#fff4fd,var(--pink),#c6b3ff);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+body[data-page="owner"] #app .ownerGrid > *,body[data-page="admin"] #app .ownerGrid > * { min-width:0; }
+body[data-page="bots"] #app .bot-dashboard-card,body[data-page="bots"] #app .bot-dashboard-summary { border-radius:20px; }
+body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .empty {
+ padding:24px;border:1px dashed rgba(255,255,255,.13);border-radius:18px;background:rgba(255,255,255,.018);
+}
+@media(max-width:700px) {
+ body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app > .pagePanel,
+ body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .pagePanel { padding:18px 14px;border-radius:18px; }
+ body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .cards,
+ body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .stats { grid-template-columns:1fr; }
+ body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .inlineForm { display:grid;grid-template-columns:1fr; }
+}
+@media(prefers-reduced-motion:reduce) { body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app * { transition:none!important;animation:none!important; } }
