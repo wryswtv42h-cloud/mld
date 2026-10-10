@@ -110,9 +110,10 @@ function buildDetails(type,args,guild) {
 export async function ensureAuditLogRooms(client) {
   const cfg=client.mldConfig||{},selected=Array.isArray(cfg.auditLogTypes)?cfg.auditLogTypes.filter(id=>AUDIT_LOG_TYPES.some(t=>t.id===id)):[];
   if(!cfg.auditLogsCreateRequested||!selected.length)return {created:0,selected:selected.length};
-  let created=0;const createdChannels={...(cfg.auditLogChannels||{})};
+  let created=0,processedGuilds=0;const createdChannels={...(cfg.auditLogChannels||{})};
   for(const guild of client.guilds.cache.values()) {
     if(cfg.auditLogsGuildId&&guild.id!==String(cfg.auditLogsGuildId))continue;
+    processedGuilds++;
     const me=guild.members.me||await guild.members.fetchMe().catch(()=>null);
     if(!me?.permissions.has(PermissionFlagsBits.ManageChannels))throw new Error('يحتاج البوت صلاحية إدارة القنوات لإنشاء رومات اللوقات.');
     const existing=new Map(guild.channels.cache.map(c=>[c.name,c]));
@@ -132,6 +133,7 @@ export async function ensureAuditLogRooms(client) {
       client.mldAuditLogChannels.set(guild.id+':'+id,channel.id);createdChannels[id]=channel.id;created++;
     }
   }
+  if(!processedGuilds)throw new Error('لم أجد السيرفر المرتبط بهذا البوت. تأكد أن البوت موجود في السيرفر ثم أعد المحاولة.');
   client.mldConfig={...cfg,auditLogChannels:createdChannels,auditLogsCreateRequested:false,auditLogsReady:true,auditLogsLastCreatedAt:new Date().toISOString()};
   return {created,selected:selected.length,channels:createdChannels};
 }
