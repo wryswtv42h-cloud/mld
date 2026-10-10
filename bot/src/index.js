@@ -326,10 +326,13 @@ function installBotFeatures(client,bot){
     const shortcutWord=String(commandSource.split(/\s+/)[0]||'').toLowerCase();
     const shortcutsEnabled=client.mldConfig?.shortcutsEnabled===true;
     const isCustomShortcut=shortcutsEnabled&&(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).some(item=>item&&item.enabled!==false&&(String(item.name||'').toLowerCase()===shortcutWord||(Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===shortcutWord))));
-    if(!commandSource.startsWith(prefix)&&!mentionCommand&&!isCustomShortcut){
-      if(message.mentions.has(client.user)&&!content.trim())return message.reply('أنا متصل، لكن قراءة أوامر البادئة تحتاج تفعيل Message Content Intent من Discord Developer Portal.').catch(()=>{});
-      return;
+    // If Discord's privileged Message Content Intent is disabled, ordinary message
+    // content arrives empty. A direct mention is still detectable, so explain the fix.
+    if(!commandSource.trim()&&message.mentions.has(client.user)){
+      await writeRuntimeLog(client.mldBotId,message.author.id,'bot.message_content_intent_missing',{guildId:message.guild.id,channelId:message.channel.id});
+      return message.reply('أنا متصل، لكن Discord لا يرسل محتوى الرسائل لي. فعّل Message Content Intent من Discord Developer Portal ثم Bot ثم Privileged Gateway Intents، وبعدها أعد تشغيل البوت. إلى ذلك الوقت جرّب أوامر /ping و/help.').catch(()=>{});
     }
+    if(!commandSource.startsWith(prefix)&&!mentionCommand&&!isCustomShortcut)return;
     const commandText=commandSource.startsWith(prefix)?commandSource.slice(prefix.length).trim():commandSource;
     const [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
     if(!command)return;
