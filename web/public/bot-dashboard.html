@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#171020"><title>لوحة البوت | MLD</title>
-<link rel="icon" href="/logo.svg.JPG"><link rel="stylesheet" href="/bot-dashboard.css?v=20261011-command-groups1">
+<link rel="icon" href="/logo.svg.JPG"><link rel="stylesheet" href="/bot-dashboard.css?v=20261011-intent-help2">
 </head>
 <body>
 <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -33,6 +33,7 @@
  <div class="overview-grid"><article class="panel inner-panel"><div class="panel-heading"><div><h3>حالة الاتصال</h3><p class="muted">اتصال البوت بخدمة Discord</p></div><span id="connectionState" class="connection-state">● غير معروف</span></div><div class="connection-track"><span id="connectionBar"></span></div><div class="connection-legend"><span>الحالة الفعلية</span><b id="runtimeText">بانتظار الحالة</b></div><p id="connectionHint" class="hint">يتم تحديث الحالة من خدمة البوت.</p></article>
  <article class="panel inner-panel"><div class="panel-heading"><div><h3>إجراءات سريعة</h3><p class="muted">أهم الأدوات بدون البحث داخل الإعدادات</p></div></div><div class="quick-actions"><button type="button" data-jump="settings">ضبط الإعدادات <span>↗</span></button><button type="button" data-jump="commands">إدارة الأوامر <span>↗</span></button><button type="button" data-jump="logs">عرض آخر السجلات <span>↗</span></button></div></article></div>
  <article class="panel diagnostics-panel"><div class="panel-heading"><div><h3>🧪 فحص استجابة البوت</h3><p class="muted">يفحص التوكن والسيرفر والصلاحيات وأوامر Discord، ويحدد سبب عدم الرد قدر الإمكان.</p></div><button id="diagnoseBtn" class="primary-btn" type="button">ابدأ الفحص</button></div><div id="diagnosticsList" class="diagnostics-list"><p class="hint">اضغط «ابدأ الفحص» لعرض نتائج فعلية من Discord.</p></div></article>
+ <article class="panel inner-panel intent-help-panel"><div class="panel-heading"><div><h3>⚡ إذا كان البوت متصلًا ولا يرد على !الأوامر</h3><p class="muted">هذا الخيار من Discord نفسه ولا يستطيع الموقع تفعيله نيابةً عنك.</p></div><a class="secondary-btn" href="https://discord.com/developers/applications" target="_blank" rel="noopener">فتح Developer Portal ↗</a></div><ol class="intent-steps"><li>افتح تطبيق البوت الصحيح من القائمة.</li><li>ادخل إلى <b>Bot</b> ثم <b>Privileged Gateway Intents</b>.</li><li>فعّل <b>Message Content Intent</b> واحفظ التغيير.</li><li>ارجع إلى لوحة MLD وأوقف البوت ثم شغّله، أو انتظر إعادة اتصاله.</li></ol><p class="hint">بعد نشر التحديث، جرّب <code>/help</code> أو <code>/ping</code> أولًا. أوامر السلاش لا تعتمد على Message Content Intent، أما الأوامر النصية مثل <code>!ping</code> فتحتاجه.</p></article>
 </section>
 <section class="tab-panel" data-panel="settings">
  <div class="section-heading"><div><span class="eyebrow">CONFIGURATION</span><h2>إعدادات البوت</h2><p class="muted">تظهر الخيارات المناسبة لنوع البوت؛ بوت MLD الشامل يعرض وحدات الإدارة والألعاب والبنك والترحيب والتذاكر من لوحة واحدة.</p></div></div>
