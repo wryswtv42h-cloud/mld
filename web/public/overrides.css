@@ -455,3 +455,12 @@ body[data-page="bots"] #app .bot-core-command-row > label span { font-weight:700
 body[data-page="bots"] #app .bot-core-command-row > label small { opacity:.65; direction:ltr; text-align:right; }
 body[data-page="bots"] #app .bot-core-command-row > input { width:100%; min-width:0; }
 @media(max-width:640px){ body[data-page="bots"] #app .bot-core-command-grid { grid-template-columns:1fr; } }
+
+
+/* MLD private-room message builder */
+body[data-page="bots"] #app .bot-private-room-panel { display:grid; gap:12px; margin:16px 0; padding:16px; }
+body[data-page="bots"] #app .bot-private-room-panel label { display:grid; gap:7px; }
+body[data-page="bots"] #app .bot-private-room-panel input,
+body[data-page="bots"] #app .bot-private-room-panel textarea,
+body[data-page="bots"] #app .bot-private-room-panel select { width:100%; min-width:0; }
+body[data-page="bots"] #app .bot-private-room-panel input[type="color"] { height:48px; padding:4px; max-width:120px; }
