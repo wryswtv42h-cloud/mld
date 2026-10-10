@@ -110,7 +110,7 @@ function buildDetails(type,args,guild) {
 export async function ensureAuditLogRooms(client) {
   const cfg=client.mldConfig||{},selected=Array.isArray(cfg.auditLogTypes)?cfg.auditLogTypes.filter(id=>AUDIT_LOG_TYPES.some(t=>t.id===id)):[];
   if(!cfg.auditLogsCreateRequested||!selected.length)return {created:0,selected:selected.length};
-  let created=0;
+  let created=0;const createdChannels={...(cfg.auditLogChannels||{})};
   for(const guild of client.guilds.cache.values()) {
     if(cfg.auditLogsGuildId&&guild.id!==String(cfg.auditLogsGuildId))continue;
     const me=guild.members.me||await guild.members.fetchMe().catch(()=>null);
@@ -121,7 +121,7 @@ export async function ensureAuditLogRooms(client) {
     for(const group of groups) {
       const name=('📚・لوقات-'+group).slice(0,90);
       let cat=existing.get(name);
-      if(!cat)cat=await guild.channels.create({name,type:ChannelType.GuildCategory,reason:'إعداد نظام لوقات MLD'});
+      if(!cat)cat=await guild.channels.create({name,type:ChannelType.GuildCategory,permissionOverwrites:[{id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},{id:me.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.ReadMessageHistory]}],reason:'إعداد نظام لوقات MLD'});
       categories.set(group,cat);
     }
     if(!client.mldAuditLogChannels)client.mldAuditLogChannels=new Map();
@@ -129,11 +129,11 @@ export async function ensureAuditLogRooms(client) {
       const type=AUDIT_LOG_TYPES.find(t=>t.id===id),name=('・'+id.replace(/_/g,'-')).slice(0,90);
       let channel=existing.get(name);
       if(!channel)channel=await guild.channels.create({name,type:ChannelType.GuildText,parent:categories.get(type.group)?.id,topic:'لوق '+type.label+' | MLD',reason:'إنشاء روم لوق من لوحة MLD'});
-      client.mldAuditLogChannels.set(guild.id+':'+id,channel.id);created++;
+      client.mldAuditLogChannels.set(guild.id+':'+id,channel.id);createdChannels[id]=channel.id;created++;
     }
   }
-  client.mldConfig={...cfg,auditLogsCreateRequested:false,auditLogsReady:true,auditLogsLastCreatedAt:new Date().toISOString()};
-  return {created,selected:selected.length};
+  client.mldConfig={...cfg,auditLogChannels:createdChannels,auditLogsCreateRequested:false,auditLogsReady:true,auditLogsLastCreatedAt:new Date().toISOString()};
+  return {created,selected:selected.length,channels:createdChannels};
 }
 
 export function setupAuditLogs(client) {
