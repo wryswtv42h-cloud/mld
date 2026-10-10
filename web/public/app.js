@@ -253,5 +253,65 @@ accountButton?.addEventListener("click",event=>{event.preventDefault();event.sto
 const userLabelButton=document.getElementById("userLabel");
 userLabelButton?.addEventListener("click",event=>{event.preventDefault();event.stopImmediatePropagation();state.user?go("profile"):openLogin();},{capture:true});
 renderAnnouncement();renderFloatingAction();renderHeader();render();consumeLoginTicket();closeMenu();window.scrollTo(0,0);
+
+// MLD interaction hardening: capture taps before any delegated listener can swallow them.
+document.addEventListener("click",async event=>{
+  const target=event.target instanceof Element?event.target:null;
+  if(!target)return;
+  const jump=target.closest("[data-owner-jump]");
+  if(jump){
+    event.preventDefault();event.stopImmediatePropagation();
+    const key=jump.dataset.ownerJump;
+    const section=document.getElementById(key==="overview"?"owner-overview":"owner-"+key);
+    if(section){section.scrollIntoView({behavior:"smooth",block:"start"});document.querySelectorAll("[data-owner-jump]").forEach(b=>b.classList.toggle("is-current",b===jump));}
+    return;
+  }
+  if(document.body.dataset.page!=="bots")return;
+  const preview=target.closest("#previewBotToken");
+  const check=target.closest("#checkBotGuild");
+  const toggle=target.closest("[data-bot-toggle]");
+  const remove=target.closest("[data-bot-delete]");
+  if(!preview&&!check&&!toggle&&!remove)return;
+  event.preventDefault();event.stopImmediatePropagation();
+  const button=preview||check||toggle||remove;
+  if(button.disabled)return;
+  const original=button.textContent;
+  try{
+    if(preview||check){
+      const form=button.closest("#botForm");
+      if(!form)throw new Error("تعذر العثور على نموذج البوت");
+      const token=String(form.elements.token?.value||"").trim();
+      const guild_id=String(form.elements.guild_id?.value||"").trim();
+      if(preview&&!token)throw new Error("أدخل توكن البوت أولًا");
+      if(check&&(!guild_id||!/^\\d{17,20}$/.test(guild_id)))throw new Error("أدخل ايدي سيرفر صحيحًا (17–20 رقمًا)");
+      button.disabled=true;button.textContent="جارٍ التحقق…";
+      if(preview){
+        const d=await api("/api/bots/preview-token",{method:"POST",body:JSON.stringify({token})});
+        const out=form.querySelector("#previewBotTokenResult");
+        if(out)out.innerHTML="البوت: "+esc(d.bot.username)+" — <a href=\""+esc(d.invite_url)+"\" target=\"_blank\" rel=\"noopener\">افتح رابط دعوة البوت وأضفه للسيرفر</a>";
+        toast("التوكن صالح");
+      }else{
+        const d=await api("/api/bots/check-guild",{method:"POST",body:JSON.stringify({guild_id,token})});
+        const out=form.querySelector("#botGuildCheckResult");
+        if(out)out.textContent="تم التحقق: "+d.guild.name+" — الأعضاء: "+d.guild.memberCount+" — صلاحية Administrator مؤكدة";
+        form.dataset.verifiedGuildId=guild_id;toast("تم التحقق من السيرفر");
+      }
+      return;
+    }
+    if(toggle){
+      button.disabled=true;button.textContent="جارٍ التنفيذ…";
+      const d=await api("/api/bots/"+encodeURIComponent(toggle.dataset.botToggle)+"/toggle",{method:"POST"});
+      toast(d.message||"تم إرسال طلب تغيير حالة البوت");await render();return;
+    }
+    if(remove){
+      const id=remove.dataset.botDelete;
+      if(!confirm("حذف هذا البوت نهائيًا؟ سيتم فصل اتصاله وحذف إعداداته."))return;
+      button.disabled=true;button.textContent="جارٍ الحذف…";
+      await api("/api/bots/"+encodeURIComponent(id),{method:"DELETE"});
+      toast("تم حذف البوت");await render();
+    }
+  }catch(error){toast(error.message||"تعذر تنفيذ العملية")}
+  finally{if(button.isConnected){button.disabled=false;button.textContent=original}}
+},{capture:true});
 document.addEventListener("input",e=>{const input=e.target.closest("[data-bot-log-search]");if(!input)return;const q=input.value.trim().toLocaleLowerCase("ar");input.closest("[data-runtime-logs]")?.querySelectorAll(".bot-log-row").forEach(row=>{row.hidden=!row.textContent.toLocaleLowerCase("ar").includes(q)});});
 })();
