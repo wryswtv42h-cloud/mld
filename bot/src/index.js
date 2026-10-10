@@ -40,22 +40,16 @@ async function writeRuntimeLog(botId,actorId,action,details={}){
     await pool.query("INSERT INTO bot_logs(bot_id,actor_id,action,details) VALUES($1,$2,$3,$4)",[String(botId),String(actorId||''),String(action).slice(0,100),JSON.stringify(details)]);
   }catch(e){console.error('Bot audit log:',e.message);auditTableReady=null;}
 }
-async function registerUserBotSlashCommands(client,bot){
+async function clearUserBotSlashCommands(client,bot){
   if(!client.user||!bot.guild_id)return;
-  const config=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
-  const commands=[
-    {name:'ping',description:'فحص اتصال البوت'},
-    {name:'help',description:'عرض دليل الأوامر'},
-    ...(Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false).map(x=>({
-      name:String(x.name||'').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,32),
-      description:String(x.description||'أمر مخصص').replace(/[\\r\\n]/g,' ').slice(0,100)||'أمر مخصص',
-      options:[{type:3,name:'args',description:'نص إضافي للأمر (اختياري)',required:false}]
-    })).filter(x=>x.name&&x.name!=='ping'&&x.name!=='help'):[])
-  ];
-  const unique=[...new Map(commands.map(x=>[x.name,x])).values()].slice(0,100);
-  const rest=new REST({version:'10'}).setToken(decryptToken(bot.token));
-  await rest.put(Routes.applicationGuildCommands(client.user.id,String(bot.guild_id)),{body:unique});
-  console.log('✅ User bot slash commands registered:',bot.name,unique.length);
+  try{
+    const rest=new REST({version:'10'}).setToken(decryptToken(bot.token));
+    await rest.put(Routes.applicationGuildCommands(client.user.id,String(bot.guild_id)),{body:[]});
+    console.log('🧹 User bot slash commands cleared:',bot.name);
+  }catch(error){
+    console.error(`User bot ${bot.name} slash cleanup:`,error.message);
+    await writeRuntimeLog(bot.id,'system','bot.slash_cleanup_failed',{error:error.message});
+  }
 }
 function installBotFeatures(client,bot){
   client.mldBotId=String(bot.id||client.user?.id||'');
@@ -89,25 +83,6 @@ function installBotFeatures(client,bot){
     }catch(e){console.error('Application submission:',e.message);await message.reply('تعذر إرسال التقديم، حاول لاحقًا.').catch(()=>{});}
   });
   client.on(Events.InteractionCreate,async interaction=>{
-    if(interaction.isChatInputCommand()){
-      try{
-        const config=client.mldConfig||{},name=interaction.commandName;
-        if(name==='ping')return interaction.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
-        if(name==='help'){
-          const commands=(Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false).map(x=>'/'+String(x.name)+' — '+String(x.description||'أمر مخصص')):[]);
-          return interaction.reply({content:['📚 أوامر '+client.user.username,'/ping — فحص الاتصال','/help — دليل الأوامر',...commands].join('\n').slice(0,1900),allowedMentions:{parse:[]}});
-        }
-        const custom=(Array.isArray(config.commands)?config.commands:[]).find(x=>x&&x.enabled!==false&&String(x.name||'').toLowerCase()===name);
-        if(!custom)return interaction.reply({content:'هذا الأمر غير مفعّل في إعدادات البوت.',ephemeral:true});
-        const args=interaction.options.getString('args')||'';
-        const reply=String(custom.response||'').slice(0,1800).replaceAll('{user}',interaction.user.username).replaceAll('{server}',interaction.guild?.name||'الخاص').replaceAll('{memberCount}',String(interaction.guild?.memberCount||0)).replaceAll('{args}',args);
-        return interaction.reply({content:reply||'تم تنفيذ الأمر.',allowedMentions:{parse:[]}});
-      }catch(error){
-        console.error('User bot slash command:',error.message);
-        if(!interaction.replied&&!interaction.deferred)await interaction.reply({content:'تعذر تنفيذ الأمر حاليًا.',ephemeral:true}).catch(()=>{});
-        return;
-      }
-    }
     if(!interaction.isButton())return;
     if(interaction.customId.startsWith('mldhelp:')){
       const [,ownerId,pageRaw]=interaction.customId.split(':');
@@ -588,11 +563,11 @@ async function syncUserBots(){
     }
     for(const bot of rows){
       const id=String(bot.id),settings=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
-      if(userBotClients.has(id)){const live=userBotClients.get(id);live.mldConfig=settings;live.mldType=bot.bot_type||'general';const slashSignature=JSON.stringify({guild_id:bot.guild_id,commands:settings.commands||[]});if(live.mldSlashSignature!==slashSignature){try{await registerUserBotSlashCommands(live,bot);live.mldSlashSignature=slashSignature;}catch(e){console.error(`User bot ${bot.name} slash refresh:`,e.message);await writeRuntimeLog(id,'system','bot.slash_registration_failed',{error:e.message});}}await applyAuditLogSetup(live);await setBotRuntime(id,'online',null,live.ws?.ping);continue;}
+      if(userBotClients.has(id)){const live=userBotClients.get(id);live.mldConfig=settings;live.mldType=bot.bot_type||'general';await applyAuditLogSetup(live);await setBotRuntime(id,'online',null,live.ws?.ping);continue;}
       const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.DirectMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.GuildModeration,GatewayIntentBits.GuildInvites,GatewayIntentBits.GuildEmojisAndStickers,GatewayIntentBits.GuildWebhooks,GatewayIntentBits.GuildIntegrations,GatewayIntentBits.GuildScheduledEvents,GatewayIntentBits.GuildMessageReactions,GatewayIntentBits.AutoModerationConfiguration,GatewayIntentBits.AutoModerationExecution],partials:[Partials.Channel,Partials.Message,Partials.Reaction]});
       c.mldBotId=id;
       installBotFeatures(c,bot);
-      c.once(Events.ClientReady,async()=>{try{c.user.setPresence({activities:[{name:String(bot.watching||'MLD | فهد المطيري').slice(0,128),type:ActivityType.Watching}],status:'online'});}catch{}console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online',null,c.ws?.ping);try{await registerUserBotSlashCommands(c,bot);c.mldSlashSignature=JSON.stringify({guild_id:bot.guild_id,commands:bot.settings?.commands||[]});}catch(e){console.error(`User bot ${bot.name} slash registration:`,e.message);await writeRuntimeLog(id,'system','bot.slash_registration_failed',{error:e.message});}await applyAuditLogSetup(c);});
+      c.once(Events.ClientReady,async()=>{try{c.user.setPresence({activities:[{name:String(bot.watching||'MLD | فهد المطيري').slice(0,128),type:ActivityType.Watching}],status:'online'});}catch{}console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online',null,c.ws?.ping);await clearUserBotSlashCommands(c,bot);await applyAuditLogSetup(c);});
       c.on('error',e=>{console.error(`User bot ${bot.name}:`,e.message);setBotRuntime(id,'error',e.message);});
       try{await c.login(decryptToken(bot.token));userBotClients.set(id,c);}
       catch(e){console.error(`❌ User bot ${bot.name} failed:`,e.message);await setBotRuntime(id,'error',e.message);try{c.destroy();}catch{}}
