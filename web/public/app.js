@@ -283,7 +283,7 @@ document.addEventListener("click",async event=>{
       const token=String(form.elements.token?.value||"").trim();
       const guild_id=String(form.elements.guild_id?.value||"").trim();
       if(preview&&!token)throw new Error("أدخل توكن البوت أولًا");
-      if(check&&(!guild_id||!/^\\d{17,20}$/.test(guild_id)))throw new Error("أدخل ايدي سيرفر صحيحًا (17–20 رقمًا)");
+      if(check&&(!guild_id||!/^\d{17,20}$/.test(guild_id)))throw new Error("أدخل ايدي سيرفر صحيحًا (17–20 رقمًا)");
       button.disabled=true;button.textContent="جارٍ التحقق…";
       if(preview){
         const d=await api("/api/bots/preview-token",{method:"POST",body:JSON.stringify({token})});
