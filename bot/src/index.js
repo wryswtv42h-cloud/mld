@@ -358,7 +358,7 @@ async function applyAuditLogSetup(client){
   try{
     const result=await ensureAuditLogRooms(client);
     if(result.selected&&client.mldConfig?.auditLogsReady){
-      const persisted={auditLogsCreateRequested:false,auditLogsReady:true,auditLogsLastCreatedAt:client.mldConfig.auditLogsLastCreatedAt};
+      const persisted={auditLogsCreateRequested:false,auditLogsReady:true,auditLogsLastCreatedAt:client.mldConfig.auditLogsLastCreatedAt,auditLogChannels:client.mldConfig.auditLogChannels||{}};
       await pool.query('UPDATE bots SET settings=COALESCE(settings,\'{}\'::jsonb) || $1::jsonb WHERE id=$2',[JSON.stringify(persisted),client.mldBotId]);
       await writeRuntimeLog(client.mldBotId,'system','bot.audit_logs_created',{selected:result.selected,created:result.created});
       console.log('📚 MLD audit log rooms configured:',client.mldBotId,result);
