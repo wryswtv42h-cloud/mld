@@ -335,7 +335,7 @@ function installBotFeatures(client,bot){
       kick:PermissionFlagsBits.KickMembers,ban:PermissionFlagsBits.BanMembers,unban:PermissionFlagsBits.BanMembers,'فكحظر':PermissionFlagsBits.BanMembers,allbans:PermissionFlagsBits.BanMembers,'قائمةالمحظورين':PermissionFlagsBits.BanMembers,clear:PermissionFlagsBits.ManageMessages,say:PermissionFlagsBits.ManageMessages,
       announce:PermissionFlagsBits.ManageMessages,slowmode:PermissionFlagsBits.ManageChannels,lock:PermissionFlagsBits.ManageChannels,unlock:PermissionFlagsBits.ManageChannels,
       timeout:PermissionFlagsBits.ModerateMembers,untimeout:PermissionFlagsBits.ModerateMembers,warn:PermissionFlagsBits.ModerateMembers,
-      nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite
+      nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,rolecreate:PermissionFlagsBits.ManageRoles,'انشاءرتبة':PermissionFlagsBits.ManageRoles,roledelete:PermissionFlagsBits.ManageRoles,'حذفرتبة':PermissionFlagsBits.ManageRoles,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite
     }[command];
     if(requiredPermission){
       if(!message.member.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_member_permission'});return message.reply('ما عندك صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
@@ -658,6 +658,22 @@ function installBotFeatures(client,bot){
         if(message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تعدل لقب عضو رتبته مساوية أو أعلى من رتبتك.');
         if(target.roles.highest.position>=message.guild.members.me.roles.highest.position)return message.reply('رتبة البوت يجب أن تكون أعلى من رتبة العضو المستهدف.');
         await target.setNickname(nick,'تعديل من بوت MLD');await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_nick',{guildId:message.guild.id,channelId:message.channel.id,targetId:target.id,nick});return message.reply('تم تعديل لقب العضو.');
+      }
+      if(command==='rolecreate'||command==='انشاءرتبة'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('تحتاج صلاحية إدارة الرتب.');
+        if(!message.guild.members.me?.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('البوت يحتاج صلاحية إدارة الرتب.');
+        const name=args.filter(x=>!/^#[0-9a-f]{6}$/i.test(x)).join(' ').trim();
+        const colorArg=args.find(x=>/^#[0-9a-f]{6}$/i.test(x));
+        if(!name)return message.reply('استخدم: '+prefix+'rolecreate اسم_الرتبة [#RRGGBB]');
+        try{const role=await message.guild.roles.create({name:name.slice(0,100),color:colorArg||'#ff9cde',reason:'إنشاء رتبة بواسطة '+message.author.tag});await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_rolecreate',{guildId:message.guild.id,roleId:role.id,roleName:role.name});return message.reply('تم إنشاء الرتبة '+role.toString()+' بنجاح.');}catch{return message.reply('تعذر إنشاء الرتبة. تحقق من صلاحيات البوت.');}
+      }
+      if(command==='roledelete'||command==='حذفرتبة'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('تحتاج صلاحية إدارة الرتب.');
+        const role=message.mentions.roles.first()||message.guild.roles.cache.get(args[0]);
+        if(!role)return message.reply('منشن الرتبة أو اكتب معرّفها.');
+        if(role.id===message.guild.id||role.managed||role.position>=message.guild.members.me.roles.highest.position)return message.reply('لا يمكن حذف هذه الرتبة؛ تحقق من كونها غير مُدارة وأن رتبة البوت أعلى منها.');
+        if(message.guild.ownerId!==message.author.id&&role.position>=message.member.roles.highest.position)return message.reply('ما تقدر تحذف رتبة مساوية أو أعلى من رتبتك.');
+        try{await role.delete('حذف بواسطة '+message.author.tag);await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_roledelete',{guildId:message.guild.id,roleId:role.id,roleName:role.name});return message.reply('تم حذف الرتبة بنجاح.');}catch{return message.reply('تعذر حذف الرتبة. تحقق من الصلاحيات وترتيب الرتب.');}
       }
       if(command==='roleadd'||command==='roleremove'){
         if(!message.member.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('تحتاج صلاحية إدارة الرتب.');
