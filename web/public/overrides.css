@@ -367,3 +367,59 @@ body[data-page]:not([data-page="home"]):not([data-page="chat"]) #app .empty {
 
 /* MLD owner console and reliable touch targets */
 .owner-console-nav{position:sticky;top:78px;z-index:8;display:flex;gap:8px;overflow-x:auto;padding:10px;margin:0 0 18px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(20,12,31,.96);backdrop-filter:blur(16px);scrollbar-width:thin}.owner-console-nav button{flex:0 0 auto;min-height:42px;padding:10px 14px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.045);color:#fff8ff;font-weight:750;touch-action:manipulation;cursor:pointer}.owner-console-nav button:hover,.owner-console-nav button:focus-visible{outline:none;border-color:#ff9cde;color:#ffb5e9;background:rgba(255,156,222,.12)}.owner-overview,.owner-section{scroll-margin-top:145px}.owner-section{padding:clamp(16px,3vw,25px);margin-top:16px;position:relative;isolation:isolate}.owner-section h2{display:flex;align-items:center;gap:10px;font-size:clamp(1.1rem,3vw,1.45rem);margin:0 0 15px}.owner-list{display:grid;gap:10px}.owner-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px;border:1px solid rgba(255,255,255,.09);border-radius:15px;background:rgba(255,255,255,.025)}.owner-row>*{min-width:0}.owner-row small{display:block;color:var(--muted);overflow-wrap:anywhere;margin-top:4px}.row-actions{display:flex;gap:8px;flex-wrap:wrap}.owner-section button,.owner-console-nav button,.owner-section a,.owner-section input,.owner-section textarea,.owner-section select{touch-action:manipulation}.owner-section button{min-height:40px}.owner-section form{margin:12px 0}.owner-section input,.owner-section textarea,.owner-section select{max-width:100%;width:100%;padding:12px;border:1px solid rgba(255,255,255,.13);border-radius:12px;background:#120c1b;color:#fff8ff}.owner-section input[type=checkbox]{width:20px;min-height:20px;accent-color:#ff9cde}.owner-inbox-grid,.owner-inbox-grid>*{min-width:0}.owner-inbox-people{max-height:360px;overflow:auto}#shade:not(.open){display:none!important;pointer-events:none!important}#modal:not(.open){pointer-events:none!important}#app{position:relative;z-index:1}#app button,#app a,#app input,#app select,#app textarea,#app summary{pointer-events:auto;touch-action:manipulation;position:relative}#app::before,#app::after,#app .panel::before,#app .panel::after{pointer-events:none!important}@media(max-width:700px){.owner-console-nav{top:70px;margin-inline:-2px}.owner-row{align-items:flex-start}.owner-row .row-actions{width:100%}.owner-row .row-actions button{flex:1 1 auto}.owner-inbox-grid{grid-template-columns:1fr!important}.owner-section{border-radius:18px}.owner-section .form{max-width:none}.owner-console-nav button{padding:10px 12px}}
+
+
+/* 2026-10-10: tap-safe bot workspace and a clearer owner console */
+body[data-page="bots"] #app .bot-dashboard-card,
+body[data-page="bots"] #app .bot-dashboard-summary,
+body[data-page="bots"] #app .bot-kind-info { position:relative; isolation:isolate; }
+body[data-page="bots"] #app .bot-dashboard-card::before,
+body[data-page="bots"] #app .bot-dashboard-card::after,
+body[data-page="bots"] #app .bot-dashboard-summary::before,
+body[data-page="bots"] #app .bot-dashboard-summary::after { content:none!important; display:none!important; pointer-events:none!important; }
+body[data-page="bots"] #app .bot-dashboard-card > *,
+body[data-page="bots"] #app .bot-dashboard-card button,
+body[data-page="bots"] #app .bot-dashboard-card a,
+body[data-page="bots"] #app .bot-dashboard-card summary,
+body[data-page="bots"] #app .bot-dashboard-card input,
+body[data-page="bots"] #app .bot-dashboard-card select,
+body[data-page="bots"] #app .bot-dashboard-card textarea,
+body[data-page="bots"] #app #botForm button,
+body[data-page="bots"] #app #botForm input,
+body[data-page="bots"] #app #botForm select { pointer-events:auto!important; touch-action:manipulation; }
+body[data-page="bots"] #app .bot-dashboard-actions { position:relative; z-index:2; display:flex; flex-wrap:wrap; gap:9px; }
+body[data-page="bots"] #app .bot-dashboard-actions > * { min-height:44px; display:inline-flex; align-items:center; justify-content:center; }
+body[data-page="bots"] #app .bot-dashboard-card details > summary { position:relative; z-index:2; cursor:pointer; padding:14px 10px; border-radius:12px; background:rgba(255,255,255,.045); }
+body[data-page="bots"] #app .bot-dashboard-card form { position:relative; z-index:1; }
+body[data-page="bots"] #app .bot-dashboard-card [hidden] { display:none!important; }
+body[data-page="bots"] #app #botForm { display:grid; gap:10px; }
+body[data-page="bots"] #app #botForm label { margin-top:7px; font-weight:700; }
+body[data-page="bots"] #app #botForm button { min-height:46px; }
+body[data-page="bots"] #app .bot-dashboard-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+body[data-page="bots"] #app .bot-dashboard-summary > div { min-width:0; padding:15px 8px; border:1px solid rgba(255,255,255,.1); border-radius:15px; text-align:center; }
+body[data-page="bots"] #app .bot-dashboard-summary b { display:block; font-size:clamp(1.3rem,4vw,2rem); color:var(--pink); }
+body[data-page="bots"] #app .bot-dashboard-summary span { display:block; margin-top:5px; color:var(--muted); font-size:12px; }
+body[data-page="owner"] #app .pagePanel { max-width:100%; overflow:visible; }
+body[data-page="owner"] #app .owner-console-nav { top:80px; padding:9px; gap:7px; border-color:rgba(255,156,222,.2); box-shadow:0 12px 32px rgba(0,0,0,.22); }
+body[data-page="owner"] #app .owner-console-nav button { border-radius:999px; white-space:nowrap; transition:background .18s,border-color .18s,transform .18s; }
+body[data-page="owner"] #app .owner-console-nav button.is-current,
+body[data-page="owner"] #app .owner-console-nav button:hover { background:linear-gradient(120deg,rgba(255,156,222,.2),rgba(177,140,255,.2)); border-color:rgba(255,156,222,.5); }
+body[data-page="owner"] #app .owner-overview .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(135px,1fr)); gap:12px; }
+body[data-page="owner"] #app .owner-overview .stat { min-width:0; padding:18px; border-radius:18px; background:linear-gradient(145deg,rgba(255,156,222,.09),rgba(177,140,255,.07)),rgba(255,255,255,.025); }
+body[data-page="owner"] #app .owner-overview .stat b { display:block; font-size:clamp(1.4rem,4vw,2.1rem); color:#ffb9e8; line-height:1.3; }
+body[data-page="owner"] #app .owner-overview .stat small { display:block; margin-top:5px; color:var(--muted); }
+body[data-page="owner"] #app .owner-section { scroll-margin-top:150px; border-color:rgba(255,255,255,.1); background:linear-gradient(145deg,rgba(38,25,55,.94),rgba(25,16,37,.97)); box-shadow:0 16px 42px rgba(0,0,0,.16); }
+body[data-page="owner"] #app .owner-section h2 { padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,.08); }
+body[data-page="owner"] #app .owner-section .row-actions { display:flex; flex-wrap:wrap; gap:8px; }
+body[data-page="owner"] #app .owner-section .row-actions button,
+body[data-page="owner"] #app .owner-section form button { min-height:44px; }
+body[data-page="owner"] #app .owner-section input,
+body[data-page="owner"] #app .owner-section textarea,
+body[data-page="owner"] #app .owner-section select { min-height:44px; }
+@media(max-width:600px){
+ body[data-page="bots"] #app .bot-dashboard-summary { grid-template-columns:repeat(3,minmax(0,1fr)); }
+ body[data-page="bots"] #app .bot-dashboard-actions > * { flex:1 1 140px; }
+ body[data-page="owner"] #app .owner-console-nav { top:68px; }
+ body[data-page="owner"] #app .owner-overview .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ body[data-page="owner"] #app .owner-section { padding:15px; }
+}
