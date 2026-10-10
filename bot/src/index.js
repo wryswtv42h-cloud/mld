@@ -265,7 +265,7 @@ function installBotFeatures(client,bot){
     }
     if(['roles','الرتب'].includes(command)){
       const roles=[...message.guild.roles.cache.values()].filter(r=>r.id!==message.guild.id).sort((a,b)=>b.position-a.position);
-      return message.reply({content:'🎭 **رتب السيرفر ('+roles.length+')**\\n'+(roles.slice(0,35).map(r=>'• '+r.name+' — '+r.members.size+' عضو').join('\\n')||'لا توجد رتب')+(roles.length>35?'\\n… وباقي الرتب':'') ,allowedMentions:{parse:[]}});
+      return message.reply({content:'🎭 **رتب السيرفر ('+roles.length+')**\n'+(roles.slice(0,35).map(r=>'• '+r.name+' — '+r.members.size+' عضو').join('\n')||'لا توجد رتب')+(roles.length>35?'\n… وباقي الرتب':'') ,allowedMentions:{parse:[]}});
     }
     if(['channelcount','القنوات'].includes(command))
       return message.reply({content:'📚 عدد قنوات السيرفر: **'+message.guild.channels.cache.size+'**',allowedMentions:{parse:[]}});
@@ -273,7 +273,7 @@ function installBotFeatures(client,bot){
       const max=Math.max(2,Math.min(1000000,Number(args[0])||6));
       return message.reply({content:'🎲 النتيجة: **'+(Math.floor(Math.random()*max)+1)+'** (من 1 إلى '+max+')',allowedMentions:{parse:[]}});
     }
-    if(['coinflip','عملة','عملة'].includes(command))
+    if(['coinflip','عملة','flip'].includes(command))
       return message.reply({content:'🪙 '+(Math.random()<0.5?'صورة':'كتابة')+'!',allowedMentions:{parse:[]}});
     if(['8ball','سؤال'].includes(command)){
       if(!args.length)return message.reply('اكتب سؤالك بعد الأمر.');
@@ -288,7 +288,7 @@ function installBotFeatures(client,bot){
     if(['poll','تصويت'].includes(command)){
       const question=args.join(' ').slice(0,900);
       if(!question)return message.reply('استخدم: '+prefix+'poll سؤال التصويت');
-      const poll=await message.reply({content:'📊 **تصويت المجتمع**\\n'+question,allowedMentions:{parse:[]}});
+      const poll=await message.reply({content:'📊 **تصويت المجتمع**\n'+question,allowedMentions:{parse:[]}});
       await Promise.all([poll.react('👍').catch(()=>{}),poll.react('👎').catch(()=>{}),poll.react('🤷').catch(()=>{})]);
       return;
     }
@@ -300,7 +300,7 @@ function installBotFeatures(client,bot){
     }
     if(['embed','إيمبد','امبد'].includes(command)){
       if(!message.member.permissions.has(PermissionFlagsBits.ManageMessages))return message.reply('تحتاج صلاحية إدارة الرسائل.');
-      const parts=message.content.slice(prefix.length).trim().replace(/^\\S+\\s*/,'').split('|').map(x=>x.trim());
+      const parts=message.content.slice(prefix.length).trim().replace(/^\S+\s*/,'').split('|').map(x=>x.trim());
       if(!parts[0]||!parts[1])return message.reply('استخدم: '+prefix+'embed عنوان | وصف');
       const embed=new EmbedBuilder().setColor(0xff9cde).setTitle(parts[0].slice(0,256)).setDescription(parts.slice(1).join(' | ').slice(0,3500)).setFooter({text:'MLD · '+message.guild.name}).setTimestamp();
       return message.channel.send({embeds:[embed],allowedMentions:{parse:[]}});
