@@ -4,6 +4,32 @@
 document.addEventListener("submit",event=>{
   if(event.target instanceof HTMLFormElement) event.preventDefault();
 },true);
+document.addEventListener("submit",async event=>{
+  const form=event.target;
+  if(!(form instanceof HTMLFormElement)||!["botForm","announcementForm"].includes(form.id))return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const button=form.querySelector('button[type="submit"],button:not([type])');
+  const original=button?.textContent||"";
+  if(button){button.disabled=true;button.textContent="جارٍ الحفظ…";}
+  try{
+    if(form.id==="botForm"){
+      const guildId=String(form.elements.guild_id?.value||"").trim();
+      if(form.dataset.verifiedGuildId!==guildId)throw new Error("تحقق من التوكن أولًا ثم تحقق من السيرفر والصلاحيات قبل الإضافة");
+      const data=Object.fromEntries(new FormData(form));
+      const result=await api("/api/bots",{method:"POST",body:JSON.stringify(data)});
+      toast(result.message||"تمت إضافة البوت");
+      await render();
+    }else{
+      const data=Object.fromEntries(new FormData(form));
+      data.enabled=!!form.elements.enabled?.checked;
+      const result=await api("/api/community/owner/announcement",{method:"PATCH",body:JSON.stringify(data)});
+      toast(result.message||"تم حفظ الإعلان");
+      await renderAnnouncement();
+    }
+  }catch(error){toast(error.message||"تعذر تنفيذ العملية");}
+  finally{if(button?.isConnected){button.disabled=false;button.textContent=original;}}
+},true);
 
 const API=(window.MLD_API_URL||"").replace(/\/$/,"");
 const pages=[["home","الرئيسية"],["members","الأعضاء"],["roles","الرتب"],["top","الإحصائيات"],["leaders","المتصدرون"],["chat","الدردشة"],["pigeon","زاجل"],["groups","القروبات"],["games","الألعاب"],["cinema","السينما"],["jokes","النكت"],["stories","القصص"],["tickets","التذاكر"],["reviews","الآراء"],["bots","البوتات"],["profile","حسابي"]];
