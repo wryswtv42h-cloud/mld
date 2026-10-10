@@ -170,6 +170,7 @@ function installBotFeatures(client,bot){
     if(interaction.isChatInputCommand()){
       try{
         const config=client.mldConfig||{},name=interaction.commandName;
+        await writeRuntimeLog(client.mldBotId,interaction.user?.id,'bot.slash_command_received',{command:name,guildId:interaction.guildId||null});
         const prefix=String(config.prefix||'!').slice(0,4);
         const commandSettings=config.commandSettings&&typeof config.commandSettings==='object'?config.commandSettings:{};
         const slashCustom=(Array.isArray(config.commands)?config.commands:[]).find(x=>x&&String(x.name||'').toLowerCase()===name);
@@ -255,6 +256,7 @@ function installBotFeatures(client,bot){
         return interaction.reply({content:'الأمر غير متاح حاليًا. استخدم /help.',ephemeral:true});
       }catch(error){
         console.error('User bot slash command:',error?.stack||error);
+        await writeRuntimeLog(client.mldBotId,interaction.user?.id,'bot.slash_command_error',{command:interaction.commandName||'unknown',guildId:interaction.guildId||null,error:String(error?.message||error).slice(0,240)}).catch(()=>{});
         const payload={content:'صار خطأ أثناء تنفيذ الأمر. حاول مرة ثانية.',ephemeral:true};
         if(interaction.replied||interaction.deferred)return interaction.followUp(payload).catch(()=>{});
         return interaction.reply(payload).catch(()=>{});
@@ -339,11 +341,13 @@ function installBotFeatures(client,bot){
     const isCustomShortcut=shortcutsEnabled&&(configuredShortcut||(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).some(item=>item&&item.enabled!==false&&(String(item.name||'').toLowerCase()===shortcutWord||(Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===shortcutWord)))));
     // If Discord's privileged Message Content Intent is disabled, ordinary message
     // content arrives empty. A direct mention is still detectable, so explain the fix.
-    if(!commandSource.trim()&&message.mentions.has(client.user)){
+    if(!commandSource.trim()&&(message.mentions?.users?.has(client.user.id)||message.mentions.has(client.user))){
       await writeRuntimeLog(client.mldBotId,message.author.id,'bot.message_content_intent_missing',{guildId:message.guild.id,channelId:message.channel.id});
       return message.reply('أنا متصل، لكن Discord لا يرسل محتوى الرسائل لي. فعّل Message Content Intent من Discord Developer Portal ثم Bot ثم Privileged Gateway Intents، وبعدها أعد تشغيل البوت. إلى ذلك الوقت جرّب أوامر /ping و/help.').catch(()=>{});
     }
     if(!commandSource.startsWith(prefix)&&!mentionCommand&&!isCustomShortcut)return;
+    const receivedCommand=String(commandSource.split(/\s+/)[0]||'').toLowerCase().slice(0,40);
+    await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_received',{command:receivedCommand,guildId:message.guild.id,channelId:message.channel.id,source:mentionCommand?'mention':isCustomShortcut?'shortcut':'prefix',contentLength:content.length});
     const commandText=commandSource.startsWith(prefix)?commandSource.slice(prefix.length).trim():commandSource;
     const [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();
     const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===command));
@@ -870,6 +874,9 @@ async function syncUserBots(){
       installBotFeatures(c,bot);
       c.once(Events.ClientReady,async()=>{try{c.user.setPresence({activities:[{name:String(bot.watching||'MLD | فهد المطيري').slice(0,128),type:ActivityType.Watching}],status:'online'});}catch{}console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online',null,c.ws?.ping);await registerUserBotSlashCommands(c,bot);await applyAuditLogSetup(c);});
       c.on('error',e=>{console.error(`User bot ${bot.name}:`,e.message);setBotRuntime(id,'error',e.message);});
+      c.on('shardError',e=>{console.error(`User bot ${bot.name} gateway shard error:`,e.message);setBotRuntime(id,'error',e.message);writeRuntimeLog(id,'system','bot.gateway_error',{error:String(e.message||e).slice(0,240)});});
+      c.on('shardDisconnect',(event,shardId)=>{const detail='Gateway disconnected (shard '+shardId+', code '+(event?.code||'unknown')+')';console.warn(`User bot ${bot.name}:`,detail);setBotRuntime(id,'error',detail);writeRuntimeLog(id,'system','bot.gateway_disconnected',{shardId,code:event?.code||null,reason:String(event?.reason||'').slice(0,120)});});
+      c.on('shardResume',shardId=>{setBotRuntime(id,'online',null,c.ws?.ping);writeRuntimeLog(id,'system','bot.gateway_resumed',{shardId});});
       try{await c.login(decryptToken(bot.token));userBotClients.set(id,c);}
       catch(e){console.error(`❌ User bot ${bot.name} failed:`,e.message);await setBotRuntime(id,'error',e.message);try{c.destroy();}catch{}}
     }

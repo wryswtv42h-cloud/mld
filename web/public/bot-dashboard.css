@@ -190,3 +190,16 @@ input:focus,textarea:focus,select:focus{outline:2px solid rgba(255,156,222,.65);
  .command-groups{top:128px;gap:6px}
  .command-groups button{padding:.65rem .55rem}
 }
+
+
+/* Live bot diagnostics */
+.diagnostics-panel{margin-top:16px;padding:clamp(15px,2.2vw,24px);border:1px solid rgba(255,156,222,.16);background:linear-gradient(140deg,rgba(255,156,222,.055),rgba(168,111,223,.055)),rgba(20,14,31,.92)}
+.diagnostics-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:14px}
+.diagnostic-row{display:flex;align-items:flex-start;gap:10px;min-width:0;padding:13px;border:1px solid var(--line,rgba(255,255,255,.1));border-radius:14px;background:rgba(255,255,255,.025)}
+.diagnostic-row>div{display:grid;gap:5px;min-width:0}.diagnostic-row b{font-size:.94rem}.diagnostic-row small{color:var(--muted,#b8a9c8);line-height:1.7;overflow-wrap:anywhere}
+.diagnostic-icon{display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border-radius:9px;font-weight:900;background:rgba(255,255,255,.06)}
+.diagnostic-row.good{border-color:rgba(95,240,177,.2)}.diagnostic-row.good .diagnostic-icon{color:#5ff0b1;background:rgba(95,240,177,.1)}
+.diagnostic-row.bad{border-color:rgba(255,107,125,.28)}.diagnostic-row.bad .diagnostic-icon{color:#ff6b7d;background:rgba(255,107,125,.12)}
+.diagnostic-row.manual{border-color:rgba(255,209,102,.2)}.diagnostic-row.manual .diagnostic-icon{color:#ffd166;background:rgba(255,209,102,.1)}
+#diagnoseBtn:disabled{opacity:.65;cursor:wait}
+@media(max-width:650px){.diagnostics-list{grid-template-columns:1fr}.diagnostics-panel .panel-heading{align-items:flex-start;flex-direction:column}.diagnostics-panel .panel-heading button{width:100%}}

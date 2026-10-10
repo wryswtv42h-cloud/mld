@@ -43,6 +43,65 @@ router.get('/:id/discord-resources',requireAuth,async(req,res)=>{try{const q=awa
 async function ensureBotLogs(){await query("CREATE TABLE IF NOT EXISTS bot_logs (id BIGSERIAL PRIMARY KEY, bot_id UUID NOT NULL, actor_id TEXT, action TEXT NOT NULL, details JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())")}
 async function writeBotLog(botId,actorId,action,details={}){try{await ensureBotLogs();await query('INSERT INTO bot_logs(bot_id,actor_id,action,details) VALUES($1,$2,$3,$4)',[botId,String(actorId||''),action,JSON.stringify(details)]);}catch(e){console.error('bot log:',e.message)}}
 router.get('/:id/stats',requireAuth,async(req,res)=>{try{const q=await query('SELECT id,user_id,guild_id,bot_type,settings,active,runtime_status,last_seen_at,created_at,token,bot_ping FROM bots WHERE id=$1',[req.params.id]),b=q.rows[0];if(!b)return res.status(404).json({error:'البوت غير موجود'});if(!req.user.is_owner&&String(b.user_id)!==String(req.user.id)&&!(await adminInGuild(req.user.id,b.guild_id)))return res.status(403).json({error:'ما تملك الصلاحية'});let guild=null,botUser=null;try{const token=String(b.token||'').startsWith('enc:')?(()=>{const [,iv,tag,data]=String(b.token).split(':');const d=crypto.createDecipheriv('aes-256-gcm',KEY,Buffer.from(iv,'base64url'));d.setAuthTag(Buffer.from(tag,'base64url'));return Buffer.concat([d.update(Buffer.from(data,'base64url')),d.final()]).toString('utf8')})():b.token;const [g,u]=await Promise.all([da('/guilds/'+b.guild_id+'?with_counts=true',token),da('/users/@me',token)]);if(g.ok)guild=g.d;if(u.ok)botUser=u.d;}catch{}const settings=b.settings&&typeof b.settings==='object'?b.settings:{};res.set('Cache-Control','private, no-store').json({stats:{status:b.runtime_status||'offline',active:!!b.active,members:guild?.approximate_member_count||guild?.member_count||null,commands:(({allinone:90,system:24,moderation:24,automod:24,applications:17,games:41,bank:18,music:17,support:8,welcome:8,general:8,custom:8,cinema:8,tickets:8,economy:8,leveling:8,suggestions:8,broadcast:8})[b.bot_type]||8)+(Array.isArray(settings.commands)?settings.commands.length:0),enabledCommands:(({system:24,moderation:24,automod:24,applications:17,games:41,bank:18,music:17,support:8,welcome:8,general:8,custom:8,cinema:8,tickets:8,economy:8,leveling:8,suggestions:8,broadcast:8})[b.bot_type]||8)+(Array.isArray(settings.commands)?settings.commands.filter(x=>x.enabled!==false).length:0),uptimeSince:b.last_seen_at||null,createdAt:b.created_at||null,ping:b.bot_ping??null,botName:botUser?.username||null,guildName:guild?.name||null}})}catch(e){res.status(500).json({error:'تعذر تحميل الإحصائيات'})}});
+router.get('/:id/diagnostics',requireAuth,async(req,res)=>{
+ try{
+  const q=await query('SELECT id,user_id,guild_id,active,locked,runtime_status,last_error,token FROM bots WHERE id=$1',[req.params.id]),b=q.rows[0];
+  if(!b)return res.status(404).json({error:'البوت غير موجود'});
+  if(!req.user.is_owner&&String(b.user_id)!==String(req.user.id)&&!(await adminInGuild(req.user.id,b.guild_id)))return res.status(403).json({error:'ما تملك الصلاحية'});
+  const stored=String(b.token||'');
+  const token=stored.startsWith('enc:')?(()=>{const [,iv,tag,data]=stored.split(':');const d=crypto.createDecipheriv('aes-256-gcm',KEY,Buffer.from(iv,'base64url'));d.setAuthTag(Buffer.from(tag,'base64url'));return Buffer.concat([d.update(Buffer.from(data,'base64url')),d.final()]).toString('utf8')})():stored;
+  const me=await da('/users/@me',token);
+  const checks=[{key:'runtime',label:'حالة تشغيل البوت',ok:!!b.active&&String(b.runtime_status)==='online',detail:!b.active?'البوت موقوف من لوحة التحكم.':String(b.runtime_status)==='online'?'اتصال Gateway مسجل كمتصل.':'الحالة الحالية: '+String(b.runtime_status||'غير معروفة')+(b.last_error?' — '+String(b.last_error).slice(0,180):'')}];
+  if(!me.ok){
+   checks.push({key:'token',label:'توكن Discord',ok:false,detail:'Discord رفض التوكن أو تعذر الوصول إلى API.'});
+   checks.push({key:'content',label:'أوامر البادئة',ok:null,detail:'لا يمكن التحقق من Message Content Intent عبر هذا الفحص؛ فعّله من Developer Portal إذا كانت أوامر ! لا تعمل.'});
+   return res.set('Cache-Control','private, no-store').json({checks,summary:'فشل فحص التوكن؛ راجع التوكن وسجلات التشغيل.'});
+  }
+  checks.push({key:'token',label:'توكن Discord',ok:true,detail:'التوكن صالح. البوت: '+String(me.d.username||'')+' ('+String(me.d.id||'')+').'});
+  const [guild,member,roles,channels]=await Promise.all([
+   da('/guilds/'+b.guild_id+'?with_counts=true',token),
+   da('/guilds/'+b.guild_id+'/members/'+me.d.id,token),
+   da('/guilds/'+b.guild_id+'/roles',token),
+   da('/guilds/'+b.guild_id+'/channels',token)
+  ]);
+  checks.push({key:'guild',label:'الوصول إلى السيرفر',ok:guild.ok,detail:guild.ok?'تمكن البوت من قراءة السيرفر '+String(guild.d.name||b.guild_id)+'.':'تعذر قراءة السيرفر؛ تأكد أن البوت مضاف إليه.'});
+  checks.push({key:'membership',label:'عضوية البوت في السيرفر',ok:member.ok,detail:member.ok?'البوت عضو في السيرفر.':'لم يتمكن Discord من تأكيد عضوية البوت في هذا السيرفر.'});
+  let sendable=0,viewable=0;
+  if(guild.ok&&member.ok&&roles.ok&&channels.ok&&Array.isArray(roles.d)&&Array.isArray(channels.d)){
+   const everyone=roles.d.find(r=>String(r.id)===String(b.guild_id));
+   let base=BigInt(everyone?.permissions||'0');
+   const roleIds=new Set((member.d.roles||[]).map(String));
+   for(const role of roles.d)if(roleIds.has(String(role.id)))base|=BigInt(role.permissions||'0');
+   const admin=(base&8n)===8n;
+   const effective=(channel)=>{
+    let p=base;
+    if(admin)return (1n<<53n)-1n;
+    const ovs=Array.isArray(channel.permission_overwrites)?channel.permission_overwrites:[];
+    const everyoneO=ovs.find(o=>String(o.id)===String(b.guild_id)&&String(o.type)==='0');
+    if(everyoneO)p=(p&~BigInt(everyoneO.deny||'0'))|BigInt(everyoneO.allow||'0');
+    let deny=0n,allow=0n;
+    for(const o of ovs)if(String(o.type)==='0'&&roleIds.has(String(o.id))){deny|=BigInt(o.deny||'0');allow|=BigInt(o.allow||'0');}
+    p=(p&~deny)|allow;
+    const memberO=ovs.find(o=>String(o.id)===String(me.d.id)&&String(o.type)==='1');
+    if(memberO)p=(p&~BigInt(memberO.deny||'0'))|BigInt(memberO.allow||'0');
+    return p;
+   };
+   for(const ch of channels.d.filter(x=>[0,5].includes(Number(x.type)))){
+    const p=effective(ch);
+    if((p&1024n)===1024n)viewable++;
+    if((p&1024n)===1024n&&(p&2048n)===2048n)sendable++;
+   }
+  }
+  checks.push({key:'text',label:'إمكانية الرد في الرومات النصية',ok:sendable>0,detail:sendable>0?'يمكن للبوت مشاهدة وإرسال الرسائل في '+sendable+' روم نصي على الأقل.':'لم يُعثر على روم نصي يملك فيه البوت صلاحية المشاهدة والإرسال؛ راجع صلاحيات الرومات وترتيب الرتب.'});
+  let slash={ok:false,d:[]};
+  if(me.ok&&/^\d{17,20}$/.test(String(b.guild_id||'')))slash=await da('/applications/'+me.d.id+'/guilds/'+b.guild_id+'/commands',token);
+  checks.push({key:'slash',label:'أوامر Discord /',ok:slash.ok?Array.isArray(slash.d)&&slash.d.length>0:null,detail:slash.ok?'الأوامر المسجلة في السيرفر: '+(Array.isArray(slash.d)?slash.d.length:0)+'.':'تعذر قراءة قائمة أوامر Discord المسجلة من API؛ جرّب /ping داخل السيرفر.'});
+  checks.push({key:'content',label:'أوامر البادئة مثل !ping',ok:null,detail:'فحص Message Content Intent غير متاح من API. إذا كانت /ping تعمل و !ping لا تعمل، فعّل Message Content Intent من Discord Developer Portal ← التطبيق ← Bot ← Privileged Gateway Intents، ثم أعد تشغيل البوت.'});
+  const failed=checks.filter(x=>x.ok===false).length,manual=checks.some(x=>x.ok===null);
+  const summary=failed?('وجدت '+failed+' فحصًا يحتاج إصلاحًا. راجع التفاصيل أدناه.'):manual?'الاتصال والتوكن والرومات فُحصت؛ بقي التحقق اليدوي من Message Content Intent إذا كانت أوامر البادئة لا تعمل.':'اجتازت الفحوص المتاحة.';
+  res.set('Cache-Control','private, no-store').json({checks,summary,channelCounts:{viewable,sendable}});
+ }catch(e){console.error('bot diagnostics:',e.message);res.status(500).json({error:'تعذر فحص البوت: '+String(e.message||'').slice(0,180)})}
+});
 router.get('/:id/logs',requireAuth,async(req,res)=>{try{const q=await query('SELECT id,user_id,guild_id FROM bots WHERE id=$1',[req.params.id]),b=q.rows[0];if(!b)return res.status(404).json({error:'البوت غير موجود'});if(!req.user.is_owner&&String(b.user_id)!==String(req.user.id)&&!(await adminInGuild(req.user.id,b.guild_id)))return res.status(403).json({error:'ما تملك الصلاحية'});await ensureBotLogs();const logs=await query('SELECT id,actor_id,action,details,created_at FROM bot_logs WHERE bot_id=$1 ORDER BY created_at DESC LIMIT 50',[b.id]);res.set('Cache-Control','private, no-store').json({logs:logs.rows})}catch(e){res.status(500).json({error:'تعذر تحميل السجلات'})}});
 router.get('/:id',requireAuth,async(req,res)=>{const q=await query('SELECT * FROM bots WHERE id=$1',[req.params.id]),b=q.rows[0];if(!b)return res.status(404).json({error:'غير موجود'});if(!req.user.is_owner&&String(b.user_id)!==String(req.user.id)&&!(await adminInGuild(req.user.id,b.guild_id)))return res.status(403).json({error:'ما تملك الصلاحية'});const {token,...safe}=b;res.json({bot:{...safe,subscription:await subInfo(b.id)}})});
 router.post('/:id/toggle',requireAuth,async(req,res)=>{const q=await query('SELECT * FROM bots WHERE id=$1',[req.params.id]),b=q.rows[0];if(!b)return res.status(404).json({error:'البوت غير موجود'});if(!req.user.is_owner&&String(b.user_id)!==String(req.user.id)&&!(await adminInGuild(req.user.id,b.guild_id)))return res.status(403).json({error:'تحتاج صلاحية Administrator'});const active=!b.active;await query('UPDATE bots SET active=$1,runtime_status=$2,last_error=CASE WHEN $1 THEN NULL ELSE last_error END WHERE id=$3',[active,active?'starting':'offline',req.params.id]);await writeBotLog(b.id,req.user.id,active?'bot.start_requested':'bot.stop_requested',{active});res.json({active,message:active?'تم طلب تشغيل البوت':'تم طلب إيقاف البوت'})});
