@@ -19,7 +19,8 @@
  <p class="hint invite-admin-note">🔐 رابط الدعوة يطلب صلاحية <strong>Administrator</strong> من Discord لهذا البوت. يجب أن توافق على الصلاحية من نافذة Discord عند إضافته إلى السيرفر.</p>
  <div id="errorBar" class="error-bar" hidden></div>
 </section>
-<nav class="tabs" aria-label="أقسام لوحة التحكم">
+<button type="button" id="menuToggle" class="mobile-menu-toggle" aria-controls="dashboardTabs" aria-expanded="false"><span aria-hidden="true">☰</span><span>أقسام لوحة التحكم</span></button>
+<nav id="dashboardTabs" class="tabs" aria-label="أقسام لوحة التحكم">
 <button type="button" class="tab active" data-tab="overview">◈ نظرة عامة</button><button type="button" class="tab" data-tab="settings">⚙ الإعدادات</button><button type="button" class="tab" data-tab="commands">⌘ الأوامر</button><button type="button" class="tab" data-tab="logs">▤ السجلات</button><button type="button" class="tab" data-tab="custom">✦ التخصيص</button><button type="button" class="tab" data-tab="rooms">▣ الرومات الخاصة</button>
 </nav>
 <section class="tab-panel active" data-panel="overview">
@@ -96,5 +97,5 @@
 </section>
 <footer class="footer"><span>MLD · COMMUNITY</span><span>لوحة تحكم آمنة • تتحدث الحالة تلقائيًا</span></footer>
 </main>
-<script src="/bot-dashboard.js?v=20261011-command-controls6" defer></script>
+<script src="/bot-dashboard.js?v=20261011-mobile-menu7" defer></script>
 </body></html>
