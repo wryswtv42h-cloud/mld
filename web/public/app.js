@@ -1,4 +1,10 @@
 (()=>{"use strict";
+// Prevent accidental browser navigation from any dynamic form. The app's submit
+// handlers still run; this only blocks native full-page form submission.
+document.addEventListener("submit",event=>{
+  if(event.target instanceof HTMLFormElement) event.preventDefault();
+},true);
+
 const API=(window.MLD_API_URL||"").replace(/\/$/,"");
 const pages=[["home","الرئيسية"],["members","الأعضاء"],["roles","الرتب"],["top","الإحصائيات"],["leaders","المتصدرون"],["chat","الدردشة"],["pigeon","زاجل"],["groups","القروبات"],["games","الألعاب"],["cinema","السينما"],["jokes","النكت"],["stories","القصص"],["tickets","التذاكر"],["reviews","الآراء"],["bots","البوتات"],["profile","حسابي"]];
 const protectedPages=new Set(["chat","pigeon","groups","games","tickets","profile","bots"]);
