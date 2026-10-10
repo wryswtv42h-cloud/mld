@@ -142,7 +142,7 @@ router.get('/settings/:key',requireAuth,async(req,res)=>{
   const q=await query('SELECT value FROM site_settings WHERE key=$1',[req.params.key]); res.json({value:q.rows[0]?.value||[]});
 });
 router.patch('/settings/:key',requireAuth,requireOwner,async(req,res)=>{
-  if(!['application_questions','ticket_questions'].includes(req.params.key))return res.status(404).json({error:'الإعداد غير موجود'});
+  if(!['application_questions','ticket_questions','page_locks'].includes(req.params.key))return res.status(404).json({error:'الإعداد غير موجود'});
   if(req.params.key==='page_locks'){
     const value=req.body.value;
     if(!value||typeof value!=='object'||Array.isArray(value)||!value.pages||typeof value.pages!=='object'||Array.isArray(value.pages))return res.status(400).json({error:'إعدادات قفل الصفحات غير صحيحة'});
