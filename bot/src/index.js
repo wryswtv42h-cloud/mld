@@ -179,7 +179,7 @@ function installBotFeatures(client,bot){
       return;
     }
     const commandText=commandSource.startsWith(prefix)?commandSource.slice(prefix.length).trim():commandSource;
-    const [raw,...args]=commandText.split(/\\s+/);let command=String(raw||'').toLowerCase();const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));if(aliasMatch&&!['help','ping','server','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
+    const [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));if(aliasMatch&&!['help','ping','server','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
     if(!command)return;
     await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_used',{command,guildId:message.guild.id,channelId:message.channel.id});
     const requiredPermission={
@@ -199,7 +199,7 @@ function installBotFeatures(client,bot){
     if(command==='setprefix'||command==='تغييرالبادئة'){
       if(!message.member.permissions.has(PermissionFlagsBits.ManageGuild))return message.reply('تحتاج صلاحية إدارة السيرفر لتغيير البادئة.');
       const nextPrefix=String(args[0]||'').trim();
-      if(!nextPrefix||nextPrefix.length>4||/\\s/.test(nextPrefix))return message.reply('استخدم: '+prefix+'setprefix ! (من 1 إلى 4 رموز بدون مسافات).');
+      if(!nextPrefix||nextPrefix.length>4||/\s/.test(nextPrefix))return message.reply('استخدم: '+prefix+'setprefix ! (من 1 إلى 4 رموز بدون مسافات).');
       const next={...config,prefix:nextPrefix};
       try{if(pool)await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);client.mldConfig=next;return message.reply('✅ تم تغيير بادئة الأوامر إلى: `'+nextPrefix+'`');}
       catch(error){console.error('Prefix save:',error.message);return message.reply('تعذر حفظ البادئة. حاول مرة ثانية.');}
