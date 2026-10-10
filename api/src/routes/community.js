@@ -136,14 +136,23 @@ async function audit(actor, action, target, meta={}) {
 
 
 router.get('/announcement',async(req,res)=>{const q=await query("SELECT value FROM site_settings WHERE key='announcement'");res.json({announcement:q.rows[0]?.value||{text:'',color:'#ff9cdc',enabled:true}});});
+router.get('/page-locks',async(req,res)=>{try{const q=await query("SELECT value FROM site_settings WHERE key='page_locks'");res.set('Cache-Control','no-store').json({locks:q.rows[0]?.value||{pages:{},message:''}})}catch(e){res.status(500).json({error:'تعذر تحميل إعدادات قفل الصفحات'})}});
 router.get('/settings/:key',requireAuth,async(req,res)=>{
-  if(!['application_questions','ticket_questions'].includes(req.params.key))return res.status(404).json({error:'الإعداد غير موجود'});
+  if(!['application_questions','ticket_questions','page_locks'].includes(req.params.key))return res.status(404).json({error:'الإعداد غير موجود'});
   const q=await query('SELECT value FROM site_settings WHERE key=$1',[req.params.key]); res.json({value:q.rows[0]?.value||[]});
 });
 router.patch('/settings/:key',requireAuth,requireOwner,async(req,res)=>{
   if(!['application_questions','ticket_questions'].includes(req.params.key))return res.status(404).json({error:'الإعداد غير موجود'});
-  if(!Array.isArray(req.body.value))return res.status(400).json({error:'القيمة يجب أن تكون قائمة'});
-  await query('INSERT INTO site_settings(key,value,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()',[req.params.key,JSON.stringify(req.body.value)]);
+  if(req.params.key==='page_locks'){
+    const value=req.body.value;
+    if(!value||typeof value!=='object'||Array.isArray(value)||!value.pages||typeof value.pages!=='object'||Array.isArray(value.pages))return res.status(400).json({error:'إعدادات قفل الصفحات غير صحيحة'});
+    const pages={};for(const [key,entry] of Object.entries(value.pages).slice(0,40)){const page=String(key).replace(/[^a-z0-9_-]/gi,'').slice(0,40);if(page)pages[page]={enabled:!!entry?.enabled};}
+    const safe={pages,message:String(value.message||'هذه الصفحة مغلقة مؤقتًا من إدارة مجتمع ملاذ.').trim().slice(0,500)};
+    await query('INSERT INTO site_settings(key,value,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()',[req.params.key,JSON.stringify(safe)]);
+  }else{
+    if(!Array.isArray(req.body.value))return res.status(400).json({error:'القيمة يجب أن تكون قائمة'});
+    await query('INSERT INTO site_settings(key,value,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()',[req.params.key,JSON.stringify(req.body.value)]);
+  }
   await audit(req.user,'settings_update',req.params.key,{});
   res.json({message:'تم الحفظ'});
 });
