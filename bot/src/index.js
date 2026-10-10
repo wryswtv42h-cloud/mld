@@ -51,25 +51,13 @@ async function writeRuntimeLog(botId,actorId,action,details={}){
 const reservedUserSlashCommands=new Set(['help','ping','server','serverinfo','botinfo']);
 function buildUserBotSlashCommands(client){
   const builtins=[
-    {name:'help',description:'قائمة أوامر البوت التفاعلية'},
     {name:'ping',description:'فحص اتصال البوت'},
     {name:'serverinfo',description:'معلومات السيرفر الحالي'},
     {name:'botinfo',description:'معلومات البوت ومدة تشغيله'}
   ];
   const config=client.mldConfig&&typeof client.mldConfig==='object'?client.mldConfig:{};
   const commandSettings=config.commandSettings&&typeof config.commandSettings==='object'?config.commandSettings:{};
-  const commands=builtins.filter(command=>commandSettings[command.name]?.enabled!==false);
-  const seen=new Set(commands.map(command=>command.name));
-  const custom=Array.isArray(config.commands)?config.commands:[];
-  for(const item of custom){
-    const name=String(item?.name||'').trim().toLowerCase();
-    const description=String(item?.description||'أمر مخصص').trim().slice(0,100)||'أمر مخصص';
-    if(item?.enabled===false||!/^[-_a-z0-9]{1,32}$/.test(name)||seen.has(name)||reservedUserSlashCommands.has(name))continue;
-    if(commands.length>=100)break;
-    commands.push({name,description,options:[{type:3,name:'args',description:'نص اختياري يمرر إلى {args} في الرد',required:false}]});
-    seen.add(name);
-  }
-  return commands;
+  return builtins.filter(command=>commandSettings[command.name]?.enabled!==false);
 }
 async function registerUserBotSlashCommands(client,bot){
   if(!client.user||!/^\d{17,20}$/.test(String(bot.guild_id||'')))return;
