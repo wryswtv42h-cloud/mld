@@ -344,7 +344,7 @@ function installBotFeatures(client,bot){
       kick:PermissionFlagsBits.KickMembers,ban:PermissionFlagsBits.BanMembers,unban:PermissionFlagsBits.BanMembers,'فكحظر':PermissionFlagsBits.BanMembers,allbans:PermissionFlagsBits.BanMembers,'قائمةالمحظورين':PermissionFlagsBits.BanMembers,clear:PermissionFlagsBits.ManageMessages,say:PermissionFlagsBits.ManageMessages,
       announce:PermissionFlagsBits.ManageMessages,slowmode:PermissionFlagsBits.ManageChannels,lock:PermissionFlagsBits.ManageChannels,unlock:PermissionFlagsBits.ManageChannels,
       timeout:PermissionFlagsBits.ModerateMembers,untimeout:PermissionFlagsBits.ModerateMembers,warn:PermissionFlagsBits.ModerateMembers,
-      nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,rolecreate:PermissionFlagsBits.ManageRoles,'انشاءرتبة':PermissionFlagsBits.ManageRoles,roledelete:PermissionFlagsBits.ManageRoles,'حذفرتبة':PermissionFlagsBits.ManageRoles,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite
+      nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,rolecreate:PermissionFlagsBits.ManageRoles,'انشاءرتبة':PermissionFlagsBits.ManageRoles,roledelete:PermissionFlagsBits.ManageRoles,'حذفرتبة':PermissionFlagsBits.ManageRoles,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite,mute:PermissionFlagsBits.MuteMembers,unmute:PermissionFlagsBits.MuteMembers,vmute:PermissionFlagsBits.MuteMembers,vunmute:PermissionFlagsBits.MuteMembers,move:PermissionFlagsBits.MoveMembers,moveme:PermissionFlagsBits.MoveMembers
     }[command];
     if(requiredPermission){
       if(!message.member.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_member_permission'});return message.reply('ما عندك صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
@@ -683,6 +683,30 @@ function installBotFeatures(client,bot){
         if(role.id===message.guild.id||role.managed||role.position>=message.guild.members.me.roles.highest.position)return message.reply('لا يمكن حذف هذه الرتبة؛ تحقق من كونها غير مُدارة وأن رتبة البوت أعلى منها.');
         if(message.guild.ownerId!==message.author.id&&role.position>=message.member.roles.highest.position)return message.reply('ما تقدر تحذف رتبة مساوية أو أعلى من رتبتك.');
         try{await role.delete('حذف بواسطة '+message.author.tag);await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_roledelete',{guildId:message.guild.id,roleId:role.id,roleName:role.name});return message.reply('تم حذف الرتبة بنجاح.');}catch{return message.reply('تعذر حذف الرتبة. تحقق من الصلاحيات وترتيب الرتب.');}
+      }
+      if(['mute','unmute','vmute','vunmute'].includes(command)){
+        const target=message.mentions.members.first();
+        if(!target)return message.reply('منشن العضو المطلوب كتمه صوتيًا أو فك كتمه.');
+        if(target.id===message.author.id)return message.reply('ما تقدر تطبق الأمر على نفسك.');
+        if(message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تستهدف عضو رتبته مساوية أو أعلى من رتبتك.');
+        if(target.roles.highest.position>=message.guild.members.me.roles.highest.position)return message.reply('رتبة البوت يجب أن تكون أعلى من رتبة العضو.');
+        if(!target.voice.channelId)return message.reply('العضو لازم يكون داخل روم صوتي.');
+        const mute=['mute','vmute'].includes(command);
+        try{await target.voice.setMute(mute,(args.slice(1).join(' ')||'إجراء صوتي بواسطة '+message.author.tag).slice(0,400));await writeRuntimeLog(client.mldBotId,message.author.id,mute?'bot.voice_mute':'bot.voice_unmute',{guildId:message.guild.id,targetId:target.id,channelId:target.voice.channelId});return message.reply(mute?'تم كتم '+target.user.tag+' صوتيًا.':'تم فك الكتم الصوتي عن '+target.user.tag+'.');}catch{return message.reply('تعذر تنفيذ الأمر. تأكد من صلاحية كتم الأعضاء وأن رتبة البوت أعلى من العضو.');}
+      }
+      if(command==='move'||command==='moveme'){
+        const target=command==='moveme'?message.member:message.mentions.members.first();
+        if(!target)return message.reply('استخدم: '+prefix+'move @عضو #روم_صوتي أو '+prefix+'moveme #روم_صوتي');
+        const channel=message.mentions.channels.first()||message.guild.channels.cache.get(args.find(x=>/^\d{17,20}$/.test(x))||'');
+        if(!channel||(channel.type!==ChannelType.GuildVoice&&channel.type!==ChannelType.GuildStageVoice))return message.reply('منشن رومًا صوتيًا صالحًا.');
+        if(target.id!==message.author.id&&message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تنقل عضو رتبته مساوية أو أعلى من رتبتك.');
+        if(!target.voice.channelId)return message.reply('العضو مو داخل روم صوتي حاليًا.');
+        try{await target.voice.setChannel(channel,'نقل بواسطة '+message.author.tag);return message.reply('تم نقل '+target.user.tag+' إلى '+channel.toString()+'.');}catch{return message.reply('تعذر النقل. تأكد من صلاحية Move Members.');}
+      }
+      if(command==='rooms'||command==='الغرفالصوتية'){
+        const channels=message.guild.channels.cache.filter(c=>c.type===ChannelType.GuildVoice||c.type===ChannelType.GuildStageVoice);
+        const body=[...channels.values()].slice(0,40).map(c=>'• '+c.name+' — '+c.members.size+' عضو (`'+c.id+'`)').join('\n');
+        return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🔊 الغرف الصوتية').setDescription(body.slice(0,4000)||'لا توجد غرف صوتية.').setFooter({text:'عدد الغرف: '+channels.size})],allowedMentions:{parse:[]}});
       }
       if(command==='roleadd'||command==='roleremove'){
         if(!message.member.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('تحتاج صلاحية إدارة الرتب.');
