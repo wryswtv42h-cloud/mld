@@ -53,6 +53,28 @@ router.get('/:id/diagnostics',requireAuth,async(req,res)=>{
   const token=stored.startsWith('enc:')?(()=>{const [,iv,tag,data]=stored.split(':');const d=crypto.createDecipheriv('aes-256-gcm',KEY,Buffer.from(iv,'base64url'));d.setAuthTag(Buffer.from(tag,'base64url'));return Buffer.concat([d.update(Buffer.from(data,'base64url')),d.final()]).toString('utf8')})():stored;
   const me=await da('/users/@me',token);
   const checks=[{key:'runtime',label:'حالة تشغيل البوت',ok:!!b.active&&String(b.runtime_status)==='online',detail:!b.active?'البوت موقوف من لوحة التحكم.':String(b.runtime_status)==='online'?'اتصال Gateway مسجل كمتصل.':'الحالة الحالية: '+String(b.runtime_status||'غير معروفة')+(b.last_error?' — '+String(b.last_error).slice(0,180):'')}];
+  // Show real command activity from runtime logs instead of treating Gateway=online as proof of replies.
+  try{
+   const activity=await query("SELECT action,details,created_at FROM bot_logs WHERE bot_id=$1 AND created_at>NOW()-INTERVAL '24 hours' AND action IN ('bot.command_received','bot.slash_command_received','bot.message_content_intent_missing','bot.command_denied','bot.slash_command_error') ORDER BY created_at DESC LIMIT 30",[b.id]);
+   const rows=activity.rows||[];
+   const intentEvent=rows.find(x=>x.action==='bot.message_content_intent_missing');
+   const prefixEvent=rows.find(x=>x.action==='bot.command_received');
+   const slashEvent=rows.find(x=>x.action==='bot.slash_command_received');
+   const stamp=x=>x?.created_at?new Date(x.created_at).toISOString():'';
+   if(intentEvent){
+    checks.push({key:'command_activity',label:'استقبال الرسائل النصية',ok:false,detail:'سُجّل أن البوت استقبل منشنًا بدون محتوى الرسالة في '+stamp(intentEvent)+'. غالبًا Message Content Intent غير مفعّل في Discord Developer Portal؛ فعّله ثم أعد تشغيل البوت.'});
+   }else if(prefixEvent){
+    const details=prefixEvent.details&&typeof prefixEvent.details==='object'?prefixEvent.details:{};
+    checks.push({key:'command_activity',label:'استقبال أوامر البادئة',ok:true,detail:'وصل أمر نصي إلى معالج البوت خلال آخر 24 ساعة'+(details.command?' (الأمر: '+String(details.command).slice(0,40)+')':'')+'؛ آخر تسجيل: '+stamp(prefixEvent)+'.'});
+   }else if(slashEvent){
+    const details=slashEvent.details&&typeof slashEvent.details==='object'?slashEvent.details:{};
+    checks.push({key:'command_activity',label:'نشاط الأوامر',ok:null,detail:'سُجّل أمر Slash'+(details.command?' ('+String(details.command).slice(0,40)+')':'')+'، لكن لم يُسجّل أمر بادئة خلال آخر 24 ساعة. جرّب /ping ثم !ping لتحديد إن كانت المشكلة في Message Content Intent.'});
+   }else{
+    checks.push({key:'command_activity',label:'نشاط الأوامر',ok:null,detail:'لا توجد أوامر مسجّلة خلال آخر 24 ساعة. أرسل /ping ثم !ping في روم يستطيع البوت الكتابة فيه، وبعدها أعد الفحص. هذا الفحص لا يقرأ محتوى رسائلك الخاصة.'});
+   }
+  }catch(logError){
+   checks.push({key:'command_activity',label:'سجل نشاط الأوامر',ok:null,detail:'تعذر قراءة سجل النشاط الآن؛ بقية فحوص Discord مستمرة.'});
+  }
   if(!me.ok){
    checks.push({key:'token',label:'توكن Discord',ok:false,detail:'Discord رفض التوكن أو تعذر الوصول إلى API.'});
    checks.push({key:'content',label:'أوامر البادئة',ok:null,detail:'لا يمكن التحقق من Message Content Intent عبر هذا الفحص؛ فعّله من Developer Portal إذا كانت أوامر ! لا تعمل.'});
