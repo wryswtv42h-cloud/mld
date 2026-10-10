@@ -9,6 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import { setupBank, ensureBankTable } from './systems/bank.js';
 import { setupGames } from './systems/games.js';
 import { setupMusic } from './systems/music.js';
+import { setupAuditLogs, ensureAuditLogRooms } from './systems/audit-logs.js';
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ function installBotFeatures(client,bot){
   setupMusic(client);
   client.mldConfig=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
   client.mldType=bot.bot_type||'general';
+  setupAuditLogs(client);
   client.mldRecentMessages=new Map();
   client.mldPendingApplications=new Map();
   const logToChannel=async(guild,channelId,text)=>{
@@ -351,6 +353,19 @@ function installBotFeatures(client,bot){
   }
 
 }
+async function applyAuditLogSetup(client){
+  if(!pool||!client?.isReady?.()||!client.mldConfig?.auditLogsCreateRequested)return;
+  try{
+    const result=await ensureAuditLogRooms(client);
+    if(result.selected&&client.mldConfig?.auditLogsReady){
+      const persisted={auditLogsCreateRequested:false,auditLogsReady:true,auditLogsLastCreatedAt:client.mldConfig.auditLogsLastCreatedAt};
+      await pool.query('UPDATE bots SET settings=COALESCE(settings,\'{}\'::jsonb) || $1::jsonb WHERE id=$2',[JSON.stringify(persisted),client.mldBotId]);
+      await writeRuntimeLog(client.mldBotId,'system','bot.audit_logs_created',{selected:result.selected,created:result.created});
+      console.log('📚 MLD audit log rooms configured:',client.mldBotId,result);
+    }
+  }catch(e){console.error('MLD audit log setup:',e.message);await setBotRuntime(client.mldBotId,'error',e.message);}
+}
+
 async function syncUserBots(){
   if(!pool)return;
   try{
@@ -361,11 +376,11 @@ async function syncUserBots(){
     }
     for(const bot of rows){
       const id=String(bot.id),settings=bot.settings&&typeof bot.settings==='object'?bot.settings:{};
-      if(userBotClients.has(id)){const live=userBotClients.get(id);live.mldConfig=settings;live.mldType=bot.bot_type||'general';await setBotRuntime(id,'online',null,live.ws?.ping);continue;}
-      const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.DirectMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates],partials:[Partials.Channel]});
+      if(userBotClients.has(id)){const live=userBotClients.get(id);live.mldConfig=settings;live.mldType=bot.bot_type||'general';await applyAuditLogSetup(live);await setBotRuntime(id,'online',null,live.ws?.ping);continue;}
+      const c=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.DirectMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.GuildModeration,GatewayIntentBits.GuildInvites,GatewayIntentBits.GuildEmojisAndStickers,GatewayIntentBits.GuildWebhooks,GatewayIntentBits.GuildIntegrations,GatewayIntentBits.GuildScheduledEvents,GatewayIntentBits.GuildMessageReactions,GatewayIntentBits.AutoModerationExecution],partials:[Partials.Channel,Partials.Message,Partials.Reaction]});
       c.mldBotId=id;
       installBotFeatures(c,bot);
-      c.once(Events.ClientReady,()=>{try{c.user.setPresence({activities:[{name:String(bot.watching||'MLD | فهد المطيري').slice(0,128),type:ActivityType.Watching}],status:'online'});}catch{}console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online',null,c.ws?.ping);});
+      c.once(Events.ClientReady,async()=>{try{c.user.setPresence({activities:[{name:String(bot.watching||'MLD | فهد المطيري').slice(0,128),type:ActivityType.Watching}],status:'online'});}catch{}console.log(`🤖 User bot online: ${bot.name} (${c.user.tag})`);setBotRuntime(id,'online',null,c.ws?.ping);await applyAuditLogSetup(c);});
       c.on('error',e=>{console.error(`User bot ${bot.name}:`,e.message);setBotRuntime(id,'error',e.message);});
       try{await c.login(decryptToken(bot.token));userBotClients.set(id,c);}
       catch(e){console.error(`❌ User bot ${bot.name} failed:`,e.message);await setBotRuntime(id,'error',e.message);try{c.destroy();}catch{}}
