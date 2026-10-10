@@ -358,7 +358,7 @@ function installBotFeatures(client,bot){
           const reply=String(custom.response||'').slice(0,1800).replaceAll('{user}',interaction.user.username).replaceAll('{server}',interaction.guild?.name||'Discord').replaceAll('{memberCount}',String(interaction.guild?.memberCount||0)).replaceAll('{args}',String(interaction.options.getString('args')||''));
           return interaction.reply({content:reply||'تم تنفيذ الأمر.',allowedMentions:{parse:[]}});
         }
-        return interaction.reply({content:'الأمر غير متاح حاليًا. استخدم /help.',ephemeral:true});
+        return interaction.reply({content:'الأمر غير متاح حاليًا. استخدم أمر المساعدة بالبادئة.',ephemeral:true});
       }catch(error){
         console.error('User bot slash command:',error?.stack||error);
         void writeRuntimeLog(client.mldBotId,interaction.user?.id,'bot.slash_command_error',{command:interaction.commandName||'unknown',guildId:interaction.guildId||null,error:String(error?.message||error).slice(0,240)});
@@ -369,7 +369,7 @@ function installBotFeatures(client,bot){
     }
     if(interaction.isStringSelectMenu?.()&&interaction.customId.startsWith('mldhelpselect:')){
       const ownerId=interaction.customId.split(':')[1];
-      if(interaction.user.id!==ownerId&&!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild))return interaction.reply({content:'هذه القائمة تخص عضوًا آخر. استخدم /help لفتح قائمتك.',ephemeral:true}).catch(()=>{});
+      if(interaction.user.id!==ownerId&&!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild))return interaction.reply({content:'هذه القائمة تخص عضوًا آخر. استخدم أمر المساعدة بالبادئة لفتح قائمتك.',ephemeral:true}).catch(()=>{});
       return interaction.update(buildUserHelpPayload(client,ownerId,interaction.values?.[0]||'general')).catch(()=>{});
     }
     if(!interaction.isButton())return;
@@ -453,7 +453,7 @@ function installBotFeatures(client,bot){
     // content arrives empty. A direct mention is still detectable, so explain the fix.
     if(!commandSource.trim()&&(message.mentions?.users?.has(client.user.id)||message.mentions.has(client.user))){
       await writeRuntimeLog(client.mldBotId,message.author.id,'bot.message_content_intent_missing',{guildId:message.guild.id,channelId:message.channel.id});
-      return message.reply('أنا متصل، لكن Discord لا يرسل محتوى الرسائل لي. فعّل Message Content Intent من Discord Developer Portal ثم Bot ثم Privileged Gateway Intents، وبعدها أعد تشغيل البوت. إلى ذلك الوقت جرّب أوامر /ping و/help.').catch(()=>{});
+      return message.reply('أنا متصل، لكن Discord لا يرسل محتوى الرسائل لي. فعّل Message Content Intent من Discord Developer Portal ثم Bot ثم Privileged Gateway Intents، وبعدها أعد تشغيل البوت. إلى ذلك الوقت جرّب /ping أو اكتب أمر المساعدة بالبادئة الحالية.').catch(()=>{});
     }
     if(!matchedPrefix&&!mentionCommand&&!isCustomShortcut)return;
     const receivedCommand=String(commandSource.split(/\s+/)[0]||'').toLowerCase().slice(0,40);
