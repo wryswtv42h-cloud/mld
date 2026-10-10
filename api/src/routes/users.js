@@ -7,7 +7,7 @@ const router = express.Router();
 // ===== قائمة الأعضاء =====
 router.get('/', requireAuth, async (req, res) => {
   const { rows } = await query(
-    `SELECT id, username, avatar, bio, role, is_owner, discord_verified, last_seen
+    `SELECT id, username, avatar, bio, occupation, role, is_owner, discord_verified, last_seen
      FROM users ORDER BY last_seen DESC LIMIT 100`
   );
   res.json({ users: rows });
