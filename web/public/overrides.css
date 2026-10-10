@@ -428,3 +428,15 @@ body[data-page="owner"] #app .owner-section select { min-height:44px; }
 /* Independent MLD profile controls */
 .profile-edit-field{display:grid;gap:10px;padding:16px;margin:12px 0;border:1px solid rgba(255,156,222,.22);border-radius:16px;background:rgba(255,255,255,.025)}
 .profile-banner-preview{display:block;width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid rgba(255,156,222,.2)}
+
+
+/* MLD bot audit-log selector */
+body[data-page="bots"] #app .bot-audit-log-settings { display:grid; gap:12px; margin:18px 0; padding:16px; }
+body[data-page="bots"] #app .bot-audit-log-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+body[data-page="bots"] #app .bot-audit-log-option { display:flex; align-items:center; gap:8px; min-width:0; padding:9px 10px; border:1px solid rgba(255,156,222,.16); border-radius:10px; background:rgba(255,255,255,.025); }
+body[data-page="bots"] #app .bot-audit-log-option input { flex:0 0 auto; accent-color:#ff9cde; }
+body[data-page="bots"] #app .bot-audit-log-option span { overflow-wrap:anywhere; }
+body[data-page="bots"] #app .bot-audit-create { display:flex; align-items:center; gap:10px; padding:12px; border:1px solid rgba(255,156,222,.28); border-radius:12px; }
+body[data-page="bots"] #app .bot-audit-create input { accent-color:#ff9cde; }
+@media(max-width:760px){ body[data-page="bots"] #app .bot-audit-log-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:420px){ body[data-page="bots"] #app .bot-audit-log-grid { grid-template-columns:1fr; } }
