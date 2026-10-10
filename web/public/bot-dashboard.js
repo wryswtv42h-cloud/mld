@@ -11,7 +11,6 @@ member_leave|خروج الأعضاء
 member_update|تغييرات الأعضاء
 member_nickname|تغيير الألقاب
 member_roles|إضافة وإزالة الرتب
-member_avatar|تغييرات الملف الشخصي
 member_ban|حظر عضو
 member_unban|فك حظر عضو
 member_timeout|المهلة الزمنية
