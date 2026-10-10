@@ -13,6 +13,13 @@ import { setupAuditLogs, ensureAuditLogRooms } from './systems/audit-logs.js';
 
 dotenv.config();
 
+// Discord media providers (especially YouTube) sometimes reject background requests with HTTP 429.
+// Keep a transient music/API rejection from restarting every connected MLD bot; command handlers
+// still catch and report their own errors to the user.
+process.on('unhandledRejection', reason => {
+  console.error('⚠️ رفض Promise غير معالج؛ يستمر البوت بدل إعادة تشغيله:', reason?.stack || reason);
+});
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const { Pool } = pg;
