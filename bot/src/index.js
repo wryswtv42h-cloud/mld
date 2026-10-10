@@ -573,6 +573,12 @@ function installBotFeatures(client,bot){
     if(['moderation','automod','system','allinone'].includes(type)){
       const target=message.mentions.members.first();
       const reason=args.slice(1).join(' ').slice(0,400)||'لم يذكر سبب';
+      if(command==='serverinfo'||command==='معلوماتالسيرفر'||command==='سيرفر'){
+        const g=message.guild;
+        const c=g.channels.cache;
+        const e=new EmbedBuilder().setColor(0xff9cde).setTitle('🏠 معلومات السيرفر').setThumbnail(g.iconURL({size:256})||null).addFields({name:'الاسم',value:g.name,inline:true},{name:'الأعضاء',value:String(g.memberCount),inline:true},{name:'الرتب',value:String(g.roles.cache.size-1),inline:true},{name:'الرومات النصية',value:String(c.filter(x=>x.type===ChannelType.GuildText||x.type===ChannelType.GuildAnnouncement).size),inline:true},{name:'الرومات الصوتية',value:String(c.filter(x=>x.type===ChannelType.GuildVoice||x.type===ChannelType.GuildStageVoice).size),inline:true},{name:'التعزيزات',value:String(g.premiumSubscriptionCount||0),inline:true},{name:'تاريخ الإنشاء',value:'<t:'+Math.floor(g.createdTimestamp/1000)+':D>',inline:true},{name:'المعرّف',value:g.id,inline:true}).setFooter({text:'MLD · مجتمع ملاذ'}).setTimestamp();
+        return message.reply({embeds:[e],allowedMentions:{parse:[]}});
+      }
       if(command==='warn'){
         if(!message.member.permissions.has('ModerateMembers'))return message.reply('تحتاج صلاحية Timeout Members لتنفيذ الأمر.');
         if(!target)return message.reply('استخدم الأمر هكذا: '+prefix+'warn @عضو السبب');
