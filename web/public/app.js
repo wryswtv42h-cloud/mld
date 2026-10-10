@@ -220,7 +220,7 @@ function setupOwnerConsole(){
  if(!overview||!nav)return;
  const activate=key=>{
   const isOverview=key==="overview";overview.hidden=!isOverview;
-  sections.forEach(section=>{section.hidden=!isOverview&&section.dataset.ownerSection!==key});
+  sections.forEach(section=>{section.hidden=isOverview||section.dataset.ownerSection!==key});
   nav.querySelectorAll("[data-owner-jump]").forEach(button=>{const active=button.dataset.ownerJump===key;button.classList.toggle("is-current",active);button.setAttribute("aria-current",active?"page":"false")});
  };
  nav.dataset.ready="yes";activate("overview");
@@ -278,7 +278,7 @@ document.addEventListener("click",async event=>{
     const sections=[...document.querySelectorAll("[data-owner-section]")];
     if(overview){
       const isOverview=key==="overview";overview.hidden=!isOverview;
-      sections.forEach(section=>{section.hidden=!isOverview&&section.dataset.ownerSection!==key});
+      sections.forEach(section=>{section.hidden=isOverview||section.dataset.ownerSection!==key});
       document.querySelectorAll("[data-owner-jump]").forEach(button=>{const active=button.dataset.ownerJump===key;button.classList.toggle("is-current",active);button.setAttribute("aria-current",active?"page":"false")});
       document.querySelector("#app .pagePanel")?.scrollIntoView({behavior:"smooth",block:"start"});
     }
