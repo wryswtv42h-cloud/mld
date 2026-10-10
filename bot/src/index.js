@@ -1112,18 +1112,27 @@ const client = new Client({
 async function registerCommands() {
   const commandsPath = join(__dirname, 'commands');
   const commandFiles = readdirSync(commandsPath).filter(f => f.endsWith('.js'));
+  // Keep slash commands limited to information and connectivity only.
+  // Moderation, protection, games, economy, tickets, broadcasts, and custom
+  // commands are intended to be used through the configured text prefixes.
+  const allowedSlashNames = new Set(['ping', 'serverinfo', 'botinfo']);
   const commands = [];
   for (const file of commandFiles) {
     const command = await import(pathToFileURL(join(commandsPath, file)).href);
-    if ('data' in command) commands.push(command.data.toJSON());
+    if ('data' in command) {
+      const definition = command.data.toJSON();
+      if (allowedSlashNames.has(String(definition.name || '').toLowerCase())) {
+        commands.push(definition);
+      }
+    }
   }
 
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
   try {
     await rest.put(Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID, process.env.DISCORD_GUILD_ID), { body: commands });
-    console.log('✅ تم تسجيل جميع الأوامر');
+    console.log('✅ تم تسجيل أوامر السلاش المسموحة فقط:', commands.map(command => command.name).join(', ') || 'لا توجد ملفات مطابقة');
   } catch (err) {
-    console.error('❌ فشل تسجيل الأوامر:', err);
+    console.error('❌ فشل تسجيل أوامر السلاش:', err);
   }
 }
 
