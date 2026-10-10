@@ -92,8 +92,8 @@ async function registerUserBotSlashCommands(client,bot){
 function buildUserHelpPayload(client, ownerId, selected='general') {
   const config=client.mldConfig||{},type=client.mldType||'general',prefix=String((type==='games'?config.prefixes?.games:type==='bank'?config.prefixes?.bank:config.prefix)||'!').slice(0,4);
   const categories=[
-    {value:'general',label:'الأوامر العامة',emoji:'✨',desc:'معلومات السيرفر وأدوات يومية',rows:[['ping','فحص الاتصال'],['server','معلومات السيرفر'],['serverinfo','بطاقة السيرفر'],['membercount','عدد الأعضاء'],['channelcount','عدد القنوات'],['uptime','مدة تشغيل البوت'],['avatar','الصورة الشخصية'],['userinfo','معلومات عضو'],['roles','عرض الرتب'],['roll','رمي نرد'],['random','رقم عشوائي'],['coinflip','عملة'],['eightball','سؤال وجواب'],['joke','نكتة']]},
-    {value:'admin',label:'الإدارة والإشراف',emoji:'🛡️',desc:'أوامر إدارة السيرفر المتاحة حسب نوع البوت',rows:[['warn @عضو السبب','تنبيه عضو'],['kick @عضو السبب','طرد عضو'],['ban @عضو السبب','حظر عضو'],['clear 10','حذف رسائل'],['slowmode 5','تحديد سرعة الرسائل'],['lock','قفل القناة'],['unlock','فتح القناة'],['timeout @عضو دقائق','تقييد عضو'],['untimeout @عضو','إلغاء التقييد'],['nick @عضو الاسم','تغيير لقب'],['roleadd @عضو @رتبة','إضافة رتبة'],['roleremove @عضو @رتبة','إزالة رتبة'],['poll سؤال','تصويت'],['announce #روم نص','إعلان']]},
+    {value:'general',label:'الأوامر العامة',emoji:'✨',desc:'معلومات السيرفر وأدوات يومية',rows:[['ping','فحص الاتصال'],['server','معلومات السيرفر'],['serverinfo','بطاقة السيرفر'],['membercount','عدد الأعضاء'],['channelcount','عدد القنوات'],['uptime','مدة تشغيل البوت'],['avatar','الصورة الشخصية'],['userinfo','معلومات عضو'],['roles','عرض الرتب'],['roll','رمي نرد'],['random','رقم عشوائي'],['coinflip','عملة'],['eightball','سؤال وجواب'],['joke','نكتة'],['id','معلومات المعرّف'],['banner','عرض بنر الحساب'],['profile','الملف الشخصي'],['myinv','دعواتي'],['topinv','أعلى الدعوات'],['user','بطاقة عضو'],['serverinfo','معلومات السيرفر']]},
+    {value:'admin',label:'الإدارة والإشراف',emoji:'🛡️',desc:'أوامر إدارة السيرفر المتاحة حسب نوع البوت',rows:[['warn @عضو السبب','تنبيه عضو'],['kick @عضو السبب','طرد عضو'],['ban @عضو السبب','حظر عضو'],['clear 10','حذف رسائل'],['slowmode 5','تحديد سرعة الرسائل'],['lock','قفل القناة'],['unlock','فتح القناة'],['timeout @عضو دقائق','تقييد عضو'],['untimeout @عضو','إلغاء التقييد'],['nick @عضو الاسم','تغيير لقب'],['roleadd @عضو @رتبة','إضافة رتبة'],['roleremove @عضو @رتبة','إزالة رتبة'],['poll سؤال','تصويت'],['announce #روم نص','إعلان'],['unban معرّف','فك الحظر'],['allbans','قائمة المحظورين'],['rolecreate اسم #RRGGBB','إنشاء رتبة'],['roledelete @رتبة','حذف رتبة'],['mute @عضو','كتم صوتي'],['unmute @عضو','فك الكتم الصوتي'],['move @عضو #روم','نقل عضو صوتيًا'],['rooms','قائمة الرومات الصوتية']]},
     {value:'welcome',label:'الترحيب والسجلات',emoji:'👋',desc:'إعدادات الترحيب والمغادرة واللوقات',rows:[['welcome','رسالة الترحيب'],['logs','معلومات السجلات'],['مغادرة','رسالة المغادرة']]},
     {value:'tickets',label:'التذاكر والتقديمات',emoji:'🎫',desc:'التذاكر وطلبات التقديم',rows:[['تذكرة','إنشاء تذكرة'],['ticket','اختصار التذكرة'],['تقديم','بدء التقديم'],['apply','اختصار التقديم'],['طلباتي','متابعة الطلب'],['قفل','إغلاق التذكرة'],['إضافة @عضو','إضافة عضو للتذكرة']]},
     {value:'games',label:'الألعاب',emoji:'🎮',desc:'ألعاب وتحديات داخل Discord',rows:['سالفة','برا السالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس'].map(n=>[n,'لعبة أو أمر نقاط'])},
@@ -349,7 +349,7 @@ function installBotFeatures(client,bot){
     const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===command));
     if(coreAlias)command=coreAlias[0];
     const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));
-    if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
+    if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','id','معرف','banner','بنر','profile','ملفي','بروفايل','myinv','دعواتي','topinv','توبدعوات','user','مستخدم','unban','فكحظر','allbans','قائمةالمحظورين','rolecreate','انشاءرتبة','roledelete','حذفرتبة','move','moveme','rooms','الغرفالصوتية','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
     if(!command)return;
     const commandPolicy=commandSettings[command];
     if(commandPolicy?.enabled===false)return message.reply('هذا الأمر معطل من لوحة التحكم.');
@@ -402,7 +402,56 @@ function installBotFeatures(client,bot){
       const emojis=[...message.guild.emojis.cache.values()];
       return message.reply({content:'😄 **إيموجيات السيرفر ('+emojis.length+')**\n'+(emojis.slice(0,45).map(e=>e.toString()).join(' ')||'ما فيه إيموجيات مخصصة.')+(emojis.length>45?'\n… والباقي أكثر من 45.':''),allowedMentions:{parse:[]}});
     }
-    if(command==='roleinfo'||command==='معلوماترتبة'){
+    if(command==='id'||command==='معرف'){
+      const member=message.mentions.members.first()||message.member;
+      const u=member.user;
+      return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🪪 معلومات المعرّف').setThumbnail(u.displayAvatarURL({size:256})).addFields({name:'العضو',value:u.tag||u.username,inline:true},{name:'معرّف Discord',value:'`'+u.id+'`',inline:true},{name:'تاريخ إنشاء الحساب',value:'<t:'+Math.floor(u.createdTimestamp/1000)+':F>'})],allowedMentions:{parse:[]}});
+    }
+    if(command==='banner'||command==='بنر'){
+      const user=message.mentions.users.first()||message.author;
+      const full=await client.users.fetch(user.id,{force:true}).catch(()=>user);
+      const url=full.bannerURL?.({size:1024,extension:'png'})||null;
+      if(!url)return message.reply('ما عند هذا الحساب بنر ظاهر.');
+      return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🖼️ بنر '+(full.tag||full.username)).setImage(url).setURL(url)],allowedMentions:{parse:[]}});
+    }
+    if(command==='profile'||command==='ملفي'||command==='بروفايل'){
+      const member=message.mentions.members.first()||message.member;
+      const u=member.user;
+      const roles=member.roles.cache.filter(r=>r.id!==message.guild.id).sort((a,b)=>b.position-a.position).map(r=>r.toString());
+      const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('👤 الملف الشخصي').setThumbnail(u.displayAvatarURL({size:256})).addFields(
+        {name:'الاسم',value:member.displayName||u.username,inline:true},
+        {name:'المعرّف',value:'`'+u.id+'`',inline:true},
+        {name:'انضم للسيرفر',value:member.joinedTimestamp?'<t:'+Math.floor(member.joinedTimestamp/1000)+':R>':'غير معروف',inline:true},
+        {name:'الحساب منذ',value:'<t:'+Math.floor(u.createdTimestamp/1000)+':D>',inline:true},
+        {name:'الرتب',value:roles.slice(0,12).join('، ')||'لا توجد رتب إضافية',inline:false}
+      ).setTimestamp();
+      return message.reply({embeds:[embed],allowedMentions:{parse:[]}});
+    }
+    if(command==='myinv'||command==='دعواتي'){
+      try{
+        const invites=await message.guild.invites.fetch();
+        const mine=invites.filter(inv=>inv.inviter?.id===message.author.id);
+        const total=mine.reduce((sum,inv)=>sum+(inv.uses||0),0);
+        const lines=mine.sort((a,b)=>(b.uses||0)-(a.uses||0)).first(10).map(inv=>'• '+inv.url+' — **'+(inv.uses||0)+'** استخدام');
+        return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🔗 دعواتك').setDescription('إجمالي الاستخدامات المسجلة: **'+total+'**\nعدد روابط الدعوة: **'+mine.size+'**\n\n'+(lines.join('\n')||'ما عندك روابط دعوة مسجلة.')).setFooter({text:'MLD · مجتمع ملاذ'})],allowedMentions:{parse:[]}});
+      }catch{return message.reply('ما قدرت أقرأ الدعوات. تأكد أن البوت عنده صلاحية إدارة السيرفر.');}
+    }
+    if(command==='topinv'||command==='توبدعوات'){
+      try{
+        const invites=await message.guild.invites.fetch();
+        const totals=new Map();
+        for(const inv of invites.values())if(inv.inviter)totals.set(inv.inviter.id,(totals.get(inv.inviter.id)||0)+(inv.uses||0));
+        const sorted=[...totals.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10);
+        const lines=await Promise.all(sorted.map(async([id,uses,i])=>{const u=await client.users.fetch(id).catch(()=>null);return '**'+(sorted.findIndex(x=>x[0]===id)+1)+'.** '+(u?.username||'عضو')+' — **'+uses+'** دعوة';}));
+        return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🏆 أعلى الدعوات').setDescription(lines.join('\n')||'ما فيه بيانات دعوات مسجلة.').setFooter({text:'MLD · مجتمع ملاذ'})],allowedMentions:{parse:[]}});
+      }catch{return message.reply('ما قدرت أقرأ الدعوات. تأكد من صلاحيات البوت.');}
+    }
+    if(command==='user'||command==='مستخدم'){
+      const member=message.mentions.members.first()||message.guild.members.cache.get(args[0])||message.member;
+      const u=member.user;
+      return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('👤 بطاقة العضو').setThumbnail(u.displayAvatarURL({size:256})).addFields({name:'الاسم',value:member.displayName||u.username,inline:true},{name:'الحساب',value:'<@'+u.id+'>',inline:true},{name:'الرتب',value:member.roles.cache.filter(r=>r.id!==message.guild.id).map(r=>r.toString()).slice(0,10).join('، ')||'لا توجد',inline:false},{name:'انضم للسيرفر',value:member.joinedTimestamp?'<t:'+Math.floor(member.joinedTimestamp/1000)+':R>':'غير معروف',inline:true})],allowedMentions:{parse:[]}});
+    }
+        if(command==='roleinfo'||command==='معلوماترتبة'){
       const role=message.mentions.roles.first()||message.guild.roles.cache.get(args[0])||message.guild.roles.cache.find(r=>r.name.toLowerCase()===args.join(' ').toLowerCase());
       if(!role)return message.reply('منشن الرتبة أو اكتب معرّفها. مثال: '+prefix+'roleinfo @الرتبة');
       return message.reply({content:'🎭 **'+role.name+'**\nالمعرّف: `'+role.id+'`\nالأعضاء: **'+role.members.size+'**\nاللون: **'+(role.hexColor||'#000000')+'**\nالترتيب: **'+role.position+'**',allowedMentions:{parse:[]}});
@@ -451,7 +500,13 @@ function installBotFeatures(client,bot){
       try{if(pool)await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);client.mldConfig=next;return message.reply('تم حفظ الأوامر المخصصة وتطبيقها فورًا.');}
       catch(e){console.error('Command settings save:',e.message);return message.reply('تعذر حفظ الإعدادات في قاعدة البيانات.');}
     }
-    if(command==='server')return message.reply({content:'**'+message.guild.name+'**\\nالأعضاء: '+message.guild.memberCount,allowedMentions:{parse:[]}});
+    if(command==='serverinfo'||command==='معلوماتالسيرفر'||command==='سيرفر'){
+        const g=message.guild;
+        const c=g.channels.cache;
+        const e=new EmbedBuilder().setColor(0xff9cde).setTitle('🏠 معلومات السيرفر').setThumbnail(g.iconURL({size:256})||null).addFields({name:'الاسم',value:g.name,inline:true},{name:'الأعضاء',value:String(g.memberCount),inline:true},{name:'الرتب',value:String(g.roles.cache.size-1),inline:true},{name:'الرومات النصية',value:String(c.filter(x=>x.type===ChannelType.GuildText||x.type===ChannelType.GuildAnnouncement).size),inline:true},{name:'الرومات الصوتية',value:String(c.filter(x=>x.type===ChannelType.GuildVoice||x.type===ChannelType.GuildStageVoice).size),inline:true},{name:'التعزيزات',value:String(g.premiumSubscriptionCount||0),inline:true},{name:'تاريخ الإنشاء',value:'<t:'+Math.floor(g.createdTimestamp/1000)+':D>',inline:true},{name:'المعرّف',value:g.id,inline:true}).setFooter({text:'MLD · مجتمع ملاذ'}).setTimestamp();
+        return message.reply({embeds:[e],allowedMentions:{parse:[]}});
+      }
+          if(command==='server')return message.reply({content:'**'+message.guild.name+'**\\nالأعضاء: '+message.guild.memberCount,allowedMentions:{parse:[]}});
 
     // Common prefix commands are available for every user bot, not only selected bot types.
     if(['membercount','members','عدد','عددالأعضاء'].includes(command))
@@ -548,7 +603,20 @@ function installBotFeatures(client,bot){
     if(['moderation','automod','system','allinone'].includes(type)){
       const target=message.mentions.members.first();
       const reason=args.slice(1).join(' ').slice(0,400)||'لم يذكر سبب';
-      if(command==='warn'){
+      if(command==='unban'||command==='فكحظر'){
+        if(!message.member.permissions.has(PermissionFlagsBits.BanMembers))return message.reply('تحتاج صلاحية حظر الأعضاء لفك الحظر.');
+        if(!message.guild.members.me?.permissions.has(PermissionFlagsBits.BanMembers))return message.reply('البوت يحتاج صلاحية حظر الأعضاء.');
+        const userId=String(args[0]||'').replace(/[<@!>]/g,'');
+        if(!/^\d{17,20}$/.test(userId))return message.reply('استخدم: '+prefix+'unban معرّف_العضو [السبب]');
+        const unbanReason=args.slice(1).join(' ').slice(0,400)||'تم فك الحظر بواسطة '+message.author.tag;
+        try{await message.guild.bans.remove(userId,unbanReason);await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_unban',{guildId:message.guild.id,targetId:userId,reason:unbanReason});await logToChannel(message.guild,config.modLogChannelId,'♻️ فك حظر المعرّف '+userId+' بواسطة '+message.author.tag+' | '+unbanReason);return message.reply({content:'تم فك الحظر بنجاح عن المعرّف `'+userId+'`.',allowedMentions:{parse:[]}});}catch{return message.reply('تعذر فك الحظر. تأكد أن المعرّف محظور وأن صلاحيات البوت صحيحة.');}
+      }
+      if(command==='allbans'||command==='قائمةالمحظورين'){
+        if(!message.member.permissions.has(PermissionFlagsBits.BanMembers))return message.reply('تحتاج صلاحية حظر الأعضاء لعرض القائمة.');
+        if(!message.guild.members.me?.permissions.has(PermissionFlagsBits.BanMembers))return message.reply('البوت يحتاج صلاحية حظر الأعضاء.');
+        try{const bans=await message.guild.bans.fetch();const entries=[...bans.values()].slice(0,40).map((entry,index)=>'**'+(index+1)+'.** '+(entry.user.tag||entry.user.username)+' (`'+entry.user.id+'`)'+(entry.reason?' — '+entry.reason.slice(0,100):''));const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('🔨 قائمة المحظورين').setDescription(entries.join('\n').slice(0,4000)||'قائمة الحظر فارغة.').setFooter({text:'عدد المحظورين: '+bans.size+' · يعرض أول 40'}).setTimestamp();return message.reply({embeds:[embed],allowedMentions:{parse:[]}});}catch{return message.reply('تعذر جلب قائمة المحظورين. تحقق من صلاحيات البوت.');}
+      }
+            if(command==='warn'){
         if(!message.member.permissions.has('ModerateMembers'))return message.reply('تحتاج صلاحية Timeout Members لتنفيذ الأمر.');
         if(!target)return message.reply('استخدم الأمر هكذا: '+prefix+'warn @عضو السبب');
         if(message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تنبه عضو رتبته مساوية أو أعلى من رتبتك.');
@@ -615,7 +683,47 @@ function installBotFeatures(client,bot){
         if(target.roles.highest.position>=message.guild.members.me.roles.highest.position)return message.reply('رتبة البوت يجب أن تكون أعلى من رتبة العضو المستهدف.');
         await target.setNickname(nick,'تعديل من بوت MLD');await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_nick',{guildId:message.guild.id,channelId:message.channel.id,targetId:target.id,nick});return message.reply('تم تعديل لقب العضو.');
       }
-      if(command==='roleadd'||command==='roleremove'){
+      if(command==='rolecreate'||command==='انشاءرتبة'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('تحتاج صلاحية إدارة الرتب.');
+        if(!message.guild.members.me?.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('البوت يحتاج صلاحية إدارة الرتب.');
+        const name=args.filter(x=>!/^#[0-9a-f]{6}$/i.test(x)).join(' ').trim();
+        const colorArg=args.find(x=>/^#[0-9a-f]{6}$/i.test(x));
+        if(!name)return message.reply('استخدم: '+prefix+'rolecreate اسم_الرتبة [#RRGGBB]');
+        try{const role=await message.guild.roles.create({name:name.slice(0,100),color:colorArg||'#ff9cde',reason:'إنشاء رتبة بواسطة '+message.author.tag});await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_rolecreate',{guildId:message.guild.id,roleId:role.id,roleName:role.name});return message.reply('تم إنشاء الرتبة '+role.toString()+' بنجاح.');}catch{return message.reply('تعذر إنشاء الرتبة. تحقق من صلاحيات البوت.');}
+      }
+      if(command==='roledelete'||command==='حذفرتبة'){
+        if(!message.member.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('تحتاج صلاحية إدارة الرتب.');
+        const role=message.mentions.roles.first()||message.guild.roles.cache.get(args[0]);
+        if(!role)return message.reply('منشن الرتبة أو اكتب معرّفها.');
+        if(role.id===message.guild.id||role.managed||role.position>=message.guild.members.me.roles.highest.position)return message.reply('لا يمكن حذف هذه الرتبة؛ تحقق من كونها غير مُدارة وأن رتبة البوت أعلى منها.');
+        if(message.guild.ownerId!==message.author.id&&role.position>=message.member.roles.highest.position)return message.reply('ما تقدر تحذف رتبة مساوية أو أعلى من رتبتك.');
+        try{await role.delete('حذف بواسطة '+message.author.tag);await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_roledelete',{guildId:message.guild.id,roleId:role.id,roleName:role.name});return message.reply('تم حذف الرتبة بنجاح.');}catch{return message.reply('تعذر حذف الرتبة. تحقق من الصلاحيات وترتيب الرتب.');}
+      }
+      if(['mute','unmute','vmute','vunmute'].includes(command)){
+        const target=message.mentions.members.first();
+        if(!target)return message.reply('منشن العضو المطلوب كتمه صوتيًا أو فك كتمه.');
+        if(target.id===message.author.id)return message.reply('ما تقدر تطبق الأمر على نفسك.');
+        if(message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تستهدف عضو رتبته مساوية أو أعلى من رتبتك.');
+        if(target.roles.highest.position>=message.guild.members.me.roles.highest.position)return message.reply('رتبة البوت يجب أن تكون أعلى من رتبة العضو.');
+        if(!target.voice.channelId)return message.reply('العضو لازم يكون داخل روم صوتي.');
+        const mute=['mute','vmute'].includes(command);
+        try{await target.voice.setMute(mute,(args.slice(1).join(' ')||'إجراء صوتي بواسطة '+message.author.tag).slice(0,400));await writeRuntimeLog(client.mldBotId,message.author.id,mute?'bot.voice_mute':'bot.voice_unmute',{guildId:message.guild.id,targetId:target.id,channelId:target.voice.channelId});return message.reply(mute?'تم كتم '+target.user.tag+' صوتيًا.':'تم فك الكتم الصوتي عن '+target.user.tag+'.');}catch{return message.reply('تعذر تنفيذ الأمر. تأكد من صلاحية كتم الأعضاء وأن رتبة البوت أعلى من العضو.');}
+      }
+      if(command==='move'||command==='moveme'){
+        const target=command==='moveme'?message.member:message.mentions.members.first();
+        if(!target)return message.reply('استخدم: '+prefix+'move @عضو #روم_صوتي أو '+prefix+'moveme #روم_صوتي');
+        const channel=message.mentions.channels.first()||message.guild.channels.cache.get(args.find(x=>/^\d{17,20}$/.test(x))||'');
+        if(!channel||(channel.type!==ChannelType.GuildVoice&&channel.type!==ChannelType.GuildStageVoice))return message.reply('منشن رومًا صوتيًا صالحًا.');
+        if(target.id!==message.author.id&&message.guild.ownerId!==message.author.id&&target.roles.highest.position>=message.member.roles.highest.position)return message.reply('ما تقدر تنقل عضو رتبته مساوية أو أعلى من رتبتك.');
+        if(!target.voice.channelId)return message.reply('العضو مو داخل روم صوتي حاليًا.');
+        try{await target.voice.setChannel(channel,'نقل بواسطة '+message.author.tag);return message.reply('تم نقل '+target.user.tag+' إلى '+channel.toString()+'.');}catch{return message.reply('تعذر النقل. تأكد من صلاحية Move Members.');}
+      }
+      if(command==='rooms'||command==='الغرفالصوتية'){
+        const channels=message.guild.channels.cache.filter(c=>c.type===ChannelType.GuildVoice||c.type===ChannelType.GuildStageVoice);
+        const body=[...channels.values()].slice(0,40).map(c=>'• '+c.name+' — '+c.members.size+' عضو (`'+c.id+'`)').join('\n');
+        return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🔊 الغرف الصوتية').setDescription(body.slice(0,4000)||'لا توجد غرف صوتية.').setFooter({text:'عدد الغرف: '+channels.size})],allowedMentions:{parse:[]}});
+      }
+            if(command==='roleadd'||command==='roleremove'){
         if(!message.member.permissions.has(PermissionFlagsBits.ManageRoles))return message.reply('تحتاج صلاحية إدارة الرتب.');
         const target=message.mentions.members.first(),role=message.mentions.roles.first();if(!target||!role)return message.reply('استخدم: '+prefix+command+' @عضو @رتبة');
         if(role.id===message.guild.id||role.position>=message.guild.members.me.roles.highest.position)return message.reply('رتبة البوت يجب أن تكون أعلى من الرتبة المستهدفة.');
