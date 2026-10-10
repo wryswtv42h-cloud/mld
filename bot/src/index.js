@@ -700,6 +700,8 @@ function installBotFeatures(client,bot){
         try{await role.delete('حذف بواسطة '+message.author.tag);await writeRuntimeLog(client.mldBotId,message.author.id,'bot.moderation_roledelete',{guildId:message.guild.id,roleId:role.id,roleName:role.name});return message.reply('تم حذف الرتبة بنجاح.');}catch{return message.reply('تعذر حذف الرتبة. تحقق من الصلاحيات وترتيب الرتب.');}
       }
       if(['mute','unmute','vmute','vunmute'].includes(command)){
+        if(!message.member.permissions.has(PermissionFlagsBits.MuteMembers))return message.reply('تحتاج صلاحية كتم الأعضاء صوتيًا.');
+        if(!message.guild.members.me?.permissions.has(PermissionFlagsBits.MuteMembers))return message.reply('البوت يحتاج صلاحية كتم الأعضاء صوتيًا.');
         const target=message.mentions.members.first();
         if(!target)return message.reply('منشن العضو المطلوب كتمه صوتيًا أو فك كتمه.');
         if(target.id===message.author.id)return message.reply('ما تقدر تطبق الأمر على نفسك.');
@@ -710,6 +712,8 @@ function installBotFeatures(client,bot){
         try{await target.voice.setMute(mute,(args.slice(1).join(' ')||'إجراء صوتي بواسطة '+message.author.tag).slice(0,400));await writeRuntimeLog(client.mldBotId,message.author.id,mute?'bot.voice_mute':'bot.voice_unmute',{guildId:message.guild.id,targetId:target.id,channelId:target.voice.channelId});return message.reply(mute?'تم كتم '+target.user.tag+' صوتيًا.':'تم فك الكتم الصوتي عن '+target.user.tag+'.');}catch{return message.reply('تعذر تنفيذ الأمر. تأكد من صلاحية كتم الأعضاء وأن رتبة البوت أعلى من العضو.');}
       }
       if(command==='move'||command==='moveme'){
+        if(command==='move'&&!message.member.permissions.has(PermissionFlagsBits.MoveMembers))return message.reply('تحتاج صلاحية نقل الأعضاء الصوتية.');
+        if(!message.guild.members.me?.permissions.has(PermissionFlagsBits.MoveMembers))return message.reply('البوت يحتاج صلاحية نقل الأعضاء الصوتية.');
         const target=command==='moveme'?message.member:message.mentions.members.first();
         if(!target)return message.reply('استخدم: '+prefix+'move @عضو #روم_صوتي أو '+prefix+'moveme #روم_صوتي');
         const channel=message.mentions.channels.first()||message.guild.channels.cache.get(args.find(x=>/^\d{17,20}$/.test(x))||'');
