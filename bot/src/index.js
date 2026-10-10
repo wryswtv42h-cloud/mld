@@ -134,7 +134,7 @@ function installBotFeatures(client,bot){
       }
     }
     if(!content.startsWith(prefix))return;
-    const [raw,...args]=content.slice(prefix.length).trim().split(/\s+/),command=String(raw||'').toLowerCase();
+    const [raw,...args]=content.slice(prefix.length).trim().split(/\s+/);let command=String(raw||'').toLowerCase();const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));if(aliasMatch&&!['help','ping','server','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
     if(!command)return;
     await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_used',{command,guildId:message.guild.id,channelId:message.channel.id});
     const requiredPermission={
