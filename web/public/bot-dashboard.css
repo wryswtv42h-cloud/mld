@@ -215,3 +215,15 @@ input:focus,textarea:focus,select:focus{outline:2px solid rgba(255,156,222,.65);
 .identity-editor .notice.locked{border-color:rgba(255,107,125,.35);color:var(--red)}
 .identity-editor .notice.good{border-color:rgba(95,240,177,.35);color:var(--green)}
 .profile-banner-preview{display:block;width:100%;max-height:180px;object-fit:cover;border-radius:14px;border:1px solid var(--line)}
+
+
+/* Accessible mobile hamburger navigation */
+.mobile-menu-toggle{display:none;align-items:center;justify-content:flex-start;gap:12px;width:100%;min-height:46px;padding:12px 15px;border:1px solid rgba(255,156,222,.24);border-radius:14px;background:linear-gradient(110deg,rgba(255,156,222,.14),rgba(168,111,223,.13));color:#fff8ff;font:inherit;font-weight:800;cursor:pointer}
+.mobile-menu-toggle span:first-child{font-size:1.25rem;line-height:1}
+@media(max-width:850px){
+ .mobile-menu-toggle{display:flex;grid-column:1;grid-row:2}
+ #app>#dashboardTabs{display:none;grid-column:1;grid-row:3;position:static;top:auto;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:10px;border-radius:16px}
+ #app>#dashboardTabs.mobile-open{display:flex}
+ #app>#dashboardTabs .tab{width:100%;justify-content:flex-start;text-align:right}
+ #app>.tab-panel{grid-column:1;grid-row:auto}
+}
