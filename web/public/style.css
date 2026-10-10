@@ -289,3 +289,7 @@ footer{width:min(1160px,calc(100% - 24px));margin:auto;padding:22px 0;border-top
 .game-table-board .monopoly-board{transform-origin:top center}
 @media(max-width:760px){.game-table-stage{grid-template-columns:minmax(66px,.65fr) minmax(0,2fr) minmax(66px,.65fr);gap:6px;padding:8px;border-radius:18px}.game-seat{padding:7px;gap:5px;border-radius:12px}.game-seat-avatar{width:28px;height:28px;flex-basis:28px;border-radius:9px}.game-seat b{font-size:.72rem}.game-seat small{font-size:.61rem}.game-seat.seat-left,.game-seat.seat-right{max-width:100%}.game-table-board .monopoly-board{transform:scale(.94)}}
 @media(max-width:460px){.game-table-stage{grid-template-columns:58px minmax(0,1fr) 58px;grid-template-rows:auto minmax(140px,auto) auto;padding:6px;gap:4px}.game-seat{flex-direction:column;text-align:center;padding:5px 3px;overflow-wrap:anywhere}.game-seat-avatar{width:24px;height:24px;flex-basis:24px}.game-seat b{font-size:.64rem}.game-seat small{font-size:.55rem}.game-seat.seat-top-left,.game-seat.seat-top-right{max-width:100%}.game-table-board .monopoly-board{transform:scale(.82);transform-origin:top center}}
+
+/* Reliable account tap target on mobile */
+.actions .user-label{background:transparent;border:0;padding:8px 10px;color:var(--muted);font-size:13px;min-height:40px;touch-action:manipulation;}
+#menuBtn{position:relative;z-index:61;min-width:44px;min-height:44px;touch-action:manipulation;}
