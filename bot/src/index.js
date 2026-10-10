@@ -51,6 +51,7 @@ async function writeRuntimeLog(botId,actorId,action,details={}){
 const reservedUserSlashCommands=new Set(['help','ping','server','serverinfo','botinfo']);
 function buildUserBotSlashCommands(client){
   const commands=[
+    {name:'help',description:'قائمة أوامر البوت التفاعلية'},
     {name:'ping',description:'فحص اتصال البوت'},
     {name:'serverinfo',description:'معلومات السيرفر الحالي'},
     {name:'botinfo',description:'معلومات البوت ومدة تشغيله'}
@@ -254,6 +255,7 @@ function installBotFeatures(client,bot){
         const allowedSlashRoles=Array.isArray(slashPolicy.allowedRoleIds)?slashPolicy.allowedRoleIds:[];
         const memberRoleIds=interaction.member?.roles?.cache?[...interaction.member.roles.cache.keys()]:(Array.isArray(interaction.member?.roles)?interaction.member.roles:[]);
         if(allowedSlashRoles.length&&interaction.guild?.ownerId!==interaction.user.id&&!allowedSlashRoles.some(roleId=>memberRoleIds.includes(String(roleId))))return interaction.reply({content:'ما عندك رتبة تسمح لك باستخدام هذا الأمر.',ephemeral:true});
+        if(name==='help')return interaction.reply(buildUserHelpPayload(client,interaction.user.id));
         if(name==='ping')return interaction.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
         if(name==='botinfo'){
           const seconds=Math.max(0,Math.floor((Date.now()-(client.readyTimestamp||Date.now()))/1000));
