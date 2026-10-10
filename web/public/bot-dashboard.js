@@ -59,7 +59,8 @@ automod_rule_delete|حذف قواعد الحماية
 reaction_add|إضافة التفاعلات
 reaction_remove|إزالة التفاعلات
 reaction_clear|مسح جميع التفاعلات
-`.trim().split(String.fromCharCode(10)).map(line=>{const [id,label]=line.split('|');return {id,label}});\nconst builtinCommands={
+`.trim().split(String.fromCharCode(10)).map(line=>{const [id,label]=line.split('|');return {id,label}});
+const builtinCommands={
   common:[['ping','فحص الاتصال','الجميع'],['help [رقم]','قائمة أوامر متعددة الصفحات','الجميع'],['server','معلومات السيرفر','الجميع']],
   moderation:[['membercount / members','عدد أعضاء السيرفر','الجميع'],['userinfo @عضو','معلومات العضو والرتب','الجميع'],['avatar [@عضو]','رابط الصورة الشخصية','الجميع'],['warn @عضو السبب','تنبيه غير دائم','ModerateMembers'],['kick @عضو','طرد عضو','KickMembers'],['ban @عضو','حظر عضو','BanMembers'],['clear 10','حذف الرسائل الحديثة','ManageMessages'],['say نص','إرسال نص باسم البوت','ManageMessages'],['slowmode ثواني','تغيير بطء القناة','ManageChannels'],['lock / unlock','قفل أو فتح الكتابة','ManageChannels'],['timeout @عضو دقائق','تقييد عضو','ModerateMembers'],['untimeout @عضو','إزالة التقييد','ModerateMembers'],['nick @عضو الاسم','تغيير اللقب','ManageNicknames'],['roleadd / roleremove','إضافة أو إزالة رتبة','ManageRoles'],['poll سؤال','إنشاء تصويت','الجميع'],['announce #روم نص','إرسال إعلان','ManageMessages']],
   applications:[['تقديم / apply','بدء طلب التقديم عبر الخاص','الجميع'],['طلباتي','إرشادات متابعة الطلب','الجميع'],['تذكرة / ticket','فتح تذكرة خاصة','الجميع'],['قفل / close','إغلاق التذكرة','صاحبها أو ManageChannels'],['إضافة / add @عضو','إضافة عضو للتذكرة','ManageChannels']],
