@@ -70,7 +70,7 @@ const builtinCommands={
   applicationsType:[],
   general:[]
 };
-const typeCommands=type=>[...(builtinCommands.common||[]),...((['system','moderation','automod'].includes(type))?builtinCommands.moderation:[]),...(type==='applications'?builtinCommands.applications:[]),...(type==='games'?builtinCommands.games:[]),...(type==='bank'?builtinCommands.bank:[]),...(type==='music'?builtinCommands.music:[]),[['command list','إدارة الأوامر المخصصة','ManageGuild'],['command add | الاسم | الوصف | الرد','إضافة أمر مخصص','ManageGuild'],['command edit | الاسم | الرد','تعديل أمر مخصص','ManageGuild'],['command toggle | الاسم','تفعيل أو تعطيل أمر','ManageGuild'],['command delete | الاسم','حذف أمر مخصص','ManageGuild']]];
+const typeCommands=type=>[...(builtinCommands.common||[]),...((['system','moderation','automod','allinone'].includes(type))?builtinCommands.moderation:[]),...((type==='applications'||type==='allinone')?builtinCommands.applications:[]),...((type==='games'||type==='allinone')?builtinCommands.games:[]),...((type==='bank'||type==='economy'||type==='allinone')?builtinCommands.bank:[]),...((type==='music'||type==='allinone')?builtinCommands.music:[]),[['command list','إدارة الأوامر المخصصة','ManageGuild'],['command add | الاسم | الوصف | الرد','إضافة أمر مخصص','ManageGuild'],['command edit | الاسم | الرد','تعديل أمر مخصص','ManageGuild'],['command toggle | الاسم','تفعيل أو تعطيل أمر','ManageGuild'],['command delete | الاسم','حذف أمر مخصص','ManageGuild']]];
 
 const typeNames={system:'⚙️ بوت السستم',applications:'📝 التقديمات + التيكت',games:'🎮 بوت الألعاب',bank:'💰 بوت البنك',support:'🛡️ بوت الدعم 24/7',music:'🎵 بوت الميوزك',welcome:'👋 بوت الترحيب',moderation:'🛡️ بوت الإشراف',automod:'🛡️ الحماية التلقائية',tickets:'🎫 بوت التذاكر',general:'✦ بوت عام',custom:'✦ بوت مخصص',cinema:'🎬 بوت السينما',leveling:'⭐ بوت المستويات',economy:'💰 بوت الاقتصاد',suggestions:'💡 الاقتراحات',broadcast:'📢 بوت الإعلانات'};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -89,8 +89,8 @@ function commandKey(label){return String(label||'').trim().split(/\s+/)[0].repla
 function roleOptions(selected=[]){const chosen=new Set((selected||[]).map(String));return (state.resources?.roles||[]).filter(r=>r.name!=='@everyone').map(r=>'<option value="'+esc(r.id)+'" '+(chosen.has(String(r.id))?'selected':'')+'>'+esc(r.name)+'</option>').join('')}
 function renderCommands(){
  const list=$('#commandsList'),q=$('#commandSearch').value.trim().toLowerCase(),filter=$('#commandFilter').value,commands=state.settings.commands||[],type=state.bot?.bot_type||'general',policies=state.settings.commandSettings||{},seen=new Set();
- const gameKeys=new Set((builtinCommands.games||[]).map(x=>commandKey(x[0].split('/')[0])));
- const bankKeys=new Set((builtinCommands.bank||[]).map(x=>commandKey(x[0].split('/')[0])));
+ const gameKeys=new Set((builtinCommands.games||[]).flatMap(x=>String(x[0]).split(/\s*\/\s*/).map(commandKey)));
+ const bankKeys=new Set((builtinCommands.bank||[]).flatMap(x=>String(x[0]).split(/\s*\/\s*/).map(commandKey)));
  const protectionKeys=new Set(['warn','kick','ban','clear','slowmode','lock','unlock','timeout','untimeout']);
  const groupOf=key=>gameKeys.has(key)?'games':bankKeys.has(key)?'bank':protectionKeys.has(key)?'protection':'admin';
  const entries=typeCommands(type).flatMap(([label,desc,perm])=>String(label).split(/\s*\/\s*/).map(part=>({key:commandKey(part),label:part.trim(),desc,perm}))).filter(x=>x.key&&!seen.has(x.key)&&seen.add(x.key));
