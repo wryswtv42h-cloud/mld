@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType, ActivityType, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, Partials, EmbedBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, Events, REST, Routes, PermissionFlagsBits, ChannelType, ActivityType, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, Partials, EmbedBuilder } from 'discord.js';
 import http from 'http';
 import crypto from 'crypto';
 import pg from 'pg';
@@ -132,6 +132,93 @@ function installBotFeatures(client,bot){
   setupPrivateRooms(client);
   client.mldRecentMessages=new Map();
   client.mldPendingApplications=new Map();
+  // Private text-room panel: create, add member, remove member, and delete with ownership checks.
+  client.on(Events.InteractionCreate,async interaction=>{
+    const customId=String(interaction.customId||'');
+    if(!customId.startsWith('mld-private:'))return;
+    try{
+      if(interaction.isButton()&&customId==='mld-private:create'){
+        const guild=interaction.guild;
+        if(!guild)return interaction.reply({content:'استخدم لوحة الرومات داخل السيرفر.',ephemeral:true});
+        const me=guild.members.me;
+        if(!me?.permissions.has(PermissionFlagsBits.ManageChannels))return interaction.reply({content:'البوت يحتاج صلاحية Manage Channels لإنشاء الروم الخاص.',ephemeral:true});
+        const ownerId=interaction.user.id;
+        const existing=guild.channels.cache.find(ch=>ch.type===ChannelType.GuildText&&String(ch.topic||'')==='MLD_PRIVATE_ROOM:'+ownerId);
+        if(existing)return interaction.reply({content:'عندك روم خاص موجود بالفعل: '+existing.toString(),ephemeral:true});
+        await interaction.deferReply({ephemeral:true});
+        const slug=String(interaction.user.username||'member').toLowerCase().normalize('NFKD').replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,65)||'member';
+        const channel=await guild.channels.create({
+          name:('خاص-'+slug+'-'+ownerId.slice(-4)).slice(0,95),
+          type:ChannelType.GuildText,
+          topic:'MLD_PRIVATE_ROOM:'+ownerId,
+          permissionOverwrites:[
+            {id:guild.id,deny:[PermissionFlagsBits.ViewChannel]},
+            {id:ownerId,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AttachFiles,PermissionFlagsBits.EmbedLinks]},
+            {id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageMessages]}
+          ],
+          reason:'إنشاء روم خاص من لوحة MLD'
+        });
+        const controls=new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('mld-private:add:'+ownerId+':'+channel.id).setLabel('إضافة عضو').setEmoji('➕').setStyle(ButtonStyle.Success),
+          new ButtonBuilder().setCustomId('mld-private:kick:'+ownerId+':'+channel.id).setLabel('إزالة عضو').setEmoji('➖').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('mld-private:delete:'+ownerId+':'+channel.id).setLabel('حذف الروم').setEmoji('🗑️').setStyle(ButtonStyle.Danger)
+        );
+        const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('🔐 رومك الخاص').setDescription('الروم خاص بك. استخدم الأزرار لإدارة الأعضاء. إزالة العضو تزيل وصوله لهذا الروم فقط ولا تطرده من السيرفر.').setFooter({text:'MLD · مجتمع ملاذ'}).setTimestamp();
+        await channel.send({content:'<@'+ownerId+'>',embeds:[embed],components:[controls],allowedMentions:{users:[ownerId]}});
+        return interaction.editReply({content:'تم إنشاء رومك الخاص: '+channel.toString()});
+      }
+      if(interaction.isButton()){
+        const parts=customId.split(':');
+        if(parts.length!==4)return;
+        const [,action,ownerId,channelId]=parts;
+        if(!['add','kick','delete'].includes(action))return;
+        const channel=interaction.guild?.channels.cache.get(channelId);
+        if(!channel||channel.type!==ChannelType.GuildText||String(channel.topic||'')!=='MLD_PRIVATE_ROOM:'+ownerId)return interaction.reply({content:'الروم غير موجود أو لم يعد رومًا خاصًا صالحًا.',ephemeral:true});
+        const isOwner=interaction.user.id===ownerId;
+        const isAdmin=!!interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels)||interaction.guild?.ownerId===interaction.user.id;
+        if(!isOwner&&!isAdmin)return interaction.reply({content:'إدارة هذا الروم متاحة لصاحبه أو لإدارة السيرفر.',ephemeral:true});
+        if(action==='delete'){
+          await interaction.reply({content:'جارٍ حذف الروم الخاص…',ephemeral:true});
+          await channel.delete('حذف روم خاص من لوحة MLD').catch(async()=>{});
+          return;
+        }
+        const modal=new ModalBuilder()
+          .setCustomId('mld-private:modal:'+action+':'+ownerId+':'+channelId)
+          .setTitle(action==='add'?'إضافة عضو للروم':'إزالة عضو من الروم')
+          .addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('member_id').setLabel('معرّف العضو أو منشنه').setPlaceholder('123456789012345678 أو @عضو').setStyle(TextInputStyle.Short).setRequired(true).setMaxLength(40)));
+        return interaction.showModal(modal);
+      }
+      if(interaction.isModalSubmit()){
+        const parts=customId.split(':');
+        if(parts.length!==5||parts[1]!=='modal')return;
+        const [, ,action,ownerId,channelId]=parts;
+        if(!['add','kick'].includes(action))return;
+        const channel=interaction.guild?.channels.cache.get(channelId);
+        if(!channel||channel.type!==ChannelType.GuildText||String(channel.topic||'')!=='MLD_PRIVATE_ROOM:'+ownerId)return interaction.reply({content:'الروم غير موجود أو لم يعد رومًا خاصًا صالحًا.',ephemeral:true});
+        const isOwner=interaction.user.id===ownerId;
+        const isAdmin=!!interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels)||interaction.guild?.ownerId===interaction.user.id;
+        if(!isOwner&&!isAdmin)return interaction.reply({content:'ما عندك صلاحية إدارة هذا الروم.',ephemeral:true});
+        const memberId=String(interaction.fields.getTextInputValue('member_id')||'').replace(/[<@!>]/g,'').trim();
+        if(!/^\d{17,20}$/.test(memberId))return interaction.reply({content:'أدخل Discord ID صحيحًا أو منشن عضو.',ephemeral:true});
+        if(memberId===ownerId)return interaction.reply({content:'ما تقدر تزيل صاحب الروم من رومه الخاص.',ephemeral:true});
+        const member=await interaction.guild.members.fetch(memberId).catch(()=>null);
+        if(!member)return interaction.reply({content:'ما لقيت هذا العضو في السيرفر.',ephemeral:true});
+        if(action==='add'){
+          await channel.permissionOverwrites.edit(member.id,{ViewChannel:true,SendMessages:true,ReadMessageHistory:true,AttachFiles:true,EmbedLinks:true},{reason:'إضافة عضو إلى روم MLD خاص'});
+          return interaction.reply({content:'تمت إضافة '+member.toString()+' إلى '+channel.toString()+'.',ephemeral:true});
+        }
+        const overwrite=channel.permissionOverwrites.cache.get(member.id);
+        if(!overwrite)return interaction.reply({content:'العضو ما عنده صلاحية مخصصة في هذا الروم.',ephemeral:true});
+        await channel.permissionOverwrites.delete(member.id,'إزالة عضو من روم MLD خاص');
+        return interaction.reply({content:'تمت إزالة وصول '+member.toString()+' إلى الروم فقط.',ephemeral:true});
+      }
+    }catch(error){
+      console.error('Private room interaction:',error?.stack||error);
+      const message='تعذر تنفيذ العملية. تأكد من صلاحيات البوت وحاول مرة ثانية.';
+      if(interaction.deferred||interaction.replied)await interaction.followUp({content:message,ephemeral:true}).catch(()=>{});
+      else await interaction.reply({content:message,ephemeral:true}).catch(()=>{});
+    }
+  });
   const logToChannel=async(guild,channelId,text)=>{
     if(!channelId)return;
     const channel=guild.channels.cache.get(String(channelId));
