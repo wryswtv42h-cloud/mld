@@ -118,7 +118,7 @@ function installBotFeatures(client,bot){
       if(!botMember?.permissions.has(requiredPermission))return message.reply('البوت نفسه يحتاج صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');
     }
     if(command==='ping')return message.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
-    if(command==='help') {
+        if(command==='help') {
       const page=Math.max(1,Math.min(50,Number(args[0])||1));
       const core=[
         ['ping','فحص اتصال البوت','الجميع'],['help [رقم]','عرض الأوامر على صفحات','الجميع'],['server','معلومات السيرفر','الجميع'],['membercount','عدد الأعضاء','الجميع'],['members','اختصار عدد الأعضاء','الجميع'],
@@ -130,26 +130,23 @@ function installBotFeatures(client,bot){
       ];
       const rows=[...core];
       if(['moderation','automod','system'].includes(type))rows.push(...moderation);
-      const custom=Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false&&/^[\\p{L}a-z0-9_-]{1,32}$/iu.test(String(x.name||''))).map(x=>[String(x.name),String(x.description||'أمر مخصص'),'حسب إعداد الأمر']):[];
+      const custom=Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false&&/^[a-z0-9_-]{1,32}$/i.test(String(x.name||''))).map(x=>[String(x.name),String(x.description||'أمر مخصص'),'حسب إعداد الأمر']):[];
       rows.push(...custom);
       const pageSize=8,total=Math.max(1,Math.ceil(rows.length/pageSize)),p=Math.min(page,total),items=rows.slice((p-1)*pageSize,p*pageSize);
       const lines=items.map(([name,desc,perm])=>'• '+prefix+name+' — '+desc+' ['+perm+']');
-      return message.reply({content:'**أوامر '+client.user.username+'** · صفحة '+p+'/'+total+'\\n'+lines.join('\\n')+'\\nاكتب '+prefix+'help '+(p<total?p+1:1)+' للصفحة '+(p<total?'التالية':'الأولى')+'.'+(type==='system'||type==='moderation'||type==='automod'?'\\nصلاحيات الأوامر الإدارية تُفحص من Discord قبل التنفيذ.':''),allowedMentions:{parse:[]}});
+      return message.reply({content:'**أوامر '+client.user.username+'** · صفحة '+p+'/'+total+'\n'+lines.join('\n')+'\nاكتب '+prefix+'help '+(p<total?p+1:1)+' للصفحة '+(p<total?'التالية':'الأولى')+'.'+(['system','moderation','automod'].includes(type)?'\nصلاحيات الأوامر الإدارية تُفحص من Discord قبل التنفيذ.':''),allowedMentions:{parse:[]}});
     }
     if(command==='command'){
       if(!message.member.permissions.has(PermissionFlagsBits.ManageGuild))return message.reply('إدارة الأوامر من Discord تتطلب صلاحية Manage Server.');
-      const rawArgs=content.slice(prefix.length).trim().replace(/^\\S+\\s*/,'');
+      const rawArgs=content.slice(prefix.length).trim().replace(/^\S+\s*/,'');
       const parts=rawArgs.split('|').map(x=>x.trim());
-      const action=String(parts[0]||'').toLowerCase(),name=String(parts[1]||'').replace(new RegExp('^'+prefix.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\    if(command==='help') {
-      const custom=Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false).map(x=>prefix+x.name+' — '+(x.description||'أمر مخصص')):[];
-      const moderation=['moderation','automod','system'].includes(type)?'\\n'+[prefix+'warn @عضو السبب',prefix+'kick @عضو السبب',prefix+'ban @عضو السبب',prefix+'clear 10',prefix+'userinfo @عضو',prefix+'avatar @عضو',prefix+'membercount',prefix+'say نص',prefix+'slowmode ثواني',prefix+'lock',prefix+'unlock',prefix+'timeout @عضو دقائق',prefix+'untimeout @عضو',prefix+'nick @عضو الاسم',prefix+'roleadd @عضو @رتبة',prefix+'roleremove @عضو @رتبة',prefix+'poll سؤال',prefix+'announce #روم نص'].join('\\n'):'';
-      return message.reply({content:'**أوامر '+client.user.username+'**\\n'+[prefix+'ping — فحص الاتصال',prefix+'help — قائمة الأوامر',prefix+'server — معلومات السيرفر',...custom].join('\\n').concat(moderation).slice(0,1800),allowedMentions:{parse:[]}});
-    }')),'').trim().toLowerCase();
+      const action=String(parts[0]||'').toLowerCase(),name=String(parts[1]||'').toLowerCase();
       const commands=Array.isArray(config.commands)?config.commands.map(x=>({...x})):[],index=commands.findIndex(x=>String(x.name||'').toLowerCase()===name);
-      if(action==='list')return message.reply({content:commands.length?'**الأوامر المخصصة**\\n'+commands.slice(0,25).map(x=>prefix+x.name+' — '+(x.enabled===false?'معطل':'مفعل')).join('\\n'):'لا توجد أوامر مخصصة بعد.',allowedMentions:{parse:[]}});
+      if(action==='list')return message.reply({content:commands.length?'**الأوامر المخصصة**\n'+commands.slice(0,25).map(x=>prefix+x.name+' — '+(x.enabled===false?'معطل':'مفعل')).join('\n'):'لا توجد أوامر مخصصة بعد.',allowedMentions:{parse:[]}});
       if(action==='add'){
         const commandName=String(parts[1]||'').toLowerCase(),description=String(parts[2]||'أمر مخصص'),response=String(parts.slice(3).join(' | ')||'');
-        if(!/^[a-z0-9_-]{1,32}$/.test(commandName)||!response)return message.reply('الصيغة: '+prefix+'command add | اسم_انجليزي | الوصف | الرد');
+        const reserved=['help','ping','server','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'];
+        if(!/^[a-z0-9_-]{1,32}$/.test(commandName)||reserved.includes(commandName)||!response)return message.reply('الصيغة: '+prefix+'command add | اسم_انجليزي | الوصف | الرد. لا يمكن استخدام اسم أمر محجوز.');
         if(commands.some(x=>String(x.name||'').toLowerCase()===commandName))return message.reply('اسم الأمر مستخدم بالفعل.');
         commands.push({name:commandName,description:description.slice(0,100),response:response.slice(0,1800),enabled:true});
       }else if(action==='delete'||action==='remove'){
@@ -162,7 +159,9 @@ function installBotFeatures(client,bot){
         if(index<0||!parts[2])return message.reply('الصيغة: '+prefix+'command edit | اسم_الأمر | الرد الجديد');
         commands[index].response=parts.slice(2).join(' | ').slice(0,1800);
       }else return message.reply('إدارة الأوامر: '+prefix+'command list / add | اسم_انجليزي | الوصف | الرد / edit | الاسم | الرد / toggle | الاسم / delete | الاسم');
-      const next={...config,commands};try{if(pool)await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);client.mldConfig=next;return message.reply('تم حفظ الأوامر المخصصة وتطبيقها فورًا.');}catch(e){console.error('Command settings save:',e.message);return message.reply('تعذر حفظ الإعدادات في قاعدة البيانات.');}
+      const next={...config,commands};
+      try{if(pool)await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);client.mldConfig=next;return message.reply('تم حفظ الأوامر المخصصة وتطبيقها فورًا.');}
+      catch(e){console.error('Command settings save:',e.message);return message.reply('تعذر حفظ الإعدادات في قاعدة البيانات.');}
     }
     if(command==='server')return message.reply({content:'**'+message.guild.name+'**\\nالأعضاء: '+message.guild.memberCount,allowedMentions:{parse:[]}});
     if(['moderation','automod','system'].includes(type)){
