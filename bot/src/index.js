@@ -47,39 +47,15 @@ async function writeRuntimeLog(botId,actorId,action,details={}){
     await pool.query("INSERT INTO bot_logs(bot_id,actor_id,action,details) VALUES($1,$2,$3,$4)",[String(botId),String(actorId||''),String(action).slice(0,100),JSON.stringify(details)]);
   }catch(e){console.error('Bot audit log:',e.message);auditTableReady=null;}
 }
-const reservedUserSlashCommands=new Set(['help','ping','server','membercount','uptime','avatar','userinfo','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','ticket','apply']);
+const reservedUserSlashCommands=new Set(['help','ping','server','serverinfo','botinfo']);
 function buildUserBotSlashCommands(client){
   const commands=[
-    {name:'help',description:'عرض دليل أوامر البوت'},
-    {name:'ping',description:'فحص الاتصال وسرعة استجابة البوت'},
-    {name:'server',description:'عرض معلومات السيرفر الحالي'},
-    {name:'serverinfo',description:'بطاقة معلومات السيرفر'},
-    {name:'servericon',description:'عرض أيقونة السيرفر'},
-    {name:'membercount',description:'عرض عدد أعضاء السيرفر'},
-    {name:'channelcount',description:'عرض عدد القنوات'},
-    {name:'roles',description:'عرض أبرز رتب السيرفر'},
-    {name:'uptime',description:'عرض مدة تشغيل البوت'},
-    {name:'avatar',description:'عرض الصورة الشخصية',options:[{type:6,name:'user',description:'العضو المطلوب (اختياري)',required:false}]},
-    {name:'userinfo',description:'عرض معلومات عضو',options:[{type:6,name:'user',description:'العضو المطلوب (اختياري)',required:false}]},
-    {name:'roll',description:'رمي نرد بعدد أوجه تختاره',options:[{type:4,name:'max',description:'أعلى رقم (2 إلى 1000000)',required:false,min_value:2,max_value:1000000}]},
-    {name:'random',description:'اختيار رقم عشوائي بين حدين',options:[{type:4,name:'min',description:'الحد الأدنى',required:true,min_value:-100000000,max_value:100000000},{type:4,name:'max',description:'الحد الأعلى',required:true,min_value:-100000000,max_value:100000000}]},
-    {name:'coinflip',description:'رمي قطعة نقدية'},
-    {name:'eightball',description:'إجابة عشوائية عن سؤال',options:[{type:3,name:'question',description:'اكتب سؤالك',required:true,max_length:500}]},
-    {name:'joke',description:'نكتة عشوائية خفيفة'}
+    {name:'ping',description:'فحص اتصال البوت'},
+    {name:'serverinfo',description:'معلومات السيرفر الحالي'},
+    {name:'botinfo',description:'معلومات البوت ومدة تشغيله'}
   ];
-  if(['tickets','applications','allinone'].includes(client.mldType))commands.push({name:'ticket',description:'فتح تذكرة دعم خاصة'});
-  if(['applications','allinone'].includes(client.mldType))commands.push({name:'apply',description:'بدء طلب التقديم عبر الخاص'});
   const commandSettings=client.mldConfig?.commandSettings&&typeof client.mldConfig.commandSettings==='object'?client.mldConfig.commandSettings:{};
-  for(let i=commands.length-1;i>=0;i--)if(commandSettings[commands[i].name]?.enabled===false)commands.splice(i,1);
-  const seen=new Set(commands.map(x=>x.name));
-  for(const item of (Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[])){
-    const name=String(item?.name||'').toLowerCase();
-    if(item?.enabled===false||!/^[-a-z0-9_]{1,32}$/.test(name)||seen.has(name))continue;
-    commands.push({name,description:String(item.description||'أمر مخصص').trim().slice(0,100)||'أمر مخصص',options:[{type:3,name:'args',description:'نص اختياري للأمر',required:false,max_length:500}]});
-    seen.add(name);
-    if(commands.length>=100)break;
-  }
-  return commands.slice(0,100);
+  return commands.filter(command=>commandSettings[command.name]?.enabled!==false);
 }
 async function registerUserBotSlashCommands(client,bot){
   if(!client.user||!/^\d{17,20}$/.test(String(bot.guild_id||'')))return;
@@ -189,6 +165,19 @@ function installBotFeatures(client,bot){
         const memberRoleIds=interaction.member?.roles?.cache?[...interaction.member.roles.cache.keys()]:(Array.isArray(interaction.member?.roles)?interaction.member.roles:[]);
         if(allowedSlashRoles.length&&interaction.guild?.ownerId!==interaction.user.id&&!allowedSlashRoles.some(roleId=>memberRoleIds.includes(String(roleId))))return interaction.reply({content:'ما عندك رتبة تسمح لك باستخدام هذا الأمر.',ephemeral:true});
         if(name==='ping')return interaction.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
+        if(name==='botinfo'){
+          const seconds=Math.max(0,Math.floor((Date.now()-(client.readyTimestamp||Date.now()))/1000));
+          const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('🤖 معلومات البوت')
+            .setThumbnail(client.user.displayAvatarURL({size:256}))
+            .addFields(
+              {name:'اسم البوت',value:String(client.user.tag||client.user.username).slice(0,100),inline:true},
+              {name:'السيرفرات',value:String(client.guilds.cache.size),inline:true},
+              {name:'زمن الاستجابة',value:String(Math.max(0,Math.round(client.ws.ping)))+' ms',inline:true},
+              {name:'مدة التشغيل',value:Math.floor(seconds/86400)+' يوم · '+Math.floor(seconds%86400/3600)+' ساعة · '+Math.floor(seconds%3600/60)+' دقيقة',inline:false}
+            ).setFooter({text:'MLD · مجتمع ملاذ'}).setTimestamp();
+          return interaction.reply({embeds:[embed],allowedMentions:{parse:[]}});
+        }
+
         if(name==='ticket'){
           if(!interaction.guild)return interaction.reply({content:'هذا الأمر يعمل داخل السيرفر فقط.',ephemeral:true});
           const cfg=client.mldConfig||{},supportRole=String(cfg.supportRoleId||'');
