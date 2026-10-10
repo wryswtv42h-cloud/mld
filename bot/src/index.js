@@ -297,6 +297,7 @@ function installBotFeatures(client,bot){
     const config=client.mldConfig||{},type=client.mldType||'general';
     const prefix=String(config.prefix||'!').slice(0,4);
     const content=String(message.content||'');
+    if(/^(?:help|مساعدة|هيلب)$/i.test(content.trim()))return message.reply({...buildUserHelpPayload(client,message.author.id),allowedMentions:{parse:[]}}).catch(()=>{});
     const words=String(config.blockedWords||'').split(/[\n,،]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
     const autoMod=type==='automod'||config.automodEnabled===true;
     if(autoMod){
