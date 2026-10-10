@@ -75,7 +75,7 @@ function ensureQueue(client,message){
 export function setupMusic(client){
   client.mldMusicQueues=queues;
   client.on(Events.MessageCreate,async message=>{
-    if(!message.guild||message.author.bot||client.mldType!=='music')return;
+    if(!message.guild||message.author.bot||!['music','allinone'].includes(client.mldType))return;
     const cfg=client.mldConfig||{},prefix=String(cfg.prefix||'!').slice(0,4);
     const text=String(message.content||'').trim();if(!text.startsWith(prefix))return;
     const [cmd,...args]=text.slice(prefix.length).trim().split(/\s+/),arg=args.join(' ');
