@@ -1,0 +1,22 @@
+name: Validate MLD source
+on:
+  push:
+    branches: [feat/allinone-source-integration]
+  pull_request:
+    branches: [main]
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check API and bot JavaScript syntax
+        run: |
+          node --check api/src/routes/bots.js
+          node --check bot/src/index.js
+      - name: Check dashboard JavaScript syntax
+        run: |
+          node --check web/public/bot-dashboard.js
+          node --check web/public/app.js
