@@ -62,7 +62,7 @@ function buildUserBotSlashCommands(client){
   return commands.slice(0,100);
 }
 async function registerUserBotSlashCommands(client,bot){
-  if(!client.user||!/^\\d{17,20}$/.test(String(bot.guild_id||'')))return;
+  if(!client.user||!/^\d{17,20}$/.test(String(bot.guild_id||'')))return;
   const body=buildUserBotSlashCommands(client);
   const signature=JSON.stringify(body);
   if(client.mldSlashSignature===signature)return;
@@ -116,7 +116,7 @@ function installBotFeatures(client,bot){
         if(name==='ping')return interaction.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
         if(name==='help'){
           const names=['/ping','/server','/membercount','/uptime','/avatar','/userinfo',...(Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false&&/^[-a-z0-9_]{1,32}$/i.test(String(x.name||''))).map(x=>'/'+x.name):[])];
-          const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('📚 أوامر '+client.user.username).setDescription(names.slice(0,50).map(x=>'• '+x).join('\\n')).setFooter({text:'MLD · تقدر تستخدم أوامر / أو البادئة '+prefix}).setTimestamp();
+          const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('📚 أوامر '+client.user.username).setDescription(names.slice(0,50).map(x=>'• '+x).join('\n')).setFooter({text:'MLD · تقدر تستخدم أوامر / أو البادئة '+prefix}).setTimestamp();
           return interaction.reply({embeds:[embed],allowedMentions:{parse:[]}});
         }
         if(name==='server'){
