@@ -1,4 +1,4 @@
-import { Events } from 'discord.js';
+import { Events, EmbedBuilder } from 'discord.js';
 
 const GAME_NAMES = ['سالفة','برا السالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس','المتجر','تحويل','ايقاف'];
 const questions = {
@@ -40,6 +40,7 @@ export function setupGames(client, pool) {
   if (pool) ensureScores(pool).catch(e=>console.error('Game score table:',e.message));
   client.mldGameRounds = new Map();
   client.mldXO = new Map();
+  client.mldMafiaGames = new Map();
   client.mldGameScoresReady = pool ? ensureScores(pool) : Promise.resolve();
   client.on(Events.MessageCreate, async message => {
     if (!message.guild || message.author.bot || !['games','allinone'].includes(client.mldType)) return;
@@ -77,7 +78,64 @@ export function setupGames(client, pool) {
     if(!enabled(client,name))return safeReply(message,'هذه اللعبة معطّلة من لوحة التحكم.');
     if(['زر','حجره'].includes(name)){const choices=['حجر 🪨','ورقة 📄','مقص ✂️'],bot=pick(choices),user=String(parts.join(' '));if(!user)return safeReply(message,'اختر: '+prefix+name+' حجر أو ورقة أو مقص');const map={'حجر':'حجر 🪨','ورقة':'ورقة 📄','مقص':'مقص ✂️','مقصّ':'مقص ✂️'};const p=map[user]||choices.find(x=>x.startsWith(user));if(!p)return safeReply(message,'اختيارك غير معروف. استخدم حجر أو ورقة أو مقص.');const win=p===bot?'تعادل':((p.startsWith('حجر')&&bot.startsWith('مقص'))||(p.startsWith('ورقة')&&bot.startsWith('حجر'))||(p.startsWith('مقص')&&bot.startsWith('ورقة')))?'فزت!':'خسرت!';if(win==='فزت!')await award(pool,client,message,Number(cfg.gamePoints??10)).catch(()=>{});return safeReply(message,'أنت: '+p+'\nأنا: '+bot+'\n'+win);}
     if(name==='روليت'){const n=Math.floor(Math.random()*6)+1;return safeReply(message,'🎲 روليت الحظ: '+n+' من 6 — '+(n===6?'ضربة حظ!':'جرّب مرة ثانية'));}
-    if(name==='مافيا')return safeReply(message,'🕵️ مافيا: اجمع 4 لاعبين على الأقل ثم ابدأ التصويت. هذه الجولة السريعة تختار دورك: **'+pick(['مدني','طبيب','محقق','مافيا'])+'**. للتجربة الجماعية اكتب '+prefix+'تصويت <موضوع>.');
+    if(name==='مافيا'){
+      const action=String(parts[0]||'').toLowerCase(),channelId=message.channel.id;
+      let game=client.mldMafiaGames.get(channelId);
+      if(['إنهاء','انهاء','إلغاء','الغاء'].includes(action)){
+        if(!game)return safeReply(message,'ما فيه جولة مافيا شغالة هنا.');
+        if(game.hostId!==message.author.id&&!message.member.permissions.has(PermissionFlagsBits.ManageGuild))return safeReply(message,'مضيف الجولة أو الإدارة فقط يقدرون ينهونها.');
+        client.mldMafiaGames.delete(channelId);return safeReply(message,'⏹️ انتهت جولة المافيا.');
+      }
+      if(['انضم','join'].includes(action)){
+        if(!game||game.phase!=='join')return safeReply(message,'ما فيه غرفة تستقبل لاعبين. اكتب '+prefix+'مافيا لفتح غرفة جديدة.');
+        if(game.players.includes(message.author.id))return safeReply(message,'أنت منضم بالفعل.');
+        if(game.players.length>=12)return safeReply(message,'الغرفة مكتملة (12 لاعبًا).');
+        game.players.push(message.author.id);
+        return safeReply(message,'✅ انضم '+message.member.displayName+' إلى المافيا ('+game.players.length+'/12). المضيف يبدأ بـ '+prefix+'مافيا ابدأ.');
+      }
+      if(['ابدأ','ابدء','start'].includes(action)){
+        if(!game||game.phase!=='join')return safeReply(message,'افتح غرفة أولًا بـ '+prefix+'مافيا.');
+        if(game.hostId!==message.author.id&&!message.member.permissions.has(PermissionFlagsBits.ManageGuild))return safeReply(message,'مضيف الغرفة أو الإدارة فقط يقدرون يبدأون الجولة.');
+        if(game.players.length<4)return safeReply(message,'تحتاج 4 لاعبين على الأقل. اكتب '+prefix+'مافيا انضم للانضمام.');
+        const shuffled=[...game.players].sort(()=>Math.random()-.5),mafiaCount=Math.max(1,Math.floor(shuffled.length/4));
+        game.roles={};game.alive=[...shuffled];game.votes={};game.phase='vote';game.day=1;
+        shuffled.forEach((id,index)=>game.roles[id]=index<mafiaCount?'مافيا':'مدني');
+        try{
+          for(const uid of shuffled){const user=await client.users.fetch(uid);await user.send('🕵️ **دورك في مافيا ملاذ**\nدورك: **'+game.roles[uid]+'**\n'+(game.roles[uid]==='مافيا'?'تظاهر أنك مدني وحاول البقاء.':'اكتشف المافيا وصوّت عليها.')+'\nالسيرفر: '+message.guild.name+' · الجولة '+game.day);}
+        }catch{
+          client.mldMafiaGames.delete(channelId);
+          return safeReply(message,'تعذر إرسال الأدوار بالخاص لأحد اللاعبين. فعّل الرسائل الخاصة من أعضاء السيرفر ثم افتح جولة جديدة.');
+        }
+        return safeReply(message,'🌙 **بدأت جولة المافيا!**\nاللاعبون: '+game.alive.map(uid=>'<@'+uid+'>').join('، ')+'\nتم إرسال الأدوار بالخاص. ناقشوا ثم صوّتوا بـ '+prefix+'مافيا تصويت @عضو\nلإنهاء الجولة: '+prefix+'مافيا إنهاء');
+      }
+      if(['تصويت','صوت','vote'].includes(action)){
+        if(!game||game.phase!=='vote')return safeReply(message,'ما فيه جولة تصويت حاليًا.');
+        if(!game.alive.includes(message.author.id))return safeReply(message,'أنت خارج الجولة أو لست لاعبًا فيها.');
+        const target=message.mentions.users.first();
+        if(!target||!game.alive.includes(target.id)||target.id===message.author.id)return safeReply(message,'منشن لاعبًا حيًا غيرك: '+prefix+'مافيا تصويت @عضو');
+        game.votes[message.author.id]=target.id;
+        const voted=Object.keys(game.votes).filter(uid=>game.alive.includes(uid)).length;
+        if(voted<game.alive.length)return safeReply(message,'🗳️ تم تسجيل صوتك ('+voted+'/'+game.alive.length+').');
+        const tally={};for(const uid of game.alive){const to=game.votes[uid];if(to)tally[to]=(tally[to]||0)+1;}
+        const maxVotes=Math.max(0,...Object.values(tally)),leaders=Object.keys(tally).filter(uid=>tally[uid]===maxVotes);
+        if(!leaders.length||leaders.length>1){game.votes={};game.day++;return safeReply(message,'🤝 تعادل التصويت. ما خرج أحد. تبدأ جولة '+game.day+'؛ أعيدوا التصويت بـ '+prefix+'مافيا تصويت @عضو');}
+        const eliminated=leaders[0],role=game.roles[eliminated];game.alive=game.alive.filter(uid=>uid!==eliminated);game.votes={};
+        const mafiaAlive=game.alive.filter(uid=>game.roles[uid]==='مافيا').length,others=game.alive.length-mafiaAlive;
+        if(mafiaAlive===0||mafiaAlive>=others){client.mldMafiaGames.delete(channelId);return safeReply(message,'⚖️ خرج <@'+eliminated+'> وكان دوره **'+role+'**.\n'+(mafiaAlive===0?'🏆 فاز المدنيون! اكتشفوا كل المافيا.':'🕵️ فازت المافيا! سيطرت على الجولة.')+'\nاللاعبون الباقون: '+(game.alive.map(uid=>'<@'+uid+'>').join('، ')||'لا أحد'));}
+        game.day++;return safeReply(message,'⚖️ خرج <@'+eliminated+'> وكان دوره **'+role+'**.\nالباقون: '+game.alive.map(uid=>'<@'+uid+'>').join('، ')+'\nتبدأ جولة '+game.day+'. صوّتوا بـ '+prefix+'مافيا تصويت @عضو');
+      }
+      if(['حالة','اللاعبون','status'].includes(action)){
+        return safeReply(message,game?'🕵️ حالة المافيا · '+(game.phase==='join'?'تجميع اللاعبين':'جولة '+game.day)+'\nاللاعبون: '+(game.phase==='join'?game.players:game.alive).map(uid=>'<@'+uid+'>').join('، '):'ما فيه جولة مافيا. اكتب '+prefix+'مافيا لفتح واحدة.');
+      }
+      if(!game){game={hostId:message.author.id,players:[message.author.id],phase:'join',votes:{},roles:{},alive:[]};client.mldMafiaGames.set(channelId,game);return safeReply(message,'🕵️ **غرفة مافيا جديدة**\nالمضيف: '+message.author.toString()+'\nاللاعبون: 1/12 · تحتاج 4 لاعبين على الأقل.\nالانضمام: '+prefix+'مافيا انضم\nالبدء: '+prefix+'مافيا ابدأ\nالحالة: '+prefix+'مافيا حالة');}
+      return safeReply(message,'أوامر المافيا: '+prefix+'مافيا انضم · '+prefix+'مافيا ابدأ · '+prefix+'مافيا تصويت @عضو · '+prefix+'مافيا حالة · '+prefix+'مافيا إنهاء');
+    }
+    if(name==='اعلام'){
+      const flags=[['السعودية','sa'],['اليابان','jp'],['فرنسا','fr'],['البرازيل','br'],['كندا','ca'],['مصر','eg'],['تركيا','tr'],['الإمارات','ae'],['إيطاليا','it'],['ألمانيا','de'],['أستراليا','au'],['كوريا الجنوبية','kr']];
+      const [answer,code]=pick(flags);client.mldGameRounds.set(message.channel.id,{answer,userId:message.author.id,expiresAt:Date.now()+45000});
+      const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('🌍 تحدي الأعلام').setDescription('ما اسم الدولة التي يمثلها العلم؟\nأول إجابة صحيحة خلال 45 ثانية تربح.').setImage('https://flagcdn.com/w640/'+code+'.png').setFooter({text:'MLD · ألعاب ملاذ'}).setTimestamp();
+      return message.reply({embeds:[embed],allowedMentions:{parse:[]}});
+    }
     if(name==='كت')return safeReply(message,'⚡ كت: '+pick(['تحدّ صديقك بسباق سرعة','اذكر 5 أشياء تبدأ بحرف م','اكتب أطول كلمة تعرفها خلال 10 ثوانٍ'])+'!');
     if(name==='بومب')return safeReply(message,'💣 بومب! '+pick(['مرّت القنبلة بسلام!','انفجرت عندك! حظ أوفر.','نجوت بفارق ثانية!']));
     if(name==='تصويت'){const poll=await message.reply({content:'📊 **تصويت ملاذ**\n'+(parts.join(' ')||'هل نبدأ لعبة جديدة؟')+'\nصوّت بالتفاعل أدناه.',allowedMentions:{parse:[]}});await Promise.all([poll.react('👍').catch(()=>{}),poll.react('👎').catch(()=>{})]);return;}
