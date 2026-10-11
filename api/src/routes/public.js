@@ -107,15 +107,6 @@ router.get('/server', async (req, res) => {
     void touchVisit(req);
     const g = await getGuild();
     let ownerId = /^\d{17,20}$/.test(String(process.env.OWNER_DISCORD_ID || '')) ? String(process.env.OWNER_DISCORD_ID) : null;
-    if (!ownerId) {
-      try {
-        const owner = await query("SELECT discord_id FROM users WHERE is_owner=TRUE ORDER BY created_at ASC LIMIT 1");
-        const savedOwnerId = String(owner.rows[0]?.discord_id || '');
-        if (savedOwnerId.length >= 17 && savedOwnerId.length <= 20 && /^\d+$/.test(savedOwnerId)) ownerId = savedOwnerId;
-      } catch (ownerLookupError) {
-        console.warn('PUBLIC_OWNER_LOOKUP', ownerLookupError.message);
-      }
-    }
     const memberCount = g.approximate_member_count ?? g.member_count ?? (cache.members.value.length||null);
     res.json({
       id: g.id,
