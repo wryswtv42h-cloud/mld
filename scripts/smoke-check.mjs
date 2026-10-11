@@ -28,8 +28,10 @@ assert.match(html, /rebuild-polish\.css/, 'The additive responsive stylesheet mu
 assert.match(app, /const ownerView=.*role.*owner/, 'Owner role must bypass page maintenance locks.');
 assert.match(app, /await getPageLocksSnapshot\(\)/, 'Page locks must be fetched before visitor pages render.');
 assert.match(app, /game-seat-avatar/, 'Game table seats must render player avatars.');
-assert.match(app, /data-member=\"\'+esc\(p\.userId\)/, 'Human player names at the table should open member profiles.');
+assert.match(app, /data-member=\"\'+esc\(p\.discordId\)/, 'Human player names at the table should open member profiles.');
+assert.match(gameRoute, /discordId:req\.user\.discord_id\|\|null/, 'New game sessions should retain the Discord ID used by profile lookups.');
 assert.match(gameRoute, /avatar:req\.user\.avatar\|\|null/, 'New game sessions should retain the host avatar.');
+assert.match(gameSocket, /discordId:socket\.user\?\.discord_id\|\|null/, 'Socket joins should retain the Discord ID used by profile lookups.');
 assert.match(gameSocket, /avatar:socket\.user\?\.avatar\|\|null/, 'Socket joins should retain player avatars.');
 
 const jsFiles = [...walk('api/src'), ...walk('bot/src'), ...walk('web/public')].filter((p) => p.endsWith('.js'));
