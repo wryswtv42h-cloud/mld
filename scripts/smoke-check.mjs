@@ -45,13 +45,13 @@ assert.ok(apiIndex.indexOf("app.use('/api/', (req, res, next)") < apiIndex.index
 assert.match(apiIndex, /req\.originalUrl/, 'Startup exemptions must use the original URL inside mounted middleware.');
 
 
-assert.match(bot, /allowedSlashNames = new Set\\(\\['ping', 'serverinfo', 'botinfo'\\]\\)/, 'Main bot slash commands must stay limited to ping, server info, and bot info.');
-assert.match(bot, /function buildUserBotSlashCommands/, 'User-created bots must expose a dedicated informational slash-command list.');
-assert.match(bot, /client\\.on\\(Events\\.MessageCreate,\\s*async message =>/, 'Prefix command handling must be registered for incoming Discord messages.');
-assert.match(botRoutes, /commands\\.slice\\(0,500\\)/, 'The bot dashboard must cap custom prefix commands at 500.');
-assert.match(botRoutes, /commandSettings/, 'The bot dashboard must persist per-command enable/disable and alias settings.');
-assert.match(uno, /function drawCard\\(state\\)/, 'UNO must recycle the discard pile when the draw pile runs out.');
-assert.match(uno, /card\\.value === 'wild4' && hand\\.some/, 'UNO must validate Wild Draw Four legality.');
+assert.ok(bot.includes("allowedSlashNames = new Set(['ping', 'serverinfo', 'botinfo'])"), 'Main bot slash commands must stay limited to ping, server info, and bot info.');
+assert.ok(bot.includes('function buildUserBotSlashCommands'), 'User-created bots must expose a dedicated informational slash-command list.');
+assert.ok(bot.includes('client.on(Events.MessageCreate, async message =>'), 'Prefix command handling must be registered for incoming Discord messages.');
+assert.ok(botRoutes.includes('commands.slice(0,500)'), 'The bot dashboard must cap custom prefix commands at 500.');
+assert.ok(botRoutes.includes('commandSettings'), 'The bot dashboard must persist per-command enable/disable and alias settings.');
+assert.ok(uno.includes('function drawCard(state)'), 'UNO must recycle the discard pile when the draw pile runs out.');
+assert.ok(uno.includes("card.value === 'wild4' && hand.some"), 'UNO must validate Wild Draw Four legality.');
 
 const jsFiles = [...walk('api/src'), ...walk('bot/src'), ...walk('web/public')].filter((p) => p.endsWith('.js'));
 assert.ok(jsFiles.length > 0, 'JavaScript source files should be discovered.');
