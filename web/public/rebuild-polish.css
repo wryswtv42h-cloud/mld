@@ -1,0 +1,30 @@
+/* MLD rebuild polish layer — additive only; preserves the established brand and existing behavior. */
+:root{--mld-pink:#ff9cde;--mld-violet:#a86fdf;--mld-edge:rgba(255,156,222,.19);--mld-glow:0 18px 55px rgba(0,0,0,.24)}
+html{scroll-behavior:smooth;scroll-padding-top:92px}
+body{background-image:radial-gradient(ellipse at 82% -8%,rgba(168,111,223,.18),transparent 42%),radial-gradient(ellipse at 0% 35%,rgba(255,156,222,.08),transparent 35%),linear-gradient(160deg,#171020 0%,#100b18 62%,#171020 100%)}
+button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--mld-pink);outline-offset:3px}
+#app{isolation:isolate}
+#app .panel,#app .pagePanel,#app .owner-section,#app .game-live-sidebar,#app .game-board-column{border-color:var(--mld-edge)}
+#app .panel,#app .pagePanel{box-shadow:var(--mld-glow)}
+#app .btn,#app button.primary,.topbar button.primary{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,filter .18s ease}
+#app .btn:hover,#app button.primary:hover,.topbar button.primary:hover{filter:brightness(1.08);box-shadow:0 8px 24px rgba(168,111,223,.16)}
+#app .btn:active,#app button.primary:active,.topbar button.primary:active{transform:translateY(1px) scale(.99)}
+.memberCard,.game-session-card,.bot-card,.stat-card,.feature-card{transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.memberCard:hover,.game-session-card:hover,.bot-card:hover,.feature-card:hover{transform:translateY(-3px);border-color:rgba(255,156,222,.45);box-shadow:0 14px 34px rgba(0,0,0,.2)}
+.game-table-stage{position:relative;isolation:isolate;min-height:clamp(390px,56vw,610px);padding:clamp(76px,11vw,112px) clamp(12px,4vw,48px);display:grid;place-items:center;overflow:hidden;border:1px solid rgba(255,156,222,.22);border-radius:28px;background:radial-gradient(ellipse at center,rgba(36,106,81,.36),rgba(11,54,42,.82) 55%,rgba(8,22,22,.96));box-shadow:inset 0 0 0 7px rgba(255,255,255,.018),inset 0 0 50px rgba(0,0,0,.38),0 22px 60px rgba(0,0,0,.22)}
+.game-table-stage:before{content:"";position:absolute;inset:16px;border:1px solid rgba(255,255,255,.1);border-radius:22px;pointer-events:none}
+.game-table-board{position:relative;z-index:1;width:min(100%,560px);min-height:230px;display:grid;place-items:center;padding:clamp(12px,3vw,26px);border:1px solid rgba(255,255,255,.16);border-radius:24px;background:radial-gradient(ellipse at 50% 25%,rgba(255,255,255,.08),transparent 65%),rgba(5,22,20,.64);box-shadow:inset 0 2px 24px rgba(0,0,0,.24),0 10px 35px rgba(0,0,0,.25)}
+.game-seat{z-index:2;min-width:92px;max-width:150px;padding:9px 12px;border:1px solid rgba(255,255,255,.16);border-radius:16px;background:rgba(22,13,31,.92);box-shadow:0 8px 22px rgba(0,0,0,.25);backdrop-filter:blur(12px)}
+.game-seat img,.game-seat-avatar,.game-player-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--mld-pink);box-shadow:0 0 0 3px rgba(255,156,222,.1)}
+.game-seat-profile{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:800;text-align:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,156,222,.45);text-underline-offset:3px}
+.game-seat-profile:hover{color:var(--mld-pink)}
+.game-seat-profile:focus-visible{outline:2px solid var(--mld-pink);outline-offset:3px;border-radius:4px}
+.game-playing-card{transform-origin:50% 85%;transition:transform .18s ease,box-shadow .18s ease}
+.game-playing-card:hover{transform:translateY(-9px) rotate(-1deg);box-shadow:0 12px 24px rgba(0,0,0,.32)}
+.game-log{max-height:240px;overflow:auto;overscroll-behavior:contain}
+.page-lock-grid{align-items:stretch}
+.page-lock-item textarea{min-height:88px}
+#toast{z-index:9999}#modal{z-index:9998}
+@media(max-width:680px){.game-table-stage{min-height:390px;padding:78px 8px;border-radius:20px}.game-table-stage:before{inset:9px;border-radius:15px}.game-table-board{min-height:200px;border-radius:18px}.game-seat{min-width:72px;padding:7px 8px;font-size:.8rem}.game-seat img,.game-seat-avatar,.game-player-avatar{width:34px;height:34px}#app .owner-console-nav{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
