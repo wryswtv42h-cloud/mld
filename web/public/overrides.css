@@ -482,3 +482,6 @@ body[data-page="bots"] #app .bot-private-room-panel input[type="color"] { height
 .side-social-links a{display:flex;align-items:center;justify-content:center;gap:7px;min-height:43px;padding:8px;border:1px solid rgba(255,156,222,.2);border-radius:12px;background:rgba(255,255,255,.035);color:var(--text,#fff8ff);text-decoration:none}
 .side-social-links a:hover{border-color:#ff9cde88;background:rgba(255,156,222,.1)}
 .side-social-links a span{font-size:1.1rem;color:#ffb9e8}
+
+/* Discord handle is plain text, not a third social button */
+.app-discord-text{cursor:default;user-select:text}
