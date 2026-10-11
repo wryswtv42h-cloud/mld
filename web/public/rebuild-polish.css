@@ -35,3 +35,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  #app .owner-console-nav{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+.game-seat-profile{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:800;text-align:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,156,222,.45);text-underline-offset:3px}.game-seat-profile:hover{color:var(--mld-pink)}.game-seat-profile:focus-visible{outline:2px solid var(--mld-pink);outline-offset:3px;border-radius:4px}
