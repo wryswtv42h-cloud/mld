@@ -1,6 +1,8 @@
 import 'dotenv/config';
+import {createServer} from 'node:http';
 import {Client,GatewayIntentBits,Events,ActivityType,PermissionFlagsBits} from 'discord.js';
 const token=process.env.DISCORD_TOKEN||process.env.DISCORD_BOT_TOKEN,prefix=process.env.BOT_PREFIX||'!',ownerId=process.env.OWNER_DISCORD_ID||'';
+const health=createServer((req,res)=>{if(req.url==='/health'||req.url==='/'){res.writeHead(200,{'content-type':'application/json; charset=utf-8'});res.end(JSON.stringify({ok:true,service:'mld-bot',discord:client.isReady()}));}else{res.writeHead(404);res.end('not found')}});health.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log('MLD Bot health endpoint listening'));
 const client=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildModeration]});
 client.once(Events.ClientReady,c=>{console.log('MLD Bot online as '+c.user.tag);c.user.setActivity(process.env.BOT_ACTIVITY||'MLD | فهد المطيري',{type:ActivityType.Watching})});
 client.on(Events.MessageCreate,async m=>{if(m.author.bot||!m.guild||!m.content.startsWith(prefix))return;const [raw,...args]=m.content.slice(prefix.length).trim().split(/\s+/),cmd=(raw||'').toLowerCase(),owner=!!ownerId&&m.author.id===ownerId,mod=owner||m.member.permissions.has(PermissionFlagsBits.ModerateMembers);try{
