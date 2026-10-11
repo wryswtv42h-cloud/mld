@@ -26,6 +26,8 @@ jobs:
           while IFS= read -r -d '' file; do
             echo "Checking $file"
             node --check "$file"
-          done < <(find api/src bot/src web/public -type f -name '*.js' -print0)
+          done < <(find api/src api/test bot/src web/public -type f -name '*.js' -print0)
+      - name: Run API regression tests
+        run: node --test api/test/*.test.js
       - name: Check essential MLD wiring
         run: node scripts/smoke-check.mjs
