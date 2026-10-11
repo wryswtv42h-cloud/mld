@@ -1,0 +1,3202 @@
+[
+  {
+    "name": "text_reverse",
+    "label": "النصوص · reverse",
+    "category": "system",
+    "kind": "text",
+    "operation": "reverse",
+    "description": "أمر النصوص: reverse"
+  },
+  {
+    "name": "text_upper",
+    "label": "النصوص · upper",
+    "category": "system",
+    "kind": "text",
+    "operation": "upper",
+    "description": "أمر النصوص: upper"
+  },
+  {
+    "name": "text_lower",
+    "label": "النصوص · lower",
+    "category": "system",
+    "kind": "text",
+    "operation": "lower",
+    "description": "أمر النصوص: lower"
+  },
+  {
+    "name": "text_title",
+    "label": "النصوص · title",
+    "category": "system",
+    "kind": "text",
+    "operation": "title",
+    "description": "أمر النصوص: title"
+  },
+  {
+    "name": "text_words",
+    "label": "النصوص · words",
+    "category": "system",
+    "kind": "text",
+    "operation": "words",
+    "description": "أمر النصوص: words"
+  },
+  {
+    "name": "text_chars",
+    "label": "النصوص · chars",
+    "category": "system",
+    "kind": "text",
+    "operation": "chars",
+    "description": "أمر النصوص: chars"
+  },
+  {
+    "name": "text_lines",
+    "label": "النصوص · lines",
+    "category": "system",
+    "kind": "text",
+    "operation": "lines",
+    "description": "أمر النصوص: lines"
+  },
+  {
+    "name": "text_trim",
+    "label": "النصوص · trim",
+    "category": "system",
+    "kind": "text",
+    "operation": "trim",
+    "description": "أمر النصوص: trim"
+  },
+  {
+    "name": "text_clean",
+    "label": "النصوص · clean",
+    "category": "system",
+    "kind": "text",
+    "operation": "clean",
+    "description": "أمر النصوص: clean"
+  },
+  {
+    "name": "text_sort",
+    "label": "النصوص · sort",
+    "category": "system",
+    "kind": "text",
+    "operation": "sort",
+    "description": "أمر النصوص: sort"
+  },
+  {
+    "name": "text_shuffle",
+    "label": "النصوص · shuffle",
+    "category": "system",
+    "kind": "text",
+    "operation": "shuffle",
+    "description": "أمر النصوص: shuffle"
+  },
+  {
+    "name": "text_unique",
+    "label": "النصوص · unique",
+    "category": "system",
+    "kind": "text",
+    "operation": "unique",
+    "description": "أمر النصوص: unique"
+  },
+  {
+    "name": "text_remove_spaces",
+    "label": "النصوص · remove spaces",
+    "category": "system",
+    "kind": "text",
+    "operation": "remove_spaces",
+    "description": "أمر النصوص: remove spaces"
+  },
+  {
+    "name": "text_remove_punctuation",
+    "label": "النصوص · remove punctuation",
+    "category": "system",
+    "kind": "text",
+    "operation": "remove_punctuation",
+    "description": "أمر النصوص: remove punctuation"
+  },
+  {
+    "name": "text_emoji",
+    "label": "النصوص · emoji",
+    "category": "system",
+    "kind": "text",
+    "operation": "emoji",
+    "description": "أمر النصوص: emoji"
+  },
+  {
+    "name": "text_codepoints",
+    "label": "النصوص · codepoints",
+    "category": "system",
+    "kind": "text",
+    "operation": "codepoints",
+    "description": "أمر النصوص: codepoints"
+  },
+  {
+    "name": "text_bytes",
+    "label": "النصوص · bytes",
+    "category": "system",
+    "kind": "text",
+    "operation": "bytes",
+    "description": "أمر النصوص: bytes"
+  },
+  {
+    "name": "text_base64",
+    "label": "النصوص · base64",
+    "category": "system",
+    "kind": "text",
+    "operation": "base64",
+    "description": "أمر النصوص: base64"
+  },
+  {
+    "name": "text_hex",
+    "label": "النصوص · hex",
+    "category": "system",
+    "kind": "text",
+    "operation": "hex",
+    "description": "أمر النصوص: hex"
+  },
+  {
+    "name": "text_binary",
+    "label": "النصوص · binary",
+    "category": "system",
+    "kind": "text",
+    "operation": "binary",
+    "description": "أمر النصوص: binary"
+  },
+  {
+    "name": "text_rot13",
+    "label": "النصوص · rot13",
+    "category": "system",
+    "kind": "text",
+    "operation": "rot13",
+    "description": "أمر النصوص: rot13"
+  },
+  {
+    "name": "text_slug",
+    "label": "النصوص · slug",
+    "category": "system",
+    "kind": "text",
+    "operation": "slug",
+    "description": "أمر النصوص: slug"
+  },
+  {
+    "name": "text_palindrome",
+    "label": "النصوص · palindrome",
+    "category": "system",
+    "kind": "text",
+    "operation": "palindrome",
+    "description": "أمر النصوص: palindrome"
+  },
+  {
+    "name": "text_vowels",
+    "label": "النصوص · vowels",
+    "category": "system",
+    "kind": "text",
+    "operation": "vowels",
+    "description": "أمر النصوص: vowels"
+  },
+  {
+    "name": "text_consonants",
+    "label": "النصوص · consonants",
+    "category": "system",
+    "kind": "text",
+    "operation": "consonants",
+    "description": "أمر النصوص: consonants"
+  },
+  {
+    "name": "text_digits",
+    "label": "النصوص · digits",
+    "category": "system",
+    "kind": "text",
+    "operation": "digits",
+    "description": "أمر النصوص: digits"
+  },
+  {
+    "name": "text_hashtags",
+    "label": "النصوص · hashtags",
+    "category": "system",
+    "kind": "text",
+    "operation": "hashtags",
+    "description": "أمر النصوص: hashtags"
+  },
+  {
+    "name": "text_mentions",
+    "label": "النصوص · mentions",
+    "category": "system",
+    "kind": "text",
+    "operation": "mentions",
+    "description": "أمر النصوص: mentions"
+  },
+  {
+    "name": "text_links",
+    "label": "النصوص · links",
+    "category": "system",
+    "kind": "text",
+    "operation": "links",
+    "description": "أمر النصوص: links"
+  },
+  {
+    "name": "text_markdown",
+    "label": "النصوص · markdown",
+    "category": "system",
+    "kind": "text",
+    "operation": "markdown",
+    "description": "أمر النصوص: markdown"
+  },
+  {
+    "name": "text_quote",
+    "label": "النصوص · quote",
+    "category": "system",
+    "kind": "text",
+    "operation": "quote",
+    "description": "أمر النصوص: quote"
+  },
+  {
+    "name": "text_unquote",
+    "label": "النصوص · unquote",
+    "category": "system",
+    "kind": "text",
+    "operation": "unquote",
+    "description": "أمر النصوص: unquote"
+  },
+  {
+    "name": "text_json",
+    "label": "النصوص · json",
+    "category": "system",
+    "kind": "text",
+    "operation": "json",
+    "description": "أمر النصوص: json"
+  },
+  {
+    "name": "text_prettyjson",
+    "label": "النصوص · prettyjson",
+    "category": "system",
+    "kind": "text",
+    "operation": "prettyjson",
+    "description": "أمر النصوص: prettyjson"
+  },
+  {
+    "name": "text_compactjson",
+    "label": "النصوص · compactjson",
+    "category": "system",
+    "kind": "text",
+    "operation": "compactjson",
+    "description": "أمر النصوص: compactjson"
+  },
+  {
+    "name": "text_csv",
+    "label": "النصوص · csv",
+    "category": "system",
+    "kind": "text",
+    "operation": "csv",
+    "description": "أمر النصوص: csv"
+  },
+  {
+    "name": "text_wordsort",
+    "label": "النصوص · wordsort",
+    "category": "system",
+    "kind": "text",
+    "operation": "wordsort",
+    "description": "أمر النصوص: wordsort"
+  },
+  {
+    "name": "text_alphabetize",
+    "label": "النصوص · alphabetize",
+    "category": "system",
+    "kind": "text",
+    "operation": "alphabetize",
+    "description": "أمر النصوص: alphabetize"
+  },
+  {
+    "name": "text_initials",
+    "label": "النصوص · initials",
+    "category": "system",
+    "kind": "text",
+    "operation": "initials",
+    "description": "أمر النصوص: initials"
+  },
+  {
+    "name": "text_acronym",
+    "label": "النصوص · acronym",
+    "category": "system",
+    "kind": "text",
+    "operation": "acronym",
+    "description": "أمر النصوص: acronym"
+  },
+  {
+    "name": "math_add",
+    "label": "الرياضيات · add",
+    "category": "system",
+    "kind": "math",
+    "operation": "add",
+    "description": "أمر الرياضيات: add"
+  },
+  {
+    "name": "math_subtract",
+    "label": "الرياضيات · subtract",
+    "category": "system",
+    "kind": "math",
+    "operation": "subtract",
+    "description": "أمر الرياضيات: subtract"
+  },
+  {
+    "name": "math_multiply",
+    "label": "الرياضيات · multiply",
+    "category": "system",
+    "kind": "math",
+    "operation": "multiply",
+    "description": "أمر الرياضيات: multiply"
+  },
+  {
+    "name": "math_divide",
+    "label": "الرياضيات · divide",
+    "category": "system",
+    "kind": "math",
+    "operation": "divide",
+    "description": "أمر الرياضيات: divide"
+  },
+  {
+    "name": "math_average",
+    "label": "الرياضيات · average",
+    "category": "system",
+    "kind": "math",
+    "operation": "average",
+    "description": "أمر الرياضيات: average"
+  },
+  {
+    "name": "math_median",
+    "label": "الرياضيات · median",
+    "category": "system",
+    "kind": "math",
+    "operation": "median",
+    "description": "أمر الرياضيات: median"
+  },
+  {
+    "name": "math_min",
+    "label": "الرياضيات · min",
+    "category": "system",
+    "kind": "math",
+    "operation": "min",
+    "description": "أمر الرياضيات: min"
+  },
+  {
+    "name": "math_max",
+    "label": "الرياضيات · max",
+    "category": "system",
+    "kind": "math",
+    "operation": "max",
+    "description": "أمر الرياضيات: max"
+  },
+  {
+    "name": "math_sum",
+    "label": "الرياضيات · sum",
+    "category": "system",
+    "kind": "math",
+    "operation": "sum",
+    "description": "أمر الرياضيات: sum"
+  },
+  {
+    "name": "math_product",
+    "label": "الرياضيات · product",
+    "category": "system",
+    "kind": "math",
+    "operation": "product",
+    "description": "أمر الرياضيات: product"
+  },
+  {
+    "name": "math_square",
+    "label": "الرياضيات · square",
+    "category": "system",
+    "kind": "math",
+    "operation": "square",
+    "description": "أمر الرياضيات: square"
+  },
+  {
+    "name": "math_cube",
+    "label": "الرياضيات · cube",
+    "category": "system",
+    "kind": "math",
+    "operation": "cube",
+    "description": "أمر الرياضيات: cube"
+  },
+  {
+    "name": "math_sqrt",
+    "label": "الرياضيات · sqrt",
+    "category": "system",
+    "kind": "math",
+    "operation": "sqrt",
+    "description": "أمر الرياضيات: sqrt"
+  },
+  {
+    "name": "math_power",
+    "label": "الرياضيات · power",
+    "category": "system",
+    "kind": "math",
+    "operation": "power",
+    "description": "أمر الرياضيات: power"
+  },
+  {
+    "name": "math_percent",
+    "label": "الرياضيات · percent",
+    "category": "system",
+    "kind": "math",
+    "operation": "percent",
+    "description": "أمر الرياضيات: percent"
+  },
+  {
+    "name": "math_percentage",
+    "label": "الرياضيات · percentage",
+    "category": "system",
+    "kind": "math",
+    "operation": "percentage",
+    "description": "أمر الرياضيات: percentage"
+  },
+  {
+    "name": "math_ratio",
+    "label": "الرياضيات · ratio",
+    "category": "system",
+    "kind": "math",
+    "operation": "ratio",
+    "description": "أمر الرياضيات: ratio"
+  },
+  {
+    "name": "math_round",
+    "label": "الرياضيات · round",
+    "category": "system",
+    "kind": "math",
+    "operation": "round",
+    "description": "أمر الرياضيات: round"
+  },
+  {
+    "name": "math_ceil",
+    "label": "الرياضيات · ceil",
+    "category": "system",
+    "kind": "math",
+    "operation": "ceil",
+    "description": "أمر الرياضيات: ceil"
+  },
+  {
+    "name": "math_floor",
+    "label": "الرياضيات · floor",
+    "category": "system",
+    "kind": "math",
+    "operation": "floor",
+    "description": "أمر الرياضيات: floor"
+  },
+  {
+    "name": "math_abs",
+    "label": "الرياضيات · abs",
+    "category": "system",
+    "kind": "math",
+    "operation": "abs",
+    "description": "أمر الرياضيات: abs"
+  },
+  {
+    "name": "math_factorial",
+    "label": "الرياضيات · factorial",
+    "category": "system",
+    "kind": "math",
+    "operation": "factorial",
+    "description": "أمر الرياضيات: factorial"
+  },
+  {
+    "name": "math_modulo",
+    "label": "الرياضيات · modulo",
+    "category": "system",
+    "kind": "math",
+    "operation": "modulo",
+    "description": "أمر الرياضيات: modulo"
+  },
+  {
+    "name": "math_gcd",
+    "label": "الرياضيات · gcd",
+    "category": "system",
+    "kind": "math",
+    "operation": "gcd",
+    "description": "أمر الرياضيات: gcd"
+  },
+  {
+    "name": "math_lcm",
+    "label": "الرياضيات · lcm",
+    "category": "system",
+    "kind": "math",
+    "operation": "lcm",
+    "description": "أمر الرياضيات: lcm"
+  },
+  {
+    "name": "math_prime",
+    "label": "الرياضيات · prime",
+    "category": "system",
+    "kind": "math",
+    "operation": "prime",
+    "description": "أمر الرياضيات: prime"
+  },
+  {
+    "name": "math_isprime",
+    "label": "الرياضيات · isprime",
+    "category": "system",
+    "kind": "math",
+    "operation": "isprime",
+    "description": "أمر الرياضيات: isprime"
+  },
+  {
+    "name": "math_even",
+    "label": "الرياضيات · even",
+    "category": "system",
+    "kind": "math",
+    "operation": "even",
+    "description": "أمر الرياضيات: even"
+  },
+  {
+    "name": "math_odd",
+    "label": "الرياضيات · odd",
+    "category": "system",
+    "kind": "math",
+    "operation": "odd",
+    "description": "أمر الرياضيات: odd"
+  },
+  {
+    "name": "math_fibonacci",
+    "label": "الرياضيات · fibonacci",
+    "category": "system",
+    "kind": "math",
+    "operation": "fibonacci",
+    "description": "أمر الرياضيات: fibonacci"
+  },
+  {
+    "name": "math_triangle",
+    "label": "الرياضيات · triangle",
+    "category": "system",
+    "kind": "math",
+    "operation": "triangle",
+    "description": "أمر الرياضيات: triangle"
+  },
+  {
+    "name": "math_area_circle",
+    "label": "الرياضيات · area circle",
+    "category": "system",
+    "kind": "math",
+    "operation": "area_circle",
+    "description": "أمر الرياضيات: area circle"
+  },
+  {
+    "name": "math_circumference",
+    "label": "الرياضيات · circumference",
+    "category": "system",
+    "kind": "math",
+    "operation": "circumference",
+    "description": "أمر الرياضيات: circumference"
+  },
+  {
+    "name": "math_circle_area",
+    "label": "الرياضيات · circle area",
+    "category": "system",
+    "kind": "math",
+    "operation": "circle_area",
+    "description": "أمر الرياضيات: circle area"
+  },
+  {
+    "name": "math_rectangle_area",
+    "label": "الرياضيات · rectangle area",
+    "category": "system",
+    "kind": "math",
+    "operation": "rectangle_area",
+    "description": "أمر الرياضيات: rectangle area"
+  },
+  {
+    "name": "math_triangle_area",
+    "label": "الرياضيات · triangle area",
+    "category": "system",
+    "kind": "math",
+    "operation": "triangle_area",
+    "description": "أمر الرياضيات: triangle area"
+  },
+  {
+    "name": "math_rectangle_perimeter",
+    "label": "الرياضيات · rectangle perimeter",
+    "category": "system",
+    "kind": "math",
+    "operation": "rectangle_perimeter",
+    "description": "أمر الرياضيات: rectangle perimeter"
+  },
+  {
+    "name": "math_hypotenuse",
+    "label": "الرياضيات · hypotenuse",
+    "category": "system",
+    "kind": "math",
+    "operation": "hypotenuse",
+    "description": "أمر الرياضيات: hypotenuse"
+  },
+  {
+    "name": "math_distance",
+    "label": "الرياضيات · distance",
+    "category": "system",
+    "kind": "math",
+    "operation": "distance",
+    "description": "أمر الرياضيات: distance"
+  },
+  {
+    "name": "math_mean",
+    "label": "الرياضيات · mean",
+    "category": "system",
+    "kind": "math",
+    "operation": "mean",
+    "description": "أمر الرياضيات: mean"
+  },
+  {
+    "name": "random_number",
+    "label": "العشوائي · number",
+    "category": "system",
+    "kind": "random",
+    "operation": "number",
+    "description": "أمر العشوائي: number"
+  },
+  {
+    "name": "random_dice",
+    "label": "العشوائي · dice",
+    "category": "system",
+    "kind": "random",
+    "operation": "dice",
+    "description": "أمر العشوائي: dice"
+  },
+  {
+    "name": "random_d4",
+    "label": "العشوائي · d4",
+    "category": "system",
+    "kind": "random",
+    "operation": "d4",
+    "description": "أمر العشوائي: d4"
+  },
+  {
+    "name": "random_d6",
+    "label": "العشوائي · d6",
+    "category": "system",
+    "kind": "random",
+    "operation": "d6",
+    "description": "أمر العشوائي: d6"
+  },
+  {
+    "name": "random_d8",
+    "label": "العشوائي · d8",
+    "category": "system",
+    "kind": "random",
+    "operation": "d8",
+    "description": "أمر العشوائي: d8"
+  },
+  {
+    "name": "random_d10",
+    "label": "العشوائي · d10",
+    "category": "system",
+    "kind": "random",
+    "operation": "d10",
+    "description": "أمر العشوائي: d10"
+  },
+  {
+    "name": "random_d12",
+    "label": "العشوائي · d12",
+    "category": "system",
+    "kind": "random",
+    "operation": "d12",
+    "description": "أمر العشوائي: d12"
+  },
+  {
+    "name": "random_d20",
+    "label": "العشوائي · d20",
+    "category": "system",
+    "kind": "random",
+    "operation": "d20",
+    "description": "أمر العشوائي: d20"
+  },
+  {
+    "name": "random_d100",
+    "label": "العشوائي · d100",
+    "category": "system",
+    "kind": "random",
+    "operation": "d100",
+    "description": "أمر العشوائي: d100"
+  },
+  {
+    "name": "random_coin",
+    "label": "العشوائي · coin",
+    "category": "system",
+    "kind": "random",
+    "operation": "coin",
+    "description": "أمر العشوائي: coin"
+  },
+  {
+    "name": "random_choice",
+    "label": "العشوائي · choice",
+    "category": "system",
+    "kind": "random",
+    "operation": "choice",
+    "description": "أمر العشوائي: choice"
+  },
+  {
+    "name": "random_choose",
+    "label": "العشوائي · choose",
+    "category": "system",
+    "kind": "random",
+    "operation": "choose",
+    "description": "أمر العشوائي: choose"
+  },
+  {
+    "name": "random_shuffle",
+    "label": "العشوائي · shuffle",
+    "category": "system",
+    "kind": "random",
+    "operation": "shuffle",
+    "description": "أمر العشوائي: shuffle"
+  },
+  {
+    "name": "random_lottery",
+    "label": "العشوائي · lottery",
+    "category": "system",
+    "kind": "random",
+    "operation": "lottery",
+    "description": "أمر العشوائي: lottery"
+  },
+  {
+    "name": "random_password",
+    "label": "العشوائي · password",
+    "category": "system",
+    "kind": "random",
+    "operation": "password",
+    "description": "أمر العشوائي: password"
+  },
+  {
+    "name": "random_color",
+    "label": "العشوائي · color",
+    "category": "system",
+    "kind": "random",
+    "operation": "color",
+    "description": "أمر العشوائي: color"
+  },
+  {
+    "name": "random_hexcolor",
+    "label": "العشوائي · hexcolor",
+    "category": "system",
+    "kind": "random",
+    "operation": "hexcolor",
+    "description": "أمر العشوائي: hexcolor"
+  },
+  {
+    "name": "random_team",
+    "label": "العشوائي · team",
+    "category": "system",
+    "kind": "random",
+    "operation": "team",
+    "description": "أمر العشوائي: team"
+  },
+  {
+    "name": "random_splitteams",
+    "label": "العشوائي · splitteams",
+    "category": "system",
+    "kind": "random",
+    "operation": "splitteams",
+    "description": "أمر العشوائي: splitteams"
+  },
+  {
+    "name": "random_pair",
+    "label": "العشوائي · pair",
+    "category": "system",
+    "kind": "random",
+    "operation": "pair",
+    "description": "أمر العشوائي: pair"
+  },
+  {
+    "name": "random_teams",
+    "label": "العشوائي · teams",
+    "category": "system",
+    "kind": "random",
+    "operation": "teams",
+    "description": "أمر العشوائي: teams"
+  },
+  {
+    "name": "random_randommember",
+    "label": "العشوائي · randommember",
+    "category": "system",
+    "kind": "random",
+    "operation": "randommember",
+    "description": "أمر العشوائي: randommember"
+  },
+  {
+    "name": "random_randomrole",
+    "label": "العشوائي · randomrole",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomrole",
+    "description": "أمر العشوائي: randomrole"
+  },
+  {
+    "name": "random_randomchannel",
+    "label": "العشوائي · randomchannel",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomchannel",
+    "description": "أمر العشوائي: randomchannel"
+  },
+  {
+    "name": "random_randomemoji",
+    "label": "العشوائي · randomemoji",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomemoji",
+    "description": "أمر العشوائي: randomemoji"
+  },
+  {
+    "name": "random_randomanimal",
+    "label": "العشوائي · randomanimal",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomanimal",
+    "description": "أمر العشوائي: randomanimal"
+  },
+  {
+    "name": "random_randomfood",
+    "label": "العشوائي · randomfood",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomfood",
+    "description": "أمر العشوائي: randomfood"
+  },
+  {
+    "name": "random_randomcountry",
+    "label": "العشوائي · randomcountry",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomcountry",
+    "description": "أمر العشوائي: randomcountry"
+  },
+  {
+    "name": "random_randomcapital",
+    "label": "العشوائي · randomcapital",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomcapital",
+    "description": "أمر العشوائي: randomcapital"
+  },
+  {
+    "name": "random_randomword",
+    "label": "العشوائي · randomword",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomword",
+    "description": "أمر العشوائي: randomword"
+  },
+  {
+    "name": "random_randomletter",
+    "label": "العشوائي · randomletter",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomletter",
+    "description": "أمر العشوائي: randomletter"
+  },
+  {
+    "name": "random_randomnumber",
+    "label": "العشوائي · randomnumber",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomnumber",
+    "description": "أمر العشوائي: randomnumber"
+  },
+  {
+    "name": "random_randomdate",
+    "label": "العشوائي · randomdate",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomdate",
+    "description": "أمر العشوائي: randomdate"
+  },
+  {
+    "name": "random_randomtime",
+    "label": "العشوائي · randomtime",
+    "category": "system",
+    "kind": "random",
+    "operation": "randomtime",
+    "description": "أمر العشوائي: randomtime"
+  },
+  {
+    "name": "random_yesno",
+    "label": "العشوائي · yesno",
+    "category": "system",
+    "kind": "random",
+    "operation": "yesno",
+    "description": "أمر العشوائي: yesno"
+  },
+  {
+    "name": "random_truth",
+    "label": "العشوائي · truth",
+    "category": "system",
+    "kind": "random",
+    "operation": "truth",
+    "description": "أمر العشوائي: truth"
+  },
+  {
+    "name": "random_dare",
+    "label": "العشوائي · dare",
+    "category": "system",
+    "kind": "random",
+    "operation": "dare",
+    "description": "أمر العشوائي: dare"
+  },
+  {
+    "name": "random_wouldyourather",
+    "label": "العشوائي · wouldyourather",
+    "category": "system",
+    "kind": "random",
+    "operation": "wouldyourather",
+    "description": "أمر العشوائي: wouldyourather"
+  },
+  {
+    "name": "random_fortune",
+    "label": "العشوائي · fortune",
+    "category": "system",
+    "kind": "random",
+    "operation": "fortune",
+    "description": "أمر العشوائي: fortune"
+  },
+  {
+    "name": "random_compliment",
+    "label": "العشوائي · compliment",
+    "category": "system",
+    "kind": "random",
+    "operation": "compliment",
+    "description": "أمر العشوائي: compliment"
+  },
+  {
+    "name": "quiz_general",
+    "label": "المعلومات والتحديات · general",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "general",
+    "description": "أمر المعلومات والتحديات: general"
+  },
+  {
+    "name": "quiz_science",
+    "label": "المعلومات والتحديات · science",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "science",
+    "description": "أمر المعلومات والتحديات: science"
+  },
+  {
+    "name": "quiz_biology",
+    "label": "المعلومات والتحديات · biology",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "biology",
+    "description": "أمر المعلومات والتحديات: biology"
+  },
+  {
+    "name": "quiz_chemistry",
+    "label": "المعلومات والتحديات · chemistry",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "chemistry",
+    "description": "أمر المعلومات والتحديات: chemistry"
+  },
+  {
+    "name": "quiz_physics",
+    "label": "المعلومات والتحديات · physics",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "physics",
+    "description": "أمر المعلومات والتحديات: physics"
+  },
+  {
+    "name": "quiz_space",
+    "label": "المعلومات والتحديات · space",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "space",
+    "description": "أمر المعلومات والتحديات: space"
+  },
+  {
+    "name": "quiz_history",
+    "label": "المعلومات والتحديات · history",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "history",
+    "description": "أمر المعلومات والتحديات: history"
+  },
+  {
+    "name": "quiz_geography",
+    "label": "المعلومات والتحديات · geography",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "geography",
+    "description": "أمر المعلومات والتحديات: geography"
+  },
+  {
+    "name": "quiz_capitals",
+    "label": "المعلومات والتحديات · capitals",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "capitals",
+    "description": "أمر المعلومات والتحديات: capitals"
+  },
+  {
+    "name": "quiz_flags",
+    "label": "المعلومات والتحديات · flags",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "flags",
+    "description": "أمر المعلومات والتحديات: flags"
+  },
+  {
+    "name": "quiz_animals",
+    "label": "المعلومات والتحديات · animals",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "animals",
+    "description": "أمر المعلومات والتحديات: animals"
+  },
+  {
+    "name": "quiz_plants",
+    "label": "المعلومات والتحديات · plants",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "plants",
+    "description": "أمر المعلومات والتحديات: plants"
+  },
+  {
+    "name": "quiz_food",
+    "label": "المعلومات والتحديات · food",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "food",
+    "description": "أمر المعلومات والتحديات: food"
+  },
+  {
+    "name": "quiz_sports",
+    "label": "المعلومات والتحديات · sports",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "sports",
+    "description": "أمر المعلومات والتحديات: sports"
+  },
+  {
+    "name": "quiz_music",
+    "label": "المعلومات والتحديات · music",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "music",
+    "description": "أمر المعلومات والتحديات: music"
+  },
+  {
+    "name": "quiz_movies",
+    "label": "المعلومات والتحديات · movies",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "movies",
+    "description": "أمر المعلومات والتحديات: movies"
+  },
+  {
+    "name": "quiz_literature",
+    "label": "المعلومات والتحديات · literature",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "literature",
+    "description": "أمر المعلومات والتحديات: literature"
+  },
+  {
+    "name": "quiz_language",
+    "label": "المعلومات والتحديات · language",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "language",
+    "description": "أمر المعلومات والتحديات: language"
+  },
+  {
+    "name": "quiz_math",
+    "label": "المعلومات والتحديات · math",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "math",
+    "description": "أمر المعلومات والتحديات: math"
+  },
+  {
+    "name": "quiz_technology",
+    "label": "المعلومات والتحديات · technology",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "technology",
+    "description": "أمر المعلومات والتحديات: technology"
+  },
+  {
+    "name": "quiz_computers",
+    "label": "المعلومات والتحديات · computers",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "computers",
+    "description": "أمر المعلومات والتحديات: computers"
+  },
+  {
+    "name": "quiz_gaming",
+    "label": "المعلومات والتحديات · gaming",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "gaming",
+    "description": "أمر المعلومات والتحديات: gaming"
+  },
+  {
+    "name": "quiz_mythology",
+    "label": "المعلومات والتحديات · mythology",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "mythology",
+    "description": "أمر المعلومات والتحديات: mythology"
+  },
+  {
+    "name": "quiz_art",
+    "label": "المعلومات والتحديات · art",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "art",
+    "description": "أمر المعلومات والتحديات: art"
+  },
+  {
+    "name": "quiz_inventions",
+    "label": "المعلومات والتحديات · inventions",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "inventions",
+    "description": "أمر المعلومات والتحديات: inventions"
+  },
+  {
+    "name": "quiz_nature",
+    "label": "المعلومات والتحديات · nature",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "nature",
+    "description": "أمر المعلومات والتحديات: nature"
+  },
+  {
+    "name": "quiz_ocean",
+    "label": "المعلومات والتحديات · ocean",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "ocean",
+    "description": "أمر المعلومات والتحديات: ocean"
+  },
+  {
+    "name": "quiz_weather",
+    "label": "المعلومات والتحديات · weather",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "weather",
+    "description": "أمر المعلومات والتحديات: weather"
+  },
+  {
+    "name": "quiz_astronomy",
+    "label": "المعلومات والتحديات · astronomy",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "astronomy",
+    "description": "أمر المعلومات والتحديات: astronomy"
+  },
+  {
+    "name": "quiz_psychology",
+    "label": "المعلومات والتحديات · psychology",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "psychology",
+    "description": "أمر المعلومات والتحديات: psychology"
+  },
+  {
+    "name": "quiz_economics",
+    "label": "المعلومات والتحديات · economics",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "economics",
+    "description": "أمر المعلومات والتحديات: economics"
+  },
+  {
+    "name": "quiz_architecture",
+    "label": "المعلومات والتحديات · architecture",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "architecture",
+    "description": "أمر المعلومات والتحديات: architecture"
+  },
+  {
+    "name": "quiz_transport",
+    "label": "المعلومات والتحديات · transport",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "transport",
+    "description": "أمر المعلومات والتحديات: transport"
+  },
+  {
+    "name": "quiz_culture",
+    "label": "المعلومات والتحديات · culture",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "culture",
+    "description": "أمر المعلومات والتحديات: culture"
+  },
+  {
+    "name": "quiz_tool35",
+    "label": "المعلومات والتحديات · tool35",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "tool35",
+    "description": "أمر المعلومات والتحديات: tool35"
+  },
+  {
+    "name": "quiz_tool36",
+    "label": "المعلومات والتحديات · tool36",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "tool36",
+    "description": "أمر المعلومات والتحديات: tool36"
+  },
+  {
+    "name": "quiz_tool37",
+    "label": "المعلومات والتحديات · tool37",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "tool37",
+    "description": "أمر المعلومات والتحديات: tool37"
+  },
+  {
+    "name": "quiz_tool38",
+    "label": "المعلومات والتحديات · tool38",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "tool38",
+    "description": "أمر المعلومات والتحديات: tool38"
+  },
+  {
+    "name": "quiz_tool39",
+    "label": "المعلومات والتحديات · tool39",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "tool39",
+    "description": "أمر المعلومات والتحديات: tool39"
+  },
+  {
+    "name": "quiz_tool40",
+    "label": "المعلومات والتحديات · tool40",
+    "category": "games",
+    "kind": "quiz",
+    "operation": "tool40",
+    "description": "أمر المعلومات والتحديات: tool40"
+  },
+  {
+    "name": "server_info",
+    "label": "السيرفر · info",
+    "category": "system",
+    "kind": "server",
+    "operation": "info",
+    "description": "أمر السيرفر: info"
+  },
+  {
+    "name": "server_members",
+    "label": "السيرفر · members",
+    "category": "system",
+    "kind": "server",
+    "operation": "members",
+    "description": "أمر السيرفر: members"
+  },
+  {
+    "name": "server_humans",
+    "label": "السيرفر · humans",
+    "category": "system",
+    "kind": "server",
+    "operation": "humans",
+    "description": "أمر السيرفر: humans"
+  },
+  {
+    "name": "server_bots",
+    "label": "السيرفر · bots",
+    "category": "system",
+    "kind": "server",
+    "operation": "bots",
+    "description": "أمر السيرفر: bots"
+  },
+  {
+    "name": "server_channels",
+    "label": "السيرفر · channels",
+    "category": "system",
+    "kind": "server",
+    "operation": "channels",
+    "description": "أمر السيرفر: channels"
+  },
+  {
+    "name": "server_textchannels",
+    "label": "السيرفر · textchannels",
+    "category": "system",
+    "kind": "server",
+    "operation": "textchannels",
+    "description": "أمر السيرفر: textchannels"
+  },
+  {
+    "name": "server_voicechannels",
+    "label": "السيرفر · voicechannels",
+    "category": "system",
+    "kind": "server",
+    "operation": "voicechannels",
+    "description": "أمر السيرفر: voicechannels"
+  },
+  {
+    "name": "server_categories",
+    "label": "السيرفر · categories",
+    "category": "system",
+    "kind": "server",
+    "operation": "categories",
+    "description": "أمر السيرفر: categories"
+  },
+  {
+    "name": "server_roles",
+    "label": "السيرفر · roles",
+    "category": "system",
+    "kind": "server",
+    "operation": "roles",
+    "description": "أمر السيرفر: roles"
+  },
+  {
+    "name": "server_emojis",
+    "label": "السيرفر · emojis",
+    "category": "system",
+    "kind": "server",
+    "operation": "emojis",
+    "description": "أمر السيرفر: emojis"
+  },
+  {
+    "name": "server_stickers",
+    "label": "السيرفر · stickers",
+    "category": "system",
+    "kind": "server",
+    "operation": "stickers",
+    "description": "أمر السيرفر: stickers"
+  },
+  {
+    "name": "server_boosts",
+    "label": "السيرفر · boosts",
+    "category": "system",
+    "kind": "server",
+    "operation": "boosts",
+    "description": "أمر السيرفر: boosts"
+  },
+  {
+    "name": "server_boostlevel",
+    "label": "السيرفر · boostlevel",
+    "category": "system",
+    "kind": "server",
+    "operation": "boostlevel",
+    "description": "أمر السيرفر: boostlevel"
+  },
+  {
+    "name": "server_owner",
+    "label": "السيرفر · owner",
+    "category": "system",
+    "kind": "server",
+    "operation": "owner",
+    "description": "أمر السيرفر: owner"
+  },
+  {
+    "name": "server_created",
+    "label": "السيرفر · created",
+    "category": "system",
+    "kind": "server",
+    "operation": "created",
+    "description": "أمر السيرفر: created"
+  },
+  {
+    "name": "server_age",
+    "label": "السيرفر · age",
+    "category": "system",
+    "kind": "server",
+    "operation": "age",
+    "description": "أمر السيرفر: age"
+  },
+  {
+    "name": "server_icon",
+    "label": "السيرفر · icon",
+    "category": "system",
+    "kind": "server",
+    "operation": "icon",
+    "description": "أمر السيرفر: icon"
+  },
+  {
+    "name": "server_banner",
+    "label": "السيرفر · banner",
+    "category": "system",
+    "kind": "server",
+    "operation": "banner",
+    "description": "أمر السيرفر: banner"
+  },
+  {
+    "name": "server_verification",
+    "label": "السيرفر · verification",
+    "category": "system",
+    "kind": "server",
+    "operation": "verification",
+    "description": "أمر السيرفر: verification"
+  },
+  {
+    "name": "server_features",
+    "label": "السيرفر · features",
+    "category": "system",
+    "kind": "server",
+    "operation": "features",
+    "description": "أمر السيرفر: features"
+  },
+  {
+    "name": "server_rules",
+    "label": "السيرفر · rules",
+    "category": "system",
+    "kind": "server",
+    "operation": "rules",
+    "description": "أمر السيرفر: rules"
+  },
+  {
+    "name": "server_systemchannel",
+    "label": "السيرفر · systemchannel",
+    "category": "system",
+    "kind": "server",
+    "operation": "systemchannel",
+    "description": "أمر السيرفر: systemchannel"
+  },
+  {
+    "name": "server_afkchannel",
+    "label": "السيرفر · afkchannel",
+    "category": "system",
+    "kind": "server",
+    "operation": "afkchannel",
+    "description": "أمر السيرفر: afkchannel"
+  },
+  {
+    "name": "server_afktimeout",
+    "label": "السيرفر · afktimeout",
+    "category": "system",
+    "kind": "server",
+    "operation": "afktimeout",
+    "description": "أمر السيرفر: afktimeout"
+  },
+  {
+    "name": "server_widget",
+    "label": "السيرفر · widget",
+    "category": "system",
+    "kind": "server",
+    "operation": "widget",
+    "description": "أمر السيرفر: widget"
+  },
+  {
+    "name": "server_invites",
+    "label": "السيرفر · invites",
+    "category": "system",
+    "kind": "server",
+    "operation": "invites",
+    "description": "أمر السيرفر: invites"
+  },
+  {
+    "name": "server_vanity",
+    "label": "السيرفر · vanity",
+    "category": "system",
+    "kind": "server",
+    "operation": "vanity",
+    "description": "أمر السيرفر: vanity"
+  },
+  {
+    "name": "server_admins",
+    "label": "السيرفر · admins",
+    "category": "system",
+    "kind": "server",
+    "operation": "admins",
+    "description": "أمر السيرفر: admins"
+  },
+  {
+    "name": "server_moderators",
+    "label": "السيرفر · moderators",
+    "category": "system",
+    "kind": "server",
+    "operation": "moderators",
+    "description": "أمر السيرفر: moderators"
+  },
+  {
+    "name": "server_online",
+    "label": "السيرفر · online",
+    "category": "system",
+    "kind": "server",
+    "operation": "online",
+    "description": "أمر السيرفر: online"
+  },
+  {
+    "name": "server_offline",
+    "label": "السيرفر · offline",
+    "category": "system",
+    "kind": "server",
+    "operation": "offline",
+    "description": "أمر السيرفر: offline"
+  },
+  {
+    "name": "server_newbies",
+    "label": "السيرفر · newbies",
+    "category": "system",
+    "kind": "server",
+    "operation": "newbies",
+    "description": "أمر السيرفر: newbies"
+  },
+  {
+    "name": "server_oldest",
+    "label": "السيرفر · oldest",
+    "category": "system",
+    "kind": "server",
+    "operation": "oldest",
+    "description": "أمر السيرفر: oldest"
+  },
+  {
+    "name": "server_newest",
+    "label": "السيرفر · newest",
+    "category": "system",
+    "kind": "server",
+    "operation": "newest",
+    "description": "أمر السيرفر: newest"
+  },
+  {
+    "name": "server_biggest_roles",
+    "label": "السيرفر · biggest roles",
+    "category": "system",
+    "kind": "server",
+    "operation": "biggest_roles",
+    "description": "أمر السيرفر: biggest roles"
+  },
+  {
+    "name": "server_rolecount",
+    "label": "السيرفر · rolecount",
+    "category": "system",
+    "kind": "server",
+    "operation": "rolecount",
+    "description": "أمر السيرفر: rolecount"
+  },
+  {
+    "name": "server_channelcount",
+    "label": "السيرفر · channelcount",
+    "category": "system",
+    "kind": "server",
+    "operation": "channelcount",
+    "description": "أمر السيرفر: channelcount"
+  },
+  {
+    "name": "server_emoji_count",
+    "label": "السيرفر · emoji count",
+    "category": "system",
+    "kind": "server",
+    "operation": "emoji_count",
+    "description": "أمر السيرفر: emoji count"
+  },
+  {
+    "name": "server_botcount",
+    "label": "السيرفر · botcount",
+    "category": "system",
+    "kind": "server",
+    "operation": "botcount",
+    "description": "أمر السيرفر: botcount"
+  },
+  {
+    "name": "server_membercount",
+    "label": "السيرفر · membercount",
+    "category": "system",
+    "kind": "server",
+    "operation": "membercount",
+    "description": "أمر السيرفر: membercount"
+  },
+  {
+    "name": "member_info",
+    "label": "الأعضاء · info",
+    "category": "system",
+    "kind": "member",
+    "operation": "info",
+    "description": "أمر الأعضاء: info"
+  },
+  {
+    "name": "member_id",
+    "label": "الأعضاء · id",
+    "category": "system",
+    "kind": "member",
+    "operation": "id",
+    "description": "أمر الأعضاء: id"
+  },
+  {
+    "name": "member_avatar",
+    "label": "الأعضاء · avatar",
+    "category": "system",
+    "kind": "member",
+    "operation": "avatar",
+    "description": "أمر الأعضاء: avatar"
+  },
+  {
+    "name": "member_banner",
+    "label": "الأعضاء · banner",
+    "category": "system",
+    "kind": "member",
+    "operation": "banner",
+    "description": "أمر الأعضاء: banner"
+  },
+  {
+    "name": "member_nickname",
+    "label": "الأعضاء · nickname",
+    "category": "system",
+    "kind": "member",
+    "operation": "nickname",
+    "description": "أمر الأعضاء: nickname"
+  },
+  {
+    "name": "member_username",
+    "label": "الأعضاء · username",
+    "category": "system",
+    "kind": "member",
+    "operation": "username",
+    "description": "أمر الأعضاء: username"
+  },
+  {
+    "name": "member_joined",
+    "label": "الأعضاء · joined",
+    "category": "system",
+    "kind": "member",
+    "operation": "joined",
+    "description": "أمر الأعضاء: joined"
+  },
+  {
+    "name": "member_created",
+    "label": "الأعضاء · created",
+    "category": "system",
+    "kind": "member",
+    "operation": "created",
+    "description": "أمر الأعضاء: created"
+  },
+  {
+    "name": "member_age",
+    "label": "الأعضاء · age",
+    "category": "system",
+    "kind": "member",
+    "operation": "age",
+    "description": "أمر الأعضاء: age"
+  },
+  {
+    "name": "member_roles",
+    "label": "الأعضاء · roles",
+    "category": "system",
+    "kind": "member",
+    "operation": "roles",
+    "description": "أمر الأعضاء: roles"
+  },
+  {
+    "name": "member_top_role",
+    "label": "الأعضاء · top role",
+    "category": "system",
+    "kind": "member",
+    "operation": "top_role",
+    "description": "أمر الأعضاء: top role"
+  },
+  {
+    "name": "member_permissions",
+    "label": "الأعضاء · permissions",
+    "category": "system",
+    "kind": "member",
+    "operation": "permissions",
+    "description": "أمر الأعضاء: permissions"
+  },
+  {
+    "name": "member_status",
+    "label": "الأعضاء · status",
+    "category": "system",
+    "kind": "member",
+    "operation": "status",
+    "description": "أمر الأعضاء: status"
+  },
+  {
+    "name": "member_activity",
+    "label": "الأعضاء · activity",
+    "category": "system",
+    "kind": "member",
+    "operation": "activity",
+    "description": "أمر الأعضاء: activity"
+  },
+  {
+    "name": "member_activities",
+    "label": "الأعضاء · activities",
+    "category": "system",
+    "kind": "member",
+    "operation": "activities",
+    "description": "أمر الأعضاء: activities"
+  },
+  {
+    "name": "member_bots",
+    "label": "الأعضاء · bots",
+    "category": "system",
+    "kind": "member",
+    "operation": "bots",
+    "description": "أمر الأعضاء: bots"
+  },
+  {
+    "name": "member_mutual",
+    "label": "الأعضاء · mutual",
+    "category": "system",
+    "kind": "member",
+    "operation": "mutual",
+    "description": "أمر الأعضاء: mutual"
+  },
+  {
+    "name": "member_isbot",
+    "label": "الأعضاء · isbot",
+    "category": "system",
+    "kind": "member",
+    "operation": "isbot",
+    "description": "أمر الأعضاء: isbot"
+  },
+  {
+    "name": "member_ishuman",
+    "label": "الأعضاء · ishuman",
+    "category": "system",
+    "kind": "member",
+    "operation": "ishuman",
+    "description": "أمر الأعضاء: ishuman"
+  },
+  {
+    "name": "member_isowner",
+    "label": "الأعضاء · isowner",
+    "category": "system",
+    "kind": "member",
+    "operation": "isowner",
+    "description": "أمر الأعضاء: isowner"
+  },
+  {
+    "name": "member_isadmin",
+    "label": "الأعضاء · isadmin",
+    "category": "system",
+    "kind": "member",
+    "operation": "isadmin",
+    "description": "أمر الأعضاء: isadmin"
+  },
+  {
+    "name": "member_ismoderator",
+    "label": "الأعضاء · ismoderator",
+    "category": "system",
+    "kind": "member",
+    "operation": "ismoderator",
+    "description": "أمر الأعضاء: ismoderator"
+  },
+  {
+    "name": "member_isboosting",
+    "label": "الأعضاء · isboosting",
+    "category": "system",
+    "kind": "member",
+    "operation": "isboosting",
+    "description": "أمر الأعضاء: isboosting"
+  },
+  {
+    "name": "member_boosts",
+    "label": "الأعضاء · boosts",
+    "category": "system",
+    "kind": "member",
+    "operation": "boosts",
+    "description": "أمر الأعضاء: boosts"
+  },
+  {
+    "name": "member_mention",
+    "label": "الأعضاء · mention",
+    "category": "system",
+    "kind": "member",
+    "operation": "mention",
+    "description": "أمر الأعضاء: mention"
+  },
+  {
+    "name": "member_profile",
+    "label": "الأعضاء · profile",
+    "category": "system",
+    "kind": "member",
+    "operation": "profile",
+    "description": "أمر الأعضاء: profile"
+  },
+  {
+    "name": "member_badges",
+    "label": "الأعضاء · badges",
+    "category": "system",
+    "kind": "member",
+    "operation": "badges",
+    "description": "أمر الأعضاء: badges"
+  },
+  {
+    "name": "member_invitecount",
+    "label": "الأعضاء · invitecount",
+    "category": "system",
+    "kind": "member",
+    "operation": "invitecount",
+    "description": "أمر الأعضاء: invitecount"
+  },
+  {
+    "name": "member_voicepresence",
+    "label": "الأعضاء · voicepresence",
+    "category": "system",
+    "kind": "member",
+    "operation": "voicepresence",
+    "description": "أمر الأعضاء: voicepresence"
+  },
+  {
+    "name": "member_presence",
+    "label": "الأعضاء · presence",
+    "category": "system",
+    "kind": "member",
+    "operation": "presence",
+    "description": "أمر الأعضاء: presence"
+  },
+  {
+    "name": "member_color",
+    "label": "الأعضاء · color",
+    "category": "system",
+    "kind": "member",
+    "operation": "color",
+    "description": "أمر الأعضاء: color"
+  },
+  {
+    "name": "member_highestrole",
+    "label": "الأعضاء · highestrole",
+    "category": "system",
+    "kind": "member",
+    "operation": "highestrole",
+    "description": "أمر الأعضاء: highestrole"
+  },
+  {
+    "name": "member_accountage",
+    "label": "الأعضاء · accountage",
+    "category": "system",
+    "kind": "member",
+    "operation": "accountage",
+    "description": "أمر الأعضاء: accountage"
+  },
+  {
+    "name": "member_serverage",
+    "label": "الأعضاء · serverage",
+    "category": "system",
+    "kind": "member",
+    "operation": "serverage",
+    "description": "أمر الأعضاء: serverage"
+  },
+  {
+    "name": "member_sharedroles",
+    "label": "الأعضاء · sharedroles",
+    "category": "system",
+    "kind": "member",
+    "operation": "sharedroles",
+    "description": "أمر الأعضاء: sharedroles"
+  },
+  {
+    "name": "member_sharedpermissions",
+    "label": "الأعضاء · sharedpermissions",
+    "category": "system",
+    "kind": "member",
+    "operation": "sharedpermissions",
+    "description": "أمر الأعضاء: sharedpermissions"
+  },
+  {
+    "name": "member_memberflags",
+    "label": "الأعضاء · memberflags",
+    "category": "system",
+    "kind": "member",
+    "operation": "memberflags",
+    "description": "أمر الأعضاء: memberflags"
+  },
+  {
+    "name": "member_displayname",
+    "label": "الأعضاء · displayname",
+    "category": "system",
+    "kind": "member",
+    "operation": "displayname",
+    "description": "أمر الأعضاء: displayname"
+  },
+  {
+    "name": "member_joinposition",
+    "label": "الأعضاء · joinposition",
+    "category": "system",
+    "kind": "member",
+    "operation": "joinposition",
+    "description": "أمر الأعضاء: joinposition"
+  },
+  {
+    "name": "member_roleslist",
+    "label": "الأعضاء · roleslist",
+    "category": "system",
+    "kind": "member",
+    "operation": "roleslist",
+    "description": "أمر الأعضاء: roleslist"
+  },
+  {
+    "name": "game_riddle",
+    "label": "الألعاب · riddle",
+    "category": "games",
+    "kind": "game",
+    "operation": "riddle",
+    "description": "أمر الألعاب: riddle"
+  },
+  {
+    "name": "game_mathquiz",
+    "label": "الألعاب · mathquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "mathquiz",
+    "description": "أمر الألعاب: mathquiz"
+  },
+  {
+    "name": "game_geographyquiz",
+    "label": "الألعاب · geographyquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "geographyquiz",
+    "description": "أمر الألعاب: geographyquiz"
+  },
+  {
+    "name": "game_sciencequiz",
+    "label": "الألعاب · sciencequiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "sciencequiz",
+    "description": "أمر الألعاب: sciencequiz"
+  },
+  {
+    "name": "game_wordquiz",
+    "label": "الألعاب · wordquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "wordquiz",
+    "description": "أمر الألعاب: wordquiz"
+  },
+  {
+    "name": "game_spellingquiz",
+    "label": "الألعاب · spellingquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "spellingquiz",
+    "description": "أمر الألعاب: spellingquiz"
+  },
+  {
+    "name": "game_scramble",
+    "label": "الألعاب · scramble",
+    "category": "games",
+    "kind": "game",
+    "operation": "scramble",
+    "description": "أمر الألعاب: scramble"
+  },
+  {
+    "name": "game_unscramble",
+    "label": "الألعاب · unscramble",
+    "category": "games",
+    "kind": "game",
+    "operation": "unscramble",
+    "description": "أمر الألعاب: unscramble"
+  },
+  {
+    "name": "game_hangman",
+    "label": "الألعاب · hangman",
+    "category": "games",
+    "kind": "game",
+    "operation": "hangman",
+    "description": "أمر الألعاب: hangman"
+  },
+  {
+    "name": "game_wordchain",
+    "label": "الألعاب · wordchain",
+    "category": "games",
+    "kind": "game",
+    "operation": "wordchain",
+    "description": "أمر الألعاب: wordchain"
+  },
+  {
+    "name": "game_trivia",
+    "label": "الألعاب · trivia",
+    "category": "games",
+    "kind": "game",
+    "operation": "trivia",
+    "description": "أمر الألعاب: trivia"
+  },
+  {
+    "name": "game_capitals",
+    "label": "الألعاب · capitals",
+    "category": "games",
+    "kind": "game",
+    "operation": "capitals",
+    "description": "أمر الألعاب: capitals"
+  },
+  {
+    "name": "game_flags",
+    "label": "الألعاب · flags",
+    "category": "games",
+    "kind": "game",
+    "operation": "flags",
+    "description": "أمر الألعاب: flags"
+  },
+  {
+    "name": "game_animalquiz",
+    "label": "الألعاب · animalquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "animalquiz",
+    "description": "أمر الألعاب: animalquiz"
+  },
+  {
+    "name": "game_emojiquiz",
+    "label": "الألعاب · emojiquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "emojiquiz",
+    "description": "أمر الألعاب: emojiquiz"
+  },
+  {
+    "name": "game_moviequiz",
+    "label": "الألعاب · moviequiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "moviequiz",
+    "description": "أمر الألعاب: moviequiz"
+  },
+  {
+    "name": "game_musicquiz",
+    "label": "الألعاب · musicquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "musicquiz",
+    "description": "أمر الألعاب: musicquiz"
+  },
+  {
+    "name": "game_sportsquiz",
+    "label": "الألعاب · sportsquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "sportsquiz",
+    "description": "أمر الألعاب: sportsquiz"
+  },
+  {
+    "name": "game_historyquiz",
+    "label": "الألعاب · historyquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "historyquiz",
+    "description": "أمر الألعاب: historyquiz"
+  },
+  {
+    "name": "game_logicquiz",
+    "label": "الألعاب · logicquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "logicquiz",
+    "description": "أمر الألعاب: logicquiz"
+  },
+  {
+    "name": "game_memoryquiz",
+    "label": "الألعاب · memoryquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "memoryquiz",
+    "description": "أمر الألعاب: memoryquiz"
+  },
+  {
+    "name": "game_reactiontest",
+    "label": "الألعاب · reactiontest",
+    "category": "games",
+    "kind": "game",
+    "operation": "reactiontest",
+    "description": "أمر الألعاب: reactiontest"
+  },
+  {
+    "name": "game_quickmath",
+    "label": "الألعاب · quickmath",
+    "category": "games",
+    "kind": "game",
+    "operation": "quickmath",
+    "description": "أمر الألعاب: quickmath"
+  },
+  {
+    "name": "game_guessnumber",
+    "label": "الألعاب · guessnumber",
+    "category": "games",
+    "kind": "game",
+    "operation": "guessnumber",
+    "description": "أمر الألعاب: guessnumber"
+  },
+  {
+    "name": "game_higherlower",
+    "label": "الألعاب · higherlower",
+    "category": "games",
+    "kind": "game",
+    "operation": "higherlower",
+    "description": "أمر الألعاب: higherlower"
+  },
+  {
+    "name": "game_wordguess",
+    "label": "الألعاب · wordguess",
+    "category": "games",
+    "kind": "game",
+    "operation": "wordguess",
+    "description": "أمر الألعاب: wordguess"
+  },
+  {
+    "name": "game_oddoneout",
+    "label": "الألعاب · oddoneout",
+    "category": "games",
+    "kind": "game",
+    "operation": "oddoneout",
+    "description": "أمر الألعاب: oddoneout"
+  },
+  {
+    "name": "game_patternquiz",
+    "label": "الألعاب · patternquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "patternquiz",
+    "description": "أمر الألعاب: patternquiz"
+  },
+  {
+    "name": "game_sequencequiz",
+    "label": "الألعاب · sequencequiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "sequencequiz",
+    "description": "أمر الألعاب: sequencequiz"
+  },
+  {
+    "name": "game_dailychallenge",
+    "label": "الألعاب · dailychallenge",
+    "category": "games",
+    "kind": "game",
+    "operation": "dailychallenge",
+    "description": "أمر الألعاب: dailychallenge"
+  },
+  {
+    "name": "game_challenge",
+    "label": "الألعاب · challenge",
+    "category": "games",
+    "kind": "game",
+    "operation": "challenge",
+    "description": "أمر الألعاب: challenge"
+  },
+  {
+    "name": "game_duel",
+    "label": "الألعاب · duel",
+    "category": "games",
+    "kind": "game",
+    "operation": "duel",
+    "description": "أمر الألعاب: duel"
+  },
+  {
+    "name": "game_coinrace",
+    "label": "الألعاب · coinrace",
+    "category": "games",
+    "kind": "game",
+    "operation": "coinrace",
+    "description": "أمر الألعاب: coinrace"
+  },
+  {
+    "name": "game_dicebattle",
+    "label": "الألعاب · dicebattle",
+    "category": "games",
+    "kind": "game",
+    "operation": "dicebattle",
+    "description": "أمر الألعاب: dicebattle"
+  },
+  {
+    "name": "game_bingo",
+    "label": "الألعاب · bingo",
+    "category": "games",
+    "kind": "game",
+    "operation": "bingo",
+    "description": "أمر الألعاب: bingo"
+  },
+  {
+    "name": "game_quiz",
+    "label": "الألعاب · quiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "quiz",
+    "description": "أمر الألعاب: quiz"
+  },
+  {
+    "name": "game_speedquiz",
+    "label": "الألعاب · speedquiz",
+    "category": "games",
+    "kind": "game",
+    "operation": "speedquiz",
+    "description": "أمر الألعاب: speedquiz"
+  },
+  {
+    "name": "game_brainteaser",
+    "label": "الألعاب · brainteaser",
+    "category": "games",
+    "kind": "game",
+    "operation": "brainteaser",
+    "description": "أمر الألعاب: brainteaser"
+  },
+  {
+    "name": "game_anagram",
+    "label": "الألعاب · anagram",
+    "category": "games",
+    "kind": "game",
+    "operation": "anagram",
+    "description": "أمر الألعاب: anagram"
+  },
+  {
+    "name": "game_crossword",
+    "label": "الألعاب · crossword",
+    "category": "games",
+    "kind": "game",
+    "operation": "crossword",
+    "description": "أمر الألعاب: crossword"
+  },
+  {
+    "name": "mod_warn",
+    "label": "الإشراف · warn",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "warn",
+    "description": "أمر الإشراف: warn"
+  },
+  {
+    "name": "mod_kick",
+    "label": "الإشراف · kick",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "kick",
+    "description": "أمر الإشراف: kick"
+  },
+  {
+    "name": "mod_ban",
+    "label": "الإشراف · ban",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "ban",
+    "description": "أمر الإشراف: ban"
+  },
+  {
+    "name": "mod_unban",
+    "label": "الإشراف · unban",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "unban",
+    "description": "أمر الإشراف: unban"
+  },
+  {
+    "name": "mod_timeout",
+    "label": "الإشراف · timeout",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "timeout",
+    "description": "أمر الإشراف: timeout"
+  },
+  {
+    "name": "mod_untimeout",
+    "label": "الإشراف · untimeout",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "untimeout",
+    "description": "أمر الإشراف: untimeout"
+  },
+  {
+    "name": "mod_clear",
+    "label": "الإشراف · clear",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "clear",
+    "description": "أمر الإشراف: clear"
+  },
+  {
+    "name": "mod_purge",
+    "label": "الإشراف · purge",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "purge",
+    "description": "أمر الإشراف: purge"
+  },
+  {
+    "name": "mod_slowmode",
+    "label": "الإشراف · slowmode",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "slowmode",
+    "description": "أمر الإشراف: slowmode"
+  },
+  {
+    "name": "mod_lock",
+    "label": "الإشراف · lock",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "lock",
+    "description": "أمر الإشراف: lock"
+  },
+  {
+    "name": "mod_unlock",
+    "label": "الإشراف · unlock",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "unlock",
+    "description": "أمر الإشراف: unlock"
+  },
+  {
+    "name": "mod_hide",
+    "label": "الإشراف · hide",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "hide",
+    "description": "أمر الإشراف: hide"
+  },
+  {
+    "name": "mod_show",
+    "label": "الإشراف · show",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "show",
+    "description": "أمر الإشراف: show"
+  },
+  {
+    "name": "mod_renamechannel",
+    "label": "الإشراف · renamechannel",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "renamechannel",
+    "description": "أمر الإشراف: renamechannel"
+  },
+  {
+    "name": "mod_settopic",
+    "label": "الإشراف · settopic",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "settopic",
+    "description": "أمر الإشراف: settopic"
+  },
+  {
+    "name": "mod_nick",
+    "label": "الإشراف · nick",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "nick",
+    "description": "أمر الإشراف: nick"
+  },
+  {
+    "name": "mod_roleadd",
+    "label": "الإشراف · roleadd",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "roleadd",
+    "description": "أمر الإشراف: roleadd"
+  },
+  {
+    "name": "mod_roleremove",
+    "label": "الإشراف · roleremove",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "roleremove",
+    "description": "أمر الإشراف: roleremove"
+  },
+  {
+    "name": "mod_rolecreate",
+    "label": "الإشراف · rolecreate",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "rolecreate",
+    "description": "أمر الإشراف: rolecreate"
+  },
+  {
+    "name": "mod_roledelete",
+    "label": "الإشراف · roledelete",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "roledelete",
+    "description": "أمر الإشراف: roledelete"
+  },
+  {
+    "name": "mod_move",
+    "label": "الإشراف · move",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "move",
+    "description": "أمر الإشراف: move"
+  },
+  {
+    "name": "mod_moveme",
+    "label": "الإشراف · moveme",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "moveme",
+    "description": "أمر الإشراف: moveme"
+  },
+  {
+    "name": "mod_mute",
+    "label": "الإشراف · mute",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "mute",
+    "description": "أمر الإشراف: mute"
+  },
+  {
+    "name": "mod_unmute",
+    "label": "الإشراف · unmute",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "unmute",
+    "description": "أمر الإشراف: unmute"
+  },
+  {
+    "name": "mod_deafen",
+    "label": "الإشراف · deafen",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "deafen",
+    "description": "أمر الإشراف: deafen"
+  },
+  {
+    "name": "mod_undeafen",
+    "label": "الإشراف · undeafen",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "undeafen",
+    "description": "أمر الإشراف: undeafen"
+  },
+  {
+    "name": "mod_disconnect",
+    "label": "الإشراف · disconnect",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "disconnect",
+    "description": "أمر الإشراف: disconnect"
+  },
+  {
+    "name": "mod_allbans",
+    "label": "الإشراف · allbans",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "allbans",
+    "description": "أمر الإشراف: allbans"
+  },
+  {
+    "name": "mod_cleanbots",
+    "label": "الإشراف · cleanbots",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "cleanbots",
+    "description": "أمر الإشراف: cleanbots"
+  },
+  {
+    "name": "mod_cleanwebhooks",
+    "label": "الإشراف · cleanwebhooks",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "cleanwebhooks",
+    "description": "أمر الإشراف: cleanwebhooks"
+  },
+  {
+    "name": "mod_cleaninvites",
+    "label": "الإشراف · cleaninvites",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "cleaninvites",
+    "description": "أمر الإشراف: cleaninvites"
+  },
+  {
+    "name": "mod_lockdown",
+    "label": "الإشراف · lockdown",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "lockdown",
+    "description": "أمر الإشراف: lockdown"
+  },
+  {
+    "name": "mod_unlockdown",
+    "label": "الإشراف · unlockdown",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "unlockdown",
+    "description": "أمر الإشراف: unlockdown"
+  },
+  {
+    "name": "mod_softban",
+    "label": "الإشراف · softban",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "softban",
+    "description": "أمر الإشراف: softban"
+  },
+  {
+    "name": "mod_massrole",
+    "label": "الإشراف · massrole",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "massrole",
+    "description": "أمر الإشراف: massrole"
+  },
+  {
+    "name": "mod_rolecolor",
+    "label": "الإشراف · rolecolor",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "rolecolor",
+    "description": "أمر الإشراف: rolecolor"
+  },
+  {
+    "name": "mod_rolehoist",
+    "label": "الإشراف · rolehoist",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "rolehoist",
+    "description": "أمر الإشراف: rolehoist"
+  },
+  {
+    "name": "mod_rolementionable",
+    "label": "الإشراف · rolementionable",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "rolementionable",
+    "description": "أمر الإشراف: rolementionable"
+  },
+  {
+    "name": "mod_channelclone",
+    "label": "الإشراف · channelclone",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "channelclone",
+    "description": "أمر الإشراف: channelclone"
+  },
+  {
+    "name": "mod_channelcreate",
+    "label": "الإشراف · channelcreate",
+    "category": "moderation",
+    "kind": "mod",
+    "operation": "channelcreate",
+    "description": "أمر الإشراف: channelcreate"
+  },
+  {
+    "name": "security_protection",
+    "label": "الحماية · protection",
+    "category": "protection",
+    "kind": "security",
+    "operation": "protection",
+    "description": "أمر الحماية: protection"
+  },
+  {
+    "name": "security_antilink",
+    "label": "الحماية · antilink",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antilink",
+    "description": "أمر الحماية: antilink"
+  },
+  {
+    "name": "security_antispam",
+    "label": "الحماية · antispam",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antispam",
+    "description": "أمر الحماية: antispam"
+  },
+  {
+    "name": "security_blockedword",
+    "label": "الحماية · blockedword",
+    "category": "protection",
+    "kind": "security",
+    "operation": "blockedword",
+    "description": "أمر الحماية: blockedword"
+  },
+  {
+    "name": "security_wordfilter",
+    "label": "الحماية · wordfilter",
+    "category": "protection",
+    "kind": "security",
+    "operation": "wordfilter",
+    "description": "أمر الحماية: wordfilter"
+  },
+  {
+    "name": "security_invitespam",
+    "label": "الحماية · invitespam",
+    "category": "protection",
+    "kind": "security",
+    "operation": "invitespam",
+    "description": "أمر الحماية: invitespam"
+  },
+  {
+    "name": "security_capsfilter",
+    "label": "الحماية · capsfilter",
+    "category": "protection",
+    "kind": "security",
+    "operation": "capsfilter",
+    "description": "أمر الحماية: capsfilter"
+  },
+  {
+    "name": "security_mentionfilter",
+    "label": "الحماية · mentionfilter",
+    "category": "protection",
+    "kind": "security",
+    "operation": "mentionfilter",
+    "description": "أمر الحماية: mentionfilter"
+  },
+  {
+    "name": "security_raidmode",
+    "label": "الحماية · raidmode",
+    "category": "protection",
+    "kind": "security",
+    "operation": "raidmode",
+    "description": "أمر الحماية: raidmode"
+  },
+  {
+    "name": "security_lockdown",
+    "label": "الحماية · lockdown",
+    "category": "protection",
+    "kind": "security",
+    "operation": "lockdown",
+    "description": "أمر الحماية: lockdown"
+  },
+  {
+    "name": "security_securitylog",
+    "label": "الحماية · securitylog",
+    "category": "protection",
+    "kind": "security",
+    "operation": "securitylog",
+    "description": "أمر الحماية: securitylog"
+  },
+  {
+    "name": "security_welcome",
+    "label": "الحماية · welcome",
+    "category": "protection",
+    "kind": "security",
+    "operation": "welcome",
+    "description": "أمر الحماية: welcome"
+  },
+  {
+    "name": "security_leave",
+    "label": "الحماية · leave",
+    "category": "protection",
+    "kind": "security",
+    "operation": "leave",
+    "description": "أمر الحماية: leave"
+  },
+  {
+    "name": "security_goodbye",
+    "label": "الحماية · goodbye",
+    "category": "protection",
+    "kind": "security",
+    "operation": "goodbye",
+    "description": "أمر الحماية: goodbye"
+  },
+  {
+    "name": "security_joinrole",
+    "label": "الحماية · joinrole",
+    "category": "protection",
+    "kind": "security",
+    "operation": "joinrole",
+    "description": "أمر الحماية: joinrole"
+  },
+  {
+    "name": "security_autorole",
+    "label": "الحماية · autorole",
+    "category": "protection",
+    "kind": "security",
+    "operation": "autorole",
+    "description": "أمر الحماية: autorole"
+  },
+  {
+    "name": "security_logchannel",
+    "label": "الحماية · logchannel",
+    "category": "protection",
+    "kind": "security",
+    "operation": "logchannel",
+    "description": "أمر الحماية: logchannel"
+  },
+  {
+    "name": "security_modlog",
+    "label": "الحماية · modlog",
+    "category": "protection",
+    "kind": "security",
+    "operation": "modlog",
+    "description": "أمر الحماية: modlog"
+  },
+  {
+    "name": "security_auditlog",
+    "label": "الحماية · auditlog",
+    "category": "protection",
+    "kind": "security",
+    "operation": "auditlog",
+    "description": "أمر الحماية: auditlog"
+  },
+  {
+    "name": "security_antiinvite",
+    "label": "الحماية · antiinvite",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antiinvite",
+    "description": "أمر الحماية: antiinvite"
+  },
+  {
+    "name": "security_antiwebhook",
+    "label": "الحماية · antiwebhook",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antiwebhook",
+    "description": "أمر الحماية: antiwebhook"
+  },
+  {
+    "name": "security_antiscam",
+    "label": "الحماية · antiscam",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antiscam",
+    "description": "أمر الحماية: antiscam"
+  },
+  {
+    "name": "security_antiphishing",
+    "label": "الحماية · antiphishing",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antiphishing",
+    "description": "أمر الحماية: antiphishing"
+  },
+  {
+    "name": "security_antighostping",
+    "label": "الحماية · antighostping",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antighostping",
+    "description": "أمر الحماية: antighostping"
+  },
+  {
+    "name": "security_antiping",
+    "label": "الحماية · antiping",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antiping",
+    "description": "أمر الحماية: antiping"
+  },
+  {
+    "name": "security_massmention",
+    "label": "الحماية · massmention",
+    "category": "protection",
+    "kind": "security",
+    "operation": "massmention",
+    "description": "أمر الحماية: massmention"
+  },
+  {
+    "name": "security_antiemoji",
+    "label": "الحماية · antiemoji",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antiemoji",
+    "description": "أمر الحماية: antiemoji"
+  },
+  {
+    "name": "security_antiattachment",
+    "label": "الحماية · antiattachment",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antiattachment",
+    "description": "أمر الحماية: antiattachment"
+  },
+  {
+    "name": "security_antifile",
+    "label": "الحماية · antifile",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antifile",
+    "description": "أمر الحماية: antifile"
+  },
+  {
+    "name": "security_antiflood",
+    "label": "الحماية · antiflood",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antiflood",
+    "description": "أمر الحماية: antiflood"
+  },
+  {
+    "name": "security_antirepeat",
+    "label": "الحماية · antirepeat",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antirepeat",
+    "description": "أمر الحماية: antirepeat"
+  },
+  {
+    "name": "security_antibot",
+    "label": "الحماية · antibot",
+    "category": "protection",
+    "kind": "security",
+    "operation": "antibot",
+    "description": "أمر الحماية: antibot"
+  },
+  {
+    "name": "security_verify",
+    "label": "الحماية · verify",
+    "category": "protection",
+    "kind": "security",
+    "operation": "verify",
+    "description": "أمر الحماية: verify"
+  },
+  {
+    "name": "security_verification",
+    "label": "الحماية · verification",
+    "category": "protection",
+    "kind": "security",
+    "operation": "verification",
+    "description": "أمر الحماية: verification"
+  },
+  {
+    "name": "security_captcha",
+    "label": "الحماية · captcha",
+    "category": "protection",
+    "kind": "security",
+    "operation": "captcha",
+    "description": "أمر الحماية: captcha"
+  },
+  {
+    "name": "security_rules",
+    "label": "الحماية · rules",
+    "category": "protection",
+    "kind": "security",
+    "operation": "rules",
+    "description": "أمر الحماية: rules"
+  },
+  {
+    "name": "security_screening",
+    "label": "الحماية · screening",
+    "category": "protection",
+    "kind": "security",
+    "operation": "screening",
+    "description": "أمر الحماية: screening"
+  },
+  {
+    "name": "security_safeurls",
+    "label": "الحماية · safeurls",
+    "category": "protection",
+    "kind": "security",
+    "operation": "safeurls",
+    "description": "أمر الحماية: safeurls"
+  },
+  {
+    "name": "security_whitelist",
+    "label": "الحماية · whitelist",
+    "category": "protection",
+    "kind": "security",
+    "operation": "whitelist",
+    "description": "أمر الحماية: whitelist"
+  },
+  {
+    "name": "security_blacklist",
+    "label": "الحماية · blacklist",
+    "category": "protection",
+    "kind": "security",
+    "operation": "blacklist",
+    "description": "أمر الحماية: blacklist"
+  },
+  {
+    "name": "social_poll",
+    "label": "التفاعل · poll",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "poll",
+    "description": "أمر التفاعل: poll"
+  },
+  {
+    "name": "social_vote",
+    "label": "التفاعل · vote",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "vote",
+    "description": "أمر التفاعل: vote"
+  },
+  {
+    "name": "social_suggest",
+    "label": "التفاعل · suggest",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "suggest",
+    "description": "أمر التفاعل: suggest"
+  },
+  {
+    "name": "social_suggestion",
+    "label": "التفاعل · suggestion",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "suggestion",
+    "description": "أمر التفاعل: suggestion"
+  },
+  {
+    "name": "social_announce",
+    "label": "التفاعل · announce",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "announce",
+    "description": "أمر التفاعل: announce"
+  },
+  {
+    "name": "social_broadcast",
+    "label": "التفاعل · broadcast",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "broadcast",
+    "description": "أمر التفاعل: broadcast"
+  },
+  {
+    "name": "social_say",
+    "label": "التفاعل · say",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "say",
+    "description": "أمر التفاعل: say"
+  },
+  {
+    "name": "social_embed",
+    "label": "التفاعل · embed",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "embed",
+    "description": "أمر التفاعل: embed"
+  },
+  {
+    "name": "social_quote",
+    "label": "التفاعل · quote",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "quote",
+    "description": "أمر التفاعل: quote"
+  },
+  {
+    "name": "social_compliment",
+    "label": "التفاعل · compliment",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "compliment",
+    "description": "أمر التفاعل: compliment"
+  },
+  {
+    "name": "social_hug",
+    "label": "التفاعل · hug",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "hug",
+    "description": "أمر التفاعل: hug"
+  },
+  {
+    "name": "social_slap",
+    "label": "التفاعل · slap",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "slap",
+    "description": "أمر التفاعل: slap"
+  },
+  {
+    "name": "social_pat",
+    "label": "التفاعل · pat",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "pat",
+    "description": "أمر التفاعل: pat"
+  },
+  {
+    "name": "social_highfive",
+    "label": "التفاعل · highfive",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "highfive",
+    "description": "أمر التفاعل: highfive"
+  },
+  {
+    "name": "social_wave",
+    "label": "التفاعل · wave",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "wave",
+    "description": "أمر التفاعل: wave"
+  },
+  {
+    "name": "social_welcome",
+    "label": "التفاعل · welcome",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "welcome",
+    "description": "أمر التفاعل: welcome"
+  },
+  {
+    "name": "social_thanks",
+    "label": "التفاعل · thanks",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "thanks",
+    "description": "أمر التفاعل: thanks"
+  },
+  {
+    "name": "social_goodmorning",
+    "label": "التفاعل · goodmorning",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "goodmorning",
+    "description": "أمر التفاعل: goodmorning"
+  },
+  {
+    "name": "social_goodnight",
+    "label": "التفاعل · goodnight",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "goodnight",
+    "description": "أمر التفاعل: goodnight"
+  },
+  {
+    "name": "social_birthday",
+    "label": "التفاعل · birthday",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "birthday",
+    "description": "أمر التفاعل: birthday"
+  },
+  {
+    "name": "social_anniversary",
+    "label": "التفاعل · anniversary",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "anniversary",
+    "description": "أمر التفاعل: anniversary"
+  },
+  {
+    "name": "social_leaderboard",
+    "label": "التفاعل · leaderboard",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "leaderboard",
+    "description": "أمر التفاعل: leaderboard"
+  },
+  {
+    "name": "social_topmembers",
+    "label": "التفاعل · topmembers",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "topmembers",
+    "description": "أمر التفاعل: topmembers"
+  },
+  {
+    "name": "social_topchatters",
+    "label": "التفاعل · topchatters",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "topchatters",
+    "description": "أمر التفاعل: topchatters"
+  },
+  {
+    "name": "social_topboosters",
+    "label": "التفاعل · topboosters",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "topboosters",
+    "description": "أمر التفاعل: topboosters"
+  },
+  {
+    "name": "social_topinvites",
+    "label": "التفاعل · topinvites",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "topinvites",
+    "description": "أمر التفاعل: topinvites"
+  },
+  {
+    "name": "social_membercard",
+    "label": "التفاعل · membercard",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "membercard",
+    "description": "أمر التفاعل: membercard"
+  },
+  {
+    "name": "social_servercard",
+    "label": "التفاعل · servercard",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "servercard",
+    "description": "أمر التفاعل: servercard"
+  },
+  {
+    "name": "social_rules",
+    "label": "التفاعل · rules",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "rules",
+    "description": "أمر التفاعل: rules"
+  },
+  {
+    "name": "social_faq",
+    "label": "التفاعل · faq",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "faq",
+    "description": "أمر التفاعل: faq"
+  },
+  {
+    "name": "social_support",
+    "label": "التفاعل · support",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "support",
+    "description": "أمر التفاعل: support"
+  },
+  {
+    "name": "social_feedback",
+    "label": "التفاعل · feedback",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "feedback",
+    "description": "أمر التفاعل: feedback"
+  },
+  {
+    "name": "social_report",
+    "label": "التفاعل · report",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "report",
+    "description": "أمر التفاعل: report"
+  },
+  {
+    "name": "social_confession",
+    "label": "التفاعل · confession",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "confession",
+    "description": "أمر التفاعل: confession"
+  },
+  {
+    "name": "social_question",
+    "label": "التفاعل · question",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "question",
+    "description": "أمر التفاعل: question"
+  },
+  {
+    "name": "social_icebreaker",
+    "label": "التفاعل · icebreaker",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "icebreaker",
+    "description": "أمر التفاعل: icebreaker"
+  },
+  {
+    "name": "social_topic",
+    "label": "التفاعل · topic",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "topic",
+    "description": "أمر التفاعل: topic"
+  },
+  {
+    "name": "social_randomquestion",
+    "label": "التفاعل · randomquestion",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "randomquestion",
+    "description": "أمر التفاعل: randomquestion"
+  },
+  {
+    "name": "social_dailyquestion",
+    "label": "التفاعل · dailyquestion",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "dailyquestion",
+    "description": "أمر التفاعل: dailyquestion"
+  },
+  {
+    "name": "social_challengeevent",
+    "label": "التفاعل · challengeevent",
+    "category": "broadcast",
+    "kind": "social",
+    "operation": "challengeevent",
+    "description": "أمر التفاعل: challengeevent"
+  }
+]
