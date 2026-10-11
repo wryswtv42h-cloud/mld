@@ -73,3 +73,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  .game-seat img,.game-player-avatar{width:30px;height:30px}
  .game-seat.seat-left,.game-seat.seat-right{top:25%}
 }
+
+
+/* Member profile preview: clearly separates Discord identity from the linked MLD account. */
+.member-profile-dialog{max-width:620px;max-height:min(86vh,820px);overflow:auto}
+.member-profile-identity{display:flex;align-items:center;gap:14px;padding:12px 0}
+.member-profile-identity .profileAvatar{flex:0 0 76px;width:76px;height:76px;margin:0;object-fit:cover}
+.member-profile-identity p{margin:5px 0}
+.member-site-profile{margin:12px 0;padding:14px;border:1px solid var(--mld-edge);border-radius:16px;background:rgba(255,255,255,.025)}
+.member-site-profile h3,.member-profile-dialog>h3{margin:0 0 8px}
+.member-profile-bio{margin:10px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+.member-profile-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.member-profile-stats .stat{min-width:0;padding:12px;text-align:center}
+.member-profile-stats .stat b{display:block;font-size:1.15rem}
+.member-profile-stats .stat small{display:block;margin-top:4px;color:var(--muted);font-size:.76rem}
+@media(max-width:520px){.member-profile-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.member-profile-identity .profileAvatar{flex-basis:60px;width:60px;height:60px}}
