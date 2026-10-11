@@ -146,7 +146,21 @@ function getLocalRooms(){try{return JSON.parse(localStorage.getItem("mld_chat_ro
 function saveLocalRooms(rooms){try{localStorage.setItem("mld_chat_rooms",JSON.stringify((rooms||[]).slice(0,12)))}catch{}}
 async function renderAnnouncement(){const wrap=$("#announcement");if(!wrap)return;try{const data=await api('/api/community/announcement');const announcement=data.announcement||{};if(announcement.enabled===false||!String(announcement.text||'').trim()){wrap.replaceChildren();return}wrap.innerHTML='<div class="ticker-wrap" style="--announcement-color:'+esc(/^#[0-9a-f]{6}$/i.test(announcement.color||'')?announcement.color:'#ff9cdc')+'"><div class="ticker-track">'+Array.from({length:8}).map(()=>'<span>'+esc(announcement.text)+'</span>').join("")+'</div></div>'}catch{const text="MLD • مجتمع ملاذ • شات عام • قروبات • سينما • ألعاب • زاجل • فهد المطيري •";wrap.innerHTML='<div class="ticker-wrap"><div class="ticker-track">'+Array.from({length:8}).map(()=>'<span>'+esc(text)+'</span>').join("")+'</div></div>'}}
 let broadcastPollTimer;
-async function pollBroadcastJobs(){clearTimeout(broadcastPollTimer);if(state.page!=="owner"||!$("#ownerBroadcastJobs"))return;try{const d=await api('/api/community/owner/broadcast/jobs');const target=$("#ownerBroadcastJobs");const statusLabel={queued:"بالانتظار",running:"جارٍ الإرسال",completed:"اكتمل",completed_with_errors:"اكتمل مع تعذّر بعض الرسائل",failed:"فشل"};if(target)target.innerHTML=(d.jobs||[]).slice(0,10).map(job=>'<div class="ticketRow"><b>'+esc(job.title)+'</b><span>'+esc(statusLabel[job.status]||job.status)+' · '+Number(job.sent_count||0)+' / '+Number(job.total_count||0)+' وصل · '+Number(job.failed_count||0)+' تعذّر</span></div>').join('')||'<div class="empty">لا توجد إعلانات</div>'}catch{}broadcastPollTimer=setTimeout(pollBroadcastJobs,4000)}
+async function pollBroadcastJobs(){
+ clearTimeout(broadcastPollTimer);
+ if(state.page!=="owner"||!$("#ownerBroadcastJobs"))return;
+ let nextDelay=20000;
+ try{
+  const d=await api('/api/community/owner/broadcast/jobs',{timeoutMs:10000});
+  if(state.page!=="owner")return;
+  const target=$("#ownerBroadcastJobs");
+  const statusLabel={queued:"بالانتظار",running:"جارٍ الإرسال",completed:"اكتمل",completed_with_errors:"اكتمل مع تعذّر بعض الرسائل",failed:"فشل"};
+  const html=(d.jobs||[]).slice(0,10).map(job=>'<div class="ticketRow"><b>'+esc(job.title)+'</b><span>'+esc(statusLabel[job.status]||job.status)+' · '+Number(job.sent_count||0)+' / '+Number(job.total_count||0)+' وصل · '+Number(job.failed_count||0)+' تعذّر</span></div>').join('')||'<div class="empty">لا توجد إعلانات</div>';
+  if(target&&target.innerHTML!==html)target.innerHTML=html;
+  if((d.jobs||[]).some(job=>["queued","running"].includes(String(job.status))))nextDelay=8000;
+ }catch{nextDelay=30000;}
+ if(state.page==="owner"&&$("#ownerBroadcastJobs"))broadcastPollTimer=setTimeout(pollBroadcastJobs,nextDelay);
+}
 function renderFloatingAction(){}
 function save(){store.set("mld_token",state.token);store.set("mld_user",state.user?JSON.stringify(state.user):"")}
 const apiGetCache=new Map(),apiGetInflight=new Map();
