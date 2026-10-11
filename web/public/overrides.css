@@ -753,3 +753,74 @@ button:disabled{opacity:.62;cursor:wait}
  .about-actions>*{flex:1 1 100%;text-align:center;justify-content:center}
  .pulse-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+/* MLD responsive polish + admin/game usability pass (2026-10-11) */
+:root{--mld-glass:rgba(30,20,43,.88);--mld-border:rgba(255,156,220,.18);--mld-pink:#ff9cde;--mld-purple:#a86fdf}
+button,a,input,select,textarea{ -webkit-tap-highlight-color:transparent }
+button:not(:disabled),a,select{touch-action:manipulation}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--mld-pink);outline-offset:3px}
+button:disabled{opacity:.68;cursor:wait}
+#app{min-height:55vh;contain:layout style}
+.pagePanel,.owner-section,.game-create-panel,.game-sessions-panel,.online-generator{border:1px solid var(--mld-border)!important;background:linear-gradient(145deg,rgba(40,27,57,.96),rgba(20,14,30,.96))!important;box-shadow:0 18px 48px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.035);border-radius:24px}
+.owner-console-nav{position:sticky;top:70px;z-index:15;display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;padding:10px;margin:0 0 18px;border:1px solid rgba(255,156,220,.2);border-radius:20px;background:rgba(18,11,29,.97);backdrop-filter:blur(12px);scrollbar-width:thin}
+.owner-console-nav button{flex:0 0 auto;min-height:44px;padding:10px 16px;border:1px solid rgba(255,255,255,.09);border-radius:14px;background:rgba(255,255,255,.035);color:var(--text);font-weight:750;transition:background .16s,border-color .16s,transform .16s}
+.owner-console-nav button:hover,.owner-console-nav button.is-current{background:linear-gradient(120deg,rgba(255,156,220,.19),rgba(168,111,223,.2));border-color:rgba(255,156,220,.55)}
+.owner-console-nav button:active,.game-card-select:active{transform:scale(.985)}
+.owner-section{padding:clamp(16px,3vw,28px);margin-block:14px;scroll-margin-top:140px}
+.owner-section h2,.owner-section h3{letter-spacing:-.02em}
+.owner-section .form{gap:13px}
+.owner-section input:not([type=checkbox]):not([type=radio]),.owner-section select,.owner-section textarea,.form input:not([type=checkbox]):not([type=radio]),.form select,.form textarea{width:100%;max-width:100%;min-height:46px;border:1px solid rgba(255,255,255,.13);border-radius:13px;background:rgba(9,6,17,.72);color:var(--text);padding:12px 14px}
+.owner-section textarea,.form textarea{min-height:110px;resize:vertical}
+.owner-section .btn,.owner-section button,.form .btn{min-height:44px}
+.owner-overview .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px}
+.owner-overview .stat{padding:18px;border:1px solid rgba(255,156,220,.16);border-radius:18px;background:linear-gradient(140deg,rgba(255,156,220,.08),rgba(168,111,223,.07))}
+.owner-overview .stat b{font-size:clamp(1.5rem,3vw,2.2rem);color:var(--mld-pink)}
+#owner-tickets,#owner-applications{scroll-margin-top:140px}
+.ticketRow,.ticket-open,.session-card{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.035);text-align:right;transition:border-color .16s,background .16s}
+.ticketRow:hover,.ticket-open:hover,.session-card:hover{border-color:rgba(255,156,220,.42);background:rgba(255,156,220,.055)}
+.ticket-open{width:100%;margin-top:10px;color:var(--text);cursor:pointer}
+.ticketRow span,.ticket-open span{color:var(--muted);font-size:.88rem}
+.ticket-thread{display:grid;gap:12px;margin-block:18px}
+.ticket-thread .card{padding:16px;border-radius:16px}
+#gameSessionForm{scroll-margin-top:100px}
+.game-session-form{display:grid;grid-template-columns:1fr;gap:10px}
+.game-session-form label{margin-top:5px;font-weight:750;color:var(--text)}
+.game-session-form input,.game-session-form select{min-height:49px;width:100%;padding:12px 14px;border:1px solid rgba(255,156,220,.2);border-radius:14px;background:#110b1b;color:var(--text)}
+.game-create-submit{min-height:52px;border-radius:15px;font-weight:850;box-shadow:0 8px 25px rgba(255,156,220,.13)}
+#gameCreateStatus[data-state=error]{color:#ffb5bd;background:rgba(255,65,90,.08);border:1px solid rgba(255,65,90,.25);padding:10px;border-radius:12px}
+.game-card-select{min-height:180px;cursor:pointer;position:relative;overflow:hidden;transition:transform .16s,border-color .16s,background .16s}
+.game-card-select.is-selected{border-color:rgba(255,156,220,.85)!important;background:linear-gradient(145deg,rgba(255,156,220,.13),rgba(168,111,223,.13))!important;box-shadow:0 0 0 1px rgba(255,156,220,.2),0 14px 30px rgba(0,0,0,.14)}
+.game-sessions{display:grid;gap:10px}
+.session-card small{display:block;margin-top:6px;color:var(--muted)}
+#gameArena{scroll-margin-top:90px}
+#gameArena:empty{display:none}
+.pulse-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px}
+.pulse-card{min-height:138px;border:1px solid rgba(255,156,220,.17);border-radius:22px;background:linear-gradient(145deg,rgba(255,156,220,.075),rgba(168,111,223,.06));transition:transform .18s,border-color .18s}
+.pulse-card:hover{transform:translateY(-2px);border-color:rgba(255,156,220,.42)}
+.pulse-copy b{font-variant-numeric:tabular-nums}
+.about-banner{overflow:hidden;border:1px solid rgba(255,156,220,.2);background:radial-gradient(ellipse at 90% 10%,rgba(168,111,223,.18),transparent 44%),linear-gradient(125deg,rgba(255,156,220,.07),rgba(255,255,255,.02))}
+.creator-owner-line,.creator-accounts-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.creator-name{color:var(--mld-pink)}
+.creator-social-links{display:flex;gap:8px;flex-wrap:wrap}
+.creator-social-link{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid rgba(255,156,220,.22);border-radius:12px;background:rgba(255,255,255,.035);text-decoration:none}
+.nav-join{display:flex;align-items:center;gap:12px;margin:16px 8px 10px;padding:14px;border:1px solid rgba(255,156,220,.3);border-radius:18px;background:linear-gradient(120deg,rgba(255,156,220,.12),rgba(168,111,223,.13));text-decoration:none}
+.nav-join small{display:block;color:var(--muted);margin-top:3px}
+.nav-redesigned>button{min-height:46px;border-radius:13px}
+#shade{touch-action:manipulation}
+#toast{z-index:9999}
+.page-loading{min-height:180px;display:grid;place-content:center;justify-items:center;gap:14px}
+@media(max-width:640px){
+ .owner-console-nav{top:60px;margin-inline:-2px;border-radius:16px}
+ .owner-console-nav button{padding:10px 12px;font-size:.88rem}
+ .owner-section{border-radius:18px}
+ .ticketRow,.ticket-open,.session-card{align-items:flex-start;flex-direction:column}
+ .game-create-panel,.game-sessions-panel,.online-generator{border-radius:19px!important}
+ .game-card-select{min-height:150px}
+ .heroActions{gap:9px}
+ .heroActions .btn,.heroActions a{min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+ .pulse-card:hover,.game-card-select:active{transform:none}
+}
