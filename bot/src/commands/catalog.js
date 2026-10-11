@@ -186,10 +186,10 @@ export async function runCatalogCommand({entry,message,args,client,config,prefix
    return message.reply({content:(kind==='game'?'🎮 تحدي':'🧠 سؤال')+' **'+entry.label+'**\n'+question+'\n||الإجابة: '+answer+'||',allowedMentions:escapeMentions});
   }
   if(kind==='security'){
-   const settings={antilink:'antiLinksEnabled',antispam:'antiSpamEnabled',protection:'automodEnabled',wordfilter:'blockedWordsEnabled',invitespam:'antiInviteEnabled',capsfilter:'capsFilterEnabled',mentionfilter:'mentionFilterEnabled',raidmode:'raidModeEnabled',antiinvite:'antiLinksEnabled',antiscam:'antiScamEnabled',antiphishing:'antiScamEnabled',antibot:'antiBotEnabled',verification:'verificationEnabled',captcha:'verificationEnabled',welcome:'welcomeEnabled',leave:'leaveEnabled',goodbye:'leaveEnabled',autorole:'autoRoleEnabled',logchannel:'modLogChannelId',modlog:'modLogChannelId',auditlog:'modLogChannelId',safeurls:'safeUrlsEnabled',whitelist:'whitelistEnabled',blacklist:'blacklistEnabled',denywords:'blockedWordsEnabled'};
+   const settings={antilink:'antiLinksEnabled',antispam:'antiSpamEnabled',protection:'automodEnabled',wordfilter:'blockedWordsEnabled',denywords:'blockedWordsEnabled',invitespam:'antiInviteEnabled',antiinvite:'antiInviteEnabled',capsfilter:'capsFilterEnabled',mentionfilter:'mentionFilterEnabled',massmention:'mentionFilterEnabled',antiscam:'antiScamEnabled',antiphishing:'antiScamEnabled',antiattachment:'antiAttachmentEnabled',antifile:'antiAttachmentEnabled',antiflood:'antiSpamEnabled',antirepeat:'antiRepeatEnabled',antiemoji:'antiEmojiSpamEnabled',welcome:'welcomeEnabled',leave:'leaveEnabled',goodbye:'leaveEnabled'};
    const key=settings[op];
    if(!message.member.permissions.has(PermissionFlagsBits.ManageGuild))return message.reply('تحتاج صلاحية إدارة السيرفر لتغيير إعدادات الحماية.');
-   if(!key)return message.reply({content:'🛡️ '+entry.label+'\nهذا الأمر يعرض حالة إعداد الحماية. الأوامر الفعلية المفعّلة حاليًا: antilink، antispam، blockedword، protection.',allowedMentions:escapeMentions});
+   if(!key)return message.reply({content:'🛡️ '+entry.label+'\nهذا الأمر لا يغيّر حماية غير مفعّلة. إعدادات الحماية المنفّذة: antilink، antispam، blockedword، capsfilter، mentionfilter، invitespam، antiscam، antiattachment، antirepeat، antiemoji.',allowedMentions:escapeMentions});
    const next={...config},arg=String(args[0]||'status').toLowerCase();
    if(['on','enable','تشغيل','تفعيل'].includes(arg))next[key]=true;
    else if(['off','disable','إيقاف','تعطيل'].includes(arg))next[key]=false;
