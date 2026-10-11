@@ -37,6 +37,7 @@ const jackaroo = read('api/src/games/jaccaro.js');
 
 assert.match(html, /logo\.svg\.JPG/, 'The original logo must remain referenced.');
 assert.match(html, /rebuild-polish\.css/, 'The additive responsive stylesheet must be loaded.');
+assert.ok(html.includes('rebuild-polish.css?v=20261011-rebuild3'), 'The responsive stylesheet cache key should change with command-menu styling.');
 assert.match(app, /const ownerView=.*role.*owner/, 'Owner role must bypass page maintenance locks.');
 assert.match(app, /await getPageLocksSnapshot\(\)/, 'Page locks must be fetched before visitor pages render.');
 assert.match(app, /authSnapshotToken===token/, 'Session refresh cache must be bound to the active login token.');
