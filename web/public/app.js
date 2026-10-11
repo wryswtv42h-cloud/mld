@@ -4,7 +4,7 @@ document.addEventListener("click",event=>{
  const target=event.target instanceof Element?event.target.closest("[data-game-start],[data-game-action],[data-game-card],[data-game-leave],[data-game-end],[data-ludo-token],[data-game-join],[data-game-watch]"):null;
  if(!target)return;
  event.preventDefault();
- event.stopImmediatePropagation();
+ // Keep target-level listeners alive; the delegated handler still handles every game action.
  try{
   if(target.hasAttribute("data-create-game-session")){
    const form=target.closest("#gameSessionForm");
