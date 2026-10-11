@@ -18,14 +18,14 @@ document.addEventListener("click",event=>{
   if(!gameSessionId&&currentGamePayload?.sessionId)gameSessionId=currentGamePayload.sessionId;
   if(!gameSessionId){toast("ما فيه غرفة مفتوحة؛ ادخل الغرفة من جديد.");return;}
   gameSocketConnect();
-  if(target.hasAttribute("data-game-start")){gameSocket?.emit("game:start",{sessionId:gameSessionId});return;}
+  if(target.hasAttribute("data-game-start")){emitGameCommand("game:start",{sessionId:gameSessionId});return;}
   if(target.hasAttribute("data-game-action")){
    const type=target.dataset.gameAction;
-   gameSocket?.emit("game:action",{sessionId:gameSessionId,action:type==="play"?{type:"play",cardIndex:Number(target.dataset.cardIndex||0)}:{type}});
+   emitGameCommand("game:action",{sessionId:gameSessionId,action:type==="play"?{type:"play",cardIndex:Number(target.dataset.cardIndex||0)}:{type}});
    return;
   }
   if(target.hasAttribute("data-ludo-token")){
-   gameSocket?.emit("game:action",{sessionId:gameSessionId,action:{type:"move",tokenIndex:Number(target.dataset.ludoToken)}});
+   emitGameCommand("game:action",{sessionId:gameSessionId,action:{type:"move",tokenIndex:Number(target.dataset.ludoToken)}});
    return;
   }
   if(target.hasAttribute("data-game-card")){
@@ -44,15 +44,15 @@ document.addEventListener("click",event=>{
    }else if(payload.gameType==="baloot")action={type:"play",card};
    else if(payload.gameType==="jaccaro")action={type:"play",cardIndex:idx};
    else {toast("اللعب بهذه الورقة غير متاح في هذه اللعبة.");return;}
-   gameSocket?.emit("game:action",{sessionId:gameSessionId,action});return;
+   emitGameCommand("game:action",{sessionId:gameSessionId,action});return;
   }
   if(target.hasAttribute("data-game-leave")){
-   gameSocket?.emit("game:leave",{sessionId:gameSessionId});gameSessionId=null;gameChatMessages=[];
+   emitGameCommand("game:leave",{sessionId:gameSessionId});gameSessionId=null;gameChatMessages=[];
    const arena=$("#gameArena");if(arena)arena.innerHTML='<div class="empty">غادرت الطاولة.</div>';
    loadGameSessions().catch(()=>{});return;
   }
   if(target.hasAttribute("data-game-end")){
-   if(confirm("إنهاء الطاولة وحذف جلستها؟"))gameSocket?.emit("game:end",{sessionId:gameSessionId});
+   if(confirm("إنهاء الطاولة وحذف جلستها؟"))emitGameCommand("game:end",{sessionId:gameSessionId});
   }
  }catch(error){console.error("MLD game control failed",error);toast(error?.message||"تعذر تنفيذ الحركة، حاول مرة أخرى.");}
 },true);
@@ -400,7 +400,7 @@ function gameSocketConnect(){
  if(gameSocket||!window.io||!state.token)return;
  gameSocket=window.io({auth:{token:state.token}});
  gameSocket.on("game:update",payload=>{if(String(payload.sessionId)!==String(gameSessionId))return;renderGameArena(payload)});
- gameSocket.on("game:error",e=>toast(e?.error||"تعذر تنفيذ حركة اللعبة"));
+ gameSocket.on("game:error",e=>toast(e?.error||"تعذر تنفيذ حركة اللعبة"));\n  gameSocket.on("connect_error",error=>{console.warn("MLD game socket connection failed",error?.message||error);});
  gameSocket.on("game:finished",e=>toast(e?.winner?"الفائز: "+e.winner:"انتهت اللعبة"));
  gameSocket.on("game:ended",()=>{gameSessionId=null;gameChatMessages=[];gameSocketPendingJoin=null;gameSocketNeedsRejoin=false;const arena=$("#gameArena");if(arena)arena.innerHTML="<div class=\"empty\">أنهى المضيف الطاولة.</div>";loadGameSessions()});
  gameSocket.on("game:chat",msg=>{if(String(msg.sessionId)!==String(gameSessionId))return;gameChatMessages.push(msg);gameChatMessages=gameChatMessages.slice(-80);const list=$("#gameChatMessages");if(list){list.innerHTML=gameChatMessages.map(m=>'<div class="game-chat-line"><b>'+esc(m.name||"عضو")+'</b><span>'+esc(m.message)+'</span><small>'+new Date(m.time||Date.now()).toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"})+'</small></div>').join("");list.scrollTop=list.scrollHeight}});
@@ -410,6 +410,17 @@ function gameSocketConnect(){
    gameSocketHasConnected=true;
  });
  gameSocket.on("disconnect",()=>{if(gameSocketHasConnected&&gameSessionId)gameSocketNeedsRejoin=true});
+}
+function emitGameCommand(eventName,payload){
+ gameSocketConnect();
+ const socket=gameSocket;
+ if(!socket){toast("تعذر الاتصال بخدمة الألعاب. حدّث الصفحة وحاول مرة أخرى.");return false;}
+ if(socket.connected){socket.emit(eventName,payload);return true;}
+ let sent=false;
+ const send=()=>{if(sent)return;sent=true;socket.emit(eventName,payload);};
+ socket.once("connect",send);
+ setTimeout(()=>{if(sent)return;socket.off("connect",send);toast("الاتصال بالطاولة تأخر. تأكد من اتصالك ثم أعد المحاولة.");},9000);
+ return false;
 }
 function renderGameArena(payload){
  currentGamePayload=payload;
