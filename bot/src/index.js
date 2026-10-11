@@ -449,6 +449,60 @@ function installBotFeatures(client,bot){
       const botMember=message.guild.members.me;
       if(!botMember?.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_bot_permission'});return message.reply('البوت نفسه يحتاج صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
     }
+    // Practical utility commands shared by all MLD bot types.
+    if(['servericon','ايقونة','أيقونة','صورةالسيرفر'].includes(command)){
+      const icon=message.guild.iconURL({size:1024,extension:'png'});
+      if(!icon)return message.reply('هذا السيرفر ما عنده أيقونة.');
+      return message.reply({content:'🖼️ أيقونة السيرفر: '+icon,allowedMentions:{parse:[]}});
+    }
+    if(['channelcount','القنوات','عددالقنوات'].includes(command)){
+      const channels=message.guild.channels.cache;
+      const textCount=channels.filter(c=>[ChannelType.GuildText,ChannelType.GuildAnnouncement].includes(c.type)).size;
+      const voiceCount=channels.filter(c=>[ChannelType.GuildVoice,ChannelType.GuildStageVoice].includes(c.type)).size;
+      const categoryCount=channels.filter(c=>c.type===ChannelType.GuildCategory).size;
+      return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('📚 إحصائيات القنوات').addFields({name:'الإجمالي',value:String(channels.size),inline:true},{name:'نصية',value:String(textCount),inline:true},{name:'صوتية',value:String(voiceCount),inline:true},{name:'تصنيفات',value:String(categoryCount),inline:true})],allowedMentions:{parse:[]}});
+    }
+    if(['roles','الرتب','قائمةالرتب'].includes(command)){
+      const list=[...message.guild.roles.cache.values()].filter(r=>r.id!==message.guild.id).sort((a,b)=>b.position-a.position).slice(0,35);
+      const body=list.map(r=>'• '+r.toString()+' — '+r.members.size+' عضو').join('\\n');
+      return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🎖️ رتب السيرفر').setDescription((body||'لا توجد رتب إضافية.').slice(0,3900)).setFooter({text:'عرض '+list.length+' رتبة كحد أقصى'})],allowedMentions:{parse:[]}});
+    }
+    if(['roll','dice','نرد','رمي'].includes(command)){
+      const sides=Math.max(2,Math.min(100000,Math.floor(Number(args[0])||6)));
+      return message.reply({content:'🎲 رميت النرد وطلعت: **'+(1+Math.floor(Math.random()*sides))+'** (من 1 إلى '+sides+')',allowedMentions:{parse:[]}});
+    }
+    if(['coinflip','عملة','وجهكتابة'].includes(command)){
+      return message.reply({content:'🪙 النتيجة: **'+(Math.random()<0.5?'وجه':'كتابة')+'**',allowedMentions:{parse:[]}});
+    }
+    if(['choose','اختيار','اختار'].includes(command)){
+      const choices=args.join(' ').split(/\\s*\\|\\s*|،|,/).map(x=>x.trim()).filter(Boolean);
+      if(choices.length<2)return message.reply('استخدم: '+prefix+'choose خيار أول | خيار ثاني | خيار ثالث');
+      return message.reply({content:'🎯 اختياري: **'+choices[Math.floor(Math.random()*choices.length)].slice(0,180)+'**',allowedMentions:{parse:[]}});
+    }
+    if(['eightball','8ball','سؤال'].includes(command)){
+      if(!args.length)return message.reply('اكتب سؤالك بعد الأمر.');
+      const answers=['أكيد!','غالبًا نعم.','الاحتمال كبير.','مو واضح للحين.','جرّب لاحقًا.','غالبًا لا.','لا أنصح بذلك.','القرار عندك بالنهاية.'];
+      return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🔮 الكرة السحرية').addFields({name:'سؤالك',value:args.join(' ').slice(0,900)},{name:'الإجابة',value:answers[Math.floor(Math.random()*answers.length)]})],allowedMentions:{parse:[]}});
+    }
+    if(['joke','نكتة','مزحة'].includes(command)){
+      const jokes=['مرة واحد بخيل فتح محل عصير… كتب: التذوق برسوم.','واحد اشترى ساعة ذكية، صارت كل ما تأخر تقول له: قلت لك!','مبرمج راح المطعم، طلب بيتزا وقال: خلّها بدون أخطاء.','واحد سأل الكمبيوتر: تعبان؟ قال: لا، بس عندي ضغط ملفات.'];
+      return message.reply({content:'😂 '+jokes[Math.floor(Math.random()*jokes.length)],allowedMentions:{parse:[]}});
+    }
+    if(['hug','حضن','احضن'].includes(command)||['slap','صفعة'].includes(command)){
+      const target=message.mentions.members.first();
+      if(!target)return message.reply('منشن العضو أولًا.');
+      if(target.id===message.author.id)return message.reply('😂 اختَر عضوًا ثانيًا!');
+      const isHug=['hug','حضن','احضن'].includes(command);
+      return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setDescription((isHug?'🤗 ':'🖐️ ')+message.member.displayName+(isHug?' حضن ':' عطى صفعة مزح لـ ')+target.toString()+(isHug?' 💗':' 😅'))],allowedMentions:{users:[target.id]}});
+    }
+    if(command==='embed'||command==='امبد'){
+      if(!message.member.permissions.has(PermissionFlagsBits.ManageMessages))return message.reply('تحتاج صلاحية إدارة الرسائل.');
+      const raw=content.slice(matchedPrefix.length).trim().replace(/^\\S+\\s*/,'');
+      const parts=raw.split('|').map(x=>x.trim());
+      if(parts.length<2||!parts[0]||!parts.slice(1).join(' | '))return message.reply('استخدم: '+prefix+'embed عنوان | وصف');
+      const embed=new EmbedBuilder().setColor(0xff9cde).setTitle(parts[0].slice(0,256)).setDescription(parts.slice(1).join(' | ').slice(0,4000)).setFooter({text:'MLD · مجتمع ملاذ'}).setTimestamp();
+      return message.channel.send({embeds:[embed],allowedMentions:{parse:[]}});
+    }
     if(command==='ping')return message.reply({content:'🏓 البوت متصل ويعمل.',allowedMentions:{parse:[]}});
     if(command==='prefix'||command==='بادئة')
       return message.reply({content:'🔧 بادئة أوامري الحالية: `'+prefix+'`\nجرّب: `'+prefix+'help` أو `'+prefix+'ping`',allowedMentions:{parse:[]}});
