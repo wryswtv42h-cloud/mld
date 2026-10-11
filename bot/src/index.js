@@ -1183,16 +1183,17 @@ async function setupZajelReplies(client){
     if(!interaction.isButton()||!String(interaction.customId||'').startsWith('mld:zajel_reply:'))return;
     const messageId=String(interaction.customId).slice('mld:zajel_reply:'.length);
     try{
+      await interaction.deferReply({ephemeral:true});
       const found=await pool.query(`SELECT sm.id,sm.recipient_id,u.discord_id AS sender_discord_id
         FROM secret_messages sm JOIN users u ON u.id::text=sm.sender_id::text WHERE sm.id=$1 LIMIT 1`,[messageId]);
       const row=found.rows[0];
-      if(!row)return interaction.reply({content:'تعذر العثور على الزاجل الأصلي.',ephemeral:true});
-      if(String(row.recipient_id)!==String(interaction.user.id))return interaction.reply({content:'زر الرد مخصص لمستلم الزاجل فقط.',ephemeral:true});
-      if(!row.sender_discord_id)return interaction.reply({content:'تعذر الرد لأن مرسل الزاجل لم يربط حساب Discord بحسابه.',ephemeral:true});
+      if(!row)return interaction.editReply({content:'تعذر العثور على الزاجل الأصلي.',ephemeral:true});
+      if(String(row.recipient_id)!==String(interaction.user.id))return interaction.editReply({content:'زر الرد مخصص لمستلم الزاجل فقط.',ephemeral:true});
+      if(!row.sender_discord_id)return interaction.editReply({content:'تعذر الرد لأن مرسل الزاجل لم يربط حساب Discord بحسابه.',ephemeral:true});
       const already=await pool.query('SELECT 1 FROM pigeon_replies WHERE message_id=$1 LIMIT 1',[messageId]);
       if(already.rows.length){
         await interaction.message.edit({components:[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(interaction.customId).setLabel('تم استخدام الرد').setStyle(ButtonStyle.Secondary).setDisabled(true))]}).catch(()=>{});
-        return interaction.reply({content:'تم استخدام زر الرد لهذا الزاجل مسبقًا.',ephemeral:true});
+        return interaction.editReply({content:'تم استخدام زر الرد لهذا الزاجل مسبقًا.',ephemeral:true});
       }
       const created=await pool.query(`INSERT INTO pigeon_reply_sessions(message_id,recipient_discord_id,sender_discord_id,status,expires_at)
         VALUES($1,$2,$3,'pending',NOW()+INTERVAL '30 minutes') ON CONFLICT(message_id) DO NOTHING RETURNING message_id`,
@@ -1202,15 +1203,15 @@ async function setupZajelReplies(client){
         const current=session.rows[0];
         if(current?.status==='pending'&&new Date(current.expires_at).getTime()>Date.now()){
           await interaction.message.edit({components:[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(interaction.customId).setLabel('بانتظار ردك بالخاص').setStyle(ButtonStyle.Secondary).setDisabled(true))]}).catch(()=>{});
-          return interaction.reply({content:'أرسل ردك برسالة خاصة للبوت خلال 30 دقيقة. يسمح برد واحد فقط.',ephemeral:true});
+          return interaction.editReply({content:'أرسل ردك برسالة خاصة للبوت خلال 30 دقيقة. يسمح برد واحد فقط.',ephemeral:true});
         }
-        return interaction.reply({content:'انتهت مهلة الرد أو تم استخدام الزر من قبل.',ephemeral:true});
+        return interaction.editReply({content:'انتهت مهلة الرد أو تم استخدام الزر من قبل.',ephemeral:true});
       }
       await interaction.message.edit({components:[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(interaction.customId).setLabel('بانتظار ردك بالخاص').setStyle(ButtonStyle.Secondary).setDisabled(true))]}).catch(()=>{});
       await interaction.reply({content:'تم تفعيل الرد. أرسل الآن رسالتك الخاصة إلى البوت خلال 30 دقيقة؛ سيصل رد واحد فقط إلى مرسل الزاجل الأصلي بعنوان «زاجل مردود».',ephemeral:true});
     }catch(error){
       console.error('Zajel reply button:',error.message);
-      if(!interaction.replied&&!interaction.deferred)await interaction.reply({content:'تعذر تفعيل الرد الآن، حاول مرة أخرى لاحقًا.',ephemeral:true}).catch(()=>{});
+      if(interaction.deferred)await interaction.editReply({content:'تعذر تفعيل الرد الآن، حاول مرة أخرى لاحقًا.'}).catch(()=>{});else if(!interaction.replied)await interaction.reply({content:'تعذر تفعيل الرد الآن، حاول مرة أخرى لاحقًا.',ephemeral:true}).catch(()=>{});
     }
   });
   client.on(Events.MessageCreate,async message=>{
