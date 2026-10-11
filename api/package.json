@@ -4,6 +4,7 @@
   "type": "module",
   "engines": { "node": ">=20.0.0" },
   "scripts": {
+    "test": "node --test",
     "start": "node src/index.js",
     "dev": "nodemon src/index.js"
   },
