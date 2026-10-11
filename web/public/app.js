@@ -6,7 +6,10 @@ document.addEventListener("click",event=>{
  const target=event.target instanceof Element?event.target.closest("[data-create-game-session],[data-game-start],[data-game-action],[data-game-card],[data-game-leave],[data-game-end],[data-ludo-token],[data-game-join],[data-game-watch]"):null;
  if(!target)return;
  event.preventDefault();
- // Keep target-level listeners alive; the delegated handler still handles every game action.
+ // This capture handler owns these room controls; stop duplicate delegated handlers
+ // from swallowing taps or emitting the same move twice on touch devices.
+ event.stopPropagation();
+ event.stopImmediatePropagation();
  try{
   if(target.hasAttribute("data-create-game-session")){
    const form=target.closest("#gameSessionForm");
@@ -23,7 +26,7 @@ document.addEventListener("click",event=>{
    toast(target.hasAttribute("data-game-watch")?"دخلت المشاهدة":"جارٍ فتح الغرفة…");
    return;
   }
-  if(!gameSessionId&&currentGamePayload?.sessionId)gameSessionId=currentGamePayload.sessionId;
+  if(!gameSessionId&&(currentGamePayload?.sessionId||currentGamePayload?.id))gameSessionId=currentGamePayload.sessionId||currentGamePayload.id;
   if(!gameSessionId){toast("ما فيه غرفة مفتوحة؛ ادخل الغرفة من جديد.");return;}
   gameSocketConnect();
   if(target.hasAttribute("data-game-start")){emitGameCommand("game:start",{sessionId:gameSessionId});return;}
