@@ -41,7 +41,7 @@ assert.match(app, /await getPageLocksSnapshot\(\)/, 'Page locks must be fetched 
 assert.match(app, /authSnapshotToken===token/, 'Session refresh cache must be bound to the active login token.');
 assert.ok(app.includes('["8ball","سؤال وجواب"]'), 'The dashboard toggle must use the same 8ball command name as the handler.');
 assert.ok(app.includes('["servericon","أيقونة السيرفر"]'), 'The dashboard must expose toggles for implemented utility commands.');
-assert.ok(html.includes('app.js?v=20261011-member-modal-single-handler1'), 'The browser cache key must change when app behavior changes.');
+assert.ok(html.includes('app.js?v=20261011-protection-toggles1'), 'The browser cache key must change when app behavior changes.');
 assert.match(app, /game-seat-avatar/, 'Game table seats must render player avatars.');
 assert.match(app, /data-member="'\+esc\(p\.discordId\)/, 'Human player names at the table should open member profiles.');
 assert.match(gameRoute, /discordId:req\.user\.discord_id\|\|null/, 'New game sessions should retain the Discord ID used by profile lookups.');
@@ -62,6 +62,9 @@ assert.match(botServerInfo, /setName\('serverinfo'\)/, 'The approved server info
 assert.match(botBotInfo, /setName\('botinfo'\)/, 'The approved bot information slash command must exist.');
 assert.ok(bot.includes('client.on(Events.MessageCreate, async message =>'), 'Prefix command handling must be registered for incoming Discord messages.');
 assert.ok(bot.includes('client.mldConfig?.commandSettings?.help?.enabled===false'), 'The help command toggle must also apply to no-prefix help.');
+assert.ok(bot.includes("if(command==='blockedword')"), 'Blocked-word management must be implemented as a real prefix command.');
+assert.ok(bot.includes("const autoMod=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true"), 'Protection can be disabled explicitly even for automod bot types.');
+assert.ok(app.includes('["blockedword","الكلمات الممنوعة"]'), 'The dashboard must expose the blocked-word command toggle.');
 assert.ok(botRoutes.includes('commands.slice(0,500)'), 'The bot dashboard must cap custom prefix commands at 500.');
 assert.ok(botRoutes.includes('commandSettings'), 'The bot dashboard must persist per-command enable/disable and alias settings.');
 assert.ok(uno.includes('function drawCard(state)'), 'UNO must recycle the discard pile when the draw pile runs out.');
