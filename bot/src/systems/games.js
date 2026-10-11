@@ -86,12 +86,12 @@ export function setupGames(client, pool) {
     const [rawGameCommand]=commandText.split(/\s+/), commandSettings=cfg.commandSettings&&typeof cfg.commandSettings==='object'?cfg.commandSettings:{};
     const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===String(rawGameCommand||'').toLowerCase()));
     const liveRound=client.mldGameRounds.get(message.channel.id);
-    const isRoundAnswer=!!(liveRound&&Date.now()<liveRound.expiresAt&&liveRound.userId!==message.author.id&&(!Array.isArray(liveRound.allowedPlayerIds)||liveRound.allowedPlayerIds.includes(message.author.id))&&normalize(content)===normalize(liveRound.answer));
+    const isRoundAnswer=!!(liveRound&&Date.now()<liveRound.expiresAt&&(liveRound.allowStarter===true||liveRound.userId!==message.author.id)&&(!Array.isArray(liveRound.allowedPlayerIds)||liveRound.allowedPlayerIds.includes(message.author.id))&&normalize(content)===normalize(liveRound.answer));
     if(!hasPrefix&&!(cfg.shortcutsEnabled===true&&coreAlias)&&!isRoundAnswer)return;
     if(commandSettings[coreAlias?.[0]||String(rawGameCommand||'')]?.enabled===false)return safeReply(message,'هذا الأمر معطّل من لوحة التحكم.');
     if(pool){try{await client.mldGameScoresReady}catch(e){console.error('Game score table unavailable:',e.message);return safeReply(message,'نظام النقاط غير متاح مؤقتًا. حاول لاحقًا.')}}
     const round=client.mldGameRounds.get(message.channel.id);
-    if (round && Date.now()<round.expiresAt && round.userId!==message.author.id && (!Array.isArray(round.allowedPlayerIds)||round.allowedPlayerIds.includes(message.author.id)) && normalize(content)===normalize(round.answer)) {
+    if (round && Date.now()<round.expiresAt && (round.allowStarter===true||round.userId!==message.author.id) && (!Array.isArray(round.allowedPlayerIds)||round.allowedPlayerIds.includes(message.author.id)) && normalize(content)===normalize(round.answer)) {
       client.mldGameRounds.delete(message.channel.id);
       client.mldGameLobbies?.delete(message.channel.id);
       const pts=Math.max(0,Math.min(100000,Number(cfg.gamePoints??10)||10));
@@ -132,8 +132,8 @@ export function setupGames(client, pool) {
       const db=await pool.connect();
       try{await db.query('BEGIN');const debit=await db.query('UPDATE mld_discord_game_scores SET points=points-$1,updated_at=NOW() WHERE bot_id=$2 AND guild_id=$3 AND user_id=$4 AND points >= $1 RETURNING points',[amount,String(client.mldBotId||client.user.id),message.guild.id,message.author.id]);if(!debit.rowCount){await db.query('ROLLBACK');return safeReply(message,'نقاطك غير كافية.');}await db.query('INSERT INTO mld_discord_game_scores(bot_id,guild_id,user_id,points) VALUES($1,$2,$3,$4) ON CONFLICT(bot_id,guild_id,user_id) DO UPDATE SET points=mld_discord_game_scores.points+$4,updated_at=NOW()',[String(client.mldBotId||client.user.id),message.guild.id,target.id,amount]);await db.query('COMMIT');return safeReply(message,'✅ حولت '+amount+' نقطة إلى '+target.username+'.');}catch(e){await db.query('ROLLBACK').catch(()=>{});throw e}finally{db.release()}
     }
-    const aliases={'برا السالفة':'برا السالفة','روليت':'روليت','مافيا':'مافيا','كت':'كت','زر':'زر','حجره':'حجره','بومب':'بومب','تصويت':'تصويت','ايفنت':'ايفنت','اعلام':'اعلام','فكك':'فكك','ترتيب':'ترتيب','صحح':'صحح','جمع':'جمع','مفرد':'مفرد','حيوانات':'حيوانات','شركة':'شركة','ضرب':'ضرب','طرح':'طرح','ترجمة':'ترجمة','عواصم':'عواصم','اعكس':'اعكس','اسرع':'اسرع','حرف':'حرف','ادمج':'ادمج','هايد':'هايد','فخ':'فخ','اكس':'اكس','اسرع':'اسرع','ضرب':'ضرب','طرح':'طرح','سالفة':'سالفة'};
-    const name=aliases[cmd] || (cmd==='برا'?'برا السالفة':null); if(!name)return;
+    const aliases={'برا السالفة':'برا السالفة','برا':'برا السالفة','روليت':'روليت','مافيا':'مافيا','كت':'كت','زر':'زر','حجره':'حجره','حجرة':'حجره','حجر':'حجره','بومب':'بومب','تصويت':'تصويت','ايفنت':'ايفنت','إيفنت':'ايفنت','اعلام':'اعلام','أعلام':'اعلام','أعلام':'اعلام','فكك':'فكك','ترتيب':'ترتيب','صحح':'صحح','جمع':'جمع','مفرد':'مفرد','حيوانات':'حيوانات','شركة':'شركة','ضرب':'ضرب','طرح':'طرح','ترجمة':'ترجمة','عواصم':'عواصم','اعكس':'اعكس','اسرع':'اسرع','أسرع':'اسرع','حرف':'حرف','ادمج':'ادمج','هايد':'هايد','فخ':'فخ','اكس':'اكس','إكس':'اكس','xo':'اكس','سالفة':'سالفة'};
+    const name=aliases[cmd] || null; if(!name)return;
     if(!enabled(client,name))return safeReply(message,'هذه اللعبة معطّلة من لوحة التحكم.');
     if(['زر','حجره'].includes(name)){const choices=['حجر 🪨','ورقة 📄','مقص ✂️'],bot=pick(choices),user=String(parts.join(' '));if(!user)return safeReply(message,'اختر: '+prefix+name+' حجر أو ورقة أو مقص');const map={'حجر':'حجر 🪨','ورقة':'ورقة 📄','مقص':'مقص ✂️','مقصّ':'مقص ✂️'};const p=map[user]||choices.find(x=>x.startsWith(user));if(!p)return safeReply(message,'اختيارك غير معروف. استخدم حجر أو ورقة أو مقص.');const win=p===bot?'تعادل':((p.startsWith('حجر')&&bot.startsWith('مقص'))||(p.startsWith('ورقة')&&bot.startsWith('حجر'))||(p.startsWith('مقص')&&bot.startsWith('ورقة')))?'فزت!':'خسرت!';if(win==='فزت!')await award(pool,client,message,Number(cfg.gamePoints??10)).catch(()=>{});return safeReply(message,'أنت: '+p+'\nأنا: '+bot+'\n'+win);}
     if(name==='روليت'){const n=Math.floor(Math.random()*6)+1;return safeReply(message,'🎲 روليت الحظ: '+n+' من 6 — '+(n===6?'ضربة حظ!':'جرّب مرة ثانية'));}
@@ -191,7 +191,7 @@ export function setupGames(client, pool) {
     }
     if(name==='اعلام'){
       const flags=[['السعودية','sa'],['اليابان','jp'],['فرنسا','fr'],['البرازيل','br'],['كندا','ca'],['مصر','eg'],['تركيا','tr'],['الإمارات','ae'],['إيطاليا','it'],['ألمانيا','de'],['أستراليا','au'],['كوريا الجنوبية','kr']];
-      const [answer,code]=pick(flags);client.mldGameRounds.set(message.channel.id,{answer,userId:message.author.id,expiresAt:Date.now()+45000});
+      const [answer,code]=pick(flags);client.mldGameRounds.set(message.channel.id,{answer,userId:message.author.id,allowStarter:true,expiresAt:Date.now()+45000});
       const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('🌍 تحدي الأعلام').setDescription('ما اسم الدولة التي يمثلها العلم؟\nأول إجابة صحيحة خلال 45 ثانية تربح.').setImage('https://flagcdn.com/w640/'+code+'.png').setFooter({text:'MLD · ألعاب ملاذ'}).setTimestamp();
       return message.reply({embeds:[embed],allowedMentions:{parse:[]}});
     }
@@ -227,10 +227,10 @@ export function setupGames(client, pool) {
       game.turn=game.players.find(id=>id!==message.author.id);
       return safeReply(message,board+'\nدور <@'+game.turn+'> ('+game.symbols[game.turn]+').');
     }
-    if(name==='اسرع'){const q=pick([['كم 7 × 8؟','56'],['عاصمة اليابان؟','طوكيو'],['كم يومًا في الأسبوع؟','7'],['كم 15 - 6؟','9']]);client.mldGameRounds.set(message.channel.id,{answer:q[1],userId:message.author.id,expiresAt:Date.now()+45000});return safeReply(message,'⚡ أول إجابة صحيحة تربح! '+q[0]+' (45 ثانية)');}
-    if(name==='ضرب'||name==='طرح'){const a=Math.floor(Math.random()*20)+1,b=Math.floor(Math.random()*20)+1,ans=name==='ضرب'?a*b:a-b;client.mldGameRounds.set(message.channel.id,{answer:String(ans),userId:message.author.id,expiresAt:Date.now()+45000});return safeReply(message,'🧠 حل بسرعة: '+a+(name==='ضرب'?' × ':' − ')+b+' = ؟ (45 ثانية)');}
-    if(questions[name]){const q=pick(questions[name]);client.mldGameRounds.set(message.channel.id,{answer:q[1],userId:message.author.id,expiresAt:Date.now()+45000});return safeReply(message,'🧩 '+q[0]+' (45 ثانية)');}
-    if(name==='اعكس'){const word=pick(['ملاذ','مجتمع','برمجة','مغامرة','ألعاب']);client.mldGameRounds.set(message.channel.id,{answer:[...word].reverse().join(''),userId:message.author.id,expiresAt:Date.now()+45000});return safeReply(message,'🔄 اعكس الكلمة: **'+word+'** (45 ثانية)');}
+    if(name==='اسرع'){const q=pick([['كم 7 × 8؟','56'],['عاصمة اليابان؟','طوكيو'],['كم يومًا في الأسبوع؟','7'],['كم 15 - 6؟','9']]);client.mldGameRounds.set(message.channel.id,{answer:q[1],userId:message.author.id,allowStarter:true,expiresAt:Date.now()+45000});return safeReply(message,'⚡ أول إجابة صحيحة تربح! '+q[0]+' (45 ثانية)');}
+    if(name==='ضرب'||name==='طرح'){const a=Math.floor(Math.random()*20)+1,b=Math.floor(Math.random()*20)+1,ans=name==='ضرب'?a*b:a-b;client.mldGameRounds.set(message.channel.id,{answer:String(ans),userId:message.author.id,allowStarter:true,expiresAt:Date.now()+45000});return safeReply(message,'🧠 حل بسرعة: '+a+(name==='ضرب'?' × ':' − ')+b+' = ؟ (45 ثانية)');}
+    if(questions[name]){const q=pick(questions[name]);client.mldGameRounds.set(message.channel.id,{answer:q[1],userId:message.author.id,allowStarter:true,expiresAt:Date.now()+45000});return safeReply(message,'🧩 '+q[0]+' (45 ثانية)');}
+    if(name==='اعكس'){const word=pick(['ملاذ','مجتمع','برمجة','مغامرة','ألعاب']);client.mldGameRounds.set(message.channel.id,{answer:[...word].reverse().join(''),userId:message.author.id,allowStarter:true,expiresAt:Date.now()+45000});return safeReply(message,'🔄 اعكس الكلمة: **'+word+'** (45 ثانية)');}
     if(name==='اسرع')return;
   });
 }
