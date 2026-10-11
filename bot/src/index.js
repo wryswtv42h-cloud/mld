@@ -475,12 +475,12 @@ function installBotFeatures(client,bot){
       try{const next={...config,[key]:enabled};await saveProtectionSettings(next,'bot.protection_setting',{setting:key,enabled});return message.reply('🛡️ '+label+': '+(enabled?'مفعل':'معطل'));}catch(error){return message.reply(error.message||'تعذر حفظ الإعداد.');}
     }
     if(command==='blockedword'){
-      const action=String(args[0]||'').toLowerCase(),word=args.slice(1).join(' ').trim().slice(0,60),current=String(config.blockedWords||'').split(/[\\n,،]/).map(value=>value.trim()).filter(Boolean);
-      if(!action||['list','عرض','قائمة'].includes(action))return message.reply('🚫 الكلمات الممنوعة: '+(current.join('، ')||'لا توجد كلمات')+'\\nالاستخدام: '+prefix+'blockedword add/remove كلمة');
+      const action=String(args[0]||'').toLowerCase(),word=args.slice(1).join(' ').trim().slice(0,60),current=String(config.blockedWords||'').split(/[\n,،]/).map(value=>value.trim()).filter(Boolean);
+      if(!action||['list','عرض','قائمة'].includes(action))return message.reply('🚫 الكلمات الممنوعة: '+(current.join('، ')||'لا توجد كلمات')+'\nالاستخدام: '+prefix+'blockedword add/remove كلمة');
       if(['add','إضافة','اضف'].includes(action)){if(!word)return message.reply('اكتب الكلمة بعد add');if(current.some(value=>value.toLowerCase()===word.toLowerCase()))return message.reply('الكلمة موجودة مسبقًا.');if(current.length>=100)return message.reply('وصلت إلى الحد الأقصى (100 كلمة).');current.push(word);}
       else if(['remove','delete','حذف','إزالة'].includes(action)){if(!word)return message.reply('اكتب الكلمة بعد remove');const filtered=current.filter(value=>value.toLowerCase()!==word.toLowerCase());if(filtered.length===current.length)return message.reply('الكلمة غير موجودة.');current.splice(0,current.length,...filtered);}
       else return message.reply('استخدم: '+prefix+'blockedword add/remove كلمة');
-      try{const next={...config,blockedWords:current.join('\\n').slice(0,2000)};await saveProtectionSettings(next,'bot.protection_word_'+action,{word});return message.reply('🚫 تم تحديث قائمة الكلمات الممنوعة.');}catch(error){return message.reply(error.message||'تعذر حفظ قائمة الكلمات.');}
+      try{const next={...config,blockedWords:current.join('\n').slice(0,2000)};await saveProtectionSettings(next,'bot.protection_word_'+action,{word});return message.reply('🚫 تم تحديث قائمة الكلمات الممنوعة.');}catch(error){return message.reply(error.message||'تعذر حفظ قائمة الكلمات.');}
     }
     // Practical utility commands shared by all MLD bot types.
     if(['servericon','ايقونة','أيقونة','صورةالسيرفر'].includes(command)){
