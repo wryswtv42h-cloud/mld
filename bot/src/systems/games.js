@@ -69,7 +69,7 @@ export function setupGames(client, pool) {
       const bank=Object.entries(questions).flatMap(([game,items])=>items.map(q=>({game,question:q[0],answer:q[1]})));
       const selected=pick(bank);
       lobby.phase='playing';
-      client.mldGameRounds.set(channelId,{answer:selected.answer,userId:lobby.hostId,allowedPlayerIds:lobby.players.filter(id=>id!==lobby.hostId),expiresAt:Date.now()+60000});
+      client.mldGameRounds.set(channelId,{answer:selected.answer,userId:client.user?.id||'__mld_game_bot__',allowedPlayerIds:[...lobby.players],expiresAt:Date.now()+60000});
       const active=EmbedBuilder.from(interaction.message.embeds[0]||new EmbedBuilder()).setColor(0x9b7bea).setTitle('⚡ بدأت الجولة الجماعية!').setDescription('اللاعبون: '+lobby.players.map(id=>'<@'+id+'>').join('، ')+'\n\n**'+selected.question+'**\n\nأول لاعب من المشاركين يكتب الإجابة الصحيحة خلال 60 ثانية يفوز.').setFooter({text:'MLD · الجولة تنتهي خلال 60 ثانية'});
       const disabled=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('mld-lobby:join:'+channelId).setLabel('بدأت الجولة').setStyle(ButtonStyle.Secondary).setDisabled(true),new ButtonBuilder().setCustomId('mld-lobby:start:'+channelId).setLabel('بدأت الجولة').setStyle(ButtonStyle.Secondary).setDisabled(true));
       await interaction.update({embeds:[active],components:[disabled]});
