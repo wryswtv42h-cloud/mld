@@ -116,7 +116,8 @@ export async function ensureAuditLogRooms(client) {
     processedGuilds++;
     const me=guild.members.me||await guild.members.fetchMe().catch(()=>null);
     if(!me?.permissions.has(PermissionFlagsBits.ManageChannels))throw new Error('يحتاج البوت صلاحية إدارة القنوات لإنشاء رومات اللوقات.');
-    const existing=new Map(guild.channels.cache.map(c=>[c.name,c]));
+    const fetchedChannels=await guild.channels.fetch();
+    const existing=new Map([...fetchedChannels.values()].filter(Boolean).map(c=>[c.name,c]));
     const groups=[...new Set(selected.map(id=>AUDIT_LOG_TYPES.find(t=>t.id===id).group))];
     const categories=new Map();
     for(const group of groups) {
