@@ -30,9 +30,10 @@ export function setupGameSocket(io,socket){
   if(!isHost&&!socket.user?.is_owner)return socket.emit('game:error',{error:'صاحب الجلسة أو الأونر فقط'});
   const cfg=getGameConfig(s.type);if(!cfg)return socket.emit('game:error',{error:'اللعبة غير مدعومة'});
   const activePlayers=safeJson(s.players).filter(p=>p.userId&&p.isBot!==true).map(p=>({...p,isBot:false}));
-  if(activePlayers.length<Number(cfg.min||2))return socket.emit('game:error',{error:'تحتاج اللعبة إلى '+Number(cfg.min||2)+' لاعبين على الأقل. ادعُ أعضاء آخرين للغرفة ثم ابدأ.'});
+  const supportsBots=cfg.bots===true;
+  if(activePlayers.length<Number(cfg.min||2)&&!supportsBots)return socket.emit('game:error',{error:'تحتاج اللعبة إلى '+Number(cfg.min||2)+' لاعبين حقيقيين على الأقل؛ هذه اللعبة لا تدعم البوتات.'});
   if(activePlayers.length>Number(s.max_players||cfg.max))return socket.emit('game:error',{error:'عدد اللاعبين تجاوز سعة الغرفة؛ أعد فتح غرفة بعدد مناسب.'});
-  const state=await initGame(s.type,activePlayers);
+  const state=await initGame(s.type,activePlayers,{fillTo:Number(s.max_players||cfg.max)});
   const allPlayers=[...activePlayers,...(state.botPlayers||[]).map(name=>({name,isBot:true,connected:true,userId:null}))];
   await query('UPDATE games SET players=$1,state=$2,status=$3 WHERE id=$4',[JSON.stringify(allPlayers),JSON.stringify(state),'playing',sessionId]);
   await emitGameUpdate(io,sessionId,{sessionId,players:allPlayers,spectators:safeJson(s.spectators),state,status:'playing',gameType:s.type});
