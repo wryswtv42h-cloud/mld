@@ -95,3 +95,44 @@ body[data-page="owner"] .owner-overview[hidden] { display: none !important; }
   body[data-page="owner"] .page-lock-grid { grid-template-columns: 1fr; }
   body[data-page="owner"] .owner-section h2::after { display: none; }
 }
+
+
+/* MLD Owner Console — responsive, clear, action-first redesign */
+.owner-console-nav{position:sticky;top:74px;z-index:20;display:flex;gap:8px;align-items:center;overflow-x:auto;padding:12px;margin:18px 0 22px;border:1px solid rgba(255,156,222,.24);border-radius:20px;background:rgba(15,10,24,.92);backdrop-filter:blur(18px);box-shadow:0 14px 36px rgba(0,0,0,.18);scrollbar-width:thin}
+.owner-console-nav button{flex:0 0 auto;min-height:42px;padding:10px 15px;border:1px solid rgba(255,255,255,.08);border-radius:13px;background:rgba(255,255,255,.035);color:var(--text,#fff8ff);font:inherit;font-weight:750;white-space:nowrap;transition:background .18s,border-color .18s,transform .18s}
+.owner-console-nav button:hover{transform:translateY(-1px);border-color:rgba(255,156,222,.5);background:rgba(255,156,222,.1)}
+.owner-console-nav button.is-current{border-color:rgba(255,156,222,.72);background:linear-gradient(135deg,rgba(255,156,222,.2),rgba(168,111,223,.19));box-shadow:inset 0 0 0 1px rgba(255,156,222,.08);color:#fff}
+.owner-overview{padding:clamp(16px,3vw,26px);border:1px solid rgba(255,156,222,.22);border-radius:24px;background:radial-gradient(ellipse at 8% 0%,rgba(168,111,223,.18),transparent 45%),linear-gradient(135deg,rgba(255,156,222,.07),rgba(255,255,255,.02));}
+.owner-overview .stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.owner-overview .stat{min-width:0;padding:20px 14px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(9,7,15,.58);text-align:center}
+.owner-overview .stat b{display:block;font-size:clamp(1.5rem,3vw,2.15rem);line-height:1.3;color:#ffb7e8;font-variant-numeric:tabular-nums}
+.owner-overview .stat small{display:block;margin-top:8px;color:rgba(255,248,255,.72);font-size:.82rem}
+.owner-section{scroll-margin-top:140px;margin-top:18px;padding:clamp(17px,3vw,28px);border:1px solid rgba(255,255,255,.09);border-radius:24px;background:linear-gradient(155deg,rgba(23,16,32,.96),rgba(13,9,20,.97));box-shadow:0 18px 50px rgba(0,0,0,.16)}
+.owner-section[hidden],#owner-overview[hidden]{display:none!important}
+.owner-section>h2{display:flex;align-items:center;gap:10px;margin:0 0 18px;padding-bottom:15px;border-bottom:1px solid rgba(255,156,222,.14);font-size:clamp(1.1rem,2.6vw,1.45rem);letter-spacing:-.02em}
+.owner-section .form{display:grid;gap:12px;margin:16px 0;padding:clamp(14px,2.5vw,22px);border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(0,0,0,.13)}
+.owner-section .form input:not([type=checkbox]):not([type=color]),.owner-section .form textarea,.owner-section .form select{width:100%;min-width:0;min-height:46px;padding:12px 14px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:#100b18;color:#fff8ff;font:inherit}
+.owner-section .form textarea{min-height:100px;resize:vertical}
+.owner-section .form input:focus-visible,.owner-section .form textarea:focus-visible,.owner-section .form select:focus-visible{outline:2px solid #ff9cde;outline-offset:2px}
+.owner-list{display:grid;gap:11px;margin-top:16px}
+.owner-row{display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:0;padding:15px;border:1px solid rgba(255,255,255,.075);border-radius:17px;background:rgba(255,255,255,.025);transition:border-color .18s,background .18s}
+.owner-row:hover{border-color:rgba(255,156,222,.22);background:rgba(255,156,222,.035)}
+.owner-row>div:first-child{min-width:0}
+.owner-row b,.owner-row small{overflow-wrap:anywhere}
+.owner-account{display:flex;align-items:center;gap:12px;min-width:0}
+.owner-account img{width:44px;height:44px;flex:0 0 44px;object-fit:cover;border-radius:14px;border:1px solid rgba(255,156,222,.25)}
+.owner-account small,.owner-row small{display:block;margin-top:5px;color:rgba(255,248,255,.64)}
+.row-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.row-actions .btn,.owner-row .btn{min-height:38px;padding:8px 12px;border-radius:11px;font-size:.88rem}
+.owner-section .ticketRow{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:13px 15px;border-bottom:1px solid rgba(255,255,255,.07)}
+.owner-section .ticketRow:last-child{border-bottom:0}
+.owner-section .empty{padding:24px;border:1px dashed rgba(255,156,222,.2);border-radius:16px;background:rgba(255,255,255,.02);text-align:center}
+.owner-section .btn:disabled,.owner-console-nav button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.pagePanel:has(#ticketForm),.pagePanel:has(#ticketReplyForm),.pagePanel:has(#applicationForm){max-width:960px;margin-inline:auto;padding:clamp(18px,4vw,36px);border:1px solid rgba(255,156,222,.16);border-radius:26px;background:radial-gradient(ellipse at 100% 0%,rgba(168,111,223,.11),transparent 42%),linear-gradient(155deg,rgba(23,16,32,.98),rgba(11,8,17,.98))}
+#ticketForm,#ticketReplyForm,#applicationForm{display:grid;gap:13px;margin-top:24px;padding:clamp(16px,3vw,26px);border:1px solid rgba(255,255,255,.09);border-radius:20px;background:rgba(255,255,255,.025)}
+#ticketForm input,#ticketForm textarea,#ticketReplyForm textarea,#applicationForm textarea{box-sizing:border-box;width:100%;min-height:48px;padding:13px 15px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:#100b18;color:#fff8ff;font:inherit}
+#ticketForm textarea,#ticketReplyForm textarea,#applicationForm textarea{min-height:112px;resize:vertical}
+.ticket-thread{display:grid;gap:12px;margin-top:20px}
+.ticket-thread .card{padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:17px;background:rgba(255,255,255,.025)}
+@media(max-width:760px){.owner-console-nav{top:62px;margin:12px -2px 17px;padding:9px;border-radius:16px}.owner-console-nav button{min-height:40px;padding:9px 12px;font-size:.86rem}.owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.owner-overview .stat:last-child{grid-column:1/-1}.owner-row{align-items:flex-start;flex-direction:column}.owner-row .row-actions{width:100%}.owner-row .row-actions .btn{flex:1 1 auto}.owner-section{scroll-margin-top:120px}.pagePanel:has(#ticketForm),.pagePanel:has(#ticketReplyForm),.pagePanel:has(#applicationForm){padding:17px;border-radius:19px}}
+@media(prefers-reduced-motion:reduce){.owner-console-nav button,.owner-row{transition:none!important;scroll-behavior:auto!important}}
