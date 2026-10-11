@@ -729,3 +729,13 @@ body[data-page="owner"] #app input,body[data-page="owner"] #app textarea,body[da
 body[data-page="owner"] #app button:focus-visible,body[data-page="owner"] #app a:focus-visible,body[data-page="owner"] #app input:focus-visible,body[data-page="owner"] #app select:focus-visible,body[data-page="owner"] #app textarea:focus-visible{outline:2px solid #ff9cde;outline-offset:3px}
 body[data-page="owner"] #app [hidden]{display:none!important}
 @media(max-width:720px){body[data-page="owner"] #app .owner-console-nav{position:relative;top:auto;grid-template-columns:repeat(2,minmax(0,1fr));padding:9px}body[data-page="owner"] #app .owner-row{align-items:flex-start;flex-direction:column}body[data-page="owner"] #app .owner-row .row-actions{width:100%;justify-content:flex-start}body[data-page="owner"] #app .owner-row .row-actions .btn{flex:1 1 auto}}
+
+/* Owner console visual refresh */
+body[data-page=owner] .owner-console-nav{position:sticky;top:8px;z-index:12;display:flex;gap:8px;overflow-x:auto;padding:10px;border:1px solid rgba(255,156,222,.24);border-radius:16px;background:rgba(14,9,22,.96)}
+body[data-page=owner] .owner-console-nav button{flex:0 0 auto;min-height:42px;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#fff0fc;font:inherit;cursor:pointer}
+body[data-page=owner] .owner-console-nav button.is-current{background:linear-gradient(110deg,#ff9cde,#c49bff);color:#241027;font-weight:800}
+body[data-page=owner] .owner-overview .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+body[data-page=owner] .owner-overview .stat{padding:20px;border:1px solid rgba(255,156,222,.2);border-radius:18px;background:linear-gradient(145deg,rgba(168,111,223,.14),rgba(255,156,222,.06))}
+body[data-page=owner] .owner-overview .stat b{display:block;font-size:2rem;color:#ffb5e7}
+body[data-page=owner] [data-owner-section]{scroll-margin-top:90px;padding:clamp(16px,2vw,28px);margin-block:14px;border:1px solid rgba(255,156,222,.18);border-radius:20px;background:linear-gradient(150deg,rgba(23,15,31,.98),rgba(13,9,20,.98))}
+@media(max-width:700px){body[data-page=owner] .owner-console-nav{top:4px}body[data-page=owner] [data-owner-section]{padding:14px}}
