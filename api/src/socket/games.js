@@ -9,12 +9,12 @@ export function setupGameSocket(io,socket){
   const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const session=rows[0];if(!session)return socket.emit('game:error',{error:'الجلسة غير موجودة'});
   if(!socket.user)return socket.emit('game:error',{error:'سجّل دخولك للعب'});
   const name=socket.user.username;
-  const player={name,userId:socket.user?.id||null,avatar:socket.user?.avatar||null,isBot:false,socketId:socket.id};
+  const player={name,userId:socket.user?.id||null,discordId:socket.user?.discord_id||null,avatar:socket.user?.avatar||null,isBot:false,socketId:socket.id};
   let players=safeJson(session.players),spectators=safeJson(session.spectators);const existingPlayer=players.find(p=>String(p.userId||'')===String(socket.user.id)),existingSpectator=spectators.find(p=>String(p.userId||'')===String(socket.user.id));players=players.filter(p=>String(p.userId||'')!==String(socket.user.id));spectators=spectators.filter(p=>String(p.userId||'')!==String(socket.user.id));
   let gameState=session.state;
   const botIndex=session.status==='playing'&&!asSpectator&&!existingPlayer?players.findIndex(p=>p.isBot===true||String(p.name||'').startsWith('بوت ')):-1;
   const mustSpectate=asSpectator||session.status==='finished'||(session.status==='playing'&&!existingPlayer&&botIndex<0)||players.length>=Number(session.max_players||4);
-  if(existingPlayer&&session.status==='playing'&&!asSpectator)players.push({...existingPlayer,avatar:socket.user?.avatar||existingPlayer.avatar||null,socketId:socket.id,connected:true});
+  if(existingPlayer&&session.status==='playing'&&!asSpectator)players.push({...existingPlayer,discordId:socket.user?.discord_id||existingPlayer.discordId||null,avatar:socket.user?.avatar||existingPlayer.avatar||null,socketId:socket.id,connected:true});
   else if(botIndex>=0){const botName=players[botIndex].name;const swapped=replaceBot(gameState,botName,name);if(swapped.success){gameState=swapped.state;players[botIndex]={...player,isHost:String(session.host_id)===String(socket.user.id),connected:true};}else spectators.push({...player,isHost:false});}
   else if(mustSpectate||existingSpectator)spectators.push({...player,isHost:String(session.host_id)===String(socket.user.id)});
   else players.push({...player,isHost:String(session.host_id)===String(socket.user.id)});
