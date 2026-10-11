@@ -128,7 +128,37 @@ let broadcastPollTimer;
 async function pollBroadcastJobs(){clearTimeout(broadcastPollTimer);if(state.page!=="owner"||!$("#ownerBroadcastJobs"))return;try{const d=await api('/api/community/owner/broadcast/jobs');const target=$("#ownerBroadcastJobs");const statusLabel={queued:"بالانتظار",running:"جارٍ الإرسال",completed:"اكتمل",completed_with_errors:"اكتمل مع تعذّر بعض الرسائل",failed:"فشل"};if(target)target.innerHTML=(d.jobs||[]).slice(0,10).map(job=>'<div class="ticketRow"><b>'+esc(job.title)+'</b><span>'+esc(statusLabel[job.status]||job.status)+' · '+Number(job.sent_count||0)+' / '+Number(job.total_count||0)+' وصل · '+Number(job.failed_count||0)+' تعذّر</span></div>').join('')||'<div class="empty">لا توجد إعلانات</div>'}catch{}broadcastPollTimer=setTimeout(pollBroadcastJobs,4000)}
 function renderFloatingAction(){}
 function save(){store.set("mld_token",state.token);store.set("mld_user",state.user?JSON.stringify(state.user):"")}
-async function api(path,opt={}){const headers={"Content-Type":"application/json",...(opt.headers||{})};if(state.token)headers.Authorization="Bearer "+state.token;const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);try{const res=await fetch(API+path,{...opt,headers,cache:"no-store",signal:controller.signal});let data={};try{data=await res.json()}catch{}if(!res.ok)throw new Error(data.error||"تعذر تنفيذ الطلب ("+res.status+")");return data}catch(error){if(error.name==="AbortError")throw new Error("تأخر رد الخادم أكثر من 15 ثانية. تحقق من اتصال الخدمة ثم أعد المحاولة.");throw error}finally{clearTimeout(timer)}}
+const apiGetCache=new Map(),apiGetInflight=new Map();
+async function api(path,opt={}){
+ const method=String(opt.method||"GET").toUpperCase();
+ const cacheKey=method==="GET"?method+" "+path+" "+String(state.token||""):"";
+ if(cacheKey){
+  const cached=apiGetCache.get(cacheKey);
+  if(cached&&cached.expires>Date.now())return cached.data;
+  if(apiGetInflight.has(cacheKey))return apiGetInflight.get(cacheKey);
+ }
+ const request=(async()=>{
+  const headers={"Content-Type":"application/json",...(opt.headers||{})};
+  if(state.token)headers.Authorization="Bearer "+state.token;
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+  try{
+   const res=await fetch(API+path,{...opt,headers,cache:"no-store",signal:controller.signal});
+   let data={};try{data=await res.json()}catch{}
+   if(!res.ok)throw new Error(data.error||"تعذر تنفيذ الطلب ("+res.status+")");
+   return data;
+  }catch(error){
+   if(error.name==="AbortError")throw new Error("تأخر رد الخادم أكثر من 15 ثانية. تحقق من اتصال الخدمة ثم أعد المحاولة.");
+   throw error;
+  }finally{clearTimeout(timer);}
+ })();
+ if(cacheKey)apiGetInflight.set(cacheKey,request);
+ if(method!=="GET")apiGetCache.clear();
+ try{
+  const data=await request;
+  if(cacheKey)apiGetCache.set(cacheKey,{data,expires:Date.now()+2200});
+  return data;
+ }finally{if(cacheKey)apiGetInflight.delete(cacheKey);}
+}
 function toast(msg){const e=$("#toast");if(!e)return;e.textContent=msg;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),2500)}
 function closeMenu(){$("#sidebar")?.classList.remove("open");$("#sidebar")?.setAttribute("aria-hidden","true");$("#shade")?.classList.remove("open")}
 function openMenu(){$("#sidebar")?.classList.add("open");$("#sidebar")?.setAttribute("aria-hidden","false");$("#shade")?.classList.add("open")}
@@ -155,6 +185,7 @@ let gameSocket=null,gameSessionId=null,currentGamePayload=null,gameSocketHasConn
 async function loadGameSessions(){try{const d=await api("/api/games/sessions");const el=$("#gameSessions");if(!el)return;el.innerHTML=(d.sessions||[]).map(s=>'<article class="panel session-card"><div><b>'+esc(s.name||gameLabel(s.type))+'</b><small>'+esc(gameLabel(s.type))+' · '+esc(gameStatusLabel(s.status))+' · '+(s.players||[]).length+'/'+s.max_players+' لاعبين</small></div>'+(s.status==="playing"?(state.user&&(s.players||[]).some(p=>String(p.userId)===String(state.user.id))?'<button class="btn" data-game-join="'+esc(s.id)+'">استئناف اللعب</button>':'<button class="btn" data-game-watch="'+esc(s.id)+'">مشاهدة</button>'):'<button class="btn" data-game-join="'+esc(s.id)+'">دخول</button>')+'</article>').join("")||'<div class="empty">لا توجد غرف مفتوحة حاليًا.</div>';}catch{const el=$("#gameSessions");if(el)el.innerHTML='<div class="empty">تعذر تحميل غرف الألعاب.</div>';}}
 async function handleGameSessionSubmit(form,event){
  event.preventDefault();
+ event.stopPropagation();
  event.stopImmediatePropagation();
  const button=form.querySelector('button[type="submit"]'),status=$("#gameCreateStatus");
  if(!state.user){openLogin();return;}
@@ -181,8 +212,10 @@ async function handleGameSessionSubmit(form,event){
   requestAnimationFrame(()=>$("#gameArena")?.scrollIntoView({behavior:"smooth",block:"start"}));
   loadGameSessions().catch(()=>{});
  }catch(error){
-  if(status)status.textContent=error.message||"تعذر إنشاء الجلسة";
-  toast(error.message||"تعذر إنشاء الجلسة");
+  const message=error.message||"تعذر إنشاء الجلسة";
+  if(status){status.textContent="تعذر الإنشاء: "+message;status.setAttribute("data-state","error");}
+  toast(message);
+  if(status)requestAnimationFrame(()=>{if(status.isConnected)status.scrollIntoView({behavior:"auto",block:"nearest"});});
  }finally{
   form.dataset.busy="0";
   if(button?.isConnected){button.disabled=false;button.innerHTML=original;}
