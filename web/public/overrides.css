@@ -632,3 +632,65 @@ body[data-page="tickets"] #app .ticket-open:hover{border-color:rgba(255,156,220,
 .about-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.about-pills span{padding:7px 11px;border-radius:999px;border:1px solid rgba(255,156,220,.15);background:rgba(255,156,220,.06);font-size:12px;color:#f2dff0}
 @media(max-width:760px){.owner-console-nav{top:70px;margin-inline:-4px}.about-banner{grid-template-columns:1fr}.about-emblem{width:75px;border-radius:20px;font-size:25px}body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){#sidebar{width:min(360px,92vw)}.owner-console-nav{top:66px}.owner-console-nav button{padding:9px 12px;font-size:12px}.pulse-section{padding:13px}.pulse-grid{grid-template-columns:1fr 1fr}.pulse-card{padding:13px}.pulse-copy b{font-size:24px}body[data-page="admin"] #app .stats{grid-template-columns:1fr 1fr}}
+
+
+/* MLD production polish 2026-10-11 — owner, ticket, application and mobile UX */
+:root{--mld-pink:#ff9cde;--mld-purple:#a86fdf;--mld-panel:rgba(31,20,45,.92)}
+#app .pagePanel{border-radius:26px;padding:clamp(18px,3.2vw,34px);background:linear-gradient(145deg,rgba(40,26,58,.97),rgba(24,16,35,.98));border-color:rgba(255,255,255,.09)}
+#app .pagePanel>h1{font-size:clamp(27px,4vw,42px);letter-spacing:-.025em;margin:10px 0}
+#app .pagePanel>h1+p{max-width:760px}
+#app .form{width:100%;max-width:760px;margin:22px 0 8px;padding:clamp(16px,2.6vw,25px);border:1px solid rgba(255,156,222,.13);border-radius:20px;background:linear-gradient(140deg,rgba(255,255,255,.035),rgba(168,111,223,.045))}
+#app .form label,#app .pagePanel label{display:block;color:#f0e5f5;font-weight:750;font-size:13px;line-height:1.7}
+#app .form input:not([type=checkbox]):not([type=color]),#app .form textarea,#app .form select,#app .pagePanel>input{width:100%;min-width:0;min-height:46px;padding:12px 14px;border:1px solid rgba(255,255,255,.13);border-radius:12px;background:#130c1d;color:#fff;font:inherit;outline:none}
+#app .form textarea{min-height:110px;resize:vertical}
+#app .form input:focus,#app .form textarea:focus,#app .form select:focus{border-color:#ff9cde;box-shadow:0 0 0 3px rgba(255,156,222,.1)}
+#app .form .btn{min-height:46px}
+#app .owner-console-nav{top:78px;gap:7px;padding:9px;border-radius:18px;background:rgba(18,11,27,.97);border-color:rgba(255,156,222,.17);box-shadow:0 12px 34px rgba(0,0,0,.22)}
+#app .owner-console-nav button{min-height:43px;padding:10px 14px;border-radius:12px;font-size:12px}
+#app .owner-console-nav button.is-current{color:#25152d;background:linear-gradient(120deg,#ff9cde,#d4a0f5);border-color:transparent;box-shadow:0 5px 18px rgba(255,156,222,.16)}
+#app .owner-overview{display:grid;gap:16px}
+#app .owner-overview .stats{grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
+#app .owner-overview .stat{position:relative;overflow:hidden;min-height:112px;padding:19px;border-radius:18px;background:linear-gradient(145deg,rgba(255,156,222,.1),rgba(168,111,223,.055)),rgba(255,255,255,.02)}
+#app .owner-overview .stat b{font-size:clamp(26px,3vw,35px)}
+#app .owner-section{margin-top:17px;border-radius:22px;background:linear-gradient(145deg,rgba(39,25,56,.94),rgba(25,17,36,.98));border-color:rgba(255,255,255,.085);box-shadow:0 18px 45px rgba(0,0,0,.16)}
+#app .owner-section h2{padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.08)}
+#app .owner-row,#app .ticketRow{border-radius:15px;background:rgba(255,255,255,.025);border-color:rgba(255,255,255,.09);transition:border-color .15s,background .15s}
+#app .owner-row:hover,#app .ticketRow:hover{border-color:rgba(255,156,222,.25);background:rgba(255,156,222,.035)}
+#app .owner-row .btn,#app .owner-row button{min-height:39px}
+#app .ticket-thread{display:grid;gap:12px;margin:20px 0}
+#app .ticket-thread .card{padding:18px;border-radius:17px}
+#app .ticket-open{gap:12px;text-align:right;cursor:pointer}
+#app .ticket-open span{font-size:12px;color:#ffb8e8}
+#app .game-create-panel{border-radius:25px}
+#app .game-session-form{gap:13px 16px}
+#app .game-session-form>select,#app .game-session-form>input{min-height:50px}
+#app #gameCreateStatus[data-state=error]{padding:11px 13px;border:1px solid rgba(255,110,140,.3);border-radius:12px;background:rgba(255,75,110,.08);color:#ffb4c5}
+#app #gameCreateStatus:not([data-state=error]):not(:empty){padding:10px 12px;border-radius:12px;background:rgba(113,225,165,.07);color:#a7f1c8}
+#app .game-create-submit{touch-action:manipulation;position:relative;z-index:2}
+#app .game-card-select{border-radius:18px;min-height:195px}
+#app .game-sessions-panel{padding:clamp(16px,3vw,26px);border-radius:24px}
+#app .online-generator{border-radius:24px;padding:clamp(18px,3vw,30px);background:radial-gradient(ellipse at 0 0,rgba(255,156,222,.11),transparent 48%),linear-gradient(145deg,rgba(40,26,58,.97),rgba(24,16,35,.98))}
+#app .generator-output{margin:18px 0;padding:22px;border:1px solid rgba(255,156,222,.2);border-radius:18px;background:linear-gradient(130deg,rgba(255,156,222,.07),rgba(168,111,223,.08));font-size:clamp(17px,2.4vw,22px);line-height:1.95;white-space:pre-wrap;overflow-wrap:anywhere}
+#app .story-result{border-color:rgba(255,156,222,.2);background:linear-gradient(135deg,rgba(255,156,222,.075),rgba(168,111,223,.08));font-size:16px}
+#app .generator-actions{display:flex;gap:9px;flex-wrap:wrap}
+#app .generator-actions .btn{min-height:45px}
+#sidebar{padding-bottom:calc(22px + env(safe-area-inset-bottom));overscroll-behavior:contain}
+#sidebar .nav-redesigned button{min-height:46px}
+#sidebar .nav-join{position:relative;min-height:70px}
+#sidebar .nav-join:hover{border-color:rgba(255,156,222,.55);transform:translateY(-1px)}
+.hero-social{display:grid;grid-template-columns:1fr;gap:13px}
+.creator-owner-line,.creator-accounts-line{padding:0}
+.creator-accounts-line .creator-social-link{border-radius:12px;border:1px solid rgba(255,156,222,.18);background:rgba(255,255,255,.035);padding:9px 12px;text-decoration:none}
+.creator-accounts-line .creator-social-link:hover{background:rgba(255,156,222,.09);border-color:rgba(255,156,222,.4)}
+@media(max-width:680px){
+ #app .pagePanel{padding:16px;border-radius:19px}
+ #app .owner-console-nav{top:70px;margin:8px 0 14px}
+ #app .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #app .owner-overview .stat{min-height:95px;padding:14px}
+ #app .game-session-form{grid-template-columns:minmax(0,1fr)}
+ #app .game-session-form>label{margin-top:3px}
+ #app .game-session-form .form-help,#app .game-create-submit{grid-column:1}
+ #app .owner-section{padding:14px}
+ #app .generator-actions .btn{flex:1 1 100%}
+ .hero-social{gap:11px}
+}
