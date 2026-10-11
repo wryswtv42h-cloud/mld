@@ -259,8 +259,8 @@ async function handleGameSessionSubmit(form,event){
   const gameOption=form.elements.namedItem("game_type")?.selectedOptions?.[0];
   const minPlayers=Number(gameOption?.dataset.min||2),maxAllowed=Number(gameOption?.dataset.max||6);
   if(!Number.isInteger(maxPlayers)||maxPlayers<minPlayers||maxPlayers>maxAllowed)throw new Error("اختر عدد لاعبين مناسبًا للعبة المحددة");
-  const data=await api("/api/games/sessions",{method:"POST",timeoutMs:30000,body:JSON.stringify({game_type:type,max_players:maxPlayers,name:name||("غرفة "+gameLabel(type))})});
-  if(!data?.session?.id)throw new Error("الخادم لم يُرجع رقم الجلسة؛ لم يتم تأكيد الإنشاء.");
+  const data=await api("/api/games/sessions",{method:"POST",timeoutMs:20000,body:JSON.stringify({game_type:type,max_players:maxPlayers,name:name||("غرفة "+gameLabel(type))})});
+  if(!data?.session?.id)throw new Error(data?.error||"الخادم لم يُرجع رقم الجلسة؛ لم يتم تأكيد الإنشاء.");
   gameSessionId=data.session.id;
   gameChatMessages=[];
   if(status){status.textContent="تم إنشاء الجلسة بنجاح ✓";status.dataset.state="success";}
@@ -274,8 +274,8 @@ async function handleGameSessionSubmit(form,event){
    const arena=$("#gameArena");
    if(arena)arena.innerHTML='<section class="panel"><h2>تم إنشاء الجلسة بنجاح ✓</h2><p class="muted">رقم الجلسة: '+esc(gameSessionId)+' — تعذر فتح لوحة اللعب تلقائيًا، لكن الجلسة محفوظة.</p><button class="btn primary" type="button" data-game-join="'+esc(gameSessionId)+'">فتح الجلسة</button></section>';
   }
-  requestAnimationFrame(()=>{const arena=$("#gameArena");if(arena)arena.scrollIntoView({behavior:"smooth",block:"start"});});
-  void loadGameSessions();
+  await loadGameSessions().catch(()=>{});
+  requestAnimationFrame(()=>{const arena=$("#gameArena");if(arena?.isConnected)arena.scrollIntoView({behavior:"smooth",block:"start"});});
  }catch(error){
   const message=error?.name==="AbortError"?"تأخر رد الخادم. حدّث الصفحة وحاول مرة أخرى.":(error.message||"تعذر إنشاء الجلسة");
   if(status){status.textContent="تعذر الإنشاء: "+message;status.dataset.state="error";}
