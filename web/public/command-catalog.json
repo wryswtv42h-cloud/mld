@@ -1232,52 +1232,52 @@
     "description": "أمر المعلومات والتحديات: culture"
   },
   {
-    "name": "quiz_tool35",
-    "label": "المعلومات والتحديات · tool35",
+    "name": "quiz_humanbody",
+    "label": "المعلومات والتحديات · humanbody",
     "category": "games",
     "kind": "quiz",
-    "operation": "tool35",
-    "description": "أمر المعلومات والتحديات: tool35"
+    "operation": "humanbody",
+    "description": "أمر المعلومات والتحديات: humanbody"
   },
   {
-    "name": "quiz_tool36",
-    "label": "المعلومات والتحديات · tool36",
+    "name": "quiz_currencies",
+    "label": "المعلومات والتحديات · currencies",
     "category": "games",
     "kind": "quiz",
-    "operation": "tool36",
-    "description": "أمر المعلومات والتحديات: tool36"
+    "operation": "currencies",
+    "description": "أمر المعلومات والتحديات: currencies"
   },
   {
-    "name": "quiz_tool37",
-    "label": "المعلومات والتحديات · tool37",
+    "name": "quiz_programming",
+    "label": "المعلومات والتحديات · programming",
     "category": "games",
     "kind": "quiz",
-    "operation": "tool37",
-    "description": "أمر المعلومات والتحديات: tool37"
+    "operation": "programming",
+    "description": "أمر المعلومات والتحديات: programming"
   },
   {
-    "name": "quiz_tool38",
-    "label": "المعلومات والتحديات · tool38",
+    "name": "quiz_rivers",
+    "label": "المعلومات والتحديات · rivers",
     "category": "games",
     "kind": "quiz",
-    "operation": "tool38",
-    "description": "أمر المعلومات والتحديات: tool38"
+    "operation": "rivers",
+    "description": "أمر المعلومات والتحديات: rivers"
   },
   {
-    "name": "quiz_tool39",
-    "label": "المعلومات والتحديات · tool39",
+    "name": "quiz_mountains",
+    "label": "المعلومات والتحديات · mountains",
     "category": "games",
     "kind": "quiz",
-    "operation": "tool39",
-    "description": "أمر المعلومات والتحديات: tool39"
+    "operation": "mountains",
+    "description": "أمر المعلومات والتحديات: mountains"
   },
   {
-    "name": "quiz_tool40",
-    "label": "المعلومات والتحديات · tool40",
+    "name": "quiz_inventions",
+    "label": "المعلومات والتحديات · inventions",
     "category": "games",
     "kind": "quiz",
-    "operation": "tool40",
-    "description": "أمر المعلومات والتحديات: tool40"
+    "operation": "inventions",
+    "description": "أمر المعلومات والتحديات: inventions"
   },
   {
     "name": "server_info",
