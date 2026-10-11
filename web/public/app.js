@@ -184,7 +184,39 @@ const storyBank=[
 {name:"العضو الجديد",text:"دخل عضو جديد بخجل، وبعد دقائق وجد الشات مليئًا بالترحيب. ومن يومها صار من أكثر الناس حضورًا في ملاذ."},
 {name:"آخر جولة",text:"قالوا إنها آخر جولة، ثم بدأت جولة أخرى، ثم أخرى، حتى أصبح الصباح أقرب من النهاية."}
 ];
-function speakStory(text){if(!("speechSynthesis" in window)){toast("القراءة الصوتية غير مدعومة في هذا المتصفح");return;}const content=String(text||"").trim();if(!content){toast("ولّد قصة أولًا");return;}speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(content);const wanted=$("#storyVoice")?.value||"male";const voices=speechSynthesis.getVoices();const arabic=voices.filter(v=>/^ar([-_]|$)/i.test(v.lang||"")||/arab|عرب/i.test(v.name||""));const male=arabic.filter(v=>/male|man|hamza|naayf|tariq|maged|majid|عربي|ذكر/i.test(v.name||""));const female=arabic.filter(v=>/female|woman|zira|sara|laila|hoda|female|أنثى|أنثوي/i.test(v.name||""));const candidates=wanted==="female"?female:wanted==="male"?male:arabic;if(candidates.length)utterance.voice=candidates[0];utterance.lang=utterance.voice?.lang||"ar-SA";utterance.rate=Number($("#storyRate")?.value||(wanted==="male"?0.92:1));utterance.pitch=Number($("#storyPitch")?.value||(wanted==="male"?0.78:wanted==="female"?1.12:1));speechSynthesis.speak(utterance);}
+function speakStory(text){
+ if(!("speechSynthesis" in window)){toast("القراءة الصوتية غير مدعومة في هذا المتصفح");return;}
+ const content=String(text||"").trim();
+ if(!content){toast("ولّد قصة أولًا");return;}
+ speechSynthesis.cancel();
+ const wanted=$("#storyVoice")?.value||"male";
+ let started=false;
+ const speakWithAvailableVoice=()=>{
+  if(started)return;
+  started=true;
+  const utterance=new SpeechSynthesisUtterance(content);
+  const voices=speechSynthesis.getVoices();
+  const arabic=voices.filter(v=>/^ar([-_]|$)/i.test(v.lang||"")||/arab|عرب/i.test(v.name||""));
+  const female=arabic.filter(v=>/female|woman|zira|sara|laila|hoda|layla|عائشة|أنثى|أنثوي/i.test(v.name||""));
+  const male=arabic.filter(v=>/male|man|hamza|naayf|tariq|maged|majid|mohammed|عربي|ذكر/i.test(v.name||""));
+  const candidates=wanted==="female"?female:wanted==="male"?(male.length?male:arabic.filter(v=>!female.includes(v))):arabic;
+  if(candidates.length)utterance.voice=candidates[0];
+  utterance.lang=utterance.voice?.lang||"ar-SA";
+  utterance.rate=Number($("#storyRate")?.value||(wanted==="male"?0.92:1));
+  utterance.pitch=Number($("#storyPitch")?.value||(wanted==="male"?0.72:wanted==="female"?1.12:1));
+  utterance.onstart=()=>{const source=$("#storySource");if(source)source.textContent="بدأ تشغيل القصة بالصوت العربي المتاح في جهازك."};
+  utterance.onerror=()=>{const source=$("#storySource");if(source)source.textContent="تعذر تشغيل الصوت؛ جرّب اختيار صوت الجهاز أو إعادة المحاولة."};
+  speechSynthesis.speak(utterance);
+ };
+ const voices=speechSynthesis.getVoices();
+ if(voices.length){speakWithAvailableVoice();return;}
+ const source=$("#storySource");
+ if(source)source.textContent="جارٍ تحميل الأصوات المتاحة لاختيار الراوي…";
+ let done=false;
+ const onVoices=()=>{if(done)return;done=true;speechSynthesis.removeEventListener?.("voiceschanged",onVoices);speakWithAvailableVoice();};
+ speechSynthesis.addEventListener?.("voiceschanged",onVoices,{once:true});
+ setTimeout(()=>{if(done)return;done=true;speechSynthesis.removeEventListener?.("voiceschanged",onVoices);speakWithAvailableVoice();},700);
+}
 
 let gameSocket=null,gameSessionId=null,currentGamePayload=null,gameSocketHasConnected=false,gameSocketPendingJoin=null,gameSocketNeedsRejoin=false;const botTypeLabel=type=>({allinone:"بوت MLD الشامل",system:"بوت السستم",applications:"التقديمات + التيكت",games:"بوت الألعاب",bank:"بوت البنك",support:"بوت الدعم 24/7",music:"بوت الموسيقى",general:"بوت عام",welcome:"بوت الترحيب",moderation:"بوت الإشراف",automod:"الحماية التلقائية",tickets:"بوت التذاكر",cinema:"بوت السينما",leveling:"بوت المستويات",economy:"بوت الاقتصاد",suggestions:"بوت الاقتراحات",broadcast:"بوت الإعلانات",custom:"بوت مخصص"})[String(type||"general")]||"بوت مخصص";const gameLabel=type=>({uno:"أونو",jaccaro:"جاكارو",baloot:"بلوت",ludo:"لودو",monopoly:"مونوبولي",codenames:"كود نيمز",maqousar:"مقاصر"})[String(type||"").toLowerCase()]||String(type||"لعبة");const gameStatusLabel=status=>({open:"مفتوحة",waiting:"بانتظار اللاعبين",playing:"قيد اللعب",closed:"منتهية"})[String(status||"").toLowerCase()]||"متاحة";
 async function loadGameSessions(){try{const d=await api("/api/games/sessions");const el=$("#gameSessions");if(!el)return;el.innerHTML=(d.sessions||[]).map(s=>'<article class="panel session-card"><div><b>'+esc(s.name||gameLabel(s.type))+'</b><small>'+esc(gameLabel(s.type))+' · '+esc(gameStatusLabel(s.status))+' · '+(s.players||[]).length+'/'+s.max_players+' لاعبين</small></div>'+(s.status==="playing"?(state.user&&(s.players||[]).some(p=>String(p.userId)===String(state.user.id))?'<button class="btn" data-game-join="'+esc(s.id)+'">استئناف اللعب</button>':'<button class="btn" data-game-watch="'+esc(s.id)+'">مشاهدة</button>'):'<button class="btn" data-game-join="'+esc(s.id)+'">دخول</button>')+'</article>').join("")||'<div class="empty">لا توجد غرف مفتوحة حاليًا.</div>';}catch{const el=$("#gameSessions");if(el)el.innerHTML='<div class="empty">تعذر تحميل غرف الألعاب.</div>';}}
