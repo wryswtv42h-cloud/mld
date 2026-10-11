@@ -42,7 +42,7 @@ assert.match(app, /await getPageLocksSnapshot\(\)/, 'Page locks must be fetched 
 assert.match(app, /authSnapshotToken===token/, 'Session refresh cache must be bound to the active login token.');
 assert.ok(app.includes('["8ball","سؤال وجواب"]'), 'The dashboard toggle must use the same 8ball command name as the handler.');
 assert.ok(app.includes('["servericon","أيقونة السيرفر"]'), 'The dashboard must expose toggles for implemented utility commands.');
-assert.ok(html.includes('app.js?v=20261011-command-pack5'), 'The browser cache key must change when app behavior changes.');
+assert.ok(html.includes('app.js?v=20261011-command-pack6'), 'The browser cache key must change when app behavior changes.');
 assert.match(app, /game-seat-avatar/, 'Game table seats must render player avatars.');
 assert.match(app, /data-member="'\+esc\(p\.discordId\)/, 'Human player names at the table should open member profiles.');
 assert.match(gameRoute, /discordId:req\.user\.discord_id\|\|null/, 'New game sessions should retain the Discord ID used by profile lookups.');
@@ -69,6 +69,7 @@ assert.ok(bot.includes("if(command==='blockedword')"), 'Blocked-word management 
 assert.ok(bot.includes("if(command==='mute'||command==='unmute')") && bot.includes('target.voice.setMute(shouldMute,reason)'), 'Advertised voice mute/unmute commands must execute real moderation actions.');
 assert.ok(bot.includes("['deafen','undeafen','disconnect'].includes(command)") && bot.includes("if(command==='hide'||command==='show')") && bot.includes("if(command==='renamechannel')") && bot.includes("if(command==='settopic')"), 'Additional voice and channel moderation commands must have real handlers.');
 assert.ok(bot.includes("if(command==='welcome')") && bot.includes("if(command==='logs')") && bot.includes('welcomeEnabled===false'), 'Advertised welcome and log commands must persist settings and respect the disabled state.');
+assert.ok(bot.includes("if(command==='broadcast')") && bot.includes("'bot.broadcast_sent'"), 'Broadcast must post to an explicitly selected channel and record the action.');
 assert.ok(bot.includes("if(['moderation','automod','system','allinone','welcome'].includes(type))"), 'Welcome-type bots must be able to run their own prefix welcome settings command.');
 assert.ok(bot.includes("const autoMod=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true"), 'Protection can be disabled explicitly even for automod bot types.');
 assert.ok(bot.includes('const knownCommandNames=new Set('), 'Only recognized prefix commands should bypass automatic link filtering.');
