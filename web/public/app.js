@@ -140,14 +140,16 @@ async function api(path,opt={}){
  const request=(async()=>{
   const headers={"Content-Type":"application/json",...(opt.headers||{})};
   if(state.token)headers.Authorization="Bearer "+state.token;
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+  const timeoutMs=Math.max(1000,Number(opt.timeoutMs)||15000);
+  const fetchOptions={...opt};delete fetchOptions.timeoutMs;
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
   try{
-   const res=await fetch(API+path,{...opt,headers,cache:"no-store",signal:controller.signal});
+   const res=await fetch(API+path,{...fetchOptions,headers,cache:"no-store",signal:controller.signal});
    let data={};try{data=await res.json()}catch{}
    if(!res.ok)throw new Error(data.error||"تعذر تنفيذ الطلب ("+res.status+")");
    return data;
   }catch(error){
-   if(error.name==="AbortError")throw new Error("تأخر رد الخادم أكثر من 15 ثانية. تحقق من اتصال الخدمة ثم أعد المحاولة.");
+   if(error.name==="AbortError")throw new Error("تأخر رد الخادم أكثر من "+Math.round(timeoutMs/1000)+" ثوانٍ. تحقق من الاتصال ثم أعد المحاولة.");
    throw error;
   }finally{clearTimeout(timer);}
  })();
@@ -155,7 +157,10 @@ async function api(path,opt={}){
  if(method!=="GET")apiGetCache.clear();
  try{
   const data=await request;
-  if(cacheKey)apiGetCache.set(cacheKey,{data,expires:Date.now()+2200});
+  if(cacheKey){
+   const stable=/^\/api\/(public\/|community\/settings\/|community\/owner\/stats|community\/owner\/announcement|community\/owner\/rooms|community\/owner\/bot-subscriptions|community\/audit|users(?:\?|$)|bots(?:\?|$))/.test(path);
+   apiGetCache.set(cacheKey,{data,expires:Date.now()+(stable?12000:3500)});
+  }
   return data;
  }finally{if(cacheKey)apiGetInflight.delete(cacheKey);}
 }
@@ -193,7 +198,7 @@ async function handleGameSessionSubmit(form,event){
  form.dataset.busy="1";
  const original=button?.innerHTML||"＋ إنشاء الجلسة";
  if(button){button.disabled=true;button.innerHTML="⏳ جارٍ إنشاء الجلسة…";}
- if(status)status.textContent="نتصل بالخادم الآن…";
+ if(status){status.textContent="نتصل بالخادم الآن…";status.removeAttribute("data-state");}
  try{
   const type=String(form.elements.namedItem("game_type")?.value||"");
   const maxPlayers=Number(form.elements.namedItem("max_players")?.value||0);
@@ -215,7 +220,7 @@ async function handleGameSessionSubmit(form,event){
   const message=error.message||"تعذر إنشاء الجلسة";
   if(status){status.textContent="تعذر الإنشاء: "+message;status.setAttribute("data-state","error");}
   toast(message);
-  if(status)requestAnimationFrame(()=>{if(status.isConnected)status.scrollIntoView({behavior:"auto",block:"nearest"});});
+  /* Keep the player on the form when creation fails; never jump the whole page. */
  }finally{
   form.dataset.busy="0";
   if(button?.isConnected){button.disabled=false;button.innerHTML=original;}
@@ -325,7 +330,7 @@ function gameLobbyPage(){
   '<section class="panel game-sessions-panel"><div class="section-heading-row"><div><div class="tag">LIVE ROOMS</div><h2 class="sectionTitle">🔥 الجلسات النشطة</h2><p class="section-subtitle">تتحدث القائمة تلقائيًا لإظهار الغرف الجديدة والمقاعد المتاحة.</p></div><button type="button" class="btn" data-game-refresh>تحديث ↻</button></div><div id="gameSessions" class="game-sessions"><div class="loading">جاري تحميل الغرف…</div></div></section><div id="gameArena"></div>'
  );
 }
-let pageLocksSnapshot=null,pageLocksSnapshotAt=0,pageLocksRequest=null;async function getPageLocksSnapshot(){if(pageLocksSnapshot&&Date.now()-pageLocksSnapshotAt<30000)return pageLocksSnapshot;if(!pageLocksRequest){pageLocksRequest=api("/api/community/page-locks").then(data=>{pageLocksSnapshot=data;pageLocksSnapshotAt=Date.now();return data}).finally(()=>{pageLocksRequest=null;});}return pageLocksRequest;}
+let pageLocksSnapshot=null,pageLocksSnapshotAt=0,pageLocksRequest=null;async function getPageLocksSnapshot(){if(pageLocksSnapshot&&Date.now()-pageLocksSnapshotAt<30000)return pageLocksSnapshot;if(!pageLocksRequest){pageLocksRequest=api("/api/community/page-locks",{timeoutMs:2500}).then(data=>{pageLocksSnapshot=data;pageLocksSnapshotAt=Date.now();return data}).finally(()=>{pageLocksRequest=null;});}return pageLocksRequest;}
 async function buildPage(p){
 if(p!=="owner"&&p!=="admin"&&!state.user?.is_owner){try{const lockData=await getPageLocksSnapshot();const lock=lockData.locks?.pages?.[p];if(lock?.enabled)return box("الصفحة مغلقة",lock.message||lockData.locks?.message||"هذه الصفحة مغلقة مؤقتًا من إدارة مجتمع ملاذ.",'<div class="empty">الصفحة متوقفة مؤقتًا بقرار من إدارة الموقع.</div><button class="btn primary" type="button" data-action="close-page-lock">إغلاق</button>')}catch{}}
 if(p==="members"){
@@ -356,26 +361,26 @@ if(p==="bots"){const d=await api("/api/bots");return box("مصنع بوت MLD ا
 if(p==="profile")return box("حسابي","كل تعديل مستقل؛ احفظ الصورة أو البنر أو الاسم أو النبذة كل واحد لحاله.",'<div class="profile-form"><div class="profile-edit-field"><label>اسم المستخدم<input data-profile-field="username" minlength="'+(state.user?.is_owner?1:2)+'" maxlength="32" value="'+esc(state.user?.username||"")+'" required></label><button type="button" class="btn primary" data-profile-save="username">حفظ اليوزر</button></div><div class="profile-edit-field"><label>رابط الصورة الشخصية<input data-profile-field="avatar" type="url" maxlength="1000" value="'+esc(state.user?.avatar||"")+'" placeholder="https://..."></label><button type="button" class="btn primary" data-profile-save="avatar">حفظ الصورة</button></div><div class="profile-edit-field"><label>رابط البنر<input data-profile-field="banner_url" type="url" maxlength="1000" value="'+esc(state.user?.banner_url||"")+'" placeholder="https://..."></label>'+(state.user?.banner_url?'<img class="profile-banner-preview" src="'+esc(state.user.banner_url)+'" alt="معاينة البنر">':'')+'<button type="button" class="btn primary" data-profile-save="banner_url">حفظ البنر</button></div><div class="profile-edit-field"><label>المهنة أو مجال العمل<input data-profile-field="occupation" maxlength="80" value="'+esc(state.user?.occupation||"")+'" placeholder="مثال: مطور واجهات"></label><button type="button" class="btn primary" data-profile-save="occupation">حفظ المهنة</button></div><div class="profile-edit-field"><label>نبذة عنك<textarea data-profile-field="bio" maxlength="500" rows="4" placeholder="اكتب نبذة قصيرة عنك...">'+esc(state.user?.bio||"")+'</textarea></label><button type="button" class="btn primary" data-profile-save="bio">حفظ النبذة</button></div></div><div class="profile-form"><h3>تغيير كلمة المرور</h3><form id="passwordForm" class="form"><input name="current_password" type="password" placeholder="كلمة المرور الحالية" required><input name="new_password" type="password" minlength="6" placeholder="كلمة المرور الجديدة" required><input name="confirm_password" type="password" minlength="6" placeholder="تأكيد كلمة المرور الجديدة" required><button class="btn primary" type="submit">حفظ كلمة المرور</button></form></div>');
 if(p==="owner"){if(!state.user?.is_owner)return box("ممنوع","للأونر فقط","");
 const [stats,audit,jobs,roomData,userData,gameData,botData,subData,reviewData,announcement,ticketQ,applicationQ,groupData,ticketData,applicationData,cinemaData,cinemaBotData,catalogData,pageLockData,pigeonLogData]=await Promise.all([
-api("/api/community/owner/stats").catch(()=>({users:0,bots:0,cinema:0,sessions:0,messages:0})),
-api("/api/community/audit").catch(()=>({logs:[]})),
-api("/api/community/owner/broadcast/jobs").catch(()=>({jobs:[]})),
-api("/api/community/owner/rooms").catch(()=>({rooms:[]})),
-api("/api/users").catch(()=>({users:[]})),
-api("/api/games/sessions").catch(()=>({sessions:[]})),
-api("/api/bots").catch(()=>({bots:[]})),
-api("/api/community/owner/bot-subscriptions").catch(()=>({bots:[]})),
-api("/api/community/reviews").catch(()=>({reviews:[]})),
-api("/api/community/owner/announcement").catch(()=>({announcement:{text:"",color:"#ff9cdc",enabled:true}})),
-api("/api/community/settings/ticket_questions").catch(()=>({value:[]})),
-api("/api/community/settings/application_questions").catch(()=>({value:[]})),
-api("/api/community/groups/all").catch(()=>({groups:[]})),
-api("/api/community/tickets").catch(()=>({tickets:[]})),
-api("/api/community/applications").catch(()=>({applications:[]})),
-api("/api/community/cinema").catch(()=>({rooms:[]})),
-api("/api/community/cinema/owner/bots").catch(()=>({bots:[]})),
-api("/api/community/cinema/owner/catalog").catch(()=>({movies:[]})),
-api("/api/community/page-locks").catch(()=>({locks:{pages:{},message:""}})),
-api("/api/community/owner/pigeon-logs").catch(()=>({logs:[]}))
+api("/api/community/owner/stats",{timeoutMs:4500}).catch(()=>({users:0,bots:0,cinema:0,sessions:0,messages:0})),
+api("/api/community/audit",{timeoutMs:4500}).catch(()=>({logs:[]})),
+api("/api/community/owner/broadcast/jobs",{timeoutMs:4500}).catch(()=>({jobs:[]})),
+api("/api/community/owner/rooms",{timeoutMs:4500}).catch(()=>({rooms:[]})),
+api("/api/users",{timeoutMs:4500}).catch(()=>({users:[]})),
+api("/api/games/sessions",{timeoutMs:4500}).catch(()=>({sessions:[]})),
+api("/api/bots",{timeoutMs:4500}).catch(()=>({bots:[]})),
+api("/api/community/owner/bot-subscriptions",{timeoutMs:4500}).catch(()=>({bots:[]})),
+api("/api/community/reviews",{timeoutMs:4500}).catch(()=>({reviews:[]})),
+api("/api/community/owner/announcement",{timeoutMs:4500}).catch(()=>({announcement:{text:"",color:"#ff9cdc",enabled:true}})),
+api("/api/community/settings/ticket_questions",{timeoutMs:4500}).catch(()=>({value:[]})),
+api("/api/community/settings/application_questions",{timeoutMs:4500}).catch(()=>({value:[]})),
+api("/api/community/groups/all",{timeoutMs:4500}).catch(()=>({groups:[]})),
+api("/api/community/tickets",{timeoutMs:4500}).catch(()=>({tickets:[]})),
+api("/api/community/applications",{timeoutMs:4500}).catch(()=>({applications:[]})),
+api("/api/community/cinema",{timeoutMs:4500}).catch(()=>({rooms:[]})),
+api("/api/community/cinema/owner/bots",{timeoutMs:4500}).catch(()=>({bots:[]})),
+api("/api/community/cinema/owner/catalog",{timeoutMs:4500}).catch(()=>({movies:[]})),
+api("/api/community/page-locks",{timeoutMs:4500}).catch(()=>({locks:{pages:{},message:""}})),
+api("/api/community/owner/pigeon-logs",{timeoutMs:4500}).catch(()=>({logs:[]}))
 ]);
 const pageLocks=pageLockData.locks||{pages:{},message:""};
 const rooms=roomData.rooms||[],users=userData.users||[],games=gameData.sessions||[],bots=botData.bots||[],subs=subData.bots||[],reviews=reviewData.reviews||[],ann=announcement.announcement||{},groups=groupData.groups||[],tickets=ticketData.tickets||[],applications=applicationData.applications||[],cinemaRooms=cinemaData.rooms||[],cinemaBots=cinemaBotData.bots||[],cinemaMovies=catalogData.movies||[];
