@@ -1218,7 +1218,8 @@ async function setupZajelReplies(client){
     if(message.author?.bot||message.guild)return;
     const text=String(message.content||'').trim();
     const attachmentText=[...(message.attachments?.values?.()||[])].map(item=>item.url).join('\n');
-    const replyContent=(text||attachmentText).slice(0,2000);
+    const stickerText=[...(message.stickers?.values?.()||[])].map(item=>item.url||item.name).join('\n');
+    const replyContent=[text,attachmentText,stickerText].filter(Boolean).join('\n').slice(0,2000);
     if(!replyContent)return;
     try{
       const candidate=await pool.query(`SELECT message_id FROM pigeon_reply_sessions
