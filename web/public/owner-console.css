@@ -164,3 +164,102 @@ body[data-page="owner"] .owner-console-nav button:focus-visible,body[data-page="
 body[data-page="owner"] .owner-console-nav{scrollbar-color:#a86fdf55 transparent}
 body[data-page="owner"] .owner-section a:not(.btn){color:#ffb6e7;text-underline-offset:3px}
 body[data-page="owner"] .owner-section .empty{padding:18px;border:1px dashed #ffffff22;border-radius:14px;text-align:center;color:var(--muted,#c9bbd2)}
+
+
+/* MLD Owner Console v8 — high-contrast, compact, action-first */
+body[data-page="owner"] #app{max-width:1540px;padding-bottom:48px}
+body[data-page="owner"] #app>.pagePanel,
+body[data-page="owner"] #app>.panel{
+  position:relative;overflow:hidden;border:1px solid rgba(255,156,222,.18);
+  border-radius:28px;background:linear-gradient(145deg,rgba(29,19,43,.97),rgba(13,9,22,.98));
+  box-shadow:0 24px 70px rgba(0,0,0,.28)
+}
+body[data-page="owner"] #app>.pagePanel::before,
+body[data-page="owner"] #app>.panel::before{
+  content:"";position:absolute;inset:0 0 auto;height:3px;
+  background:linear-gradient(90deg,transparent,#ff9cde 25%,#a86fdf 72%,transparent);pointer-events:none
+}
+body[data-page="owner"] .owner-console-nav{
+  top:66px;padding:10px;margin:18px 0 20px;border-radius:18px;
+  border-color:rgba(255,156,222,.18);background:rgba(12,8,19,.96);
+  box-shadow:0 12px 34px rgba(0,0,0,.24)
+}
+body[data-page="owner"] .owner-console-nav button{
+  position:relative;min-height:43px;padding:10px 14px;border-radius:12px;
+  border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.035);
+  color:#eee3f4;font-size:13px;transition:background .16s,border-color .16s,transform .16s
+}
+body[data-page="owner"] .owner-console-nav button:hover,
+body[data-page="owner"] .owner-console-nav button.is-current{
+  transform:translateY(-1px);color:#1b1022;border-color:transparent;
+  background:linear-gradient(115deg,#ffb1e6,#c4a3ff);box-shadow:0 7px 20px rgba(255,156,222,.17)
+}
+body[data-page="owner"] .owner-overview{margin:0 0 22px}
+body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+body[data-page="owner"] .owner-overview .stat{
+  min-width:0;min-height:112px;padding:19px;border-radius:20px;
+  border:1px solid rgba(255,255,255,.09);
+  background:linear-gradient(150deg,rgba(255,156,222,.09),rgba(168,111,223,.055) 55%,rgba(255,255,255,.018));
+  box-shadow:0 10px 28px rgba(0,0,0,.13);transition:transform .18s,border-color .18s
+}
+body[data-page="owner"] .owner-overview .stat:hover{transform:translateY(-3px);border-color:rgba(255,156,222,.28)}
+body[data-page="owner"] .owner-overview .stat b{font-size:clamp(1.7rem,2.8vw,2.4rem);letter-spacing:-.04em;color:#ffc0ec}
+body[data-page="owner"] .owner-overview .stat small{font-size:12px;letter-spacing:.01em}
+body[data-page="owner"] .owner-section{
+  position:relative;margin:0 0 20px;padding:clamp(17px,2.5vw,29px);
+  border-radius:22px;border-color:rgba(255,255,255,.085);
+  background:linear-gradient(150deg,rgba(30,20,43,.96),rgba(16,11,25,.97));
+  box-shadow:0 14px 38px rgba(0,0,0,.15);scroll-margin-top:135px
+}
+body[data-page="owner"] .owner-section h2{margin-bottom:20px;font-size:clamp(1.05rem,1.8vw,1.35rem)}
+body[data-page="owner"] .owner-section h2::after{background:linear-gradient(90deg,rgba(255,156,222,.36),transparent)}
+body[data-page="owner"] .owner-section .form{
+  display:grid;gap:12px;padding:18px;margin:12px 0 18px;
+  border-radius:17px;border-color:rgba(255,255,255,.075);background:rgba(5,3,10,.22)
+}
+body[data-page="owner"] .owner-section input:not([type="checkbox"]):not([type="color"]),
+body[data-page="owner"] .owner-section textarea,
+body[data-page="owner"] .owner-section select{
+  min-height:46px;border-radius:13px;border-color:rgba(255,255,255,.12);
+  background:#100a19;transition:border-color .15s,box-shadow .15s
+}
+body[data-page="owner"] .owner-section input:focus,
+body[data-page="owner"] .owner-section textarea:focus,
+body[data-page="owner"] .owner-section select:focus{
+  outline:none;border-color:#ff9cde;box-shadow:0 0 0 3px rgba(255,156,222,.10)
+}
+body[data-page="owner"] .owner-section .btn{
+  min-height:42px;padding:10px 14px;border-radius:12px;white-space:normal
+}
+body[data-page="owner"] .owner-section .btn.primary{
+  border:0;color:#201026;background:linear-gradient(115deg,#ffb1e6,#c4a3ff);
+  box-shadow:0 7px 20px rgba(255,156,222,.12)
+}
+body[data-page="owner"] .owner-row{
+  align-items:center;gap:14px;padding:14px 16px;margin:9px 0;
+  border-radius:16px;border-color:rgba(255,255,255,.075);background:rgba(255,255,255,.025)
+}
+body[data-page="owner"] .owner-row:hover{transform:translateY(-1px);border-color:rgba(255,156,222,.25)}
+body[data-page="owner"] .owner-row .row-actions{gap:7px}
+body[data-page="owner"] .owner-account img{border-radius:14px;border-color:rgba(255,156,222,.24)}
+body[data-page="owner"] .ticketRow{gap:12px;padding:14px;border-radius:15px;border-color:rgba(255,255,255,.07);background:rgba(255,255,255,.022)}
+body[data-page="owner"] .owner-inbox-grid{align-items:start}
+body[data-page="owner"] .owner-inbox-people{position:sticky;top:140px;max-height:62vh;overflow:auto}
+body[data-page="owner"] .owner-section [hidden],body[data-page="owner"] .owner-overview[hidden]{display:none!important}
+body[data-page="owner"] .owner-section :is(button,a,input,select,textarea){touch-action:manipulation}
+@media(max-width:900px){
+ body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+ body[data-page="owner"] .owner-inbox-people{position:static;max-height:none}
+}
+@media(max-width:600px){
+ body[data-page="owner"] #app>.pagePanel,body[data-page="owner"] #app>.panel{border-radius:20px}
+ body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ body[data-page="owner"] .owner-overview .stat{min-height:88px;padding:13px;border-radius:15px}
+ body[data-page="owner"] .owner-console-nav{top:54px;margin:12px 0 16px;padding:7px;gap:6px}
+ body[data-page="owner"] .owner-console-nav button{min-height:38px;padding:8px 11px;font-size:12px}
+ body[data-page="owner"] .owner-section{padding:13px;margin-bottom:14px;border-radius:17px;scroll-margin-top:110px}
+ body[data-page="owner"] .owner-section .form{padding:12px}
+ body[data-page="owner"] .owner-row{align-items:stretch;flex-direction:column}
+ body[data-page="owner"] .owner-row .row-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ body[data-page="owner"] .owner-row .row-actions .btn{width:100%;min-width:0}
+}
