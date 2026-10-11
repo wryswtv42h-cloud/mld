@@ -13,7 +13,6 @@ export async function execute(interaction) {
   const embed = new EmbedBuilder()
     .setColor(0xff9cde)
     .setTitle('🤖 معلومات بوت MLD')
-    .setThumbnail(client.user?.displayAvatarURL({ size: 256 }) || null)
     .addFields(
       { name: 'اسم البوت', value: String(client.user?.username || 'MLD').slice(0, 100), inline: true },
       { name: 'المعرّف', value: String(client.user?.id || 'غير متاح'), inline: true },
@@ -23,5 +22,7 @@ export async function execute(interaction) {
     )
     .setFooter({ text: 'MLD · مجتمع ملاذ' })
     .setTimestamp();
+  const avatar = client.user?.displayAvatarURL({ size: 256 });
+  if (avatar) embed.setThumbnail(avatar);
   return interaction.reply({ embeds: [embed], allowedMentions: { parse: [] } });
 }
