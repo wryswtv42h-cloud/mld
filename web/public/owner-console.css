@@ -513,3 +513,29 @@ body[data-page="owner"] .owner-section .application-answers summary{cursor:point
 body[data-page="owner"] .owner-section .application-answer{margin:8px 0;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.035)}
 body[data-page="owner"] .owner-section .application-answer p{margin-bottom:0;overflow-wrap:anywhere}
 @media(max-width:700px){body[data-page="owner"] #app{width:calc(100% - 18px)}body[data-page="owner"] .owner-console-nav{top:64px;margin:14px -2px;padding:9px;border-radius:15px}body[data-page="owner"] .owner-row{align-items:stretch;flex-direction:column}body[data-page="owner"] .owner-row .row-actions{width:100%}body[data-page="owner"] .owner-row .row-actions .btn{flex:1 1 auto}body[data-page="owner"] .owner-section .form{padding:12px}}
+
+
+/* MLD Owner Console — complete visual refresh, responsive and touch-safe */
+body[data-page="owner"]{--owner-border:rgba(255,255,255,.11);--owner-surface:rgba(35,23,50,.88)}
+body[data-page="owner"] #app{max-width:1500px;padding-top:20px}
+body[data-page="owner"] #app>.pagePanel,body[data-page="owner"] #app>.panel{background:transparent;border:0;box-shadow:none;padding:0}
+body[data-page="owner"] .owner-overview{padding:clamp(18px,3vw,34px);border:1px solid var(--owner-border);border-radius:28px;background:radial-gradient(ellipse at 90% 0,rgba(255,156,220,.16),transparent 42%),linear-gradient(135deg,rgba(49,31,69,.96),rgba(21,14,31,.96));box-shadow:0 24px 65px rgba(0,0,0,.22)}
+body[data-page="owner"] .owner-overview h1,body[data-page="owner"] .owner-overview h2{letter-spacing:-.025em}
+body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
+body[data-page="owner"] .owner-overview .stat{min-height:125px;border-radius:19px;background:linear-gradient(145deg,rgba(255,255,255,.085),rgba(255,255,255,.025));border:1px solid var(--owner-border);box-shadow:inset 0 1px rgba(255,255,255,.04);transition:transform .18s,border-color .18s}
+body[data-page="owner"] .owner-overview .stat:hover{transform:translateY(-3px);border-color:rgba(255,156,220,.4)}
+body[data-page="owner"] .owner-console-nav{top:80px;padding:10px;gap:7px;background:rgba(20,13,29,.96);border-color:var(--owner-border);box-shadow:0 14px 36px rgba(0,0,0,.25)}
+body[data-page="owner"] .owner-console-nav button{min-height:44px;border-radius:12px;padding:10px 14px;white-space:nowrap;touch-action:manipulation}
+body[data-page="owner"] .owner-section{position:relative;margin-top:18px;padding:clamp(16px,2.5vw,26px);border:1px solid var(--owner-border);border-radius:23px;background:linear-gradient(145deg,rgba(38,25,54,.95),rgba(23,15,33,.95));box-shadow:0 14px 40px rgba(0,0,0,.14);scroll-margin-top:150px}
+body[data-page="owner"] .owner-section h2{display:flex;align-items:center;gap:10px;font-size:clamp(18px,2vw,23px);margin-bottom:18px}
+body[data-page="owner"] .owner-section .form{max-width:none;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));align-items:end;background:rgba(0,0,0,.12);border-color:var(--owner-border)}
+body[data-page="owner"] .owner-section button,body[data-page="owner"] .owner-console-nav button{touch-action:manipulation;transition:transform .16s,filter .16s}
+body[data-page="owner"] .owner-section button:hover{filter:brightness(1.08)}
+body[data-page="owner"] .owner-section button:active{transform:scale(.98)}
+body[data-page="owner"] .owner-row{background:rgba(255,255,255,.025);border-color:var(--owner-border);border-radius:16px}
+body[data-page="owner"] .owner-row .row-actions button{min-height:38px}
+body[data-page="owner"] .owner-section input:focus,body[data-page="owner"] .owner-section textarea:focus{outline:2px solid rgba(255,156,220,.55);outline-offset:1px}
+body[data-page="owner"] .owner-console-nav button:focus-visible,body[data-page="owner"] .owner-section button:focus-visible{outline:2px solid #ff9cde;outline-offset:3px}
+body[data-page="owner"] .owner-list{gap:9px}
+body[data-page="owner"] .owner-section .stats{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+@media(max-width:720px){body[data-page="owner"] .owner-console-nav{top:70px;margin:10px 0 16px;border-radius:15px}body[data-page="owner"] .owner-overview{border-radius:20px}body[data-page="owner"] .owner-section{border-radius:18px}body[data-page="owner"] .owner-section .form{grid-template-columns:1fr}body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
