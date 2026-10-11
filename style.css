@@ -62,3 +62,5 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 
 .private-picker{grid-column:1/-1;display:flex;align-items:end;gap:12px;padding:17px;border:1px solid #a86fdf35;background:#a86fdf0b;border-radius:16px}.private-picker label{display:flex;flex:1;flex-direction:column;gap:8px;color:var(--muted);font-size:11px}.private-conversation{grid-column:1/-1;display:grid;gap:12px;padding:16px;border:1px solid #ff9cde33;border-radius:18px;background:#ff9cde08}.private-conversation h3{font-size:15px;margin:0}.private-conversation .module-form{margin:0}.private-conversation .module-form textarea{grid-column:1/-1}.private-picker button{cursor:pointer;white-space:nowrap}
 @media(max-width:520px){.private-picker{align-items:stretch;flex-direction:column}.private-picker button{width:100%}}
+
+.forgot-password{display:inline-flex;margin-top:9px;padding:6px 0;border:0;background:transparent;color:var(--pink);font:inherit;font-size:11px;cursor:pointer}.auth-dialog form[hidden],.auth-dialog [hidden]{display:none!important}.auth-dialog .module-notice{width:100%}
