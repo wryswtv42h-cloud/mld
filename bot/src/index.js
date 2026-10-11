@@ -932,8 +932,17 @@ function installBotFeatures(client,bot){
     if(custom){
       const allowedRoles=Array.isArray(custom.allowedRoleIds)?custom.allowedRoleIds:[];
       if(allowedRoles.length&&message.author.id!==message.guild.ownerId&&!allowedRoles.some(roleId=>message.member.roles.cache.has(String(roleId))))return message.reply('ما عندك رتبة تسمح لك باستخدام هذا الأمر.');
-      const reply=String(custom.response||'').slice(0,1800).replaceAll('{user}',message.author.username).replaceAll('{server}',message.guild.name).replaceAll('{memberCount}',String(message.guild.memberCount)).replaceAll('{args}',args.join(' '));
-      if(reply)await message.reply({content:reply,allowedMentions:{repliedUser:false,parse:[]}});
+      let reply=String(custom.response||'').slice(0,1800).replaceAll('{user}',message.author.username).replaceAll('{server}',message.guild.name).replaceAll('{memberCount}',String(message.guild.memberCount)).replaceAll('{args}',args.join(' '));
+      const takeDirective=key=>{const re=new RegExp('\\{\\{'+key+':([^}]+)\\}\\}','i'),match=reply.match(re);if(!match)return '';reply=reply.replace(match[0],'').trim();return match[1].trim();};
+      const imageUrl=takeDirective('image'),thumbnailUrl=takeDirective('thumbnail'),title=takeDirective('title'),colorRaw=takeDirective('color');
+      const safeImageUrl=value=>/^https?:\/\/\S+$/i.test(value)&&value.length<=1000?value:'';
+      const image=safeImageUrl(imageUrl),thumbnail=safeImageUrl(thumbnailUrl);
+      const colorMatch=String(colorRaw||'').match(/^#?([0-9a-f]{6})$/i);
+      const embed=new EmbedBuilder().setColor(colorMatch?parseInt(colorMatch[1],16):0xff9cde).setDescription((reply||'‎').slice(0,4000)).setFooter({text:'MLD · مجتمع ملاذ'}).setTimestamp();
+      if(title)embed.setTitle(title.slice(0,256));
+      if(image)embed.setImage(image);
+      if(thumbnail)embed.setThumbnail(thumbnail);
+      if(reply||title||image||thumbnail)await message.reply({embeds:[embed],allowedMentions:{repliedUser:false,parse:[]}});
     }
     } catch(error) {
       console.error('Prefix command handler:',error?.stack||error);
