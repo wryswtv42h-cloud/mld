@@ -464,3 +464,10 @@ body[data-page="bots"] #app .bot-private-room-panel input,
 body[data-page="bots"] #app .bot-private-room-panel textarea,
 body[data-page="bots"] #app .bot-private-room-panel select { width:100%; min-width:0; }
 body[data-page="bots"] #app .bot-private-room-panel input[type="color"] { height:48px; padding:4px; max-width:120px; }
+
+/* MLD creator links and persistent Discord support shortcut */
+.mld-creator-links{position:fixed;right:18px;bottom:86px;z-index:1000;display:flex;align-items:center;gap:9px;flex-wrap:wrap;max-width:min(94vw,560px);padding:10px 13px;border:1px solid rgba(255,156,222,.28);border-radius:16px;background:rgba(23,16,32,.94);box-shadow:0 12px 32px #0004;color:var(--text,#fff8ff);font-size:12px;backdrop-filter:blur(14px)}
+.mld-creator-links>span:first-child{font-weight:800;color:#ff9cde}.mld-creator-links a{color:#fff8ff;text-decoration:none;padding:5px 8px;border-radius:8px;background:rgba(168,111,223,.18)}.mld-creator-links a:focus-visible,.mld-discord-support:focus-visible{outline:2px solid #ff9cde;outline-offset:3px}
+.mld-discord-support{position:fixed;right:18px;bottom:18px;z-index:1001;display:flex;align-items:center;gap:9px;padding:12px 16px;border-radius:999px;background:linear-gradient(135deg,#5865f2,#a86fdf);color:#fff;text-decoration:none;font-weight:800;box-shadow:0 12px 30px #0005;transition:transform .18s ease,box-shadow .18s ease}
+.mld-discord-support:hover{transform:translateY(-2px);box-shadow:0 16px 34px #0006}.mld-discord-support span{font-size:20px}
+@media(max-width:560px){.mld-creator-links{right:10px;bottom:76px;left:10px;max-width:none;gap:6px;padding:8px 10px;font-size:11px}.mld-creator-links>span:first-child{width:100%}.mld-discord-support{right:10px;bottom:10px;padding:10px 13px;font-size:12px}}
