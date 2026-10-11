@@ -94,7 +94,8 @@ export function handleUnoAction(state, playerName, action = {}) {
       s.currentIndex = nextIndex(s.currentIndex, s.players.length, s.direction, 2);
     } else if (card.value === 'reverse') {
       s.direction *= -1;
-      s.currentIndex = nextIndex(s.currentIndex, s.players.length, s.direction, 1);
+      // In a two-player UNO game, reverse acts like skip.
+      s.currentIndex = nextIndex(s.currentIndex, s.players.length, s.direction, s.players.length === 2 ? 2 : 1);
     } else if (card.value === 'draw2' || card.value === 'wild4') {
       const penalty = card.value === 'draw2' ? 2 : 4;
       const next = nextIndex(s.currentIndex, s.players.length, s.direction, 1);
