@@ -928,3 +928,28 @@ body[data-page="games"] #app .game-chat-compose button {flex:0 0 auto}
 .owner-section [data-owner-section],.owner-section [id^=owner-]{scroll-margin-top:100px}
 @media(max-width:700px){.owner-console-nav{top:4px;margin-inline:-4px;padding:8px;border-radius:16px;gap:7px}.owner-console-nav button{min-height:42px;padding:9px 12px;font-size:.86rem}.owner-overview{padding:12px;border-radius:20px}.owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.owner-overview .stat{min-height:86px;padding:13px;border-radius:15px}.owner-section{padding:15px;border-radius:19px;margin-top:12px}.owner-section .owner-row{align-items:stretch}.owner-section .row-actions{width:100%}.owner-section .row-actions button{flex:1 1 auto}}
 @media(prefers-reduced-motion:reduce){.owner-console-nav button{transition:none}}
+
+
+/* MLD owner console: cohesive, fast, responsive redesign */
+body[data-page="owner"] #app{max-width:1480px;margin-inline:auto;padding:clamp(12px,2.4vw,30px);color:var(--text,#fff8ff)}
+body[data-page="owner"] #app>.panel:first-child{border:1px solid rgba(255,156,222,.24);background:radial-gradient(ellipse at 90% 0%,rgba(168,111,223,.18),transparent 42%),linear-gradient(145deg,rgba(32,21,46,.98),rgba(15,10,24,.98));box-shadow:0 24px 70px rgba(0,0,0,.24);border-radius:24px}
+body[data-page="owner"] .owner-console-nav{position:sticky;top:8px;z-index:30;display:flex;gap:8px;overflow-x:auto;overscroll-behavior-inline:contain;padding:10px;margin:16px 0 22px;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:rgba(17,11,27,.94);backdrop-filter:blur(18px);box-shadow:0 12px 34px rgba(0,0,0,.25);scrollbar-width:thin}
+body[data-page="owner"] .owner-console-nav button{flex:0 0 auto;min-height:42px;padding:10px 15px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.035);color:#eadff1;font:inherit;font-weight:750;white-space:nowrap;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}
+body[data-page="owner"] .owner-console-nav button:hover{background:rgba(168,111,223,.16);border-color:rgba(255,156,222,.45);transform:translateY(-1px)}
+body[data-page="owner"] .owner-console-nav button.is-current{color:#210d24;background:linear-gradient(135deg,#ffb2e4,#c49aff);border-color:transparent;box-shadow:0 5px 20px rgba(255,156,222,.17)}
+body[data-page="owner"] .owner-overview .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:13px;margin:16px 0 24px}
+body[data-page="owner"] .owner-overview .stat{position:relative;overflow:hidden;min-height:118px;padding:20px;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:linear-gradient(145deg,rgba(168,111,223,.12),rgba(255,255,255,.025))}
+body[data-page="owner"] .owner-overview .stat b{display:block;font-size:clamp(1.6rem,3vw,2.25rem);line-height:1.2;color:#ffc1e9;font-variant-numeric:tabular-nums}
+body[data-page="owner"] .owner-overview .stat small{display:block;margin-top:9px;color:#cdbbd8;font-weight:700}
+body[data-page="owner"] .owner-section{margin:16px 0;padding:clamp(16px,2.2vw,26px);border:1px solid rgba(255,255,255,.09);border-radius:22px;background:linear-gradient(145deg,rgba(35,23,49,.94),rgba(20,13,29,.96));box-shadow:0 14px 42px rgba(0,0,0,.16);scroll-margin-top:92px}
+body[data-page="owner"] .owner-section h2{display:flex;align-items:center;gap:10px;margin:0 0 16px;font-size:clamp(1.1rem,2.2vw,1.5rem);letter-spacing:-.02em}
+body[data-page="owner"] .owner-section h2:after{content:"";height:2px;flex:1;min-width:16px;background:linear-gradient(90deg,rgba(255,156,222,.45),transparent);border-radius:99px}
+body[data-page="owner"] .owner-section .form,body[data-page="owner"] .owner-section form{display:grid;gap:12px;margin-block:14px;padding:16px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(7,5,13,.24)}
+body[data-page="owner"] .owner-section input:not([type="checkbox"]):not([type="color"]),body[data-page="owner"] .owner-section select,body[data-page="owner"] .owner-section textarea{width:100%;min-width:0;max-width:100%;padding:12px 14px;border:1px solid rgba(255,255,255,.13);border-radius:12px;background:#130d1d;color:#fff8ff;font:inherit;outline:none}
+body[data-page="owner"] .owner-section input:focus,body[data-page="owner"] .owner-section select:focus,body[data-page="owner"] .owner-section textarea:focus{border-color:#ff9cde;box-shadow:0 0 0 3px rgba(255,156,222,.12)}
+body[data-page="owner"] .owner-section button,body[data-page="owner"] .owner-console-nav button{touch-action:manipulation}
+body[data-page="owner"] .owner-section button{min-height:40px;max-width:100%;cursor:pointer}
+body[data-page="owner"] .owner-section .owner-list{display:grid;gap:10px}
+body[data-page="owner"] .owner-section .ticketRow,body[data-page="owner"] .owner-section .owner-list>*{min-width:0;border:1px solid rgba(255,255,255,.09);border-radius:14px;background:rgba(255,255,255,.025)}
+body[data-page="owner"] .owner-section [hidden],body[data-page="owner"] #owner-overview[hidden]{display:none!important}
+@media(max-width:700px){body[data-page="owner"] #app{padding:10px}body[data-page="owner"] .owner-console-nav{top:4px;margin:10px -2px 16px;padding:8px;border-radius:14px}body[data-page="owner"] .owner-console-nav button{min-height:40px;padding:9px 12px;font-size:.88rem}body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}body[data-page="owner"] .owner-overview .stat{min-height:98px;padding:14px}body[data-page="owner"] .owner-section{padding:14px;border-radius:17px}body[data-page="owner"] .owner-section .form,body[data-page="owner"] .owner-section form{padding:12px}}
