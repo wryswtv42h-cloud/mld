@@ -33,3 +33,21 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 
 /* Keep authentication reachable on phones; previously the mobile rule hid every header button. */
 @media(max-width:700px){.actions>#loginOpen{display:inline-flex;align-items:center;justify-content:center;padding:9px 11px;min-height:39px;font-size:11px;white-space:nowrap}.actions{gap:7px}.top{padding-inline:4%}.brand{gap:7px}.brand img{width:37px;height:37px}.brand b{font-size:16px}}
+
+
+/* Data-backed module surfaces */
+.module-notice{margin:14px 0;padding:12px 15px;border:1px solid #a86fdf45;border-radius:12px;background:#a86fdf12;color:#e8d8f2;font-size:12px;line-height:1.9}
+.module-form{display:grid;gap:12px;padding:18px;border:1px solid #ffffff1a;border-radius:16px;background:#ffffff07}
+.module-form label{display:grid;gap:7px;color:var(--muted);font-size:12px}
+.module-input{display:block;width:100%;min-width:0;box-sizing:border-box;border:1px solid #ffffff22;border-radius:11px;background:#120b1b;color:var(--text);font:inherit;font-size:13px;padding:12px;outline:none}
+.module-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px #ff9cde18}
+.module-input option{background:#21152b;color:#fff}
+.module-form .btn{border:0;cursor:pointer}
+.module-form .btn:disabled{opacity:.55;cursor:wait}
+.module-empty{grid-column:1/-1;padding:25px;border:1px dashed #ffffff24;border-radius:14px;color:var(--muted);font-size:13px;text-align:center;line-height:2}
+.module-mark{display:grid;place-items:center;width:35px;height:35px;margin-bottom:10px;border-radius:11px;background:#ff9cde18;color:var(--pink);font-style:normal}
+.preview-cards .preview-card{min-width:0;overflow-wrap:anywhere}
+.light .module-form{background:#ffffffaa;border-color:#4a26551b}
+.light .module-input{background:#fff;color:#2d1932;border-color:#4a265525}
+.light .module-notice{color:#53395d}
+@media(max-width:520px){.module-form{padding:14px}.module-input{font-size:16px}.module-notice{font-size:11px}}
