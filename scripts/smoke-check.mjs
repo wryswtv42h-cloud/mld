@@ -12,7 +12,7 @@ assert.match(html,/rebuild-polish\.css/,'Responsive polish stylesheet must be lo
 assert.match(app,/const ownerView=.*role.*owner/,'Owner role must bypass page maintenance locks.');
 assert.match(app,/await getPageLocksSnapshot\(\)/,'Visitor lock settings must be fetched before rendering.');
 assert.match(app,/game-seat-avatar/,'Game seats must render avatars.');
-assert.match(app,/data-member="\+esc\(p\.discordId\)/,'Game seat profile links must use Discord member IDs.');
+assert.match(app,/data-member="'\+esc\(p\.discordId\)/,'Game seat profile links must use Discord member IDs.');
 assert.match(gameRoute,/discordId:req\.user\.discord_id\|\|null/,'New sessions must retain the host Discord ID.');
 assert.match(gameRoute,/avatar:req\.user\.avatar\|\|null/,'New sessions must retain the host avatar.');
 assert.match(gameSocket,/discordId:socket\.user\?\.discord_id\|\|null/,'Socket joins must retain the player Discord ID.');
