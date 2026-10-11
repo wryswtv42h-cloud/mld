@@ -812,7 +812,7 @@ function installBotFeatures(client,bot){
       return message.channel.send({content:(['hug','حضن'].includes(command)?'🫂 ':'👋 ')+message.author.toString()+( ['hug','حضن'].includes(command)?' حضن ':' عطى صفعة خفيفة لـ ')+target.toString(),allowedMentions:{users:[message.author.id,target.id]}});
     }
 
-    if(['moderation','automod','system','allinone'].includes(type)){
+    if(['moderation','automod','system','allinone','welcome'].includes(type)){
       const target=message.mentions.members.first();
       const reason=args.slice(1).join(' ').slice(0,400)||'لم يذكر سبب';
       if(command==='unban'||command==='فكحظر'){
