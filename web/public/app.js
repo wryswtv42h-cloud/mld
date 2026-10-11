@@ -496,7 +496,7 @@ function gameLobbyPage(){
   '<section class="panel game-sessions-panel"><div class="section-heading-row"><div><div class="tag">LIVE ROOMS</div><h2 class="sectionTitle">🔥 الجلسات النشطة</h2><p class="section-subtitle">تتحدث القائمة تلقائيًا لإظهار الغرف الجديدة والمقاعد المتاحة.</p></div><button type="button" class="btn" data-game-refresh>تحديث ↻</button></div><div id="gameSessions" class="game-sessions"><div class="loading">جاري تحميل الغرف…</div></div></section><div id="gameArena"></div>'
  );
 }
-let pageLocksSnapshot=null,pageLocksSnapshotAt=0,pageLocksRequest=null;async function getPageLocksSnapshot(){if(pageLocksSnapshot&&Date.now()-pageLocksSnapshotAt<30000)return pageLocksSnapshot;if(!pageLocksRequest){pageLocksRequest=api("/api/community/page-locks",{timeoutMs:800}).then(data=>{pageLocksSnapshot=data;pageLocksSnapshotAt=Date.now();return data}).finally(()=>{pageLocksRequest=null;});}return pageLocksRequest;}
+let pageLocksSnapshot=null,pageLocksSnapshotAt=0,pageLocksRequest=null;async function getPageLocksSnapshot(){if(pageLocksSnapshot&&Date.now()-pageLocksSnapshotAt<30000)return pageLocksSnapshot;if(!pageLocksRequest){pageLocksRequest=api("/api/community/page-locks",{timeoutMs:6000}).then(data=>{pageLocksSnapshot=data;pageLocksSnapshotAt=Date.now();return data}).finally(()=>{pageLocksRequest=null;});}return pageLocksRequest;}
 async function buildPage(p){
 if(p!=="owner"&&p!=="admin"&&!state.user?.is_owner){const lockData=pageLocksSnapshot;const lock=lockData?.locks?.pages?.[p];if(lock?.enabled)return box("الصفحة مغلقة",lock.message||lockData.locks?.message||"هذه الصفحة مغلقة مؤقتًا من إدارة مجتمع ملاذ.",'<div class="empty">الصفحة متوقفة مؤقتًا بقرار من إدارة الموقع.</div><button class="btn primary" type="button" data-action="close-page-lock">إغلاق</button>');if(!lockData)getPageLocksSnapshot().then(data=>{if(state.page===p&&data.locks?.pages?.[p]?.enabled)void render()}).catch(()=>{});}
 if(p==="members"){
@@ -527,26 +527,26 @@ if(p==="bots"){const d=await api("/api/bots");return box("مصنع بوت MLD ا
 if(p==="profile")return box("حسابي","كل تعديل مستقل؛ احفظ الصورة أو البنر أو الاسم أو النبذة كل واحد لحاله.",'<div class="profile-form"><div class="profile-edit-field"><label>اسم المستخدم<input data-profile-field="username" minlength="'+(state.user?.is_owner?1:2)+'" maxlength="32" value="'+esc(state.user?.username||"")+'" required></label><button type="button" class="btn primary" data-profile-save="username">حفظ اليوزر</button></div><div class="profile-edit-field"><label>رابط الصورة الشخصية<input data-profile-field="avatar" type="url" maxlength="1000" value="'+esc(state.user?.avatar||"")+'" placeholder="https://..."></label><button type="button" class="btn primary" data-profile-save="avatar">حفظ الصورة</button></div><div class="profile-edit-field"><label>رابط البنر<input data-profile-field="banner_url" type="url" maxlength="1000" value="'+esc(state.user?.banner_url||"")+'" placeholder="https://..."></label>'+(state.user?.banner_url?'<img class="profile-banner-preview" src="'+esc(state.user.banner_url)+'" alt="معاينة البنر">':'')+'<button type="button" class="btn primary" data-profile-save="banner_url">حفظ البنر</button></div><div class="profile-edit-field"><label>المهنة أو مجال العمل<input data-profile-field="occupation" maxlength="80" value="'+esc(state.user?.occupation||"")+'" placeholder="مثال: مطور واجهات"></label><button type="button" class="btn primary" data-profile-save="occupation">حفظ المهنة</button></div><div class="profile-edit-field"><label>نبذة عنك<textarea data-profile-field="bio" maxlength="500" rows="4" placeholder="اكتب نبذة قصيرة عنك...">'+esc(state.user?.bio||"")+'</textarea></label><button type="button" class="btn primary" data-profile-save="bio">حفظ النبذة</button></div></div><div class="profile-form"><h3>تغيير كلمة المرور</h3><form id="passwordForm" class="form"><input name="current_password" type="password" placeholder="كلمة المرور الحالية" required><input name="new_password" type="password" minlength="6" placeholder="كلمة المرور الجديدة" required><input name="confirm_password" type="password" minlength="6" placeholder="تأكيد كلمة المرور الجديدة" required><button class="btn primary" type="submit">حفظ كلمة المرور</button></form></div>');
 if(p==="owner"){if(!state.user?.is_owner)return box("ممنوع","للأونر فقط","");
 const [stats,audit,jobs,roomData,userData,gameData,botData,subData,reviewData,announcement,ticketQ,applicationQ,groupData,ticketData,applicationData,cinemaData,cinemaBotData,catalogData,pageLockData,pigeonLogData]=await Promise.all([
-api("/api/community/owner/stats",{timeoutMs:1600}).catch(()=>({users:0,bots:0,cinema:0,sessions:0,messages:0})),
-api("/api/community/audit",{timeoutMs:1600}).catch(()=>({logs:[]})),
-api("/api/community/owner/broadcast/jobs",{timeoutMs:1600}).catch(()=>({jobs:[]})),
-api("/api/community/owner/rooms",{timeoutMs:1600}).catch(()=>({rooms:[]})),
-api("/api/users",{timeoutMs:1600}).catch(()=>({users:[]})),
-api("/api/games/sessions",{timeoutMs:1600}).catch(()=>({sessions:[]})),
-api("/api/bots",{timeoutMs:1600}).catch(()=>({bots:[]})),
-api("/api/community/owner/bot-subscriptions",{timeoutMs:1600}).catch(()=>({bots:[]})),
-api("/api/community/reviews",{timeoutMs:1600}).catch(()=>({reviews:[]})),
-api("/api/community/owner/announcement",{timeoutMs:1600}).catch(()=>({announcement:{text:"",color:"#ff9cdc",enabled:true}})),
-api("/api/community/settings/ticket_questions",{timeoutMs:1600}).catch(()=>({value:[]})),
-api("/api/community/settings/application_questions",{timeoutMs:1600}).catch(()=>({value:[]})),
-api("/api/community/groups/all",{timeoutMs:1600}).catch(()=>({groups:[]})),
-api("/api/community/tickets",{timeoutMs:1600}).catch(()=>({tickets:[]})),
-api("/api/community/applications",{timeoutMs:1600}).catch(()=>({applications:[]})),
-api("/api/community/cinema",{timeoutMs:1600}).catch(()=>({rooms:[]})),
-api("/api/community/cinema/owner/bots",{timeoutMs:1600}).catch(()=>({bots:[]})),
-api("/api/community/cinema/owner/catalog",{timeoutMs:1600}).catch(()=>({movies:[]})),
-api("/api/community/page-locks",{timeoutMs:1600}).catch(()=>({locks:{pages:{},message:""}})),
-api("/api/community/owner/pigeon-logs",{timeoutMs:1600}).catch(()=>({logs:[]}))
+api("/api/community/owner/stats",{timeoutMs:6500}).catch(()=>({users:0,bots:0,cinema:0,sessions:0,messages:0})),
+api("/api/community/audit",{timeoutMs:6500}).catch(()=>({logs:[]})),
+api("/api/community/owner/broadcast/jobs",{timeoutMs:6500}).catch(()=>({jobs:[]})),
+api("/api/community/owner/rooms",{timeoutMs:6500}).catch(()=>({rooms:[]})),
+api("/api/users",{timeoutMs:6500}).catch(()=>({users:[]})),
+api("/api/games/sessions",{timeoutMs:6500}).catch(()=>({sessions:[]})),
+api("/api/bots",{timeoutMs:6500}).catch(()=>({bots:[]})),
+api("/api/community/owner/bot-subscriptions",{timeoutMs:6500}).catch(()=>({bots:[]})),
+api("/api/community/reviews",{timeoutMs:6500}).catch(()=>({reviews:[]})),
+api("/api/community/owner/announcement",{timeoutMs:6500}).catch(()=>({announcement:{text:"",color:"#ff9cdc",enabled:true}})),
+api("/api/community/settings/ticket_questions",{timeoutMs:6500}).catch(()=>({value:[]})),
+api("/api/community/settings/application_questions",{timeoutMs:6500}).catch(()=>({value:[]})),
+api("/api/community/groups/all",{timeoutMs:6500}).catch(()=>({groups:[]})),
+api("/api/community/tickets",{timeoutMs:6500}).catch(()=>({tickets:[]})),
+api("/api/community/applications",{timeoutMs:6500}).catch(()=>({applications:[]})),
+api("/api/community/cinema",{timeoutMs:6500}).catch(()=>({rooms:[]})),
+api("/api/community/cinema/owner/bots",{timeoutMs:6500}).catch(()=>({bots:[]})),
+api("/api/community/cinema/owner/catalog",{timeoutMs:6500}).catch(()=>({movies:[]})),
+api("/api/community/page-locks",{timeoutMs:6500}).catch(()=>({locks:{pages:{},message:""}})),
+api("/api/community/owner/pigeon-logs",{timeoutMs:6500}).catch(()=>({logs:[]}))
 ]);
 const pageLocks=pageLockData.locks||{pages:{},message:""};
 const rooms=roomData.rooms||[],users=userData.users||[],games=gameData.sessions||[],bots=botData.bots||[],subs=subData.bots||[],reviews=reviewData.reviews||[],ann=announcement.announcement||{},groups=groupData.groups||[],tickets=ticketData.tickets||[],applications=applicationData.applications||[],cinemaRooms=cinemaData.rooms||[],cinemaBots=cinemaBotData.bots||[],cinemaMovies=catalogData.movies||[];
