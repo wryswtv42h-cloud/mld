@@ -32,13 +32,14 @@ const botServerInfo = read('bot/src/commands/serverinfo.js');
 const botBotInfo = read('bot/src/commands/botinfo.js');
 const botRoutes = read('api/src/routes/bots.js');
 const uno = read('api/src/games/uno.js');
+const jackaroo = read('api/src/games/jaccaro.js');
 
 assert.match(html, /logo\.svg\.JPG/, 'The original logo must remain referenced.');
 assert.match(html, /rebuild-polish\.css/, 'The additive responsive stylesheet must be loaded.');
 assert.match(app, /const ownerView=.*role.*owner/, 'Owner role must bypass page maintenance locks.');
 assert.match(app, /await getPageLocksSnapshot\(\)/, 'Page locks must be fetched before visitor pages render.');
 assert.match(app, /authSnapshotToken===token/, 'Session refresh cache must be bound to the active login token.');
-assert.match(html, /app\.js\?v=20261011-auth-token-cache1/, 'The browser cache key must change when session refresh logic changes.');
+assert.match(html, /app\.js\?v=20261011-jackaroo-swap1/, 'The browser cache key must change when the game controls change.');
 assert.match(app, /game-seat-avatar/, 'Game table seats must render player avatars.');
 assert.match(app, /data-member="'\+esc\(p\.discordId\)/, 'Human player names at the table should open member profiles.');
 assert.match(gameRoute, /discordId:req\.user\.discord_id\|\|null/, 'New game sessions should retain the Discord ID used by profile lookups.');
@@ -61,6 +62,9 @@ assert.ok(botRoutes.includes('commands.slice(0,500)'), 'The bot dashboard must c
 assert.ok(botRoutes.includes('commandSettings'), 'The bot dashboard must persist per-command enable/disable and alias settings.');
 assert.ok(uno.includes('function drawCard(state)'), 'UNO must recycle the discard pile when the draw pile runs out.');
 assert.ok(uno.includes("card.value === 'wild4' && hand.some"), 'UNO must validate Wild Draw Four legality.');
+assert.ok(jackaroo.includes("case 'swap': {"), 'Jackaroo swap cards must have a real game effect.');
+assert.ok(jackaroo.includes('function drawCard(state)'), 'Jackaroo must handle an exhausted draw pile safely.');
+assert.ok(app.includes('اكتب اسم اللاعب الذي تريد تبديل موقعك معه'), 'The Jackaroo UI must let the player select a swap target.');
 
 const jsFiles = [...walk('api/src'), ...walk('bot/src'), ...walk('web/public')].filter((p) => p.endsWith('.js'));
 assert.ok(jsFiles.length > 0, 'JavaScript source files should be discovered.');
