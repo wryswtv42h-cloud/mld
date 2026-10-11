@@ -28,6 +28,7 @@ const gameSocket = read('api/src/socket/games.js');
 const apiIndex = read('api/src/index.js');
 const enhancements = read('web/public/enhancements.js');
 const bot = read('bot/src/index.js');
+const botMessageEvent = read('bot/src/events/messageCreate.js');
 const botServerInfo = read('bot/src/commands/serverinfo.js');
 const botBotInfo = read('bot/src/commands/botinfo.js');
 const botRoutes = read('api/src/routes/bots.js');
@@ -62,6 +63,7 @@ assert.match(botServerInfo, /setName\('serverinfo'\)/, 'The approved server info
 assert.match(botBotInfo, /setName\('botinfo'\)/, 'The approved bot information slash command must exist.');
 assert.ok(bot.includes('client.on(Events.MessageCreate, async message =>'), 'Prefix command handling must be registered for incoming Discord messages.');
 assert.ok(bot.includes("if(matchedPrefix&&/^(?:help|مساعدة|هيلب)$/i.test(content.slice(matchedPrefix.length).trim()))"), 'Help must use the configured prefix rather than silently acting as a no-prefix command.');
+assert.ok(botMessageEvent.includes("const prefix = String(process.env.BOT_PREFIX || '!').slice(0, 4) || '!'") && botMessageEvent.includes('prefix + \'help\''), 'The main bot help handler must require its configured prefix too.');
 assert.ok(bot.includes('client.mldConfig?.commandSettings?.help?.enabled===false'), 'The help command toggle must also apply to no-prefix help.');
 assert.ok(bot.includes("if(command==='blockedword')"), 'Blocked-word management must be implemented as a real prefix command.');
 assert.ok(bot.includes("if(command==='mute'||command==='unmute')") && bot.includes('target.voice.setMute(shouldMute,reason)'), 'Advertised voice mute/unmute commands must execute real moderation actions.');
