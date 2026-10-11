@@ -539,3 +539,50 @@ body[data-page="owner"] .owner-console-nav button:focus-visible,body[data-page="
 body[data-page="owner"] .owner-list{gap:9px}
 body[data-page="owner"] .owner-section .stats{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
 @media(max-width:720px){body[data-page="owner"] .owner-console-nav{top:70px;margin:10px 0 16px;border-radius:15px}body[data-page="owner"] .owner-overview{border-radius:20px}body[data-page="owner"] .owner-section{border-radius:18px}body[data-page="owner"] .owner-section .form{grid-template-columns:1fr}body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* MLD Owner Console — visual refresh and dependable mobile controls */
+body[data-page="owner"] #app { width:min(1480px, calc(100% - 28px)); margin-inline:auto; padding-bottom:54px; }
+body[data-page="owner"] #app > .pagePanel,
+body[data-page="owner"] #app > .panel { border:1px solid rgba(255,156,220,.15); background:linear-gradient(145deg,rgba(31,21,45,.97),rgba(18,12,27,.98)); box-shadow:0 20px 60px rgba(0,0,0,.18); }
+body[data-page="owner"] .owner-console-nav { position:sticky; top:70px; z-index:30; border-color:rgba(255,156,220,.22); background:rgba(20,12,31,.97); box-shadow:0 12px 34px rgba(0,0,0,.3); }
+body[data-page="owner"] .owner-console-nav button { touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+body[data-page="owner"] .owner-console-nav button[aria-current="true"],
+body[data-page="owner"] .owner-console-nav button.active { color:#1c1024; background:linear-gradient(120deg,#ff9cde,#c49aff); border-color:transparent; }
+body[data-page="owner"] .owner-overview { position:relative; overflow:hidden; padding:clamp(18px,3vw,34px); border:1px solid rgba(255,156,220,.24); background:radial-gradient(ellipse at 8% 0,rgba(255,156,220,.15),transparent 42%),radial-gradient(ellipse at 100% 100%,rgba(168,111,223,.15),transparent 40%),linear-gradient(145deg,#24152f,#140e1d); }
+body[data-page="owner"] .owner-overview h2,
+body[data-page="owner"] .owner-section h2 { letter-spacing:-.025em; }
+body[data-page="owner"] .owner-overview .stats { gap:12px; }
+body[data-page="owner"] .owner-overview .stat,
+body[data-page="owner"] .owner-overview .panel.stat { border:1px solid rgba(255,255,255,.1); background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025)); border-radius:18px; padding:17px; }
+body[data-page="owner"] .owner-section { padding:clamp(16px,2.5vw,28px); margin:0 0 18px; border:1px solid rgba(255,255,255,.09); border-radius:24px; background:linear-gradient(145deg,rgba(30,20,43,.98),rgba(18,12,27,.98)); box-shadow:0 12px 38px rgba(0,0,0,.14); scroll-margin-top:145px; }
+body[data-page="owner"] .owner-section > h2 { display:flex; align-items:center; gap:10px; margin:0 0 18px; padding-bottom:14px; border-bottom:1px solid rgba(255,255,255,.09); }
+body[data-page="owner"] .owner-list { display:grid; gap:10px; }
+body[data-page="owner"] .owner-row { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:15px; border:1px solid rgba(255,255,255,.09); border-radius:16px; background:rgba(255,255,255,.035); }
+body[data-page="owner"] .owner-section .form { padding:clamp(14px,2vw,22px); border:1px solid rgba(255,255,255,.09); border-radius:18px; background:rgba(255,255,255,.025); }
+body[data-page="owner"] .owner-section input,
+body[data-page="owner"] .owner-section textarea,
+body[data-page="owner"] .owner-section select { min-height:44px; border-radius:12px; }
+body[data-page="owner"] .owner-section button,
+body[data-page="owner"] .owner-console-nav button { min-height:42px; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+body[data-page="owner"] .owner-section button:disabled { opacity:.55; cursor:wait; }
+body[data-page="owner"] .owner-section button:focus-visible { outline:2px solid #ff9cde; outline-offset:3px; }
+.game-room-shell button,
+.game-room-shell a,
+.game-room-shell input,
+.game-room-shell select,
+.game-room-shell textarea { pointer-events:auto; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.game-room-shell .game-actions,
+.game-room-shell .game-room-actions,
+.game-room-shell .game-hand,
+.game-room-shell .ludo-token-row { position:relative; z-index:2; }
+.game-room-shell button:disabled { opacity:.45; cursor:not-allowed; }
+@media(max-width:720px) {
+ body[data-page="owner"] #app { width:calc(100% - 18px); }
+ body[data-page="owner"] .owner-console-nav { top:62px; padding:8px; gap:6px; }
+ body[data-page="owner"] .owner-console-nav button { padding:9px 12px; }
+ body[data-page="owner"] .owner-section { scroll-margin-top:120px; }
+ body[data-page="owner"] .owner-row { align-items:stretch; }
+ body[data-page="owner"] .owner-row .row-actions,
+ body[data-page="owner"] .owner-row > button { width:100%; }
+}
