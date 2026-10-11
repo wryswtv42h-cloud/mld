@@ -42,7 +42,7 @@ assert.match(app, /await getPageLocksSnapshot\(\)/, 'Page locks must be fetched 
 assert.match(app, /authSnapshotToken===token/, 'Session refresh cache must be bound to the active login token.');
 assert.ok(app.includes('["8ball","سؤال وجواب"]'), 'The dashboard toggle must use the same 8ball command name as the handler.');
 assert.ok(app.includes('["servericon","أيقونة السيرفر"]'), 'The dashboard must expose toggles for implemented utility commands.');
-assert.ok(html.includes('app.js?v=20261011-command-pack6'), 'The browser cache key must change when app behavior changes.');
+assert.ok(html.includes('app.js?v=20261011-command-pack7'), 'The browser cache key must change when app behavior changes.');
 assert.match(app, /game-seat-avatar/, 'Game table seats must render player avatars.');
 assert.match(app, /data-member="'\+esc\(p\.discordId\)/, 'Human player names at the table should open member profiles.');
 assert.match(gameRoute, /discordId:req\.user\.discord_id\|\|null/, 'New game sessions should retain the Discord ID used by profile lookups.');
@@ -79,6 +79,7 @@ assert.ok(app.includes('["welcome","الترحيب والمغادرة"]') && app
 assert.ok(app.includes('["deafen","كتم سماعة عضو"]') && app.includes('["disconnect","فصل عضو صوتيًا"]') && app.includes('["hide","إخفاء القناة"]') && app.includes('["renamechannel","تغيير اسم القناة"]') && app.includes('["settopic","تغيير وصف القناة"]'), 'The dashboard must expose expanded voice and channel moderation controls.');
 assert.ok(app.includes('["برا السالفة","برا السالفة"]') && app.includes('["ترجمة","تحدي الترجمة"]') && app.includes('["عواصم","عواصم الدول"]') && app.includes('["المتجر","متجر النقاط"]'), 'The dashboard must expose the implemented Arabic game command toggles.');
 assert.ok(app.includes('["تبرع","التبرع بالنقاط"]') && app.includes('["صندوق","صندوق الاستثمار"]') && app.includes('["تداول","التداول"]') && app.includes('["إيقاف-مؤقت","إيقاف مؤقت"]') && app.includes('["صوت","مستوى الصوت"]'), 'The dashboard must expose all implemented bank and music controls.');
+assert.ok(app.includes('data-core-command-menu-toggle') && app.includes('data-core-command-category') && app.includes('data-core-command-group') && app.includes('BOT_COMMAND_GROUPS=[{id:"moderation"'), 'Bot commands should be grouped behind the three-line category picker.');
 assert.ok(botRoutes.includes('commands.slice(0,500)'), 'The bot dashboard must cap custom prefix commands at 500.');
 assert.ok(botRoutes.includes('commandSettings'), 'The bot dashboard must persist per-command enable/disable and alias settings.');
 assert.ok(botRoutes.includes('adminInGuild(req.user.id,x.guild_id,dec(x.token))'), 'Bot owners should be verified against the selected bot token so their target guild does not need the main MLD bot installed.');
