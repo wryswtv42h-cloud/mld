@@ -17,6 +17,9 @@ mustExist('web/public/rebuild-polish.css');
 mustExist('api/src/routes/games.js');
 mustExist('api/src/socket/games.js');
 mustExist('bot/src/index.js');
+mustExist('bot/src/commands/ping.js');
+mustExist('bot/src/commands/serverinfo.js');
+mustExist('bot/src/commands/botinfo.js');
 
 const html = read('web/public/index.html');
 const app = read('web/public/app.js');
@@ -25,6 +28,8 @@ const gameSocket = read('api/src/socket/games.js');
 const apiIndex = read('api/src/index.js');
 const enhancements = read('web/public/enhancements.js');
 const bot = read('bot/src/index.js');
+const botServerInfo = read('bot/src/commands/serverinfo.js');
+const botBotInfo = read('bot/src/commands/botinfo.js');
 const botRoutes = read('api/src/routes/bots.js');
 const uno = read('api/src/games/uno.js');
 
@@ -49,6 +54,8 @@ assert.match(apiIndex, /req\.originalUrl/, 'Startup exemptions must use the orig
 
 assert.ok(bot.includes("allowedSlashNames = new Set(['ping', 'serverinfo', 'botinfo'])"), 'Main bot slash commands must stay limited to ping, server info, and bot info.');
 assert.ok(bot.includes('function buildUserBotSlashCommands'), 'User-created bots must expose a dedicated informational slash-command list.');
+assert.match(botServerInfo, /setName\('serverinfo'\)/, 'The approved server information slash command must exist.');
+assert.match(botBotInfo, /setName\('botinfo'\)/, 'The approved bot information slash command must exist.');
 assert.ok(bot.includes('client.on(Events.MessageCreate, async message =>'), 'Prefix command handling must be registered for incoming Discord messages.');
 assert.ok(botRoutes.includes('commands.slice(0,500)'), 'The bot dashboard must cap custom prefix commands at 500.');
 assert.ok(botRoutes.includes('commandSettings'), 'The bot dashboard must persist per-command enable/disable and alias settings.');
