@@ -1,7 +1,9 @@
 (()=>{"use strict";
-// Reliable room controls: handle live-game taps before any delegated page handlers.
+// Prevent accidental form navigation on interactive controls, especially on mobile.
+document.addEventListener("click",event=>{const button=event.target instanceof Element?event.target.closest("button"):null;if(!button||button.hasAttribute("type"))return;if([...button.attributes].some(attr=>attr.name.startsWith("data-")))button.type="button";},true);
+// Reliable room controls: capture create/join/action taps before any page handlers can submit or navigate.
 document.addEventListener("click",event=>{
- const target=event.target instanceof Element?event.target.closest("[data-game-start],[data-game-action],[data-game-card],[data-game-leave],[data-game-end],[data-ludo-token],[data-game-join],[data-game-watch]"):null;
+ const target=event.target instanceof Element?event.target.closest("[data-create-game-session],[data-game-start],[data-game-action],[data-game-card],[data-game-leave],[data-game-end],[data-ludo-token],[data-game-join],[data-game-watch]"):null;
  if(!target)return;
  event.preventDefault();
  // Keep target-level listeners alive; the delegated handler still handles every game action.
