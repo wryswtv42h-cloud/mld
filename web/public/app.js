@@ -360,7 +360,8 @@ function openLogin(){const auth='<div class="dialog"><div class="dialogHead"><h2
 function logout(){state.token="";state.user=null;save();state.page="home";renderHeader();render();toast("تم تسجيل الخروج")}
 async function consumeLoginTicket(){const match=window.location.hash.match(/(?:^#|&)login_ticket=([^&]+)/);if(!match)return;let ticket;try{ticket=decodeURIComponent(match[1])}catch{return}history.replaceState(null,'',window.location.pathname+window.location.search);try{const d=await api('/api/auth/bot/exchange-ticket',{method:'POST',body:JSON.stringify({ticket})});state.token=d.token;state.user=d.user;save();renderHeader();render();toast('تم تسجيل الدخول عبر بوت MLD')}catch(error){toast(error.message||'تعذر استهلاك رابط الدخول')}}
 document.addEventListener("click",e=>{const jump=e.target.closest("[data-owner-jump]");if(!jump)return;const key=jump.dataset.ownerJump;const target=document.getElementById(key==="overview"?"owner-overview":"owner-"+key);if(target)target.scrollIntoView({behavior:"smooth",block:"start"});});
-// Intercept game creation in capture phase to prevent mobile form/page jumps.\ndocument.addEventListener("click",async event=>{
+// Intercept game creation in capture phase to prevent mobile form/page jumps.
+document.addEventListener("click",async event=>{
  const button=event.target instanceof Element?event.target.closest("[data-game-create]"):null;
  if(!button)return;
  event.preventDefault();
