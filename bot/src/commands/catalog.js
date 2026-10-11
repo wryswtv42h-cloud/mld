@@ -191,7 +191,7 @@ export async function runCatalogCommand({entry,message,args,client,config,prefix
    if(!message.member.permissions.has(PermissionFlagsBits.ManageGuild))return message.reply('تحتاج صلاحية إدارة السيرفر لتغيير إعدادات الحماية.');
    if(!key)return message.reply({content:'🛡️ '+entry.label+'\nهذا الأمر لا يغيّر حماية غير مفعّلة. إعدادات الحماية المنفّذة: antilink، antispam، blockedword، capsfilter، mentionfilter، invitespam، antiscam، antiattachment، antirepeat، antiemoji.',allowedMentions:escapeMentions});
    const next={...config},arg=String(args[0]||'status').toLowerCase();
-   if(['on','enable','تشغيل','تفعيل'].includes(arg))next[key]=true;
+   if(['on','enable','تشغيل','تفعيل'].includes(arg)){next[key]=true;if(key!=='automodEnabled')next.automodEnabled=true;}
    else if(['off','disable','إيقاف','تعطيل'].includes(arg))next[key]=false;
    if(!pool)return message.reply('قاعدة البيانات غير متاحة لحفظ الإعدادات.');
    await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);
