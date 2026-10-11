@@ -377,7 +377,7 @@ function installBotFeatures(client,bot){
     const receivedCommand=String(commandSource.split(/\s+/)[0]||'').toLowerCase().slice(0,40);
     void writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_received',{command:receivedCommand,guildId:message.guild.id,channelId:message.channel.id,source:mentionCommand?'mention':isCustomShortcut?'shortcut':'prefix',contentLength:content.length});
     const commandText=matchedPrefix?commandSource.slice(matchedPrefix.length).trim():commandSource;
-    const [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();
+    let [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();
     const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===command));
     if(coreAlias)command=coreAlias[0];
     // Built-in Arabic shortcuts work without requiring each server owner to configure them first.
@@ -413,6 +413,8 @@ function installBotFeatures(client,bot){
       ستريك:'ستريك',زاجل:'زاجل',برودكاست:'broadcast',تذكرةجديدة:'ticket','افتح تذكرة':'ticket',
       تقديماتي:'طلباتي',تقديموظيفة:'apply',مساعدة:'help',اوامر:'help',الأوامر:'help'
     };
+    const spacedAlias=Object.keys(builtinArabicAliases).filter(alias=>alias.includes(' ')).sort((a,b)=>b.length-a.length).find(alias=>commandText.toLowerCase()===alias||commandText.toLowerCase().startsWith(alias+' '));
+    if(spacedAlias){command=builtinArabicAliases[spacedAlias];args=commandText.slice(spacedAlias.length).trim().split(/\s+/).filter(Boolean);}
     if(builtinArabicAliases[command])command=builtinArabicAliases[command];
     const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));
     if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','id','معرف','banner','بنر','profile','ملفي','بروفايل','myinv','دعواتي','topinv','توبدعوات','user','مستخدم','unban','فكحظر','allbans','قائمةالمحظورين','rolecreate','انشاءرتبة','roledelete','حذفرتبة','move','moveme','rooms','الغرفالصوتية','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
