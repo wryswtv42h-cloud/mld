@@ -1,4 +1,4 @@
-import { Events, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { Events, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 
 const GAME_NAMES = ['سالفة','برا السالفة','روليت','مافيا','كت','زر','بومب','تصويت','ايفنت','اعلام','فكك','ترتيب','صحح','جمع','مفرد','حيوانات','شركة','ضرب','طرح','ترجمة','عواصم','اعكس','اسرع','حرف','ادمج','توب','هايد','فخ','حجره','اكس','المتجر','تحويل','ايقاف'];
 const questions = {
@@ -42,18 +42,58 @@ export function setupGames(client, pool) {
   client.mldXO = new Map();
   client.mldMafiaGames = new Map();
   client.mldGameScoresReady = pool ? ensureScores(pool) : Promise.resolve();
+  client.mldGameLobbies = new Map();
+  client.on(Events.InteractionCreate,async interaction=>{
+    if(!interaction.isButton()||!String(interaction.customId||'').startsWith('mld-lobby:'))return;
+    const [,action,channelId]=interaction.customId.split(':');
+    const lobby=client.mldGameLobbies.get(channelId);
+    if(!lobby||lobby.phase!=='join')return interaction.reply({content:'انتهت هذه الغرفة أو بدأت الجولة بالفعل.',ephemeral:true}).catch(()=>{});
+    if(interaction.channelId!==channelId)return interaction.reply({content:'هذا الزر لا يخص هذه القناة.',ephemeral:true}).catch(()=>{});
+    if(action==='join'){
+      if(lobby.players.includes(interaction.user.id))return interaction.reply({content:'أنت منضم بالفعل.',ephemeral:true});
+      if(lobby.players.length>=lobby.maxPlayers)return interaction.reply({content:'الغرفة مكتملة، وصلت للحد الأقصى.',ephemeral:true});
+      lobby.players.push(interaction.user.id);
+    }else if(action==='leave'){
+      if(!lobby.players.includes(interaction.user.id))return interaction.reply({content:'أنت لست ضمن اللاعبين.',ephemeral:true});
+      if(interaction.user.id===lobby.hostId)return interaction.reply({content:'المضيف لا يستطيع الخروج؛ استخدم إلغاء الغرفة أو انقل الاستضافة يدويًا.',ephemeral:true});
+      lobby.players=lobby.players.filter(id=>id!==interaction.user.id);
+    }else if(action==='cancel'){
+      if(interaction.user.id!==lobby.hostId&&!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild))return interaction.reply({content:'المضيف أو الإدارة فقط يقدرون يلغون الغرفة.',ephemeral:true});
+      client.mldGameLobbies.delete(channelId);
+      const ended=EmbedBuilder.from(interaction.message.embeds[0]||new EmbedBuilder()).setColor(0x888888).setTitle('🗑️ تم إلغاء الغرفة').setDescription('ألغى الغرفة <@'+interaction.user.id+'>.');
+      return interaction.update({embeds:[ended],components:[]});
+    }else if(action==='start'){
+      if(interaction.user.id!==lobby.hostId&&!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild))return interaction.reply({content:'المضيف أو الإدارة فقط يقدرون يبدأون الجولة.',ephemeral:true});
+      if(lobby.players.length<lobby.minPlayers)return interaction.reply({content:'ما نقدر نبدأ: تحتاج '+lobby.minPlayers+' لاعبين على الأقل، الموجودون الآن '+lobby.players.length+'.',ephemeral:true});
+      if(pool){try{await client.mldGameScoresReady}catch{return interaction.reply({content:'نظام النقاط غير متاح مؤقتًا.',ephemeral:true})}}
+      const bank=Object.entries(questions).flatMap(([game,items])=>items.map(q=>({game,question:q[0],answer:q[1]})));
+      const selected=pick(bank);
+      lobby.phase='playing';
+      client.mldGameRounds.set(channelId,{answer:selected.answer,userId:lobby.hostId,allowedPlayerIds:lobby.players.filter(id=>id!==lobby.hostId),expiresAt:Date.now()+60000});
+      const active=EmbedBuilder.from(interaction.message.embeds[0]||new EmbedBuilder()).setColor(0x9b7bea).setTitle('⚡ بدأت الجولة الجماعية!').setDescription('اللاعبون: '+lobby.players.map(id=>'<@'+id+'>').join('، ')+'\n\n**'+selected.question+'**\n\nأول لاعب من المشاركين يكتب الإجابة الصحيحة خلال 60 ثانية يفوز.').setFooter({text:'MLD · الجولة تنتهي خلال 60 ثانية'});
+      const disabled=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('mld-lobby:join:'+channelId).setLabel('بدأت الجولة').setStyle(ButtonStyle.Secondary).setDisabled(true),new ButtonBuilder().setCustomId('mld-lobby:start:'+channelId).setLabel('بدأت الجولة').setStyle(ButtonStyle.Secondary).setDisabled(true));
+      await interaction.update({embeds:[active],components:[disabled]});
+      setTimeout(()=>{const round=client.mldGameRounds.get(channelId);if(round&&round.expiresAt<=Date.now()){client.mldGameRounds.delete(channelId);client.mldGameLobbies.delete(channelId);interaction.message.edit({embeds:[EmbedBuilder.from(active).setColor(0x888888).setTitle('⌛ انتهت الجولة الجماعية').setDescription('انتهى الوقت. الإجابة كانت: **'+selected.answer+'**')],components:[]}).catch(()=>{});}},61000);
+      return;
+    }
+    const updated=EmbedBuilder.from(interaction.message.embeds[0]||new EmbedBuilder()).setDescription('المضيف: <@'+lobby.hostId+'>\nاللاعبون ('+lobby.players.length+'/'+lobby.maxPlayers+'): '+lobby.players.map(id=>'<@'+id+'>').join('، ')+'\n\nالحد الأدنى للبدء: **'+lobby.minPlayers+'** لاعبًا. اضغط انضمام للدخول.');
+    return interaction.update({embeds:[updated]});
+  });
   client.on(Events.MessageCreate, async message => {
     if (!message.guild || message.author.bot || !['games','allinone'].includes(client.mldType)) return;
     const cfg=client.mldConfig||{}, prefix=String(cfg.prefixes?.games||cfg.prefix||'!').slice(0,4), content=String(message.content||'').trim();
     const hasPrefix=content.startsWith(prefix), commandText=hasPrefix?content.slice(prefix.length).trim():content;
     const [rawGameCommand]=commandText.split(/\s+/), commandSettings=cfg.commandSettings&&typeof cfg.commandSettings==='object'?cfg.commandSettings:{};
     const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===String(rawGameCommand||'').toLowerCase()));
-    if(!hasPrefix&&!(cfg.shortcutsEnabled===true&&coreAlias))return;
+    const liveRound=client.mldGameRounds.get(message.channel.id);
+    const isRoundAnswer=!!(liveRound&&Date.now()<liveRound.expiresAt&&liveRound.userId!==message.author.id&&(!Array.isArray(liveRound.allowedPlayerIds)||liveRound.allowedPlayerIds.includes(message.author.id))&&normalize(content)===normalize(liveRound.answer));
+    if(!hasPrefix&&!(cfg.shortcutsEnabled===true&&coreAlias)&&!isRoundAnswer)return;
     if(commandSettings[coreAlias?.[0]||String(rawGameCommand||'')]?.enabled===false)return safeReply(message,'هذا الأمر معطّل من لوحة التحكم.');
     if(pool){try{await client.mldGameScoresReady}catch(e){console.error('Game score table unavailable:',e.message);return safeReply(message,'نظام النقاط غير متاح مؤقتًا. حاول لاحقًا.')}}
     const round=client.mldGameRounds.get(message.channel.id);
-    if (round && Date.now()<round.expiresAt && round.userId!==message.author.id && normalize(content)===normalize(round.answer)) {
+    if (round && Date.now()<round.expiresAt && round.userId!==message.author.id && (!Array.isArray(round.allowedPlayerIds)||round.allowedPlayerIds.includes(message.author.id)) && normalize(content)===normalize(round.answer)) {
       client.mldGameRounds.delete(message.channel.id);
+      client.mldGameLobbies?.delete(message.channel.id);
       const pts=Math.max(0,Math.min(100000,Number(cfg.gamePoints??10)||10));
       await award(pool,client,message,pts).catch(()=>{});
       return safeReply(message,'🎉 إجابة صحيحة يا '+message.member.displayName+'! ربحت **'+pts+'** نقطة.');
@@ -66,6 +106,21 @@ export function setupGames(client, pool) {
       if(!pool)return safeReply(message,'لوحة النقاط غير متاحة الآن.');
       const q=await pool.query('SELECT user_id,points,wins FROM mld_discord_game_scores WHERE bot_id=$1 AND guild_id=$2 ORDER BY points DESC,wins DESC LIMIT 10',[String(client.mldBotId||client.user.id),message.guild.id]);
       return safeReply(message,q.rows.length?'🏆 **متصدرون الألعاب**\n'+q.rows.map((r,i)=>(i+1)+'. <@'+r.user_id+'> — '+r.points+' نقطة · '+r.wins+' فوز').join('\n'):'لا توجد نتائج بعد. ابدأ لعبة لتحجز مكانك!');
+    }
+    if (['تحدي','تحدي_جماعي','غرفة_لعبة','لوبي'].includes(cmd)) {
+      if(!enabled(client,'ايفنت'))return safeReply(message,'الألعاب الجماعية معطّلة من لوحة التحكم.');
+      const minRaw=Number(parts[0]||2),maxRaw=Number(parts[1]||12);
+      const minPlayers=Number.isInteger(minRaw)?Math.max(2,Math.min(20,minRaw)):2;
+      const maxPlayers=Number.isInteger(maxRaw)?Math.max(minPlayers,Math.min(25,maxRaw)):12;
+      const existing=client.mldGameLobbies.get(message.channel.id);
+      if(existing&&existing.expiresAt>Date.now())return safeReply(message,'فيه غرفة جماعية مفتوحة بالفعل في هذه القناة. انضم من الأزرار الموجودة أو أنهها المضيف.');
+      const lobby={hostId:message.author.id,players:[message.author.id],minPlayers,maxPlayers,phase:'join',expiresAt:Date.now()+10*60*1000,messageId:null};
+      const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('🎮 غرفة تحدّي جماعي').setDescription('المضيف: <@'+lobby.hostId+'>\nاللاعبون: **1/'+maxPlayers+'**\nالحد الأدنى للبدء: **'+minPlayers+' لاعبين**\n\nاضغط **انضمام** للدخول. لا تبدأ الجولة قبل اكتمال الحد الأدنى.').addFields({name:'نوع الجولة',value:'سؤال جماعي سريع · أول إجابة صحيحة تفوز',inline:true},{name:'تنتهي الغرفة',value:'بعد 10 دقائق إذا لم تبدأ',inline:true}).setFooter({text:'MLD · ألعاب جماعية'}).setTimestamp();
+      const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('mld-lobby:join:'+message.channel.id).setLabel('انضمام').setEmoji('🎟️').setStyle(ButtonStyle.Success),new ButtonBuilder().setCustomId('mld-lobby:start:'+message.channel.id).setLabel('ابدأ الجولة').setEmoji('🚀').setStyle(ButtonStyle.Primary),new ButtonBuilder().setCustomId('mld-lobby:leave:'+message.channel.id).setLabel('خروج').setEmoji('↩️').setStyle(ButtonStyle.Secondary),new ButtonBuilder().setCustomId('mld-lobby:cancel:'+message.channel.id).setLabel('إلغاء الغرفة').setEmoji('🗑️').setStyle(ButtonStyle.Danger));
+      const sent=await message.channel.send({embeds:[embed],components:[row],allowedMentions:{parse:[]}});
+      lobby.messageId=sent.id;client.mldGameLobbies.set(message.channel.id,lobby);
+      setTimeout(()=>{const live=client.mldGameLobbies.get(message.channel.id);if(live&&live.messageId===sent.id&&live.phase==='join'){client.mldGameLobbies.delete(message.channel.id);sent.edit({embeds:[EmbedBuilder.from(embed).setColor(0x888888).setTitle('⌛ انتهت مهلة غرفة التحدي').setDescription('لم تبدأ الجولة خلال 10 دقائق.')],components:[]}).catch(()=>{});}},10*60*1000);
+      return;
     }
     if (cmd==='المتجر') { if(!enabled(client,'المتجر'))return safeReply(message,'هذه اللعبة معطّلة من لوحة التحكم.'); return safeReply(message,'🛍️ متجر ألعاب ملاذ\n• 100 نقطة — لقب لاعب مميز (قريبًا)\n• نقاطك تُجمع عند الفوز بالألعاب. لا يتم خصم أي نقاط من حسابك هنا.'); }
     if (cmd==='ايقاف') { client.mldGameRounds.delete(message.channel.id); return safeReply(message,'⏹️ تم إنهاء الجولة الحالية في هذه القناة.'); }
