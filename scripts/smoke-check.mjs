@@ -66,6 +66,7 @@ assert.ok(bot.includes('client.mldConfig?.commandSettings?.help?.enabled===false
 assert.ok(bot.includes("if(command==='blockedword')"), 'Blocked-word management must be implemented as a real prefix command.');
 assert.ok(bot.includes("if(command==='mute'||command==='unmute')") && bot.includes('target.voice.setMute(shouldMute,reason)'), 'Advertised voice mute/unmute commands must execute real moderation actions.');
 assert.ok(bot.includes("if(command==='welcome')") && bot.includes("if(command==='logs')") && bot.includes('welcomeEnabled===false'), 'Advertised welcome and log commands must persist settings and respect the disabled state.');
+assert.ok(bot.includes("if(['moderation','automod','system','allinone','welcome'].includes(type))"), 'Welcome-type bots must be able to run their own prefix welcome settings command.');
 assert.ok(bot.includes("const autoMod=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true"), 'Protection can be disabled explicitly even for automod bot types.');
 assert.ok(bot.includes('const knownCommandNames=new Set('), 'Only recognized prefix commands should bypass automatic link filtering.');
 assert.ok(bot.includes("if(command==='antilink'||command==='antispam')"), 'Link and spam protection must be independently configurable.');
