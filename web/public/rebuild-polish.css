@@ -37,3 +37,39 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
 .game-seat-profile{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:800;text-align:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,156,222,.45);text-underline-offset:3px}.game-seat-profile:hover{color:var(--mld-pink)}.game-seat-profile:focus-visible{outline:2px solid var(--mld-pink);outline-offset:3px;border-radius:4px}
+
+
+/* Seat layout fix: each participant has a stable position around the shared board. */
+.game-table-stage{display:block;position:relative;padding:0;min-height:clamp(430px,58vw,650px)}
+.game-table-board{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(68%,560px);min-height:230px}
+.game-seat{position:absolute;display:flex;align-items:center;gap:9px;min-width:118px;max-width:190px;z-index:3}
+.game-seat>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.game-seat small{font-size:.72rem;color:#d9c8e3;line-height:1.3}
+.game-seat.seat-top{top:20px;left:50%;transform:translateX(-50%)}
+.game-seat.seat-bottom{bottom:20px;left:50%;transform:translateX(-50%)}
+.game-seat.seat-left{left:18px;top:50%;transform:translateY(-50%)}
+.game-seat.seat-right{right:18px;top:50%;transform:translateY(-50%)}
+.game-seat.seat-top-left{left:8%;top:18px}
+.game-seat.seat-top-right{right:8%;top:18px}
+.game-seat.is-current{border-color:#ff9cde;box-shadow:0 0 0 2px rgba(255,156,222,.22),0 0 28px rgba(255,156,222,.2);animation:mldTurnPulse 1.8s ease-in-out infinite}
+@keyframes mldTurnPulse{0%,100%{box-shadow:0 0 0 2px rgba(255,156,222,.18),0 8px 22px rgba(0,0,0,.25)}50%{box-shadow:0 0 0 5px rgba(255,156,222,.08),0 0 30px rgba(255,156,222,.28)}}
+.game-table-board .jaccaro-board,.game-table-board .jaccaro-track,.game-table-board [data-jaccaro-board]{max-width:100%;margin-inline:auto}
+@media(max-width:760px){
+ .game-table-stage{min-height:520px;padding:0}
+ .game-table-board{top:50%;width:calc(100% - 32px);min-height:200px}
+ .game-seat{min-width:0;max-width:45%;padding:7px 8px;gap:6px;border-radius:13px}
+ .game-seat.seat-top{top:12px}
+ .game-seat.seat-bottom{bottom:12px}
+ .game-seat.seat-left{left:8px;top:50%}
+ .game-seat.seat-right{right:8px;top:50%}
+ .game-seat.seat-top-left{left:8px;top:12px}
+ .game-seat.seat-top-right{right:8px;top:12px}
+ .game-seat small{font-size:.65rem}
+}
+@media(max-width:480px){
+ .game-table-stage{min-height:560px}
+ .game-table-board{top:52%;width:calc(100% - 20px);padding:10px}
+ .game-seat{max-width:48%;font-size:.76rem}
+ .game-seat img,.game-player-avatar{width:30px;height:30px}
+ .game-seat.seat-left,.game-seat.seat-right{top:25%}
+}
