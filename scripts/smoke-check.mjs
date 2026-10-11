@@ -64,6 +64,8 @@ assert.ok(bot.includes('client.on(Events.MessageCreate, async message =>'), 'Pre
 assert.ok(bot.includes('client.mldConfig?.commandSettings?.help?.enabled===false'), 'The help command toggle must also apply to no-prefix help.');
 assert.ok(bot.includes("if(command==='blockedword')"), 'Blocked-word management must be implemented as a real prefix command.');
 assert.ok(bot.includes("const autoMod=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true"), 'Protection can be disabled explicitly even for automod bot types.');
+assert.ok(bot.includes('const knownCommandNames=new Set('), 'Only recognized prefix commands should bypass automatic link filtering.');
+assert.ok(bot.includes("if(command==='antilink'||command==='antispam')"), 'Link and spam protection must be independently configurable.');
 assert.ok(app.includes('["blockedword","الكلمات الممنوعة"]'), 'The dashboard must expose the blocked-word command toggle.');
 assert.ok(botRoutes.includes('commands.slice(0,500)'), 'The bot dashboard must cap custom prefix commands at 500.');
 assert.ok(botRoutes.includes('commandSettings'), 'The bot dashboard must persist per-command enable/disable and alias settings.');
