@@ -352,12 +352,20 @@ function installBotFeatures(client,bot){
       const linkPattern=/(https?:|discord\.gg|www\.)/i;
       const key=message.channel.id+':'+message.author.id,now=Date.now();
       const history=(client.mldRecentMessages.get(key)||[]).filter(t=>now-t<8000);history.push(now);client.mldRecentMessages.set(key,history);
-      const blockedWord=words.some(w=>w&&content.toLowerCase().includes(w));
+      const blockedWord=config.blockedWordsEnabled===false?false:words.some(w=>w&&content.toLowerCase().includes(w));
       const blockedLink=linksOn&&linkPattern.test(content);
       const spam=spamOn&&history.length>=5;
-      if(blockedWord||blockedLink||spam){
+      const caps=config.capsFilterEnabled===true&&content.length>=12&&((content.match(/[A-Z]/g)||[]).length/Math.max(1,(content.match(/[A-Za-z]/g)||[]).length))>=0.75;
+      const mentionFlood=config.mentionFilterEnabled===true&&((content.match(/<@!?\d{17,20}>/g)||[]).length+(content.match(/<@&\d{17,20}>/g)||[]).length)>=5;
+      const inviteSpam=config.antiInviteEnabled===true&&/(discord\.gg\/|discord\.com\/invite\/)/i.test(content);
+      const scam=config.antiScamEnabled===true&&/(free nitro|nitro مجاني|steam gift|هدية ستيم|verify your account|تحقق من حسابك|airdrop|wallet connect)/i.test(content);
+      const attachment=config.antiAttachmentEnabled===true&&message.attachments.size>0;
+      const emojiFlood=config.antiEmojiSpamEnabled===true&&((content.match(/\p{Extended_Pictographic}/gu)||[]).length)>=12;
+      const repeated=config.antiRepeatEnabled===true&&client.mldRecentContent?.get(key)===content;
+      client.mldRecentContent=client.mldRecentContent||new Map();client.mldRecentContent.set(key,content.slice(0,500));
+      if(blockedWord||blockedLink||spam||caps||mentionFlood||inviteSpam||scam||attachment||emojiFlood||repeated){
         await message.delete().catch(()=>{});
-        const reason=blockedWord?'كلمة ممنوعة':blockedLink?'رابط غير مسموح':'تكرار الرسائل (سبام)';
+        const reason=blockedWord?'كلمة ممنوعة':blockedLink?'رابط غير مسموح':spam?'تكرار الرسائل (سبام)':caps?'كتابة بالأحرف الكبيرة بشكل مزعج':mentionFlood?'منشنات جماعية':inviteSpam?'رابط دعوة غير مسموح':scam?'رابط أو نص احتيالي محتمل':attachment?'المرفقات ممنوعة':emojiFlood?'إغراق بالإيموجي':'تكرار الرسالة نفسها';
         await writeRuntimeLog(client.mldBotId,message.author.id,'bot.automod_action',{guildId:message.guild.id,channelId:message.channel.id,reason});
         const notice=await message.channel.send({content:'⚠️ '+message.author.toString()+' تم حذف رسالتك: '+reason+'.',allowedMentions:{users:[message.author.id]}}).catch(()=>null);
         if(notice)setTimeout(()=>notice.delete().catch(()=>{}),5000);
