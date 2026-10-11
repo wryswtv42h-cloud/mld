@@ -1208,7 +1208,7 @@ async function setupZajelReplies(client){
         return interaction.editReply({content:'انتهت مهلة الرد أو تم استخدام الزر من قبل.',ephemeral:true});
       }
       await interaction.message.edit({components:[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(interaction.customId).setLabel('بانتظار ردك بالخاص').setStyle(ButtonStyle.Secondary).setDisabled(true))]}).catch(()=>{});
-      await interaction.reply({content:'تم تفعيل الرد. أرسل الآن رسالتك الخاصة إلى البوت خلال 30 دقيقة؛ سيصل رد واحد فقط إلى مرسل الزاجل الأصلي بعنوان «زاجل مردود».',ephemeral:true});
+      await interaction.editReply({content:'تم تفعيل الرد. أرسل الآن رسالتك الخاصة إلى البوت خلال 30 دقيقة؛ سيصل رد واحد فقط إلى مرسل الزاجل الأصلي بعنوان «زاجل مردود».'});
     }catch(error){
       console.error('Zajel reply button:',error.message);
       if(interaction.deferred)await interaction.editReply({content:'تعذر تفعيل الرد الآن، حاول مرة أخرى لاحقًا.'}).catch(()=>{});else if(!interaction.replied)await interaction.reply({content:'تعذر تفعيل الرد الآن، حاول مرة أخرى لاحقًا.',ephemeral:true}).catch(()=>{});
