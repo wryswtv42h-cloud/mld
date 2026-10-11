@@ -473,7 +473,7 @@ function installBotFeatures(client,bot){
       const key=command==='antilink'?'antiLinksEnabled':'antiSpamEnabled',label=command==='antilink'?'منع الروابط':'مكافحة السبام',mode=String(args[0]||'').toLowerCase();
       if(!mode){const enabled=config[key]===undefined?(config.automodEnabled===undefined?type==='automod':!!config.automodEnabled):!!config[key];return message.reply('🛡️ '+label+': '+(enabled?'مفعل':'معطل')+'. استخدم '+prefix+command+' on/off');}
       const enabled=['on','enable','تشغيل','تفعيل'].includes(mode);if(!enabled&&!['off','disable','إيقاف','تعطيل'].includes(mode))return message.reply('استخدم: '+prefix+command+' on أو off');
-      try{const next={...config,[key]:enabled};await saveProtectionSettings(next,'bot.protection_setting',{setting:key,enabled});return message.reply('🛡️ '+label+': '+(enabled?'مفعل':'معطل'));}catch(error){return message.reply(error.message||'تعذر حفظ الإعداد.');}
+      try{const next={...config,[key]:enabled};if(enabled){next.automodEnabled=true;if(next.antiLinksEnabled===undefined)next.antiLinksEnabled=false;if(next.antiSpamEnabled===undefined)next.antiSpamEnabled=false;}await saveProtectionSettings(next,'bot.protection_setting',{setting:key,enabled});return message.reply('🛡️ '+label+': '+(enabled?'مفعل':'معطل'));}catch(error){return message.reply(error.message||'تعذر حفظ الإعداد.');}
     }
     if(command==='blockedword'){
       const action=String(args[0]||'').toLowerCase(),word=args.slice(1).join(' ').trim().slice(0,60),current=String(config.blockedWords||'').split(/[\n,،]/).map(value=>value.trim()).filter(Boolean);
