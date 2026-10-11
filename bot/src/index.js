@@ -440,7 +440,7 @@ function installBotFeatures(client,bot){
       if(['رومخاص','روماتخاصة','شاتخاص','خاص','rooms','private','privateroom','privatemessage'].includes(key))return 'rooms';
       if(['ستريك','streak','streaks'].includes(key))return 'streak';
       if(['زاجل','pigeon','broadcast','برودكاست','نشر','announce','اعلان'].includes(key))return key==='announce'||key==='اعلان'||key==='broadcast'||key==='برودكاست'?'broadcast':'pigeon';
-      if(['حماية','حمايه','anti','antilink','antispam','automod','فلتر','منعروابط'].includes(key))return 'protection';
+      if(['protection','حماية','حمايه','anti','antilink','antispam','automod','blockedword','كلمةممنوعة','منعالروابط','منعالسبام','فلتر','منعروابط'].includes(key))return 'protection';
       if(['warn','kick','ban','clear','slowmode','lock','unlock','timeout','untimeout','mute','unmute','nick','roleadd','roleremove','rolecreate','roledelete','unban','allbans','move'].includes(key))return 'moderation';
       if(['شات','chat','روم','room','الغرف','غرف'].includes(key))return 'chat';
       return 'system';
