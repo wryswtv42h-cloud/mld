@@ -88,3 +88,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .member-profile-stats .stat b{display:block;font-size:1.15rem}
 .member-profile-stats .stat small{display:block;margin-top:4px;color:var(--muted);font-size:.76rem}
 @media(max-width:520px){.member-profile-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.member-profile-identity .profileAvatar{flex-basis:60px;width:60px;height:60px}}
+
+
+/* One combined leaderboard with accessible profile links and visible metric values. */
+.leaderboard-card h3{margin-bottom:14px}
+.leaderboard-row{width:100%;display:grid;grid-template-columns:34px 38px minmax(0,1fr) auto;align-items:center;gap:10px;text-align:right;padding:9px 8px;margin:3px 0;border:1px solid transparent;border-radius:12px;background:rgba(255,255,255,.025);color:inherit}
+.leaderboard-row:hover{border-color:var(--mld-edge);background:rgba(255,156,222,.06)}
+.leaderboard-row img{width:36px;height:36px;border-radius:50%;object-fit:cover}
+.leaderboard-row>b{color:var(--mld-pink);text-align:center}
+.leaderboard-row>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leaderboard-row>strong{font-variant-numeric:tabular-nums;color:#fff;font-size:.9rem}
