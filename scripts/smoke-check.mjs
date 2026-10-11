@@ -35,7 +35,7 @@ assert.match(gameRoute, /discordId:req\.user\.discord_id\|\|null/, 'New game ses
 assert.match(gameRoute, /avatar:req\.user\.avatar\|\|null/, 'New game sessions should retain the host avatar.');
 assert.match(gameSocket, /discordId:socket\.user\?\.discord_id\|\|null/, 'Socket joins should retain the Discord ID used by profile lookups.');
 assert.match(gameSocket, /avatar:socket\.user\?\.avatar\|\|null/, 'Socket joins should retain player avatars.');
-assert.match(app, /if\(p===\"leaders\"\)p===\"top\"|if\(p===\"leaders\"\)p=\"top\"/, 'Legacy leaderboard route should resolve to the unified statistics page.');
+assert.match(app, /if\(p==="leaders"\)p="top"/, 'Legacy leaderboard route should resolve to the unified statistics page.');
 assert.match(app, /المتصدرون والإحصائيات/, 'The unified leaderboard should use a clear Arabic title.');
 assert.match(enhancements, /data\.siteProfile/, 'Member previews should include linked MLD profile data.');
 assert.ok(apiIndex.indexOf("app.use('/api/', (req, res, next)") < apiIndex.indexOf("app.use('/api/auth', authRoutes)"), 'Database readiness middleware must run before API routes.');
