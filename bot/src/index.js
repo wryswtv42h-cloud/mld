@@ -11,7 +11,7 @@ import { setupGames } from './systems/games.js';
 import { setupMusic } from './systems/music.js';
 import { setupAuditLogs, ensureAuditLogRooms } from './systems/audit-logs.js';
 import { setupPrivateRooms } from './systems/private-rooms.js';
-import { CATALOG_COMMAND_MAP, runCatalogCommand } from './commands/catalog.js';
+import { CATALOG_COMMANDS, CATALOG_COMMAND_MAP, runCatalogCommand } from './commands/catalog.js';
 
 dotenv.config();
 
@@ -93,11 +93,16 @@ function buildUserHelpPayload(client, ownerId, selected='general') {
     {value:'custom',label:'أوامري المخصصة',emoji:'🧩',desc:'الأوامر التي أضفتها من لوحة التحكم',rows:(Array.isArray(config.commands)?config.commands.filter(x=>x&&x.enabled!==false).map(x=>[String(x.name),String(x.description||'أمر مخصص')]):[])}
   ];
   const visible=categories.filter(c=>c.value==='general'||c.value==='custom'||(c.value==='admin'&&['moderation','automod','system','allinone'].includes(type))||(c.value==='welcome'&&['welcome','system','allinone'].includes(type))||(c.value==='broadcast'&&['broadcast','system','allinone'].includes(type))||(c.value==='protection'&&['automod','moderation','system','allinone'].includes(type))||(c.value==='tickets'&&['tickets','applications','allinone'].includes(type))||(c.value==='games'&&['games','allinone'].includes(type))||(c.value==='economy'&&['bank','economy','allinone'].includes(type))||(c.value==='music'&&['music','allinone'].includes(type)));
-  const cat=visible.find(x=>x.value===selected)||visible[0];
+  const catalogCategoryByHelp={general:'system',admin:'moderation',protection:'protection',games:'games',broadcast:'broadcast'};
+  for(const cat of categories){const target=catalogCategoryByHelp[cat.value];if(target)cat.rows.push(...CATALOG_COMMANDS.filter(x=>x.category===target).map(x=>[x.name,x.description]));}
+  const pageMatch=String(selected||'').match(/^page:([^:]+):(\d+)$/);const selectedCategory=pageMatch?pageMatch[1]:selected;const requestedPage=pageMatch?Number(pageMatch[2]):0;
+  const cat=visible.find(x=>x.value===selectedCategory)||visible[0];
   const categoryPrefix=String(({games:config.prefixes?.games,economy:config.prefixes?.bank,tickets:config.prefixes?.tickets,admin:config.prefixes?.moderation,welcome:config.prefixes?.system,protection:config.prefixes?.protection,music:config.prefixes?.system,custom:config.prefix}[cat.value]||prefix)).slice(0,4);
-  const lines=(cat.rows.length?cat.rows:[['لا توجد أوامر مخصصة','أضف أوامر من لوحة التحكم ثم احفظها.']]).slice(0,35).map(([n,d],i)=>'**'+(i+1)+'. '+(String(n).startsWith('/')?n:categoryPrefix+n)+'**\n'+d);
-  const embed=new EmbedBuilder().setColor(0xff9cde).setTitle(cat.emoji+' '+cat.label).setDescription(cat.desc+'\n\n'+lines.join('\n\n')).setFooter({text:'MLD · '+cat.rows.length+' أمرًا/مدخلًا · اختر قسمًا من القائمة'}).setTimestamp();
-  const menu=new StringSelectMenuBuilder().setCustomId('mldhelpselect:'+ownerId).setPlaceholder('اختر قسم الأوامر…').addOptions(visible.map(c=>({label:c.label,value:c.value,emoji:c.emoji,description:c.desc.slice(0,100),default:c.value===cat.value})));
+  const pageSize=25,totalPages=Math.max(1,Math.ceil(cat.rows.length/pageSize)),page=Math.max(0,Math.min(totalPages-1,requestedPage));const pageRows=(cat.rows.length?cat.rows:[['لا توجد أوامر مخصصة','أضف أوامر من لوحة التحكم ثم احفظها.']]).slice(page*pageSize,(page+1)*pageSize);
+  const lines=pageRows.map(([n,d],i)=>'**'+(page*pageSize+i+1)+'. '+(String(n).startsWith('/')?n:categoryPrefix+n)+'**\n'+d);
+  const embed=new EmbedBuilder().setColor(0xff9cde).setTitle(cat.emoji+' '+cat.label).setDescription(cat.desc+'\n\n'+lines.join('\n\n')).setFooter({text:'MLD · '+cat.rows.length+' أمرًا · صفحة '+(page+1)+'/'+totalPages+' · اختر قسمًا أو صفحة'}).setTimestamp();
+  const menuOptions=[...visible.map(c=>({label:c.label,value:c.value,emoji:c.emoji,description:c.desc.slice(0,100),default:c.value===cat.value})),...Array.from({length:totalPages},(_,i)=>({label:'صفحة '+(i+1)+' / '+totalPages,value:'page:'+cat.value+':'+i,description:'أوامر '+cat.label+' · '+(i*pageSize+1)+'-'+Math.min((i+1)*pageSize,cat.rows.length)}))].slice(0,25);
+  const menu=new StringSelectMenuBuilder().setCustomId('mldhelpselect:'+ownerId).setPlaceholder('اختر قسم الأوامر أو الصفحة…').addOptions(menuOptions);
   return {embeds:[embed],components:[new ActionRowBuilder().addComponents(menu)],allowedMentions:{parse:[]}};
 }
 
