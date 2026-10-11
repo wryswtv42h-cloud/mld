@@ -97,5 +97,23 @@
 </section>
 <footer class="footer"><span>MLD · COMMUNITY</span><span>لوحة تحكم آمنة • تتحدث الحالة تلقائيًا</span></footer>
 </main>
-<script src="/bot-dashboard.js?v=20261011-startup-selector-fix1" defer></script>
+<script>
+(()=>{'use strict';
+ const show=(title,detail)=>{
+  const loading=document.getElementById('loading');
+  if(!loading||loading.hidden)return;
+  loading.replaceChildren();
+  const box=document.createElement('div');box.className='error-page';
+  const heading=document.createElement('h2');heading.textContent=title;
+  const message=document.createElement('p');message.textContent=detail;
+  const retry=document.createElement('button');retry.type='button';retry.className='secondary-btn';retry.textContent='إعادة المحاولة';retry.addEventListener('click',()=>location.reload());
+  const back=document.createElement('a');back.className='secondary-btn';back.href='/#bots';back.textContent='العودة إلى البوتات';
+  box.append(heading,message,retry,back);loading.append(box);
+ };
+ window.addEventListener('error',event=>show('تعذر تشغيل لوحة البوت',event.message||'حدث خطأ في JavaScript قبل اكتمال تحميل اللوحة.'));
+ window.addEventListener('unhandledrejection',event=>show('تعذر تحميل لوحة البوت',String(event.reason?.message||event.reason||'تعذر إكمال طلب التحميل.')));
+ setTimeout(()=>show('لوحة البوت تأخرت','لم تكتمل عملية التحميل خلال 15 ثانية. أعد المحاولة؛ إذا تكرر الخطأ فسيظهر سببه بدل بقاء الشاشة معلّقة.'),15000);
+})();
+</script>
+<script src="/bot-dashboard.js?v=20261011-startup-selector-fix2" defer></script>
 </body></html>
