@@ -17,6 +17,16 @@ document.addEventListener("submit",event=>{
   }
   event.preventDefault();
 },true);
+// iOS/Safari fallback: catch the actual tap before the browser performs native form navigation.
+document.addEventListener("click",event=>{
+  const submit=event.target instanceof Element?event.target.closest('#gameSessionForm button[type="submit"]'):null;
+  if(!submit)return;
+  const form=submit.closest("form");
+  if(!form)return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  void handleGameSessionSubmit(form,event);
+},true);
 document.addEventListener("click",event=>{
   const option=event.target instanceof Element?event.target.closest("[data-user-option]"):null;
   if(!option)return;
