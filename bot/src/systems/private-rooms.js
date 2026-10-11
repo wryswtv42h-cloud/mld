@@ -26,11 +26,12 @@ export function setupPrivateRooms(client){
       if(interaction.isButton()&&interaction.customId==='mld-private:create'){
         const guild=interaction.guild;
         if(!guild)return interaction.reply({content:'زر إنشاء الروم يعمل داخل السيرفر فقط.',ephemeral:true});
+        await interaction.deferReply({ephemeral:true});
         const member=await guild.members.fetch(interaction.user.id).catch(()=>null);
-        if(!member)return interaction.reply({content:'تعذر العثور على عضويتك في السيرفر.',ephemeral:true});
+        if(!member)return interaction.editReply({content:'تعذر العثور على عضويتك في السيرفر.'});
         const channels=await guild.channels.fetch();
         const existing=[...channels.values()].find(ch=>ch?.type===ChannelType.GuildText&&String(ch.topic||'')==='MLD_PRIVATE:'+interaction.user.id);
-        if(existing)return interaction.reply({content:'عندك روم خاص موجود بالفعل: '+existing.toString(),ephemeral:true,allowedMentions:{parse:[]}});
+        if(existing)return interaction.editReply({content:'عندك روم خاص موجود بالفعل: '+existing.toString(),allowedMentions:{parse:[]}});
         const slug=String(interaction.user.username||'member').toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,35)||'member';
         const name=('خاص-'+slug+'-'+interaction.user.id.slice(-4)).slice(0,90);
         const channel=await guild.channels.create({
@@ -49,7 +50,7 @@ export function setupPrivateRooms(client){
           components:[roomControls(channel.id)],
           allowedMentions:{users:[interaction.user.id]}
         });
-        return interaction.reply({content:'تم إنشاء رومك الخاص: '+channel.toString(),ephemeral:true,allowedMentions:{parse:[]}});
+        return interaction.editReply({content:'تم إنشاء رومك الخاص: '+channel.toString(),allowedMentions:{parse:[]}});
       }
       if(interaction.isButton()&&interaction.customId.startsWith('mld-private:')){
         const [,action,channelId]=interaction.customId.split(':');
