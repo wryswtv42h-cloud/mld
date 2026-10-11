@@ -12,7 +12,6 @@ export async function execute(interaction) {
   const embed = new EmbedBuilder()
     .setColor(0xff9cde)
     .setTitle('🏠 معلومات السيرفر')
-    .setThumbnail(guild.iconURL({ size: 256 }) || null)
     .addFields(
       { name: 'اسم السيرفر', value: String(guild.name).slice(0, 100), inline: true },
       { name: 'المالك', value: owner ? String(owner.user.tag || owner.user.username).slice(0, 100) : 'غير متاح', inline: true },
@@ -26,5 +25,7 @@ export async function execute(interaction) {
     )
     .setFooter({ text: 'MLD · مجتمع ملاذ' })
     .setTimestamp();
+  const icon = guild.iconURL({ size: 256 });
+  if (icon) embed.setThumbnail(icon);
   return interaction.reply({ embeds: [embed], allowedMentions: { parse: [] } });
 }
