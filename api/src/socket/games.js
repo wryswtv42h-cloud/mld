@@ -22,14 +22,16 @@ export function setupGameSocket(io,socket){
   socket.join(room(sessionId));await emitGameUpdate(io,sessionId,{sessionId,players,spectators,state:gameState,status:session.status,gameType:session.type});
  }catch(e){console.error('game join',e);socket.emit('game:error',{error:'تعذر الانضمام للجلسة'})}});
  socket.on('game:start',async({sessionId}={})=>{try{
-  const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const s=rows[0];if(!s)return;
-  if(!socket.user)return socket.emit('game:error',{error:'سجّل دخولك للعب'});
-  if(s.status!=='waiting')return socket.emit('game:error',{error:'لا يمكن بدء جلسة بدأت أو انتهت بالفعل'});
+  const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const s=rows[0];if(!s)return socket.emit('game:error',{error:'الجلسة غير موجودة أو تم حذفها'});
+  if(!socket.user)return socket.emit('game:error',{error:'انتهت جلسة الدخول؛ سجّل دخولك ثم افتح الغرفة من جديد'});
+  if(s.status!=='waiting')return socket.emit('game:error',{error:'لا يمكن بدء هذه الجلسة؛ حالتها الحالية: '+String(s.status)});
   const name=socket.user.username;
   const host=s.players?.[0]?.name||name;const isHost=String(s.host_id||'')===String(socket.user.id)||(!s.host_id&&host===name);
   if(!isHost&&!socket.user?.is_owner)return socket.emit('game:error',{error:'صاحب الجلسة أو الأونر فقط'});
   const cfg=getGameConfig(s.type);if(!cfg)return socket.emit('game:error',{error:'اللعبة غير مدعومة'});
   const activePlayers=safeJson(s.players).filter(p=>p.userId&&p.isBot!==true).map(p=>({...p,isBot:false}));
+  if(activePlayers.length<Number(cfg.min||2))return socket.emit('game:error',{error:'تحتاج اللعبة إلى '+Number(cfg.min||2)+' لاعبين على الأقل. ادعُ أعضاء آخرين للغرفة ثم ابدأ.'});
+  if(activePlayers.length>Number(s.max_players||cfg.max))return socket.emit('game:error',{error:'عدد اللاعبين تجاوز سعة الغرفة؛ أعد فتح غرفة بعدد مناسب.'});
   const state=await initGame(s.type,activePlayers);
   const allPlayers=[...activePlayers,...(state.botPlayers||[]).map(name=>({name,isBot:true,connected:true,userId:null}))];
   await query('UPDATE games SET players=$1,state=$2,status=$3 WHERE id=$4',[JSON.stringify(allPlayers),JSON.stringify(state),'playing',sessionId]);
@@ -37,7 +39,7 @@ export function setupGameSocket(io,socket){
   if((state.botPlayers||[]).length)startBotLoop(io,sessionId,s.type);
  }catch(e){console.error('game start',e);socket.emit('game:error',{error:e.message||'تعذر بدء اللعبة'})}});
  socket.on('game:action',async({sessionId,action}={})=>{try{
-  const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const s=rows[0];if(!s||s.status!=='playing'||!s.state)return;
+  const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const s=rows[0];if(!s)return socket.emit('game:error',{error:'الجلسة غير موجودة أو تم حذفها'});if(s.status!=='playing'||!s.state)return socket.emit('game:error',{error:'اللعبة لم تبدأ بعد أو انتهت بالفعل'});
   if(!socket.user)return socket.emit('game:error',{error:'سجّل دخولك للعب'}); const name=socket.user.username;
   const activePlayer=safeJson(s.players).find(p=>String(p.userId||'')===String(socket.user.id));if(!activePlayer||activePlayer.connected===false||(activePlayer.socketId&&activePlayer.socketId!==socket.id)||safeJson(s.spectators).some(p=>String(p.userId||'')===String(socket.user.id)))return socket.emit('game:error',{error:'أنت مشاهد أو انفصلت عن الطاولة؛ أعد الانضمام للعب'});
   const next=await handleAction(s.type,s.state,name,action);const status=next.finished?'finished':'playing';
@@ -45,7 +47,7 @@ export function setupGameSocket(io,socket){
  }catch(e){console.error('game action',e);socket.emit('game:error',{error:'الحركة غير صالحة'})}});
  socket.on('game:chat',({sessionId,message}={})=>{if(!socket.user)return socket.emit('game:error',{error:'سجّل دخولك للعب'});const text=String(message||'').trim().slice(0,500);if(!text)return;const roomName=room(sessionId);if(!socket.rooms.has(roomName))return socket.emit('game:error',{error:'انضم إلى الطاولة قبل إرسال الرسائل'});io.to(roomName).emit('game:chat',{sessionId,name:socket.user.username||'عضو',message:text,time:Date.now()})});
  socket.on('game:leave',async({sessionId}={})=>{try{const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const s=rows[0];if(!s)return;const userId=String(socket.user?.id||'');let players;if(s.status==='playing'){players=safeJson(s.players).map(p=>String(p.userId||'')===userId?{...p,connected:false}:p)}else{players=safeJson(s.players).filter(p=>String(p.userId||'')!==userId)}const spectators=safeJson(s.spectators).filter(p=>String(p.userId||'')!==userId);await query('UPDATE games SET players=$1,spectators=$2 WHERE id=$3',[JSON.stringify(players),JSON.stringify(spectators),sessionId]);socket.leave(room(sessionId));await emitGameUpdate(io,sessionId,{sessionId,players,spectators,state:s.state,status:s.status,gameType:s.type})}catch(e){console.error('game leave',e)}});
- socket.on('game:end',async({sessionId}={})=>{try{const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const s=rows[0];if(!s)return;const host=String(s.host_id||'')===String(socket.user?.id||'');if(!host&&!socket.user?.is_owner)return;await query('DELETE FROM games WHERE id=$1',[sessionId]);if(botLoops.has(sessionId)){clearInterval(botLoops.get(sessionId));botLoops.delete(sessionId)}io.to(room(sessionId)).emit('game:ended')}catch(e){console.error('game end',e)}});
+ socket.on('game:end',async({sessionId}={})=>{try{const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const s=rows[0];if(!s)return socket.emit('game:error',{error:'الجلسة غير موجودة أو تم حذفها'});const host=String(s.host_id||'')===String(socket.user?.id||'');if(!host&&!socket.user?.is_owner)return socket.emit('game:error',{error:'إنهاء الطاولة متاح للمضيف أو الأونر فقط'});await query('DELETE FROM games WHERE id=$1',[sessionId]);if(botLoops.has(sessionId)){clearInterval(botLoops.get(sessionId));botLoops.delete(sessionId)}io.to(room(sessionId)).emit('game:ended')}catch(e){console.error('game end',e)}});
 }
 
 async function startBotLoop(io,sessionId,gameType){
