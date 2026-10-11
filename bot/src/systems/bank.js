@@ -36,11 +36,11 @@ export function setupBank(client, pool) {
     if(!hasPrefix&&!(cfg.shortcutsEnabled===true&&coreAlias))return;
     const requestedCommand=String(coreAlias?.[0]||rawCommand).toLowerCase();
     const commandAliases={
-      'راتب':'يومي','راتبي':'يومي','مكافأة':'يومي','مكافاه':'يومي','مكافأتي':'يومي',
+      'راتب':'يومي','راتبي':'يومي','مكافأة':'يومي','مكافاه':'يومي','مكافأتي':'يومي','salary':'يومي','daily':'يومي','dailyreward':'يومي',
       'بخشيش':'بخشيش','حظ':'حظ','روليت':'روليت','روليت بنك':'روليت','فواكه':'فواكه',
       'لعبة':'لعبة','لعبة عشوائية':'لعبة','نرد':'نرد','قمار':'قمار','رهان':'رهان','حرامية':'حرامية',
-      'رصيدي':'رصيد','فلوسي':'رصيد','فلوس':'رصيد','بنك':'رصيد','رصيد':'رصيد',
-      'تحويل':'تحويل','تبرع':'تبرع','قرض':'قرض','سداد':'سداد','استثمار':'استثمار','صندوق':'صندوق','تداول':'تداول'
+      'رصيدي':'رصيد','فلوسي':'رصيد','فلوس':'رصيد','بنك':'رصيد','رصيد':'رصيد','balance':'رصيد','money':'رصيد',
+      'تحويل':'تحويل','تبرع':'تبرع','قرض':'قرض','سداد':'سداد','استثمار':'استثمار','صندوق':'صندوق','تداول':'تداول','transfer':'تحويل','donate':'تبرع','loan':'قرض','repay':'سداد','invest':'استثمار','box':'صندوق','trade':'تداول','tip':'بخشيش','luck':'حظ','roulette':'روليت','fruits':'فواكه','gamble':'قمار','bet':'رهان','rob':'حرامية','dice':'نرد'
     };
     const cmd=commandAliases[requestedCommand]||commandAliases[rawCommand]||requestedCommand;
     if(commandSettings[requestedCommand]?.enabled===false||commandSettings[cmd]?.enabled===false)return message.reply('هذا الأمر معطّل من لوحة التحكم.');
