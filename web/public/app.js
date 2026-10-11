@@ -400,7 +400,8 @@ function gameSocketConnect(){
  if(gameSocket||!window.io||!state.token)return;
  gameSocket=window.io({auth:{token:state.token}});
  gameSocket.on("game:update",payload=>{if(String(payload.sessionId)!==String(gameSessionId))return;renderGameArena(payload)});
- gameSocket.on("game:error",e=>toast(e?.error||"تعذر تنفيذ حركة اللعبة"));\n  gameSocket.on("connect_error",error=>{console.warn("MLD game socket connection failed",error?.message||error);});
+ gameSocket.on("game:error",e=>toast(e?.error||"تعذر تنفيذ حركة اللعبة"));
+  gameSocket.on("connect_error",error=>{console.warn("MLD game socket connection failed",error?.message||error);});
  gameSocket.on("game:finished",e=>toast(e?.winner?"الفائز: "+e.winner:"انتهت اللعبة"));
  gameSocket.on("game:ended",()=>{gameSessionId=null;gameChatMessages=[];gameSocketPendingJoin=null;gameSocketNeedsRejoin=false;const arena=$("#gameArena");if(arena)arena.innerHTML="<div class=\"empty\">أنهى المضيف الطاولة.</div>";loadGameSessions()});
  gameSocket.on("game:chat",msg=>{if(String(msg.sessionId)!==String(gameSessionId))return;gameChatMessages.push(msg);gameChatMessages=gameChatMessages.slice(-80);const list=$("#gameChatMessages");if(list){list.innerHTML=gameChatMessages.map(m=>'<div class="game-chat-line"><b>'+esc(m.name||"عضو")+'</b><span>'+esc(m.message)+'</span><small>'+new Date(m.time||Date.now()).toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"})+'</small></div>').join("");list.scrollTop=list.scrollHeight}});
