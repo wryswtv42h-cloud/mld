@@ -489,7 +489,8 @@ function gameLobbyPage(){
 }
 let pageLocksSnapshot=null,pageLocksSnapshotAt=0,pageLocksRequest=null;async function getPageLocksSnapshot(){if(pageLocksSnapshot&&Date.now()-pageLocksSnapshotAt<30000)return pageLocksSnapshot;if(!pageLocksRequest){pageLocksRequest=api("/api/community/page-locks",{timeoutMs:6000}).then(data=>{pageLocksSnapshot=data;pageLocksSnapshotAt=Date.now();return data}).finally(()=>{pageLocksRequest=null;});}return pageLocksRequest;}
 async function buildPage(p){
-if(p!=="owner"&&p!=="admin"&&!state.user?.is_owner){const lockData=pageLocksSnapshot;const lock=lockData?.locks?.pages?.[p];if(lock?.enabled)return box("الصفحة مغلقة",lock.message||lockData.locks?.message||"هذه الصفحة مغلقة مؤقتًا من إدارة مجتمع ملاذ.",'<div class="empty">الصفحة متوقفة مؤقتًا بقرار من إدارة الموقع.</div><button class="btn primary" type="button" data-action="close-page-lock">إغلاق</button>');if(!lockData)getPageLocksSnapshot().then(data=>{if(state.page===p&&data.locks?.pages?.[p]?.enabled)void render()}).catch(()=>{});}
+const ownerView=!!(state.user?.is_owner||String(state.user?.role||"").toLowerCase()==="owner");
+if(p!=="owner"&&p!=="admin"&&!ownerView){let lockData=pageLocksSnapshot;try{if(!lockData||Date.now()-pageLocksSnapshotAt>30000)lockData=await getPageLocksSnapshot()}catch{}const lock=lockData?.locks?.pages?.[p];if(lock?.enabled)return box("الصفحة مغلقة",lock.message||lockData.locks?.message||"هذه الصفحة مغلقة مؤقتًا من إدارة مجتمع ملاذ.",'<div class="empty">الصفحة متوقفة مؤقتًا بقرار من إدارة الموقع.</div><button class="btn primary" type="button" data-action="close-page-lock">إغلاق</button>');}
 if(p==="members"){
  const d=await api("/api/public/members?limit=100&offset=0");state.memberOffset=d.members.length;state.memberTotal=d.total||0;
  const cards=d.members.map(m=>'<button class="memberCard" data-member="'+esc(m.id)+'"><img src="'+esc(m.avatar)+'"><b>'+esc(m.name)+'</b><small>@'+esc(m.username)+'</small></button>').join("");
