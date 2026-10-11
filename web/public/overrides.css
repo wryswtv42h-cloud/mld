@@ -578,3 +578,57 @@ body[data-page="admin"] #app .row-actions{margin-top:14px}
 .about-feature-grid{margin-top:12px}
 @media(max-width:760px){.owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.owner-console-nav{top:72px;margin-inline:-4px;padding:8px}.owner-section{scroll-margin-top:125px}body[data-page="admin"] #app .cards{grid-template-columns:1fr}.story-controls{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.owner-overview .stat{min-height:92px;padding:14px}.owner-console-nav button{padding:8px 11px}.story-controls{grid-template-columns:1fr}.game-session-form{grid-template-columns:1fr}.game-session-form .form-help,.game-create-submit{grid-column:1}.ticket-open{align-items:flex-start;flex-direction:column}}
+
+
+/* MLD Studio refresh 2026-10-11 — crisp admin surfaces, lighter navigation and accessible mobile layouts */
+:root{--mld-ease:cubic-bezier(.2,.7,.2,1);--mld-border:rgba(255,255,255,.095);--mld-shadow:0 18px 55px rgba(0,0,0,.22)}
+html{scroll-behavior:auto}
+button,a,input,select,textarea{ -webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #ff9cde;outline-offset:3px}
+#sidebar{box-shadow:-22px 0 70px rgba(0,0,0,.28);background:linear-gradient(160deg,#21132f,#140e1d 78%);padding:clamp(16px,3vw,24px)}
+#sidebar .nav{gap:7px}
+#sidebar .nav button{min-height:47px;border:1px solid transparent;transition:background .16s ease,border-color .16s ease,transform .16s ease}
+#sidebar .nav button:hover{transform:translateX(-2px);border-color:rgba(255,156,220,.14);background:rgba(255,156,220,.07)}
+#sidebar .nav button.active{background:linear-gradient(100deg,rgba(255,156,220,.16),rgba(168,111,223,.08));border-color:rgba(255,156,220,.2);box-shadow:inset -3px 0 #ff9cde}
+.nav-caption{margin:17px 8px 7px;color:#ad98bd;font-size:11px;font-weight:900;letter-spacing:.5px}
+.nav-join{display:flex;align-items:center;gap:12px;margin-top:18px;padding:15px;border:1px solid rgba(255,156,220,.23);border-radius:17px;background:linear-gradient(120deg,rgba(255,156,220,.13),rgba(168,111,223,.12));text-decoration:none}
+.nav-join>span:first-child{display:grid;place-items:center;width:39px;height:39px;border-radius:13px;background:#ff9cde;color:#25132c;font-size:20px}
+.nav-join>span:nth-child(2){display:grid;gap:4px;flex:1}.nav-join small{color:#c9bbd2;font-size:11px}
+.owner-console-nav{position:sticky;top:76px;z-index:12;display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;padding:10px;margin:16px 0 22px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(20,13,30,.94);backdrop-filter:blur(14px);scrollbar-width:thin}
+.owner-console-nav button{flex:0 0 auto;min-height:42px;padding:10px 15px;border:1px solid transparent;border-radius:12px;background:rgba(255,255,255,.045);color:#dfd2e8;font-weight:800;white-space:nowrap}
+.owner-console-nav button:hover{border-color:rgba(255,156,220,.22);background:rgba(255,156,220,.08)}
+.owner-console-nav button.is-current{color:#25132c;background:linear-gradient(120deg,#ffb5e7,#c5a1ff);box-shadow:0 7px 22px rgba(255,156,220,.13)}
+body[data-page="owner"] #app>.pagePanel{padding:clamp(14px,2.5vw,28px);border-radius:26px;background:radial-gradient(600px 280px at 100% 0,rgba(255,156,220,.075),transparent 72%),linear-gradient(150deg,#21152f,#171020 72%);border-color:rgba(255,255,255,.09)}
+body[data-page="owner"] #app>.pagePanel>h1{font-size:clamp(27px,4vw,39px);letter-spacing:-.5px}
+body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:11px}
+body[data-page="owner"] .owner-overview .stat{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.085);background:linear-gradient(145deg,rgba(255,156,220,.075),rgba(168,111,223,.07)),#21162d;border-radius:18px;box-shadow:none}
+body[data-page="owner"] .owner-section{padding:clamp(15px,2.5vw,25px);border:1px solid rgba(255,255,255,.09);border-radius:22px;background:linear-gradient(145deg,rgba(39,26,55,.98),rgba(24,16,35,.98));box-shadow:0 14px 35px rgba(0,0,0,.12)}
+body[data-page="owner"] .owner-section h2{font-size:clamp(20px,2.5vw,27px)}
+body[data-page="owner"] .owner-row{gap:12px;border-radius:15px;background:rgba(255,255,255,.025)}
+body[data-page="owner"] .owner-row .btn,body[data-page="admin"] .btn{min-height:40px}
+body[data-page="admin"] #app>.pagePanel{border:1px solid rgba(255,156,220,.15);box-shadow:0 24px 70px rgba(0,0,0,.2)}
+body[data-page="admin"] #app .cards{align-items:stretch}
+body[data-page="admin"] #app .card{display:flex;flex-direction:column;gap:8px;min-width:0}
+body[data-page="admin"] #app .card p{line-height:1.8;overflow-wrap:anywhere}
+body[data-page="admin"] #app .card .row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:12px}
+body[data-page="admin"] #app .card .row-actions .btn{flex:1}
+body[data-page="tickets"] #app .ticket-open,body[data-page="tickets"] #app .ticketRow{transition:border-color .16s ease,background .16s ease}
+body[data-page="tickets"] #app .ticket-open:hover{border-color:rgba(255,156,220,.3);background:rgba(255,156,220,.06)}
+.game-create-panel{box-shadow:0 20px 55px rgba(0,0,0,.16)}
+.game-session-form select,.game-session-form input{transition:border-color .15s ease,box-shadow .15s ease}
+.game-session-form select:focus,.game-session-form input:focus{border-color:#ff9cde;box-shadow:0 0 0 3px rgba(255,156,220,.09);outline:0}
+.game-create-submit:disabled{opacity:.72;cursor:wait}
+#gameCreateStatus{padding:0 2px;line-height:1.7;overflow-wrap:anywhere}
+.pulse-section{position:relative;padding:clamp(16px,3vw,26px);border:1px solid rgba(255,255,255,.07);border-radius:25px;background:linear-gradient(145deg,rgba(255,255,255,.025),rgba(168,111,223,.025))}
+.pulse-grid{gap:12px}
+.pulse-card{position:relative;min-width:0;overflow:hidden;border:1px solid rgba(255,255,255,.085);border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.015));box-shadow:0 12px 35px rgba(0,0,0,.13);transition:transform .18s ease,border-color .18s ease}
+.pulse-card:hover{transform:translateY(-3px);border-color:rgba(255,156,220,.25)}
+.pulse-copy b{font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.about-section{margin-bottom:22px}
+.about-banner{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:clamp(18px,4vw,35px)}
+.about-emblem{display:grid;place-items:center;width:clamp(90px,15vw,140px);aspect-ratio:1;border-radius:28px;background:linear-gradient(145deg,rgba(255,156,220,.18),rgba(168,111,223,.2));border:1px solid rgba(255,156,220,.22);font-size:36px;font-weight:950;color:#fff}
+.about-emblem span{color:#ffb8e7}
+.about-copy p{max-width:760px;line-height:2}
+.about-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.about-pills span{padding:7px 11px;border-radius:999px;border:1px solid rgba(255,156,220,.15);background:rgba(255,156,220,.06);font-size:12px;color:#f2dff0}
+@media(max-width:760px){.owner-console-nav{top:70px;margin-inline:-4px}.about-banner{grid-template-columns:1fr}.about-emblem{width:75px;border-radius:20px;font-size:25px}body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){#sidebar{width:min(360px,92vw)}.owner-console-nav{top:66px}.owner-console-nav button{padding:9px 12px;font-size:12px}.pulse-section{padding:13px}.pulse-grid{grid-template-columns:1fr 1fr}.pulse-card{padding:13px}.pulse-copy b{font-size:24px}body[data-page="admin"] #app .stats{grid-template-columns:1fr 1fr}}
