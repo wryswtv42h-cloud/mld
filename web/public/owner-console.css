@@ -586,3 +586,32 @@ body[data-page="owner"] .owner-section button:focus-visible { outline:2px solid 
  body[data-page="owner"] .owner-row .row-actions,
  body[data-page="owner"] .owner-row > button { width:100%; }
 }
+
+
+/* MLD Owner Console v2 — clear hierarchy, compact controls, mobile-first */
+body[data-page="owner"] #app{max-width:1240px;margin-inline:auto;padding:clamp(12px,2.5vw,28px)}
+body[data-page="owner"] #app>.pagePanel{overflow:visible;background:transparent;border:0;box-shadow:none;padding:0}
+body[data-page="owner"] #app>.pagePanel>.pageHead,
+body[data-page="owner"] #app>.pagePanel>.page-header{padding:clamp(20px,4vw,36px);border-radius:26px;background:radial-gradient(ellipse at 85% 0%,rgba(255,156,222,.20),transparent 42%),radial-gradient(ellipse at 8% 100%,rgba(142,109,255,.18),transparent 42%),linear-gradient(135deg,#21142f,#110b1c);border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 55px rgba(0,0,0,.22);margin-bottom:18px}
+body[data-page="owner"] .owner-console-nav{top:68px;gap:7px;padding:9px;border-radius:18px;background:rgba(15,10,24,.96);border-color:rgba(255,156,222,.22);box-shadow:0 14px 32px rgba(0,0,0,.22);overscroll-behavior-x:contain}
+body[data-page="owner"] .owner-console-nav button{min-height:44px;padding:10px 15px;border-radius:13px;font-size:13px;white-space:nowrap;transition:background .15s ease,border-color .15s ease}
+body[data-page="owner"] .owner-console-nav button.is-current{background:linear-gradient(135deg,rgba(255,156,222,.22),rgba(142,109,255,.20));border-color:rgba(255,156,222,.62);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)}
+body[data-page="owner"] .owner-overview .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin:14px 0 22px}
+body[data-page="owner"] .owner-overview .stat{min-width:0;padding:19px;border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.10);box-shadow:0 12px 28px rgba(0,0,0,.12)}
+body[data-page="owner"] .owner-overview .stat>b{display:block;font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.1;color:#ffb8e8;font-variant-numeric:tabular-nums}
+body[data-page="owner"] .owner-overview .stat>small{display:block;margin-top:9px;color:#d8cce3;font-weight:700}
+body[data-page="owner"] .owner-section{padding:clamp(16px,3vw,26px);border-radius:22px;border:1px solid rgba(255,255,255,.11);background:linear-gradient(145deg,rgba(37,25,55,.98),rgba(18,12,28,.98));box-shadow:0 16px 42px rgba(0,0,0,.17);scroll-margin-top:145px}
+body[data-page="owner"] .owner-section>h2{margin-bottom:18px;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.09);font-size:clamp(1.05rem,2.5vw,1.4rem)}
+body[data-page="owner"] .owner-row{border-radius:16px;border-color:rgba(255,255,255,.09);background:rgba(255,255,255,.035);transition:border-color .15s ease,background .15s ease}
+body[data-page="owner"] .owner-row:focus-within,body[data-page="owner"] .owner-row:hover{border-color:rgba(255,156,222,.30);background:rgba(255,156,222,.045)}
+body[data-page="owner"] .owner-row .row-actions{display:flex;flex-wrap:wrap;gap:8px}
+body[data-page="owner"] .owner-section button,body[data-page="owner"] .owner-console-nav button{min-height:42px;touch-action:manipulation;pointer-events:auto;cursor:pointer}
+body[data-page="owner"] .owner-section button:disabled{opacity:.6;cursor:wait}
+body[data-page="owner"] .owner-section input,body[data-page="owner"] .owner-section select,body[data-page="owner"] .owner-section textarea{min-height:44px;border-radius:13px;background:#100a19;border:1px solid rgba(255,255,255,.14);color:#fff8ff}
+body[data-page="owner"] .owner-section input:focus,body[data-page="owner"] .owner-section select:focus,body[data-page="owner"] .owner-section textarea:focus{outline:2px solid rgba(255,156,222,.4);outline-offset:1px}
+body[data-page="owner"] .owner-account{display:flex;align-items:center;gap:12px;min-width:0}
+body[data-page="owner"] .owner-account img{width:44px;height:44px;flex:0 0 44px;object-fit:cover;border-radius:50%;border:1px solid rgba(255,156,222,.4)}
+body[data-page="owner"] .owner-account>div{min-width:0;overflow-wrap:anywhere}
+body[data-page="owner"] .owner-section [hidden],body[data-page="owner"] .owner-overview[hidden]{display:none!important}
+body[data-page="owner"] .owner-console-nav button:focus-visible,body[data-page="owner"] .owner-section button:focus-visible{outline:2px solid #ff9cde;outline-offset:2px}
+@media(max-width:680px){body[data-page="owner"] #app{padding:10px}body[data-page="owner"] .owner-console-nav{top:64px;margin-inline:0;display:flex;flex-wrap:nowrap}body[data-page="owner"] .owner-console-nav button{flex:0 0 auto;font-size:12px;padding:10px 12px}body[data-page="owner"] .owner-section{padding:14px;border-radius:18px}body[data-page="owner"] .owner-row{padding:12px}body[data-page="owner"] .owner-row .row-actions{width:100%}body[data-page="owner"] .owner-row .row-actions button,body[data-page="owner"] .owner-row .row-actions a{flex:1 1 120px;text-align:center}}
