@@ -54,7 +54,9 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/', (req, res, next) => {
-  if (!dbReady && req.path !== '/public/server' && req.path !== '/public/members' && req.path !== '/public/roles') {
+  const originalPath = String(req.originalUrl || '').split('?')[0];
+  const publicDuringStartup = ['/api/public/server', '/api/public/members', '/api/public/roles'].includes(originalPath);
+  if (!dbReady && !publicDuringStartup) {
     return res.status(503).json({ error: 'الخدمة ما زالت تجهز قاعدة البيانات، حاول بعد لحظات' });
   }
   next();
