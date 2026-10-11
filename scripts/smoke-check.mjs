@@ -41,7 +41,7 @@ assert.match(app, /await getPageLocksSnapshot\(\)/, 'Page locks must be fetched 
 assert.match(app, /authSnapshotToken===token/, 'Session refresh cache must be bound to the active login token.');
 assert.ok(app.includes('["8ball","سؤال وجواب"]'), 'The dashboard toggle must use the same 8ball command name as the handler.');
 assert.ok(app.includes('["servericon","أيقونة السيرفر"]'), 'The dashboard must expose toggles for implemented utility commands.');
-assert.ok(html.includes('app.js?v=20261011-bot-command-options1'), 'The browser cache key must change when app behavior changes.');
+assert.ok(html.includes('app.js?v=20261011-member-modal-single-handler1'), 'The browser cache key must change when app behavior changes.');
 assert.match(app, /game-seat-avatar/, 'Game table seats must render player avatars.');
 assert.match(app, /data-member="'\+esc\(p\.discordId\)/, 'Human player names at the table should open member profiles.');
 assert.match(gameRoute, /discordId:req\.user\.discord_id\|\|null/, 'New game sessions should retain the Discord ID used by profile lookups.');
@@ -51,6 +51,7 @@ assert.match(gameSocket, /avatar:socket\.user\?\.avatar\|\|null/, 'Socket joins 
 assert.match(app, /if\(p==="leaders"\)p="top"/, 'Legacy leaderboard route should resolve to the unified statistics page.');
 assert.match(app, /المتصدرون والإحصائيات/, 'The unified leaderboard should use a clear Arabic title.');
 assert.match(enhancements, /data\.siteProfile/, 'Member previews should include linked MLD profile data.');
+assert.ok(!app.includes('if(e.target.closest("[data-member]"))'), 'Only the enhancements module should own the member profile modal handler.');
 assert.ok(apiIndex.indexOf("app.use('/api/', (req, res, next)") < apiIndex.indexOf("app.use('/api/auth', authRoutes)"), 'Database readiness middleware must run before API routes.');
 assert.match(apiIndex, /req\.originalUrl/, 'Startup exemptions must use the original URL inside mounted middleware.');
 
