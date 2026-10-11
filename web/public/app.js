@@ -394,6 +394,16 @@ function setupOwnerConsole(){
   nav.querySelectorAll("[data-owner-jump]").forEach(button=>{const active=button.dataset.ownerJump===key;button.classList.toggle("is-current",active);button.setAttribute("aria-current",active?"page":"false")});
  };
  nav.dataset.ready="yes";activate("overview");
+ nav.addEventListener("click",event=>{
+  const button=event.target instanceof Element?event.target.closest("[data-owner-jump]"):null;
+  if(!button||!nav.contains(button))return;
+  const key=button.dataset.ownerJump;
+  activate(key);
+  requestAnimationFrame(()=>{
+   const target=key==="overview"?overview:document.getElementById("owner-"+key);
+   target?.scrollIntoView({behavior:"smooth",block:"start"});
+  });
+ });
 }
 async function render(){clearTimeout(broadcastPollTimer);clearTimeout(chatPollTimer);clearInterval(gameSessionsTimer);gameSessionsTimer=null;const page=state.page,previousPage=document.body.dataset.page||'',keepScroll=previousPage===page,scrollBefore=window.scrollY;document.body.dataset.page=page;if(page==='home'){renderAnnouncement();$("#app").innerHTML=home();loadStats();if(keepScroll)requestAnimationFrame(()=>window.scrollTo(0,scrollBefore));return}const appRoot=$("#app");if(appRoot)appRoot.innerHTML='<section class="panel page-loading"><span class="loading-orbit"></span><b>نجهّز لك '+esc((pages.find(x=>x[0]===page)||[])[1]||'الصفحة')+'</b><small>لحظة واحدة…</small></section>';try{const html=await buildPage(page);if(state.page!==page)return;if(appRoot)appRoot.innerHTML=html;bindPage(page);if(page==="owner"){setupOwnerConsole();pollBroadcastJobs()}if(page==="chat")startChatPolling();if(keepScroll)requestAnimationFrame(()=>window.scrollTo(0,scrollBefore))}catch(e){if(state.page!==page)return;if(appRoot)appRoot.innerHTML='<section class="panel pagePanel"><h1>تعذر التحميل</h1><p class="muted">'+esc(e.message)+'</p><button class="btn" type="button" data-action="retry-page">إعادة المحاولة ↻</button></section>'}}
 function chatMessageHtml(m){return '<article class="ig-message"><div class="ig-avatar">'+(m.avatar?'<img src="'+esc(m.avatar)+'" alt="">':esc((m.sender_name||"م").slice(0,1)))+'</div><div class="ig-bubble-wrap"><div class="ig-message-meta"><b>'+esc(m.sender_name||"عضو")+'</b><span class="ig-role '+(m.is_owner?"owner":String(m.role||"").toLowerCase()==="admin"?"admin":"member")+'">'+(m.is_owner?"أونر":String(m.role||"").toLowerCase()==="admin"?"إداري":"عضو")+'</span></div>'+(m.reply_content?'<div class="ig-reply-preview">رد على '+esc(m.reply_sender||"عضو")+'<br>'+esc(m.reply_content)+'</div>':"")+'<div class="ig-bubble">'+esc(m.content)+'</div><div class="ig-message-actions"><button type="button" data-chat-reply="'+esc(m.id)+'" data-chat-content="'+esc(m.content)+'">رد</button>'+(String(m.sender_id)===String(state.user?.id)||state.user?.is_owner||String(state.user?.role||"").toLowerCase()==="admin"?'<button type="button" data-chat-delete="'+esc(m.id)+'">حذف</button>':"")+'</div></div></article>'}
