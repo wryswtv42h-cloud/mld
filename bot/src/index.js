@@ -338,10 +338,13 @@ function installBotFeatures(client,bot){
     let prefix=matchedPrefix||defaultPrefix;
     if(/^(?:help|مساعدة|هيلب)$/i.test(content.trim())){if(client.mldConfig?.commandSettings?.help?.enabled===false)return message.reply('هذا الأمر معطل من لوحة التحكم.').catch(()=>{});return message.reply({...buildUserHelpPayload(client,message.author.id),allowedMentions:{parse:[]}}).catch(()=>{});}
     const words=String(config.blockedWords||'').split(/[\n,،]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
-    const autoMod=type==='automod'||config.automodEnabled===true;
-    if(autoMod){
-      const linksOn=config.antiLinksEnabled===undefined?type==='automod':!!config.antiLinksEnabled;
-      const spamOn=config.antiSpamEnabled===undefined?type==='automod':!!config.antiSpamEnabled;
+    const defaultProtectionPrefix=String(config.prefix||'!').slice(0,4)||'!';
+    const protectionPrefixes=[defaultProtectionPrefix,...Object.values(config.prefixes||{}).map(value=>String(value||'').trim().slice(0,4)).filter(Boolean)];
+    const isCommandMessage=protectionPrefixes.some(value=>content.startsWith(value))||!!(client.user&&new RegExp('^<@!?'+client.user.id+'>\\s*').test(content));
+    const autoMod=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true;
+    if(autoMod&&!isCommandMessage){
+      const linksOn=config.antiLinksEnabled===undefined?autoMod:!!config.antiLinksEnabled;
+      const spamOn=config.antiSpamEnabled===undefined?autoMod:!!config.antiSpamEnabled;
       const linkPattern=/(https?:|discord\.gg|www\.)/i;
       const key=message.channel.id+':'+message.author.id,now=Date.now();
       const history=(client.mldRecentMessages.get(key)||[]).filter(t=>now-t<8000);history.push(now);client.mldRecentMessages.set(key,history);
@@ -393,7 +396,7 @@ function installBotFeatures(client,bot){
       معلوماتالسيرفر:'serverinfo',معلوماتالبوت:'botinfo',مدةالتشغيل:'uptime',
       عددالاعضاء:'membercount',صورة:'avatar',بنر:'banner',دعوة:'invite',
       رصيد:'رصيد',فلوسي:'رصيد',مكافأة:'يومي',مكافاه:'يومي',تحويلفلوس:'تحويل',
-      توب:'توب',العاب:'games',الألعاب:'games',حماية:'protection',حمايه:'protection',
+      توب:'توب',العاب:'games',الألعاب:'games',حماية:'protection',حمايه:'protection',منعروابط:'antilink',منعالروابط:'antilink',منعالسبام:'antispam',مكافحةالسبام:'antispam',كلمةممنوعة:'blockedword',
       روماتخاصة:'rooms',رومخاص:'rooms',شاتخاص:'rooms',تذكرة:'ticket',تقديم:'apply',
       اطردني:'kick',طردعضو:'kick',تقلع:'kick',اخراج:'kick',اخراجعضو:'kick',حظرعضو:'ban',باند:'ban',
       الغالحظر:'unban',الغاءالحظر:'unban',مسحرسائل:'clear',احذف:'clear',حذف:'clear',نظف:'clear',
@@ -451,12 +454,33 @@ function installBotFeatures(client,bot){
       kick:PermissionFlagsBits.KickMembers,ban:PermissionFlagsBits.BanMembers,clear:PermissionFlagsBits.ManageMessages,say:PermissionFlagsBits.ManageMessages,
       announce:PermissionFlagsBits.ManageMessages,slowmode:PermissionFlagsBits.ManageChannels,lock:PermissionFlagsBits.ManageChannels,unlock:PermissionFlagsBits.ManageChannels,
       timeout:PermissionFlagsBits.ModerateMembers,untimeout:PermissionFlagsBits.ModerateMembers,warn:PermissionFlagsBits.ModerateMembers,
-      nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,rolecreate:PermissionFlagsBits.ManageRoles,'انشاءرتبة':PermissionFlagsBits.ManageRoles,roledelete:PermissionFlagsBits.ManageRoles,'حذفرتبة':PermissionFlagsBits.ManageRoles,unban:PermissionFlagsBits.BanMembers,'فكحظر':PermissionFlagsBits.BanMembers,allbans:PermissionFlagsBits.BanMembers,'قائمةالمحظورين':PermissionFlagsBits.BanMembers,move:PermissionFlagsBits.MoveMembers,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite
+      nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,rolecreate:PermissionFlagsBits.ManageRoles,'انشاءرتبة':PermissionFlagsBits.ManageRoles,roledelete:PermissionFlagsBits.ManageRoles,'حذفرتبة':PermissionFlagsBits.ManageRoles,unban:PermissionFlagsBits.BanMembers,'فكحظر':PermissionFlagsBits.BanMembers,allbans:PermissionFlagsBits.BanMembers,'قائمةالمحظورين':PermissionFlagsBits.BanMembers,move:PermissionFlagsBits.MoveMembers,protection:PermissionFlagsBits.ManageGuild,antilink:PermissionFlagsBits.ManageGuild,antispam:PermissionFlagsBits.ManageGuild,blockedword:PermissionFlagsBits.ManageGuild,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite
     }[command];
     if(requiredPermission){
       if(!message.member.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_member_permission'});return message.reply('ما عندك صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
       const botMember=message.guild.members.me;
       if(!botMember?.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_bot_permission'});return message.reply('البوت نفسه يحتاج صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
+    }
+    const saveProtectionSettings=async(next,action,details={})=>{if(!pool)throw new Error('قاعدة البيانات غير متاحة لحفظ إعدادات الحماية');await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);client.mldConfig=next;await writeRuntimeLog(client.mldBotId,message.author.id,action,{guildId:message.guild.id,...details});};
+    if(command==='protection'){
+      const mode=String(args[0]||'').toLowerCase();
+      if(!mode){const enabled=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true;return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🛡️ حالة الحماية').addFields({name:'الحماية التلقائية',value:enabled?'مفعلة':'معطلة',inline:true},{name:'منع الروابط',value:(config.antiLinksEnabled===undefined?enabled:!!config.antiLinksEnabled)?'مفعل':'معطل',inline:true},{name:'مكافحة السبام',value:(config.antiSpamEnabled===undefined?enabled:!!config.antiSpamEnabled)?'مفعلة':'معطلة',inline:true},{name:'الكلمات الممنوعة',value:String(words.length),inline:true})],allowedMentions:{parse:[]}});}
+      const enabled=['on','enable','تشغيل','تفعيل'].includes(mode);if(!enabled&&!['off','disable','إيقاف','تعطيل'].includes(mode))return message.reply('استخدم: '+prefix+'protection on أو off');
+      try{const next={...config,automodEnabled:enabled};if(!enabled){next.antiLinksEnabled=false;next.antiSpamEnabled=false;}await saveProtectionSettings(next,'bot.protection_toggle',{enabled});return message.reply(enabled?'🛡️ تم تفعيل الحماية التلقائية.':'🛡️ تم إيقاف الحماية التلقائية.');}catch(error){return message.reply(error.message||'تعذر حفظ إعدادات الحماية.');}
+    }
+    if(command==='antilink'||command==='antispam'){
+      const key=command==='antilink'?'antiLinksEnabled':'antiSpamEnabled',label=command==='antilink'?'منع الروابط':'مكافحة السبام',mode=String(args[0]||'').toLowerCase();
+      if(!mode){const enabled=config[key]===undefined?(config.automodEnabled===undefined?type==='automod':!!config.automodEnabled):!!config[key];return message.reply('🛡️ '+label+': '+(enabled?'مفعل':'معطل')+'. استخدم '+prefix+command+' on/off');}
+      const enabled=['on','enable','تشغيل','تفعيل'].includes(mode);if(!enabled&&!['off','disable','إيقاف','تعطيل'].includes(mode))return message.reply('استخدم: '+prefix+command+' on أو off');
+      try{const next={...config,[key]:enabled};await saveProtectionSettings(next,'bot.protection_setting',{setting:key,enabled});return message.reply('🛡️ '+label+': '+(enabled?'مفعل':'معطل'));}catch(error){return message.reply(error.message||'تعذر حفظ الإعداد.');}
+    }
+    if(command==='blockedword'){
+      const action=String(args[0]||'').toLowerCase(),word=args.slice(1).join(' ').trim().slice(0,60),current=String(config.blockedWords||'').split(/[\\n,،]/).map(value=>value.trim()).filter(Boolean);
+      if(!action||['list','عرض','قائمة'].includes(action))return message.reply('🚫 الكلمات الممنوعة: '+(current.join('، ')||'لا توجد كلمات')+'\\nالاستخدام: '+prefix+'blockedword add/remove كلمة');
+      if(['add','إضافة','اضف'].includes(action)){if(!word)return message.reply('اكتب الكلمة بعد add');if(current.some(value=>value.toLowerCase()===word.toLowerCase()))return message.reply('الكلمة موجودة مسبقًا.');if(current.length>=100)return message.reply('وصلت إلى الحد الأقصى (100 كلمة).');current.push(word);}
+      else if(['remove','delete','حذف','إزالة'].includes(action)){if(!word)return message.reply('اكتب الكلمة بعد remove');const filtered=current.filter(value=>value.toLowerCase()!==word.toLowerCase());if(filtered.length===current.length)return message.reply('الكلمة غير موجودة.');current.splice(0,current.length,...filtered);}
+      else return message.reply('استخدم: '+prefix+'blockedword add/remove كلمة');
+      try{const next={...config,blockedWords:current.join('\\n').slice(0,2000)};await saveProtectionSettings(next,'bot.protection_word_'+action,{word});return message.reply('🚫 تم تحديث قائمة الكلمات الممنوعة.');}catch(error){return message.reply(error.message||'تعذر حفظ قائمة الكلمات.');}
     }
     // Practical utility commands shared by all MLD bot types.
     if(['servericon','ايقونة','أيقونة','صورةالسيرفر'].includes(command)){
