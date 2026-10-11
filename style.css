@@ -30,3 +30,6 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 #authMessage,#registerMessage{min-height:1.4em;margin:4px 0 0;color:#ffcaec;font-size:.9rem;line-height:1.7;overflow-wrap:anywhere}
 .auth-foot{display:block;margin-top:12px;color:#bcaec7;line-height:1.8}
 @media(max-width:520px){.auth-dialog{width:calc(100% - 28px);max-width:420px;padding:24px 18px}.auth-tabs{margin-top:10px}.auth-dialog form input{font-size:16px}}
+
+/* Keep authentication reachable on phones; previously the mobile rule hid every header button. */
+@media(max-width:700px){.actions>#loginOpen{display:inline-flex;align-items:center;justify-content:center;padding:9px 11px;min-height:39px;font-size:11px;white-space:nowrap}.actions{gap:7px}.top{padding-inline:4%}.brand{gap:7px}.brand img{width:37px;height:37px}.brand b{font-size:16px}}
