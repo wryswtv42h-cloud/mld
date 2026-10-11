@@ -1,8 +1,5 @@
 (()=>{"use strict";
-// Prevent action buttons without an explicit type from accidentally submitting
-// a surrounding form on mobile; real form submits already declare type="submit".
-document.addEventListener("click",event=>{const button=event.target instanceof Element?event.target.closest("button"):null;if(!button||button.hasAttribute("type"))return;const hasDataAction=[...button.attributes].some(attr=>attr.name.startsWith("data-"));if(hasDataAction)button.type="button";},true);
-// Keep action buttons from accidentally submitting their surrounding forms (a common cause of iPhone page refreshes).
+// Prevent action buttons from accidentally submitting forms on mobile.
 document.addEventListener("click",event=>{const button=event.target instanceof Element?event.target.closest("button"):null;if(!button||button.hasAttribute("type"))return;const hasDataAction=[...button.attributes].some(attr=>attr.name.startsWith("data-"));if(hasDataAction)button.type="button";},true);
 
 // Prevent accidental browser navigation from any dynamic form. The app's submit
