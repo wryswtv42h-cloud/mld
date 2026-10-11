@@ -390,7 +390,7 @@ function installBotFeatures(client,bot){
       قفل:'lock',اقفل:'lock',فتح:'unlock',افتح:'unlock',بطيء:'slowmode',بطء:'slowmode',
       تحذير:'warn',انذار:'warn',انذار:'warn',اضفرتبة:'roleadd',شيلرتبة:'roleremove',
       احذفرتبة:'roledelete',انشئرتبة:'rolecreate',نقل:'move',نقلني:'moveme',
-      معلوماتالسيرفر:'serverinfo',معلوماتالبوت:'botinfo',مدةالتشغيل:'uptime',
+      معلوماتالسيرفر:'serverinfo',معلوماتالبوت:'botinfo',مدةالتشغيل:'uptime',وقت:'time',الوقت:'time',مدير:'owner',مالك:'owner',معلومات:'serverinfo',
       عددالاعضاء:'membercount',صورة:'avatar',بنر:'banner',دعوة:'invite',
       رصيد:'رصيد',فلوسي:'رصيد',مكافأة:'يومي',مكافاه:'يومي',تحويلفلوس:'تحويل',
       توب:'توب',العاب:'games',الألعاب:'games',حماية:'protection',حمايه:'protection',
@@ -522,6 +522,16 @@ function installBotFeatures(client,bot){
       const next=type==='games'?{...config,prefixes:{...(config.prefixes||{}),games:nextPrefix}}:type==='bank'?{...config,prefixes:{...(config.prefixes||{}),bank:nextPrefix}}:{...config,prefix:nextPrefix};
       try{if(pool)await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);client.mldConfig=next;return message.reply('✅ تم تغيير بادئة الأوامر إلى: `'+nextPrefix+'`');}
       catch(error){console.error('Prefix save:',error.message);return message.reply('تعذر حفظ البادئة. حاول مرة ثانية.');}
+    }
+    if(command==='time'||command==='وقت'||command==='الوقت'){
+      const now=new Date();
+      const stamp=Math.floor(now.getTime()/1000);
+      return message.reply({content:'🕒 الوقت الحالي: <t:'+stamp+':F> · <t:'+stamp+':R>',allowedMentions:{parse:[]}});
+    }
+    if(command==='owner'||command==='مدير'||command==='مالك'){
+      const owner=await message.guild.fetchOwner().catch(()=>null);
+      if(!owner)return message.reply('تعذر جلب مالك السيرفر الآن.');
+      return message.reply({content:'👑 مالك السيرفر: '+owner.user.toString()+'\nالمعرّف: `'+owner.id+'`',allowedMentions:{users:[owner.id]}});
     }
     if(command==='uptime'||command==='مدةالتشغيل'){
       const seconds=Math.max(0,Math.floor((Date.now()-(client.readyTimestamp||Date.now()))/1000));
