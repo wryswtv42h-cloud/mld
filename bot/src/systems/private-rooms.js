@@ -77,24 +77,25 @@ export function setupPrivateRooms(client){
         return interaction.showModal(modal);
       }
       if(interaction.isModalSubmit()&&interaction.customId.startsWith('mld-private:member:')){
+        await interaction.deferReply({ephemeral:true});
         const [, ,action,channelId]=interaction.customId.split(':');
         if(!['add','kick'].includes(action))return;
         const channel=await interaction.guild?.channels.fetch(channelId).catch(()=>null);
-        if(!channel||channel.type!==ChannelType.GuildText||!String(channel.topic||'').startsWith('MLD_PRIVATE:'))return interaction.reply({content:'الروم الخاص غير موجود.',ephemeral:true});
-        if(!canManageRoom(interaction,channel))return interaction.reply({content:'ما عندك صلاحية إدارة هذا الروم.',ephemeral:true});
+        if(!channel||channel.type!==ChannelType.GuildText||!String(channel.topic||'').startsWith('MLD_PRIVATE:'))return interaction.editReply({content:'الروم الخاص غير موجود.',ephemeral:true});
+        if(!canManageRoom(interaction,channel))return interaction.editReply({content:'ما عندك صلاحية إدارة هذا الروم.',ephemeral:true});
         const targetId=memberIdFrom(interaction.fields.getTextInputValue('memberId'));
-        if(!targetId)return interaction.reply({content:'المعرّف غير صحيح. استخدم منشن العضو أو معرّفه الرقمي.',ephemeral:true});
-        if(targetId===String(channel.topic).slice('MLD_PRIVATE:'.length))return interaction.reply({content:'صاحب الروم لا يمكن طرده من رومه.',ephemeral:true});
+        if(!targetId)return interaction.editReply({content:'المعرّف غير صحيح. استخدم منشن العضو أو معرّفه الرقمي.',ephemeral:true});
+        if(targetId===String(channel.topic).slice('MLD_PRIVATE:'.length))return interaction.editReply({content:'صاحب الروم لا يمكن طرده من رومه.',ephemeral:true});
         const target=await interaction.guild.members.fetch(targetId).catch(()=>null);
-        if(!target)return interaction.reply({content:'هذا العضو غير موجود في السيرفر.',ephemeral:true});
+        if(!target)return interaction.editReply({content:'هذا العضو غير موجود في السيرفر.',ephemeral:true});
         if(action==='add'){
           await channel.permissionOverwrites.edit(target.id,{ViewChannel:true,SendMessages:true,ReadMessageHistory:true,AttachFiles:true,EmbedLinks:true});
           await channel.send({content:'➕ تمت إضافة '+target.toString()+' إلى الروم الخاص.',allowedMentions:{users:[target.id]}});
-          return interaction.reply({content:'تمت إضافة العضو للروم الخاص.',ephemeral:true});
+          return interaction.editReply({content:'تمت إضافة العضو للروم الخاص.',ephemeral:true});
         }
         await channel.permissionOverwrites.edit(target.id,{ViewChannel:false,SendMessages:false,ReadMessageHistory:false});
         await channel.send({content:'👤 تمت إزالة '+target.toString()+' من الروم الخاص.',allowedMentions:{parse:[]}});
-        return interaction.reply({content:'تم طرد العضو من الروم الخاص فقط، ولم يتم طرده من السيرفر.',ephemeral:true});
+        return interaction.editReply({content:'تم طرد العضو من الروم الخاص فقط، ولم يتم طرده من السيرفر.',ephemeral:true});
       }
     }catch(error){
       console.error('MLD private rooms:',error?.stack||error);
