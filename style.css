@@ -15,3 +15,18 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 @media(max-width:600px){.pages-drawer{padding:18px 15px}.drawer-links button{padding:9px}.preview-content{margin-top:35px}.preview-cards{grid-template-columns:1fr;gap:10px}.preview-card{min-height:120px}.preview-content h2{font-size:38px}}
 @media(prefers-reduced-motion:reduce){.logo-frame,.float,.orbit,body:before{animation:none!important}}
 @media(min-width:701px){.hamburger{display:block}.actions{gap:10px}}
+/* Authentication: responsive login and Discord-verified signup */
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 18px;padding:5px;border:1px solid rgba(255,255,255,.09);border-radius:14px;background:rgba(255,255,255,.035)}
+.auth-tab{border:0;border-radius:10px;padding:11px 10px;color:var(--muted,#b8a9c3);background:transparent;font:inherit;font-weight:800;cursor:pointer;transition:background .2s,color .2s,transform .2s}
+.auth-tab.active{background:linear-gradient(120deg,#ff9cde,#a86fdf);color:#180d20;box-shadow:0 7px 24px #a86fdf2b}
+.auth-tab:active{transform:scale(.98)}
+.auth-dialog form[hidden],.auth-dialog [hidden]{display:none!important}
+.auth-dialog form{display:flex;flex-direction:column;gap:9px}
+.auth-dialog form label{margin-top:5px;font-size:.9rem;font-weight:700;color:#f4eaf8}
+.auth-dialog form input{box-sizing:border-box;width:100%;min-height:46px;padding:12px 14px;border:1px solid rgba(255,255,255,.13);border-radius:12px;background:rgba(255,255,255,.045);color:#fff;font:inherit;outline:none;transition:border-color .2s,box-shadow .2s}
+.auth-dialog form input:focus{border-color:#ff9cde;box-shadow:0 0 0 3px #ff9cde22}
+.auth-dialog form input::placeholder{color:#9f90aa}
+.auth-dialog .auth-submit{margin-top:10px;min-height:48px}
+#authMessage,#registerMessage{min-height:1.4em;margin:4px 0 0;color:#ffcaec;font-size:.9rem;line-height:1.7;overflow-wrap:anywhere}
+.auth-foot{display:block;margin-top:12px;color:#bcaec7;line-height:1.8}
+@media(max-width:520px){.auth-dialog{width:calc(100% - 28px);max-width:420px;padding:24px 18px}.auth-tabs{margin-top:10px}.auth-dialog form input{font-size:16px}}
