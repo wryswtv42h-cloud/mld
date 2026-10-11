@@ -336,7 +336,7 @@ function installBotFeatures(client,bot){
     const allPrefixes=[...new Set([defaultPrefix,...Object.values(prefixMap).filter(Boolean)])].sort((a,b)=>b.length-a.length);
     const matchedPrefix=allPrefixes.find(value=>content.startsWith(value))||'';
     let prefix=matchedPrefix||defaultPrefix;
-    if(/^(?:help|مساعدة|هيلب)$/i.test(content.trim()))return message.reply({...buildUserHelpPayload(client,message.author.id),allowedMentions:{parse:[]}}).catch(()=>{});
+    if(/^(?:help|مساعدة|هيلب)$/i.test(content.trim())){if(client.mldConfig?.commandSettings?.help?.enabled===false)return message.reply('هذا الأمر معطل من لوحة التحكم.').catch(()=>{});return message.reply({...buildUserHelpPayload(client,message.author.id),allowedMentions:{parse:[]}}).catch(()=>{});}
     const words=String(config.blockedWords||'').split(/[\n,،]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
     const autoMod=type==='automod'||config.automodEnabled===true;
     if(autoMod){
