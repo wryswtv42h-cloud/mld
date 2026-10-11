@@ -921,3 +921,38 @@ body[data-page="owner"] #app .empty { border:1px dashed rgba(255,255,255,.14); b
 @media(prefers-reduced-motion:reduce) {
   body[data-page="owner"] *, body[data-page="owner"] *::before, body[data-page="owner"] *::after { transition:none!important; scroll-behavior:auto!important; }
 }
+
+
+/* MLD OWNER CONSOLE — redesigned premium control center */
+body[data-page="owner"] #app { width:min(1500px,calc(100% - 28px)); padding-top:22px; }
+body[data-page="owner"] #app > .pagePanel,
+body[data-page="owner"] #app > .panel { overflow:clip; border:1px solid rgba(255,156,222,.16); background:linear-gradient(145deg,rgba(37,25,52,.97),rgba(20,14,30,.98)); box-shadow:0 22px 70px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.035); }
+body[data-page="owner"] .owner-console-nav { top:80px; padding:9px; gap:7px; border-radius:18px; border-color:rgba(255,156,222,.2); background:rgba(16,11,24,.96); box-shadow:0 12px 34px rgba(0,0,0,.3); }
+body[data-page="owner"] .owner-console-nav button { min-height:44px; padding:10px 15px; border-radius:12px; white-space:nowrap; transition:transform .16s ease,background .16s ease,border-color .16s ease; }
+body[data-page="owner"] .owner-console-nav button:hover { transform:translateY(-1px); }
+body[data-page="owner"] .owner-overview .stats { grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+body[data-page="owner"] .owner-overview .stat { min-height:124px; border-radius:19px; border-color:rgba(255,156,222,.16); background:linear-gradient(145deg,rgba(255,156,222,.10),rgba(168,111,223,.08) 58%,rgba(255,255,255,.025)); }
+body[data-page="owner"] .owner-overview .stat b { font-size:clamp(1.65rem,3vw,2.45rem); letter-spacing:-.04em; }
+body[data-page="owner"] .owner-section { scroll-margin-top:145px; margin-top:18px; padding:clamp(16px,2vw,26px); border-radius:22px; border:1px solid rgba(255,255,255,.085); background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012)); }
+body[data-page="owner"] .owner-section > h2 { display:flex; align-items:center; gap:10px; margin:0 0 18px; padding-bottom:13px; border-bottom:1px solid rgba(255,156,222,.16); font-size:clamp(1.05rem,2vw,1.35rem); }
+body[data-page="owner"] .owner-section form { gap:12px; }
+body[data-page="owner"] .owner-section input:not([type="checkbox"]):not([type="radio"]):not([type="color"]), 
+body[data-page="owner"] .owner-section select,
+body[data-page="owner"] .owner-section textarea { min-height:44px; border:1px solid rgba(255,255,255,.12); border-radius:12px; background:rgba(9,7,15,.6); color:#fff8ff; padding:11px 13px; max-width:100%; }
+body[data-page="owner"] .owner-section textarea { min-height:100px; resize:vertical; }
+body[data-page="owner"] .owner-section input:focus-visible,
+body[data-page="owner"] .owner-section select:focus-visible,
+body[data-page="owner"] .owner-section textarea:focus-visible,
+body[data-page="owner"] .owner-section button:focus-visible { outline:2px solid #ff9cde; outline-offset:3px; }
+body[data-page="owner"] .owner-section button,
+body[data-page="owner"] .owner-console-nav button { touch-action:manipulation; }
+body[data-page="owner"] .owner-row,
+body[data-page="owner"] .ticketRow { border:1px solid rgba(255,255,255,.075); border-radius:14px; background:rgba(255,255,255,.025); padding:12px 14px; }
+body[data-page="owner"] .owner-row + .owner-row,
+body[data-page="owner"] .ticketRow + .ticketRow { margin-top:8px; }
+body[data-page="owner"] .owner-row .row-actions { gap:7px; }
+body[data-page="owner"] .owner-section button:not(.plain) { border-radius:12px; }
+body[data-page="owner"] .owner-section .danger,
+body[data-page="owner"] .owner-section button.danger { border-color:rgba(255,100,130,.3); }
+@media(max-width:900px){body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:600px){body[data-page="owner"] #app{width:calc(100% - 18px);padding-top:12px}body[data-page="owner"] .owner-console-nav{top:72px;margin:10px 0 14px;padding:7px}body[data-page="owner"] .owner-console-nav button{min-height:42px;padding:9px 12px;font-size:.84rem}body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}body[data-page="owner"] .owner-overview .stat{min-height:96px;padding:14px}body[data-page="owner"] .owner-section{padding:13px;border-radius:17px}body[data-page="owner"] .owner-row{padding:11px}}
