@@ -32,6 +32,8 @@ assert.match(html, /logo\.svg\.JPG/, 'The original logo must remain referenced.'
 assert.match(html, /rebuild-polish\.css/, 'The additive responsive stylesheet must be loaded.');
 assert.match(app, /const ownerView=.*role.*owner/, 'Owner role must bypass page maintenance locks.');
 assert.match(app, /await getPageLocksSnapshot\(\)/, 'Page locks must be fetched before visitor pages render.');
+assert.match(app, /authSnapshotToken===token/, 'Session refresh cache must be bound to the active login token.');
+assert.match(html, /app\.js\?v=20261011-auth-token-cache1/, 'The browser cache key must change when session refresh logic changes.');
 assert.match(app, /game-seat-avatar/, 'Game table seats must render player avatars.');
 assert.match(app, /data-member="'\+esc\(p\.discordId\)/, 'Human player names at the table should open member profiles.');
 assert.match(gameRoute, /discordId:req\.user\.discord_id\|\|null/, 'New game sessions should retain the Discord ID used by profile lookups.');
