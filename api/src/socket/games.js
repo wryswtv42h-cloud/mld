@@ -14,7 +14,7 @@ export function setupGameSocket(io,socket){
   let gameState=session.state;
   const botIndex=session.status==='playing'&&!asSpectator&&!existingPlayer?players.findIndex(p=>p.isBot===true||String(p.name||'').startsWith('بوت ')):-1;
   const mustSpectate=asSpectator||session.status==='finished'||(session.status==='playing'&&!existingPlayer&&botIndex<0)||players.length>=Number(session.max_players||4);
-  if(existingPlayer&&session.status==='playing'&&!asSpectator)players.push({...existingPlayer,socketId:socket.id,connected:true});
+  if(existingPlayer&&session.status==='playing'&&!asSpectator)players.push({...existingPlayer,avatar:socket.user?.avatar||existingPlayer.avatar||null,socketId:socket.id,connected:true});
   else if(botIndex>=0){const botName=players[botIndex].name;const swapped=replaceBot(gameState,botName,name);if(swapped.success){gameState=swapped.state;players[botIndex]={...player,isHost:String(session.host_id)===String(socket.user.id),connected:true};}else spectators.push({...player,isHost:false});}
   else if(mustSpectate||existingSpectator)spectators.push({...player,isHost:String(session.host_id)===String(socket.user.id)});
   else players.push({...player,isHost:String(session.host_id)===String(socket.user.id)});
