@@ -99,3 +99,26 @@ test('Jackaroo rejects a swap without a valid active opponent and keeps the card
   assert.equal(next.discard.length, 0);
   assert.equal(next.currentIndex, 0);
 });
+
+
+test('Jackaroo safely recycles the discard pile when replenishing a hand', () => {
+  const state = {
+    game: 'jaccaro',
+    players: ['A', 'B'],
+    hands: { A: [{ type: 'move', value: 1 }], B: [{ type: 'move', value: 2 }] },
+    deck: [],
+    discard: [{ type: 'move', value: 2 }, { type: 'skip' }],
+    marbles: {
+      A: { home: 0, track: 1, safe: 0, finished: 0 },
+      B: { home: 0, track: 5, safe: 0, finished: 0 }
+    },
+    currentIndex: 0,
+    finished: false,
+    winner: null,
+    log: []
+  };
+  const next = handleJaccaroAction(state, 'A', { type: 'play', cardIndex: 0 });
+  assert.equal(next.hands.A.length, 1);
+  assert.equal(next.discard.length, 1);
+  assert.equal(next.discard[0].type, 'move');
+});
