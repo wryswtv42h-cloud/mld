@@ -18,11 +18,13 @@ const GAMES = {
 
 export function getGameConfig(type){ return GAMES[type] || null; }
 
-export async function initGame(gameType,players){
+export async function initGame(gameType,players,options={}){
  const game=GAMES[gameType];if(!game)throw new Error('لعبة غير معروفة: '+gameType);
  const names=players.map(p=>typeof p==='string'?p:p.name).filter(Boolean).slice(0,game.max);
  if(names.length<game.min&&!game.bots)throw new Error(`تحتاج اللعبة إلى ${game.min} لاعبين حقيقيين على الأقل؛ البوتات غير مسموحة هنا`);
- const botPlayers=[];while(names.length<game.min&&game.bots){const n='بوت '+(botPlayers.length+1);names.push(n);botPlayers.push(n);}
+ const requested=Number(options.fillTo||game.min);
+ const target=game.bots?Math.min(game.max,Math.max(game.min,Number.isInteger(requested)?requested:game.min)):game.min;
+ const botPlayers=[];while(names.length<target&&game.bots){const n='بوت '+(botPlayers.length+1);names.push(n);botPlayers.push(n);}
  const state=await game.init(names.slice(0,game.max));state.lastMove=Date.now();state.botPlayers=botPlayers;return state;
 }
 
