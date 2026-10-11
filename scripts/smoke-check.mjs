@@ -61,6 +61,7 @@ assert.ok(bot.includes('function buildUserBotSlashCommands'), 'User-created bots
 assert.match(botServerInfo, /setName\('serverinfo'\)/, 'The approved server information slash command must exist.');
 assert.match(botBotInfo, /setName\('botinfo'\)/, 'The approved bot information slash command must exist.');
 assert.ok(bot.includes('client.on(Events.MessageCreate, async message =>'), 'Prefix command handling must be registered for incoming Discord messages.');
+assert.ok(bot.includes("if(matchedPrefix&&/^(?:help|مساعدة|هيلب)$/i.test(content.slice(matchedPrefix.length).trim()))"), 'Help must use the configured prefix rather than silently acting as a no-prefix command.');
 assert.ok(bot.includes('client.mldConfig?.commandSettings?.help?.enabled===false'), 'The help command toggle must also apply to no-prefix help.');
 assert.ok(bot.includes("if(command==='blockedword')"), 'Blocked-word management must be implemented as a real prefix command.');
 assert.ok(bot.includes("const autoMod=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true"), 'Protection can be disabled explicitly even for automod bot types.');
