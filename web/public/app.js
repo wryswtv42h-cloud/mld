@@ -1,4 +1,62 @@
 (()=>{"use strict";
+// Reliable room controls: handle live-game taps before any delegated page handlers.
+document.addEventListener("click",event=>{
+ const target=event.target instanceof Element?event.target.closest("[data-game-start],[data-game-action],[data-game-card],[data-game-leave],[data-game-end],[data-ludo-token],[data-game-join],[data-game-watch]"):null;
+ if(!target)return;
+ event.preventDefault();
+ event.stopImmediatePropagation();
+ try{
+  if(target.hasAttribute("data-game-join")||target.hasAttribute("data-game-watch")){
+   if(!state.user){openLogin();return;}
+   gameSessionId=target.dataset.gameJoin||target.dataset.gameWatch;
+   gameChatMessages=[];
+   gameSocketConnect();
+   joinGameSocket(gameSessionId,target.hasAttribute("data-game-watch"));
+   toast(target.hasAttribute("data-game-watch")?"دخلت المشاهدة":"جارٍ فتح الغرفة…");
+   return;
+  }
+  if(!gameSessionId&&currentGamePayload?.sessionId)gameSessionId=currentGamePayload.sessionId;
+  if(!gameSessionId){toast("ما فيه غرفة مفتوحة؛ ادخل الغرفة من جديد.");return;}
+  gameSocketConnect();
+  if(target.hasAttribute("data-game-start")){gameSocket?.emit("game:start",{sessionId:gameSessionId});return;}
+  if(target.hasAttribute("data-game-action")){
+   const type=target.dataset.gameAction;
+   gameSocket?.emit("game:action",{sessionId:gameSessionId,action:type==="play"?{type:"play",cardIndex:Number(target.dataset.cardIndex||0)}:{type}});
+   return;
+  }
+  if(target.hasAttribute("data-ludo-token")){
+   gameSocket?.emit("game:action",{sessionId:gameSessionId,action:{type:"move",tokenIndex:Number(target.dataset.ludoToken)}});
+   return;
+  }
+  if(target.hasAttribute("data-game-card")){
+   const idx=Number(target.dataset.gameCard),payload=currentGamePayload,hand=payload?.state?.hands?.[state.user?.username],card=Array.isArray(hand)?hand[idx]:null;
+   if(!card||!payload){toast("تعذر قراءة ورقتك؛ انتظر تحديث الطاولة.");return;}
+   let action;
+   if(payload.gameType==="uno"){
+    let color=card.color;
+    if(card.color==="wild"){
+     const choice=prompt("اختر لون الورقة: أحمر، أزرق، أخضر، أو أصفر","أحمر");
+     if(choice===null)return;
+     color=({"أحمر":"red","احمر":"red","red":"red","أزرق":"blue","ازرق":"blue","blue":"blue","أخضر":"green","اخضر":"green","green":"green","أصفر":"yellow","اصفر":"yellow","yellow":"yellow"})[choice.trim().toLowerCase()];
+     if(!color){toast("اختر لونًا صحيحًا: أحمر أو أزرق أو أخضر أو أصفر");return;}
+    }
+    action={type:"play",card,color};
+   }else if(payload.gameType==="baloot")action={type:"play",card};
+   else if(payload.gameType==="jaccaro")action={type:"play",cardIndex:idx};
+   else {toast("اللعب بهذه الورقة غير متاح في هذه اللعبة.");return;}
+   gameSocket?.emit("game:action",{sessionId:gameSessionId,action});return;
+  }
+  if(target.hasAttribute("data-game-leave")){
+   gameSocket?.emit("game:leave",{sessionId:gameSessionId});gameSessionId=null;gameChatMessages=[];
+   const arena=$("#gameArena");if(arena)arena.innerHTML='<div class="empty">غادرت الطاولة.</div>';
+   loadGameSessions().catch(()=>{});return;
+  }
+  if(target.hasAttribute("data-game-end")){
+   if(confirm("إنهاء الطاولة وحذف جلستها؟"))gameSocket?.emit("game:end",{sessionId:gameSessionId});
+  }
+ }catch(error){console.error("MLD game control failed",error);toast(error?.message||"تعذر تنفيذ الحركة، حاول مرة أخرى.");}
+},true);
+
 // Prevent action buttons from accidentally submitting forms on mobile.
 // Reliable mobile-safe game creation: handle the tap directly, not only the native submit event.
 document.addEventListener("click",event=>{
