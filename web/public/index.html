@@ -27,6 +27,6 @@
 (()=>{const link=document.getElementById('mldDiscordSupport');if(!link)return;const base=String(window.MLD_API_URL||'');const root=base.endsWith('/')?base.slice(0,-1):base;fetch(root+'/api/public/server',{headers:{Accept:'application/json'},cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>{if(!data||!data.invite)return;try{const target=new URL(data.invite);const id=target.pathname.split('/').filter(Boolean).pop()||'';if(target.hostname==='discord.com'&&target.pathname.startsWith('/users/')&&/^\d{17,20}$/.test(id)){link.href=target.href;link.setAttribute('aria-label','التواصل المباشر مع فهد المطيري عبر Discord');const label=link.querySelector('b');if(label)label.textContent='تواصل مع المطوّر';}}catch{}}).catch(()=>{});})();
 </script>
 <script src="/socket.io/socket.io.js"></script>
-<script src="app.js?v=20261011-unified-stats-owner-lock8"></script>
+<script src="app.js?v=20261011-owner-lock-cache9"></script>
 <script src="enhancements.js?v=20261011-member-profile2"></script>
 </body></html>
