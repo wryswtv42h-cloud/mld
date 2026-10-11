@@ -477,3 +477,39 @@ body[data-page="games"] .session-card small{display:block;margin-top:6px}
  body[data-page="owner"] .owner-console-nav button,
  body[data-page="games"] .game-card-select{transition:none}
 }
+
+
+/* MLD owner console refresh: modern hierarchy, touch-first controls, RTL */
+body[data-page="owner"] #app{width:min(1480px,calc(100% - 28px));margin-inline:auto}
+body[data-page="owner"] #app>.pagePanel,body[data-page="owner"] #app>.panel{overflow:visible;border:1px solid rgba(255,255,255,.1);background:linear-gradient(145deg,rgba(35,24,52,.97),rgba(16,11,26,.99));box-shadow:0 24px 70px rgba(0,0,0,.25)}
+body[data-page="owner"] .owner-console-nav{display:flex;gap:9px;padding:12px;margin:22px 0;border:1px solid rgba(255,255,255,.1);border-radius:20px;background:rgba(12,8,20,.94);box-shadow:0 14px 35px rgba(0,0,0,.18);overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
+body[data-page="owner"] .owner-console-nav button{flex:0 0 auto;min-height:42px;padding:10px 16px;border:1px solid rgba(255,255,255,.1);border-radius:13px;background:rgba(255,255,255,.035);color:#e9deef;font-weight:750;transition:background .18s,border-color .18s,transform .18s}
+body[data-page="owner"] .owner-console-nav button:hover{border-color:rgba(255,156,220,.55);background:rgba(255,156,220,.1);transform:translateY(-1px)}
+body[data-page="owner"] .owner-console-nav button.is-current{color:#1b1022;border-color:transparent;background:linear-gradient(120deg,#ff9cdc,#b18cff);box-shadow:0 6px 22px rgba(255,156,220,.18)}
+body[data-page="owner"] .owner-overview{margin:14px 0 24px}
+body[data-page="owner"] .owner-overview .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
+body[data-page="owner"] .owner-overview .stat{min-height:112px;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:20px;border-radius:18px;border:1px solid rgba(255,255,255,.09);background:linear-gradient(145deg,rgba(255,156,220,.09),rgba(177,140,255,.07) 60%,rgba(255,255,255,.025))}
+body[data-page="owner"] .owner-overview .stat b{font-size:clamp(25px,4vw,36px);line-height:1.15;letter-spacing:-.04em}
+body[data-page="owner"] .owner-overview .stat small{color:#c8b8d4;font-size:13px}
+body[data-page="owner"] .owner-section{padding:clamp(16px,3vw,28px);margin:16px 0;border-radius:22px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(155deg,rgba(35,24,52,.88),rgba(17,12,27,.96));box-shadow:0 15px 40px rgba(0,0,0,.13);scroll-margin-top:92px}
+body[data-page="owner"] .owner-section[hidden],body[data-page="owner"] #owner-overview[hidden]{display:none!important}
+body[data-page="owner"] .owner-section>h2{display:flex;align-items:center;gap:10px;margin:0 0 18px;font-size:clamp(19px,2.5vw,25px);letter-spacing:-.02em}
+body[data-page="owner"] .owner-list{display:grid;gap:10px}
+body[data-page="owner"] .owner-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px;border:1px solid rgba(255,255,255,.085);border-radius:16px;background:rgba(255,255,255,.025)}
+body[data-page="owner"] .owner-row>div:first-child{min-width:0}
+body[data-page="owner"] .owner-row b{overflow-wrap:anywhere}
+body[data-page="owner"] .owner-row small{display:block;margin-top:5px;color:#c8b8d4;overflow-wrap:anywhere}
+body[data-page="owner"] .owner-account{display:flex;align-items:center;gap:12px}
+body[data-page="owner"] .owner-account img{width:44px;height:44px;border-radius:14px;object-fit:cover;border:1px solid rgba(255,255,255,.14)}
+body[data-page="owner"] .row-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+body[data-page="owner"] .owner-section .btn,body[data-page="owner"] .owner-section button{min-height:40px}
+body[data-page="owner"] .owner-section .form{gap:12px;padding:18px;margin:14px 0;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(8,5,14,.3)}
+body[data-page="owner"] .owner-section input:not([type="checkbox"]):not([type="color"]),body[data-page="owner"] .owner-section select,body[data-page="owner"] .owner-section textarea{width:100%;min-width:0;border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff8ff;background:#171020;outline:none}
+body[data-page="owner"] .owner-section input:focus,body[data-page="owner"] .owner-section select:focus,body[data-page="owner"] .owner-section textarea:focus{border-color:#ff9cdc;box-shadow:0 0 0 3px rgba(255,156,220,.12)}
+body[data-page="owner"] .owner-section button:focus-visible,body[data-page="owner"] .owner-console-nav button:focus-visible{outline:3px solid #ff9cdc;outline-offset:3px}
+body[data-page="owner"] .owner-section .ticketRow{display:flex;flex-direction:column;gap:5px;padding:13px 15px;margin:8px 0;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.025)}
+body[data-page="owner"] .owner-section .application-answers{margin-top:10px}
+body[data-page="owner"] .owner-section .application-answers summary{cursor:pointer;color:#ffb3eb;padding:8px 0}
+body[data-page="owner"] .owner-section .application-answer{margin:8px 0;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.035)}
+body[data-page="owner"] .owner-section .application-answer p{margin-bottom:0;overflow-wrap:anywhere}
+@media(max-width:700px){body[data-page="owner"] #app{width:calc(100% - 18px)}body[data-page="owner"] .owner-console-nav{top:64px;margin:14px -2px;padding:9px;border-radius:15px}body[data-page="owner"] .owner-row{align-items:stretch;flex-direction:column}body[data-page="owner"] .owner-row .row-actions{width:100%}body[data-page="owner"] .owner-row .row-actions .btn{flex:1 1 auto}body[data-page="owner"] .owner-section .form{padding:12px}}
