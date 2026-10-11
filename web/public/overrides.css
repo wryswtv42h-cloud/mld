@@ -861,3 +861,26 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.72}
 .generator-output,.story-result{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.95}
 @media(max-width:640px){.owner-console-nav{top:70px}.owner-row{align-items:stretch}.row-actions{width:100%}.row-actions .btn{flex:1 1 auto}.game-create-heading{align-items:flex-start}.game-session-form{gap:8px}.game-create-submit{width:100%}.session-card{align-items:stretch}.session-card .btn{width:100%}.owner-section{padding:14px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* MLD owner console redesign 2026-10-11 */
+body[data-page="owner"] #app .pagePanel:has(.owner-console-nav){max-width:1240px;margin:22px auto;padding:clamp(16px,3vw,34px);border:1px solid rgba(255,156,222,.16);background:radial-gradient(ellipse at 100% 0,rgba(168,111,223,.13),transparent 36%),linear-gradient(145deg,rgba(22,14,34,.97),rgba(13,9,22,.97));box-shadow:0 24px 80px rgba(0,0,0,.24)}
+body[data-page="owner"] #app .pagePanel:has(.owner-console-nav)>h1{font-size:clamp(1.8rem,4vw,2.7rem);letter-spacing:-.035em;margin:8px 0 10px}
+body[data-page="owner"] #app .owner-console-nav{position:sticky;top:8px;z-index:20;display:flex;gap:8px;padding:10px;margin:22px 0;border:1px solid rgba(255,156,222,.2);border-radius:20px;background:rgba(12,8,20,.96);box-shadow:0 12px 34px rgba(0,0,0,.28);backdrop-filter:blur(18px)}
+body[data-page="owner"] #app .owner-console-nav button{border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.035);color:#f9efff;font-weight:750;transition:background .16s,border-color .16s,transform .16s}
+body[data-page="owner"] #app .owner-console-nav button.is-current{color:#fff;background:linear-gradient(120deg,rgba(255,156,222,.22),rgba(168,111,223,.22));border-color:rgba(255,156,222,.65);box-shadow:inset 0 0 0 1px rgba(255,156,222,.08)}
+body[data-page="owner"] #app .owner-console-nav button:active{transform:scale(.98)}
+body[data-page="owner"] #app .owner-overview .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin:12px 0 22px}
+body[data-page="owner"] #app .owner-overview .stat{min-height:112px;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:18px;border-radius:19px;border:1px solid rgba(255,156,222,.15);background:linear-gradient(145deg,rgba(255,156,222,.075),rgba(168,111,223,.07),rgba(255,255,255,.02))}
+body[data-page="owner"] #app .owner-overview .stat b{font-size:clamp(1.5rem,3vw,2.2rem);line-height:1.1;color:#ffb8e8;font-variant-numeric:tabular-nums}
+body[data-page="owner"] #app .owner-overview .stat small{color:#c9bbd7;font-weight:650}
+body[data-page="owner"] #app .owner-section{margin:14px 0;padding:clamp(16px,2.5vw,26px);border:1px solid rgba(255,255,255,.085);border-radius:22px;background:linear-gradient(140deg,rgba(31,21,45,.88),rgba(17,11,27,.88));box-shadow:0 12px 32px rgba(0,0,0,.12);scroll-margin-top:95px}
+body[data-page="owner"] #app .owner-section>h2{font-size:1.25rem;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.07)}
+body[data-page="owner"] #app .owner-row{border-color:rgba(255,255,255,.075);border-radius:16px;background:rgba(255,255,255,.025);transition:border-color .15s,background .15s}
+body[data-page="owner"] #app .owner-row:hover{border-color:rgba(255,156,222,.26);background:rgba(255,156,222,.035)}
+body[data-page="owner"] #app .owner-section .btn,body[data-page="owner"] #app .owner-section button{min-height:42px;border-radius:12px;font-weight:700}
+body[data-page="owner"] #app .owner-section input:not([type=checkbox]):not([type=color]),body[data-page="owner"] #app .owner-section textarea,body[data-page="owner"] #app .owner-section select{min-height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#100a19;color:#fff8ff}
+body[data-page="owner"] #app .owner-section input:focus,body[data-page="owner"] #app .owner-section textarea:focus,body[data-page="owner"] #app .owner-section select:focus{outline:2px solid rgba(255,156,222,.55);outline-offset:1px}
+body[data-page="owner"] #app .owner-section form{padding:14px;border-radius:16px;background:rgba(0,0,0,.12)}
+body[data-page="owner"] #app .owner-section [hidden],body[data-page="owner"] #app .owner-overview[hidden]{display:none!important}
+@media(max-width:700px){body[data-page="owner"] #app .pagePanel:has(.owner-console-nav){margin:10px 0;padding:14px;border-radius:20px}body[data-page="owner"] #app .owner-console-nav{top:3px;margin:14px -2px;padding:7px;border-radius:15px}body[data-page="owner"] #app .owner-console-nav button{padding:9px 11px;min-height:40px;font-size:.84rem}body[data-page="owner"] #app .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}body[data-page="owner"] #app .owner-section{padding:14px;border-radius:17px}body[data-page="owner"] #app .owner-section form{padding:10px}}
