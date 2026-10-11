@@ -487,9 +487,12 @@ function gameLobbyPage(){
   '<section class="panel game-sessions-panel"><div class="section-heading-row"><div><div class="tag">LIVE ROOMS</div><h2 class="sectionTitle">🔥 الجلسات النشطة</h2><p class="section-subtitle">تتحدث القائمة تلقائيًا لإظهار الغرف الجديدة والمقاعد المتاحة.</p></div><button type="button" class="btn" data-game-refresh>تحديث ↻</button></div><div id="gameSessions" class="game-sessions"><div class="loading">جاري تحميل الغرف…</div></div></section><div id="gameArena"></div>'
  );
 }
+let authSnapshotAt=0,authRefreshPromise=null;async function refreshSessionUser(){if(!state.token||Date.now()-authSnapshotAt<15000)return;if(!authRefreshPromise){authRefreshPromise=api("/api/users/me",{timeoutMs:6000}).then(data=>{if(data?.user){state.user=data.user;store.set("mld_user",JSON.stringify(data.user));}authSnapshotAt=Date.now();return data;}).catch(()=>null).finally(()=>{authRefreshPromise=null;});}await authRefreshPromise;}
 let pageLocksSnapshot=null,pageLocksSnapshotAt=0,pageLocksRequest=null;async function getPageLocksSnapshot(){if(pageLocksSnapshot&&Date.now()-pageLocksSnapshotAt<30000)return pageLocksSnapshot;if(!pageLocksRequest){pageLocksRequest=api("/api/community/page-locks",{timeoutMs:6000}).then(data=>{pageLocksSnapshot=data;pageLocksSnapshotAt=Date.now();return data}).finally(()=>{pageLocksRequest=null;});}return pageLocksRequest;}
 async function buildPage(p){
-const ownerView=!!(state.user?.is_owner||String(state.user?.role||"").toLowerCase()==="owner");
+// Refresh the authoritative account before deciding whether a page is locked. Cached localStorage roles can be stale after owner promotion or login repair.
+if(state.token)await refreshSessionUser();
+const ownerView=state.user?.is_owner===true||["true","1","yes"].includes(String(state.user?.is_owner??"").toLowerCase())||String(state.user?.role||"").toLowerCase()==="owner";
 if(p!=="owner"&&p!=="admin"&&!ownerView){let lockData=pageLocksSnapshot;try{if(!lockData||Date.now()-pageLocksSnapshotAt>30000)lockData=await getPageLocksSnapshot()}catch{}const lock=lockData?.locks?.pages?.[p];if(lock?.enabled)return box("الصفحة مغلقة",lock.message||lockData.locks?.message||"هذه الصفحة مغلقة مؤقتًا من إدارة مجتمع ملاذ.",'<div class="empty">الصفحة متوقفة مؤقتًا بقرار من إدارة الموقع.</div><button class="btn primary" type="button" data-action="close-page-lock">إغلاق</button>');}
 if(p==="members"){
  const d=await api("/api/public/members?limit=100&offset=0");state.memberOffset=d.members.length;state.memberTotal=d.total||0;
