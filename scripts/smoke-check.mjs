@@ -69,6 +69,7 @@ assert.ok(bot.includes("if(command==='antilink'||command==='antispam')"), 'Link 
 assert.ok(app.includes('["blockedword","الكلمات الممنوعة"]'), 'The dashboard must expose the blocked-word command toggle.');
 assert.ok(botRoutes.includes('commands.slice(0,500)'), 'The bot dashboard must cap custom prefix commands at 500.');
 assert.ok(botRoutes.includes('commandSettings'), 'The bot dashboard must persist per-command enable/disable and alias settings.');
+assert.ok(botRoutes.includes('adminInGuild(req.user.id,x.guild_id,dec(x.token))'), 'Bot owners should be verified against the selected bot token so their target guild does not need the main MLD bot installed.');
 assert.ok(uno.includes('function drawCard(state)'), 'UNO must recycle the discard pile when the draw pile runs out.');
 assert.ok(uno.includes("card.value === 'wild4' && hand.some"), 'UNO must validate Wild Draw Four legality.');
 assert.ok(uno.includes("s.players.length === 2 ? 2 : 1"), 'UNO reverse must skip the opponent in two-player games.');
