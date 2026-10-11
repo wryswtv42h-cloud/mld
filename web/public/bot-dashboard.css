@@ -227,3 +227,10 @@ input:focus,textarea:focus,select:focus{outline:2px solid rgba(255,156,222,.65);
  #app>#dashboardTabs .tab{width:100%;justify-content:flex-start;text-align:right}
  #app>.tab-panel{grid-column:1;grid-row:auto}
 }
+
+/* Startup recovery / accessible command center controls */
+.dashboard-bot-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:18px 0}
+.dashboard-bot-picker .secondary-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;padding:14px;border-radius:14px;text-decoration:none;overflow-wrap:anywhere}
+#dashboardTabs .tab{touch-action:manipulation}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #ff9cde;outline-offset:3px}
+@media(max-width:620px){.dashboard-bot-picker{grid-template-columns:1fr}}
