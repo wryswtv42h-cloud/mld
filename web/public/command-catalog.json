@@ -1152,12 +1152,12 @@
     "description": "أمر المعلومات والتحديات: art"
   },
   {
-    "name": "quiz_inventions",
-    "label": "المعلومات والتحديات · inventions",
+    "name": "quiz_engineering",
+    "label": "المعلومات والتحديات · engineering",
     "category": "games",
     "kind": "quiz",
-    "operation": "inventions",
-    "description": "أمر المعلومات والتحديات: inventions"
+    "operation": "engineering",
+    "description": "أمر المعلومات والتحديات: engineering"
   },
   {
     "name": "quiz_nature",
