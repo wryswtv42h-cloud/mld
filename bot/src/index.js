@@ -468,7 +468,7 @@ function installBotFeatures(client,bot){
     if(command==='broadcast'){
       const targetChannel=message.mentions.channels.first()||message.guild.channels.cache.get(String(config.broadcastChannelId||''));
       const text=args.join(' ').replace(/<#[0-9]{17,20}>/g,'').trim().slice(0,1800);
-      if(!targetChannel?.isTextBased())return message.reply('حدد روم الإعلان أو عيّن broadcastChannelId من لوحة التحكم: '+prefix+'broadcast #الإعلانات نص الإعلان');
+      if(!targetChannel?.isTextBased())return message.reply('حدد روم الإعلان: '+prefix+'broadcast #الإعلانات نص الإعلان');
       if(!text)return message.reply('اكتب نص الإعلان: '+prefix+'broadcast #الإعلانات نص الإعلان');
       try{
         const sent=await targetChannel.send({content:text,allowedMentions:{parse:[]}});
