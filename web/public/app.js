@@ -553,7 +553,7 @@ accountButton?.addEventListener("click",event=>{event.preventDefault();event.sto
 const userLabelButton=document.getElementById("userLabel");
 userLabelButton?.addEventListener("click",event=>{event.preventDefault();event.stopImmediatePropagation();state.user?go("profile"):openLogin();},{capture:true});
 document.addEventListener("click",async event=>{const button=event.target.closest("[data-profile-save]");if(!button)return;event.preventDefault();event.stopImmediatePropagation();const key=button.dataset.profileSave,field=button.closest(".profile-edit-field")?.querySelector("[data-profile-field]");if(!field)return;const value=String(field.value||"").trim();if(key==="username"&&(!value||value.length<(state.user?.is_owner?1:2))){toast(state.user?.is_owner?"اسم المستخدم مطلوب":"اسم المستخدم يجب أن يكون حرفين على الأقل");return}const original=button.textContent;button.disabled=true;button.textContent="جارٍ الحفظ…";try{const d=await api("/api/users/me",{method:"PATCH",body:JSON.stringify({[key]:value})});state.user=d.user||{...state.user,[key]:value};save();renderHeader();toast("تم حفظ "+({username:"اليوزر",avatar:"الصورة",banner_url:"البنر",occupation:"المهنة",bio:"النبذة"}[key]||"التعديل")+" بنجاح");await render()}catch(error){toast(error.message||"تعذر الحفظ")}finally{if(button.isConnected){button.disabled=false;button.textContent=original}}},true);
-renderAnnouncement();renderHeader();render();consumeLoginTicket();closeMenu();window.scrollTo(0,0);
+getPageLocksSnapshot().catch(()=>{});renderAnnouncement();renderHeader();render();consumeLoginTicket();closeMenu();window.scrollTo(0,0);
 
 // MLD interaction hardening: capture taps before any delegated listener can swallow them.
 document.addEventListener("click",async event=>{
