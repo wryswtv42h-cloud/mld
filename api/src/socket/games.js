@@ -9,7 +9,7 @@ export function setupGameSocket(io,socket){
   const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const session=rows[0];if(!session)return socket.emit('game:error',{error:'الجلسة غير موجودة'});
   if(!socket.user)return socket.emit('game:error',{error:'سجّل دخولك للعب'});
   const name=socket.user.username;
-  const player={name,userId:socket.user?.id||null,isBot:false,socketId:socket.id};
+  const player={name,userId:socket.user?.id||null,avatar:socket.user?.avatar||null,isBot:false,socketId:socket.id};
   let players=safeJson(session.players),spectators=safeJson(session.spectators);const existingPlayer=players.find(p=>String(p.userId||'')===String(socket.user.id)),existingSpectator=spectators.find(p=>String(p.userId||'')===String(socket.user.id));players=players.filter(p=>String(p.userId||'')!==String(socket.user.id));spectators=spectators.filter(p=>String(p.userId||'')!==String(socket.user.id));
   let gameState=session.state;
   const botIndex=session.status==='playing'&&!asSpectator&&!existingPlayer?players.findIndex(p=>p.isBot===true||String(p.name||'').startsWith('بوت ')):-1;
