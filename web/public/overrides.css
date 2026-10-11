@@ -504,3 +504,77 @@ body[data-page="bots"] #app .bot-private-room-panel input[type="color"] { height
 
 /* Creator identity is a clear two-step block; never put creator accounts in the hamburger navigation. */
 .hero-social{display:grid;grid-template-columns:1fr;align-items:stretch;gap:13px}.creator-owner-line{display:flex;align-items:center;gap:9px}.creator-accounts-line{display:grid;gap:9px}.creator-accounts-line .creator-social-links{display:flex;gap:8px;flex-wrap:wrap}.creator-accounts-line .creator-social-link{min-width:110px}.creator-owner-line .creator-name{font-size:14px}.hero-social .accounts-label{margin:0}
+
+
+/* MLD 2026.10 visual refresh: owner/admin, ticket and application workspaces */
+:root{--mld-glass:rgba(35,23,51,.82);--mld-border:rgba(255,255,255,.09);--mld-shadow:0 18px 55px rgba(0,0,0,.22)}
+.panel{box-shadow:0 12px 34px rgba(0,0,0,.14);transition:border-color .18s,box-shadow .18s}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
+.nav-redesigned{gap:6px}.nav-redesigned .nav-caption{margin:17px 10px 5px;color:#cdb8de;font-size:11px;font-weight:900;letter-spacing:.08em}
+.nav-redesigned button{display:flex;align-items:center;gap:12px;min-height:47px;border:1px solid transparent;border-radius:14px;transition:background .16s,border-color .16s,transform .16s}
+.nav-redesigned button:hover{background:rgba(255,156,220,.08);border-color:rgba(255,156,220,.16);transform:translateX(-2px)}
+.nav-redesigned button.active{background:linear-gradient(100deg,rgba(255,156,220,.16),rgba(168,111,223,.12));border-color:rgba(255,156,220,.25);box-shadow:inset -3px 0 var(--pink)}
+.nav-symbol{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.045);color:#ffb9e5;font-size:18px}
+.nav-arrow{margin-right:auto;color:#bfa6d1}
+.nav-join{display:flex;align-items:center;gap:11px;margin-top:20px;padding:15px;border-radius:17px;background:linear-gradient(120deg,rgba(255,156,220,.14),rgba(168,111,223,.13));text-decoration:none}
+.nav-join>span:first-child{display:grid;place-items:center;width:39px;height:39px;border-radius:13px;background:linear-gradient(135deg,#ff9cdc,#a86fdf);color:#26132e}
+.nav-join b,.nav-join small{display:block}.nav-join small{margin-top:4px;color:var(--muted);font-size:11px}
+.owner-console-nav{display:flex;gap:7px;align-items:center;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:10px;margin:16px 0 20px;border:1px solid var(--mld-border);border-radius:19px;background:rgba(18,11,27,.82);box-shadow:var(--mld-shadow);position:sticky;top:78px;z-index:10;backdrop-filter:blur(16px)}
+.owner-console-nav button{flex:0 0 auto;min-height:40px;padding:9px 13px;border:1px solid transparent;border-radius:12px;background:transparent;color:#e7d9ef;font-weight:750;font-size:12px;white-space:nowrap}
+.owner-console-nav button:hover,.owner-console-nav button.is-current{background:linear-gradient(135deg,rgba(255,156,220,.16),rgba(168,111,223,.18));border-color:rgba(255,156,220,.25);color:#fff}
+.owner-overview{padding:4px 0 18px}
+.owner-overview .stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.owner-overview .stat{position:relative;overflow:hidden;min-height:105px;padding:18px;border:1px solid var(--mld-border);border-radius:19px;background:linear-gradient(145deg,rgba(255,156,220,.075),rgba(168,111,223,.08),rgba(26,17,39,.95))}
+.owner-overview .stat:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;left:-30px;bottom:-48px;background:rgba(255,156,220,.09);filter:blur(2px)}
+.owner-overview .stat b{font-size:clamp(25px,3vw,36px);line-height:1.15;color:#fff}
+.owner-overview .stat small{display:block;margin-top:9px;font-size:12px;color:#d8c5e5}
+.owner-section{padding:clamp(16px,3vw,28px);margin:0 0 18px;border-radius:24px;border:1px solid var(--mld-border);background:linear-gradient(145deg,rgba(38,25,54,.96),rgba(22,14,33,.96));box-shadow:var(--mld-shadow);scroll-margin-top:145px}
+.owner-section>h2{display:flex;align-items:center;gap:10px;margin:0 0 16px;font-size:clamp(19px,2.5vw,25px)}
+.owner-section>h2:after{content:"";height:2px;flex:1;max-width:120px;background:linear-gradient(90deg,var(--pink),transparent);border-radius:2px}
+.owner-section .form{max-width:760px;margin:16px 0}
+.owner-section input,.owner-section select,.owner-section textarea,.pagePanel input,.pagePanel select,.pagePanel textarea{width:100%;min-height:46px;padding:12px 14px;border:1px solid rgba(255,255,255,.11);border-radius:13px;background:#120c1c;color:#fff;font:inherit}
+.owner-section textarea,.pagePanel textarea{min-height:110px;resize:vertical}
+.owner-section input:focus,.owner-section select:focus,.owner-section textarea:focus,.pagePanel input:focus,.pagePanel select:focus,.pagePanel textarea:focus{border-color:rgba(255,156,220,.65);box-shadow:0 0 0 3px rgba(255,156,220,.08);outline:0}
+.owner-section .owner-list{gap:10px}
+.owner-section .owner-row{padding:16px;border-radius:17px;background:linear-gradient(120deg,rgba(255,255,255,.035),rgba(168,111,223,.045));border-color:rgba(255,255,255,.075)}
+.owner-section .owner-row:hover{border-color:rgba(255,156,220,.25);box-shadow:0 12px 30px rgba(0,0,0,.16)}
+.owner-section [hidden],.owner-overview[hidden]{display:none!important}
+#app:has(#ticketForm),#app:has(#ticketReplyForm),#app:has(#applicationForm){max-width:900px}
+#app:has(#ticketForm) .pagePanel,#app:has(#ticketReplyForm) .pagePanel,#app:has(#applicationForm) .pagePanel{padding:clamp(18px,4vw,38px);border-radius:27px;background:radial-gradient(500px 220px at 100% 0,rgba(255,156,220,.10),transparent 72%),linear-gradient(145deg,#251832,#171020);border-color:rgba(255,156,220,.15)}
+#app:has(#ticketForm) .pagePanel>h1,#app:has(#ticketReplyForm) .pagePanel>h1,#app:has(#applicationForm) .pagePanel>h1{font-size:clamp(28px,4vw,40px);margin:8px 0}
+#ticketForm,#ticketReplyForm,#applicationForm{max-width:none;margin:24px 0;padding:clamp(16px,3vw,26px);display:grid;gap:12px;border:1px solid rgba(255,156,220,.16);border-radius:22px;background:linear-gradient(135deg,rgba(255,156,220,.055),rgba(168,111,223,.06))}
+#ticketForm input,#ticketForm textarea,#ticketReplyForm textarea,#applicationForm textarea{margin:0}
+#ticketForm label,#applicationForm label{display:block;margin:5px 0 0;color:#f4dff0;font-weight:800}
+#ticketForm button,#ticketReplyForm button,#applicationForm button{min-height:49px;border-radius:14px}
+.ticket-open,.ticketRow{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;margin:9px 0;padding:15px 17px;border:1px solid var(--mld-border);border-radius:16px;background:rgba(255,255,255,.035);color:var(--text);text-align:right}
+.ticket-open b,.ticket-open span{min-width:0}.ticket-open span{color:var(--muted);font-size:12px}
+.ticket-thread{display:grid;gap:10px;margin:18px 0}
+.ticket-thread .card{padding:18px;border-radius:17px;background:rgba(255,255,255,.035)}
+body[data-page="admin"] #app .pagePanel{padding:clamp(18px,3vw,32px);border-radius:25px;background:radial-gradient(500px 240px at 100% 0,rgba(168,111,223,.12),transparent 75%),linear-gradient(145deg,#241630,#171020)}
+body[data-page="admin"] #app .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0 28px}
+body[data-page="admin"] #app .stat{padding:20px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--mld-border)}
+body[data-page="admin"] #app .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+body[data-page="admin"] #app .card{padding:19px;border-radius:18px;border:1px solid var(--mld-border);background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(168,111,223,.045))}
+body[data-page="admin"] #app .card h3{margin:0 0 10px;font-size:16px}
+body[data-page="admin"] #app .row-actions{margin-top:14px}
+.game-create-panel{position:relative;overflow:hidden;padding:clamp(18px,4vw,32px);border:1px solid rgba(255,156,220,.2);border-radius:24px;background:radial-gradient(450px 220px at 100% 0,rgba(255,156,220,.10),transparent 75%),linear-gradient(145deg,#2a1b3c,#191122)}
+.game-session-form{display:grid;grid-template-columns:1fr 1fr;gap:10px 13px;align-items:center;margin-top:18px}
+.game-session-form label{font-weight:800;color:#f4dff0}
+.game-session-form input,.game-session-form select{min-width:0;width:100%;min-height:48px;padding:11px 13px;border-radius:13px;background:#120c1c;color:#fff;border:1px solid var(--mld-border)}
+.game-session-form .form-help,.game-create-submit{grid-column:1/-1}
+.game-create-submit{min-height:50px;border-radius:15px}
+.game-card-select{border:1px solid var(--mld-border);transition:transform .18s,border-color .18s,box-shadow .18s}
+.game-card-select:hover,.game-card-select.is-selected{transform:translateY(-3px);border-color:rgba(255,156,220,.5);box-shadow:0 15px 40px rgba(255,156,220,.07)}
+.game-card-select.is-selected .game-select-label{color:var(--pink)}
+#gameCreateStatus{min-height:20px}
+.online-generator{position:relative;overflow:hidden;padding:clamp(18px,4vw,34px);border-radius:24px;background:radial-gradient(500px 220px at 100% 0,rgba(255,156,220,.1),transparent 72%),linear-gradient(145deg,#281a3a,#171020);border:1px solid rgba(255,156,220,.18)}
+.online-generator .generator-output,.story-result{padding:clamp(18px,3vw,28px);margin:18px 0;border-radius:18px;background:rgba(9,6,14,.5);border:1px solid rgba(255,255,255,.08);font-size:clamp(17px,2vw,21px);line-height:2}
+.story-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.story-controls label{display:grid;gap:8px;color:#ead9f2;font-size:13px;font-weight:800}
+.story-controls select{min-width:0;width:100%;min-height:46px;border:1px solid var(--mld-border);border-radius:12px;background:#120c1c;color:#fff;padding:10px}
+.generator-actions{display:flex;gap:9px;flex-wrap:wrap}
+.generator-actions .btn{min-height:45px}
+.about-banner{padding:clamp(22px,4vw,38px);border:1px solid rgba(255,156,220,.16);background:radial-gradient(350px 220px at 0 0,rgba(168,111,223,.12),transparent 75%),linear-gradient(130deg,#281a3a,#171020);border-radius:25px}
+.about-feature-grid{margin-top:12px}
+@media(max-width:760px){.owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.owner-console-nav{top:72px;margin-inline:-4px;padding:8px}.owner-section{scroll-margin-top:125px}body[data-page="admin"] #app .cards{grid-template-columns:1fr}.story-controls{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.owner-overview .stat{min-height:92px;padding:14px}.owner-console-nav button{padding:8px 11px}.story-controls{grid-template-columns:1fr}.game-session-form{grid-template-columns:1fr}.game-session-form .form-help,.game-create-submit{grid-column:1}.ticket-open{align-items:flex-start;flex-direction:column}}
