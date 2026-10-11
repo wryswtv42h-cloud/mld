@@ -78,7 +78,7 @@ assert.ok(app.includes('اكتب اسم اللاعب الذي تريد تبدي�
 assert.ok(gameSocket.includes("setInterval(async()=>{try{const {rows}=await query(\"DELETE FROM games WHERE last_activity < NOW() - INTERVAL '5 minutes'"), 'Idle game sessions should be cleaned up after five minutes without activity.');
 assert.ok(gameSocket.includes("socket.on('disconnect',async()=>"), 'Disconnected players should be marked offline or removed from waiting rooms.');
 assert.ok(gameSocket.includes('const sessionLocks=new Map()'), 'Concurrent game events must use per-session serialization.');
-assert.equal(gameSocket.split('withSessionLock(sessionId,async()=>').length-1, 3, 'Joining, starting, and moving should be serialized per session.');
+assert.equal(gameSocket.split('withSessionLock(sessionId,async()=>').length-1, 5, 'Joining, starting, moving, leaving, and ending should be serialized per session.');
 assert.ok(gameSocket.includes('last_activity=NOW()'), 'Joining, leaving, chatting and playing should refresh session activity.');
 assert.ok((await read('api/src/db.js')).includes('ALTER TABLE games ADD COLUMN IF NOT EXISTS last_activity timestamptz'), 'Existing game tables should migrate safely to activity tracking.');
 
