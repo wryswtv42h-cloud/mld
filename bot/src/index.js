@@ -464,7 +464,7 @@ function installBotFeatures(client,bot){
     }
     if(['roles','الرتب','قائمةالرتب'].includes(command)){
       const list=[...message.guild.roles.cache.values()].filter(r=>r.id!==message.guild.id).sort((a,b)=>b.position-a.position).slice(0,35);
-      const body=list.map(r=>'• '+r.toString()+' — '+r.members.size+' عضو').join('\\n');
+      const body=list.map(r=>'• '+r.toString()+' — '+r.members.size+' عضو').join('\n');
       return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🎖️ رتب السيرفر').setDescription((body||'لا توجد رتب إضافية.').slice(0,3900)).setFooter({text:'عرض '+list.length+' رتبة كحد أقصى'})],allowedMentions:{parse:[]}});
     }
     if(['roll','dice','نرد','رمي'].includes(command)){
