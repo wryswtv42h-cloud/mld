@@ -12,7 +12,7 @@ async function withSessionLock(sessionId,work){
 function personalizedState(state, userName){if(!state||!state.hands)return state;const copy=JSON.parse(JSON.stringify(state));for(const [name,hand] of Object.entries(copy.hands)){if(name!==userName)copy.hands[name]={hidden:true,count:Array.isArray(hand)?hand.length:0};}return copy;}
 async function emitGameUpdate(io,sessionId,payload){const sockets=await io.in(room(sessionId)).fetchSockets();for(const client of sockets){const name=client.user?.username||'';client.emit('game:update',{...payload,state:personalizedState(payload.state,name)});}}
 export function setupGameSocket(io,socket){
- if(!cleanupTimer){cleanupTimer=setInterval(async()=>{try{const {rows}=await query("DELETE FROM games WHERE last_activity < NOW() - INTERVAL '5 minutes' AND status IN ('open','waiting','playing','finished') RETURNING id");for(const row of rows){const timer=botLoops.get(row.id);if(timer)clearInterval(timer);botLoops.delete(row.id);io.to(room(row.id)).emit('game:ended',{reason:'inactive'});}}catch(error){console.error('game idle cleanup',error)}},60000);cleanupTimer.unref?.();}
+ if(!cleanupTimer){cleanupTimer=setInterval(async()=>{try{const {rows}=await query("SELECT id FROM games WHERE last_activity < NOW() - INTERVAL '5 minutes' AND status IN ('open','waiting','playing','finished')");for(const row of rows){await withSessionLock(row.id,async()=>{const deleted=await query("DELETE FROM games WHERE id=$1 AND last_activity < NOW() - INTERVAL '5 minutes' AND status IN ('open','waiting','playing','finished') RETURNING id",[row.id]);if(!deleted.rows.length)return;const timer=botLoops.get(row.id);if(timer)clearInterval(timer);botLoops.delete(row.id);io.to(room(row.id)).emit('game:ended',{reason:'inactive'});});}}catch(error){console.error('game idle cleanup',error)}},60000);cleanupTimer.unref?.();}
  socket.on('game:join',async({sessionId,asSpectator=false}={})=>withSessionLock(sessionId,async()=>{try{
   const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const session=rows[0];if(!session)return socket.emit('game:error',{error:'الجلسة غير موجودة'});
   if(!socket.user)return socket.emit('game:error',{error:'سجّل دخولك للعب'});
@@ -76,17 +76,17 @@ export function setupGameSocket(io,socket){
 
 async function startBotLoop(io,sessionId,gameType){
  if(botLoops.has(sessionId))clearInterval(botLoops.get(sessionId));
- const timer=setInterval(async()=>{
+ const timer=setInterval(()=>{void withSessionLock(sessionId,async()=>{
   try{
    const {rows}=await query('SELECT * FROM games WHERE id=$1',[sessionId]);const session=rows[0];
-   if(!session||session.status!=='playing'||!Array.isArray(session.state?.botPlayers)||session.state.botPlayers.length===0){clearInterval(timer);botLoops.delete(sessionId);return}
+   if(!session||session.status!=='playing'||!Array.isArray(session.state?.botPlayers)||session.state.botPlayers.length===0){clearInterval(timer);if(botLoops.get(sessionId)===timer)botLoops.delete(sessionId);return}
    const result=await tickGame(gameType,session.state);
    if(!result.changed)return;
    const status=result.state?.finished?'finished':'playing';
    await query('UPDATE games SET state=$1,status=$2,last_activity=NOW() WHERE id=$3',[JSON.stringify(result.state),status,sessionId]);
    await emitGameUpdate(io,sessionId,{sessionId,players:safeJson(session.players),spectators:safeJson(session.spectators),state:result.state,status,gameType});
-   if(status==='finished'){io.to(room(sessionId)).emit('game:finished',{winner:result.state.winner});clearInterval(timer);botLoops.delete(sessionId)}
-  }catch(e){console.error('game bot loop',e);clearInterval(timer);botLoops.delete(sessionId)}
- },2200);
+   if(status==='finished'){io.to(room(sessionId)).emit('game:finished',{winner:result.state.winner});clearInterval(timer);if(botLoops.get(sessionId)===timer)botLoops.delete(sessionId)}
+  }catch(e){console.error('game bot loop',e);clearInterval(timer);if(botLoops.get(sessionId)===timer)botLoops.delete(sessionId)}
+ })},2200);
  botLoops.set(sessionId,timer);
 }
