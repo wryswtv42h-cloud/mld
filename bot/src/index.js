@@ -239,7 +239,7 @@ function installBotFeatures(client,bot){
         if(name==='roles'){
           if(!interaction.guild)return interaction.reply({content:'هذا الأمر يعمل داخل السيرفر فقط.',ephemeral:true});
           const roles=[...interaction.guild.roles.cache.values()].filter(r=>r.id!==interaction.guild.id).sort((a,b)=>b.position-a.position);
-          return interaction.reply({content:'🎭 **رتب السيرفر ('+roles.length+')**\\n'+(roles.slice(0,25).map(r=>'• '+r.name+' — '+r.members.size+' عضو').join('\\n')||'لا توجد رتب إضافية.'),allowedMentions:{parse:[]}});
+          return interaction.reply({content:'🎭 **رتب السيرفر ('+roles.length+')**\\n'+(roles.slice(0,25).map(r=>'• '+r.name+' — '+r.members.size+' عضو').join('\n')||'لا توجد رتب إضافية.'),allowedMentions:{parse:[]}});
         }
         if(name==='roll'){
           const max=Math.max(2,Math.min(1000000,Number(interaction.options.getInteger('max')||6)));
@@ -475,7 +475,7 @@ function installBotFeatures(client,bot){
       return message.reply({content:'🪙 النتيجة: **'+(Math.random()<0.5?'وجه':'كتابة')+'**',allowedMentions:{parse:[]}});
     }
     if(['choose','اختيار','اختار'].includes(command)){
-      const choices=args.join(' ').split(/\\s*\\|\\s*|،|,/).map(x=>x.trim()).filter(Boolean);
+      const choices=args.join(' ').split(/\s*\|\s*|،|,/).map(x=>x.trim()).filter(Boolean);
       if(choices.length<2)return message.reply('استخدم: '+prefix+'choose خيار أول | خيار ثاني | خيار ثالث');
       return message.reply({content:'🎯 اختياري: **'+choices[Math.floor(Math.random()*choices.length)].slice(0,180)+'**',allowedMentions:{parse:[]}});
     }
@@ -497,7 +497,7 @@ function installBotFeatures(client,bot){
     }
     if(command==='embed'||command==='امبد'){
       if(!message.member.permissions.has(PermissionFlagsBits.ManageMessages))return message.reply('تحتاج صلاحية إدارة الرسائل.');
-      const raw=content.slice(matchedPrefix.length).trim().replace(/^\\S+\\s*/,'');
+      const raw=content.slice(matchedPrefix.length).trim().replace(/^\S+\s*/,'');
       const parts=raw.split('|').map(x=>x.trim());
       if(parts.length<2||!parts[0]||!parts.slice(1).join(' | '))return message.reply('استخدم: '+prefix+'embed عنوان | وصف');
       const embed=new EmbedBuilder().setColor(0xff9cde).setTitle(parts[0].slice(0,256)).setDescription(parts.slice(1).join(' | ').slice(0,4000)).setFooter({text:'MLD · مجتمع ملاذ'}).setTimestamp();
