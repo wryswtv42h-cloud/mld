@@ -1,11 +1,17 @@
 (()=>{"use strict";
 // Reliable room controls: handle live-game taps before any delegated page handlers.
 document.addEventListener("click",event=>{
- const target=event.target instanceof Element?event.target.closest("[data-game-start],[data-game-action],[data-game-card],[data-game-leave],[data-game-end],[data-ludo-token],[data-game-join],[data-game-watch]"):null;
+ const target=event.target instanceof Element?event.target.closest("[data-create-game-session],[data-game-start],[data-game-action],[data-game-card],[data-game-leave],[data-game-end],[data-ludo-token],[data-game-join],[data-game-watch]"):null;
  if(!target)return;
  event.preventDefault();
  event.stopImmediatePropagation();
  try{
+  if(target.hasAttribute("data-create-game-session")){
+   const form=target.closest("#gameSessionForm");
+   if(!form){toast("تعذر العثور على نموذج إنشاء الجلسة.");return;}
+   void handleGameSessionSubmit(form,event);
+   return;
+  }
   if(target.hasAttribute("data-game-join")||target.hasAttribute("data-game-watch")){
    if(!state.user){openLogin();return;}
    gameSessionId=target.dataset.gameJoin||target.dataset.gameWatch;
