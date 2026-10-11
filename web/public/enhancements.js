@@ -97,14 +97,22 @@
       if (!memberButton) return;
       try {
         const data = await api(`/api/public/member/${encodeURIComponent(memberButton.dataset.member)}`);
+        const site = data.siteProfile || null;
+        const siteRole = site?.is_owner ? "الأونر" : (String(site?.role || "").toLowerCase() === "admin" ? "إدارة" : (site ? "عضو MLD" : ""));
         const payload = `
-          <div class="dialog">
-            <div class="dialogHead"><h2>${escapeHtml(data.name)}</h2><button class="close" type="button" data-close>×</button></div>
-            <img class="profileAvatar" src="${escapeHtml(data.avatar || "logo.svg.JPG")}" alt="${escapeHtml(data.name)}">
-            <p class="muted" style="text-align:center">@${escapeHtml(data.username)}</p>
-            <div class="stats" style="margin-top:15px">
-              <div class="panel stat"><b>${Number(data.stats?.messages || 0)}</b><small>الرسائل</small></div>
-              <div class="panel stat"><b>${Number(data.stats?.voiceMinutes || 0)}</b><small>دقائق الصوت</small></div>
+          <div class="dialog member-profile-dialog">
+            <div class="dialogHead"><div><h2>${escapeHtml(data.name || data.username || "عضو")}</h2><small class="muted">ملف عضو مجتمع ملاذ</small></div><button class="close" type="button" data-close aria-label="إغلاق">×</button></div>
+            <div class="member-profile-identity">
+              <img class="profileAvatar" src="${escapeHtml(data.avatar || "logo.svg.JPG")}" alt="${escapeHtml(data.name || data.username)}">
+              <div><strong>${escapeHtml(data.name || data.username)}</strong><p class="muted">@${escapeHtml(data.username || "")}</p><span class="tag">${escapeHtml(data.rank || "عضو Discord")}</span></div>
+            </div>
+            ${site ? `<section class="member-site-profile"><h3>حساب MLD المرتبط</h3><div class="member-profile-identity"><img class="profileAvatar" src="${escapeHtml(site.avatar || data.avatar || "logo.svg.JPG")}" alt=""><div><strong>${escapeHtml(site.username || "عضو MLD")}</strong><p class="muted">${escapeHtml(siteRole)}</p>${site.occupation ? `<p>${escapeHtml(site.occupation)}</p>` : ""}</div></div>${site.bio ? `<p class="member-profile-bio">${escapeHtml(site.bio)}</p>` : '<p class="muted">لم يضف العضو نبذة شخصية بعد.</p>'}</section>` : '<section class="member-site-profile"><h3>حساب MLD</h3><p class="muted">لم يربط هذا العضو حسابًا في الموقع بعد.</p></section>'}
+            <h3>نشاط Discord</h3>
+            <div class="stats member-profile-stats" style="margin-top:12px">
+              <div class="panel stat"><b>${Number(data.stats?.messages || 0).toLocaleString("ar-SA")}</b><small>الرسائل</small></div>
+              <div class="panel stat"><b>${Number(data.stats?.mentionsReceived || 0).toLocaleString("ar-SA")}</b><small>منشنات مستلمة</small></div>
+              <div class="panel stat"><b>${Number(data.stats?.voiceMinutes || 0).toLocaleString("ar-SA")}</b><small>دقائق الصوت</small></div>
+              <div class="panel stat"><b>${Number(data.stats?.voiceJoins || 0).toLocaleString("ar-SA")}</b><small>دخول صوتي</small></div>
             </div>
           </div>`;
         $("#modal").innerHTML = payload;
