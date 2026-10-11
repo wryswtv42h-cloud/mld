@@ -28,6 +28,15 @@ function shuffle(arr) {
   return a;
 }
 
+function drawCard(state) {
+  if (!state.deck.length && state.discard.length > 1) {
+    const top = state.discard.pop();
+    state.deck = shuffle(state.discard);
+    state.discard = [top];
+  }
+  return state.deck.pop() || null;
+}
+
 export function initJaccaro(players) {
   const deck = buildDeck();
   const hands = {};
@@ -65,13 +74,16 @@ export function handleJaccaroAction(state, playerName, action) {
     const hand = s.hands[playerName];
     const idx = action.cardIndex;
 
-    if (idx < 0 || idx >= hand.length) return s;
+    if (!Array.isArray(hand) || !Number.isInteger(idx) || idx < 0 || idx >= hand.length) return s;
 
     const card = hand[idx];
+    const m = s.marbles[playerName];
+    const targetName = String(action.targetPlayer || '');
+    const target = s.marbles[targetName];
+    if (card.type === 'swap' && (!targetName || targetName === playerName || !target || m.home >= 4 || target.home >= 4)) return s;
+
     hand.splice(idx, 1);
     s.discard.push(card);
-
-    const m = s.marbles[playerName];
 
     switch (card.type) {
       case 'move':
@@ -94,16 +106,22 @@ export function handleJaccaroAction(state, playerName, action) {
       case 'back':
         m.track = Math.max(0, m.track - card.value);
         break;
-      case 'swap':
-        // تبديل مع لاعب آخر
+      case 'swap': {
+        const target = s.marbles[targetName];
+        [m.track, target.track] = [target.track, m.track];
+        [m.safe, target.safe] = [target.safe, m.safe];
+        s.log.push(`${playerName} بدّل موقعه مع ${targetName}`);
         break;
+      }
       case 'skip':
         // Advance exactly two seats: the current player and the skipped player.
         advanceBy = 2;
         break;
-      case 'draw':
-        s.hands[playerName].push(s.deck.pop());
+      case 'draw': {
+        const extra = drawCard(s);
+        if (extra) s.hands[playerName].push(extra);
         break;
+      }
     }
 
     if (m.track >= 60) {
@@ -120,7 +138,7 @@ export function handleJaccaroAction(state, playerName, action) {
     s.currentIndex = nextIndex(s.currentIndex, s.players.length, advanceBy);
 
     // سحب ورقة جديدة
-    const newCard = s.deck.pop();
+    const newCard = drawCard(s);
     if (newCard) s.hands[playerName].push(newCard);
   }
 
