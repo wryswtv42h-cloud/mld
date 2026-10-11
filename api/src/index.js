@@ -53,6 +53,13 @@ app.get('/', (req, res) => {
   });
 });
 
+app.use('/api/', (req, res, next) => {
+  if (!dbReady && req.path !== '/public/server' && req.path !== '/public/members' && req.path !== '/public/roles') {
+    return res.status(503).json({ error: 'الخدمة ما زالت تجهز قاعدة البيانات، حاول بعد لحظات' });
+  }
+  next();
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/bots', botRoutes);
@@ -82,9 +89,4 @@ httpServer.listen(PORT, '0.0.0.0', async () => {
   }
 });
 
-app.use('/api/', (req, res, next) => {
-  if (!dbReady && req.path !== '/public/server' && req.path !== '/public/members' && req.path !== '/public/roles') {
-    return res.status(503).json({ error: 'الخدمة ما زالت تجهز قاعدة البيانات، حاول بعد لحظات' });
-  }
-  next();
-});
+
