@@ -61,6 +61,7 @@ export function handleJaccaroAction(state, playerName, action) {
   if (currentPlayer !== playerName) return s;
 
   if (action.type === 'play') {
+    let advanceBy = 1;
     const hand = s.hands[playerName];
     const idx = action.cardIndex;
 
@@ -97,7 +98,8 @@ export function handleJaccaroAction(state, playerName, action) {
         // تبديل مع لاعب آخر
         break;
       case 'skip':
-        s.currentIndex = nextIndex(s.currentIndex, s.players.length, 2);
+        // Advance exactly two seats: the current player and the skipped player.
+        advanceBy = 2;
         break;
       case 'draw':
         s.hands[playerName].push(s.deck.pop());
@@ -115,7 +117,7 @@ export function handleJaccaroAction(state, playerName, action) {
     }
 
     s.log.push(`${playerName} لعب ${card.type}${card.value ? ' ' + card.value : ''}`);
-    s.currentIndex = nextIndex(s.currentIndex, s.players.length, 1);
+    s.currentIndex = nextIndex(s.currentIndex, s.players.length, advanceBy);
 
     // سحب ورقة جديدة
     const newCard = s.deck.pop();
