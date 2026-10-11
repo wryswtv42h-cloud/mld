@@ -9,12 +9,12 @@ const proxy=httpProxy.createProxyServer({target:API,changeOrigin:true,ws:true,xf
 proxy.on('error',(e,req,res)=>{if(res&&!res.headersSent)res.writeHead(502,{'content-type':'application/json'});try{res?.end(JSON.stringify({error:'تعذر الاتصال بخدمة MLD API'}))}catch{}});
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp'};
 const server=http.createServer((req,res)=>{
- const u=(req.url||'/').split('?')[0];
+ const [u,query='']=(req.url||'/').split('?');
  if(u.startsWith('/api/')||u.startsWith('/socket.io/'))return proxy.web(req,res,{target:API});
  let p=u==='/'?'/index.html':decodeURIComponent(u);
  const file=path.normalize(path.join(root,p));
  if(!file.startsWith(root))return res.writeHead(403).end();
- fs.readFile(file,(err,data)=>{if(err)return fs.readFile(path.join(root,'index.html'),(e,d)=>{if(e)return res.writeHead(404).end('Not found');res.writeHead(200,{'content-type':types['.html'],'cache-control':'no-cache'});res.end(d)});res.writeHead(200,{'content-type':types[path.extname(file).toLowerCase()]||'application/octet-stream','cache-control':'no-cache'});res.end(data)});
+ fs.readFile(file,(err,data)=>{if(err)return fs.readFile(path.join(root,'index.html'),(e,d)=>{if(e)return res.writeHead(404).end('Not found');res.writeHead(200,{'content-type':types['.html'],'cache-control':'no-cache'});res.end(d)});const ext=path.extname(file).toLowerCase();const versioned=/(?:^|&)v=[^&]+/.test(query);const cacheControl=ext==='.html'?'no-cache':versioned?'public, max-age=31536000, immutable':'public, max-age=300';res.writeHead(200,{'content-type':types[ext]||'application/octet-stream','cache-control':cacheControl});res.end(data)});
 });
 server.on('upgrade',(req,socket,head)=>{if(req.url.startsWith('/socket.io/'))proxy.ws(req,socket,head,{target:API});else socket.destroy()});
 server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log('MLD Web SPA online'));
