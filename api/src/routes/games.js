@@ -37,7 +37,7 @@ router.post('/sessions',requireAuth,async(req,res)=>{
     if(!Number.isInteger(max)||max<cfg.min||max>cfg.max)return res.status(400).json({error:`عدد اللاعبين يجب أن يكون بين ${cfg.min} و${cfg.max}`});
     const hostId=req.user.id;
     const hostName=req.user.username;
-    const players=[{name:hostName,userId:hostId,isBot:false,isHost:true}];
+    const players=[{name:hostName,userId:hostId,discordId:req.user.discord_id||null,avatar:req.user.avatar||null,isBot:false,isHost:true}];
     const {rows}=await query(`INSERT INTO games(name,type,status,host_id,players,min_players,max_players,state,spectators)
       VALUES($1,$2,'waiting',$3,$4,$5,$6,NULL,$7) RETURNING *`,
       [req.body.name||('غرفة '+type),type,hostId,JSON.stringify(players),cfg.min,max,JSON.stringify([])]);

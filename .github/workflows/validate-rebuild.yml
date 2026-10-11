@@ -1,0 +1,29 @@
+name: Validate MLD rebuild
+
+on:
+  push:
+    branches:
+      - "redesign/mld-rebuild-safe-2026-10-11"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  javascript-syntax:
+    name: JavaScript syntax and wiring checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check all application JavaScript files
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            node --check "$file"
+          done < <(find api/src bot/src web/public -type f -name '*.js' -print0)
+      - name: Check essential MLD wiring
+        run: node scripts/smoke-check.mjs
