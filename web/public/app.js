@@ -1,5 +1,16 @@
 (()=>{"use strict";
 // Prevent action buttons from accidentally submitting forms on mobile.
+// Reliable mobile-safe game creation: handle the tap directly, not only the native submit event.
+document.addEventListener("click",event=>{
+ const button=event.target instanceof Element?event.target.closest("[data-create-game-session]"):null;
+ if(!button)return;
+ const form=button.closest("#gameSessionForm");
+ if(!form)return;
+ event.preventDefault();
+ event.stopImmediatePropagation();
+ void handleGameSessionSubmit(form,event);
+},true);
+
 document.addEventListener("click",event=>{const button=event.target instanceof Element?event.target.closest("button"):null;if(!button||button.hasAttribute("type"))return;const hasDataAction=[...button.attributes].some(attr=>attr.name.startsWith("data-"));if(hasDataAction)button.type="button";},true);
 
 // Prevent accidental browser navigation from any dynamic form. The app's submit
