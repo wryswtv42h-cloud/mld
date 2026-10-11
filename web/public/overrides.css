@@ -884,3 +884,26 @@ body[data-page="owner"] #app .owner-section input:focus,body[data-page="owner"] 
 body[data-page="owner"] #app .owner-section form{padding:14px;border-radius:16px;background:rgba(0,0,0,.12)}
 body[data-page="owner"] #app .owner-section [hidden],body[data-page="owner"] #app .owner-overview[hidden]{display:none!important}
 @media(max-width:700px){body[data-page="owner"] #app .pagePanel:has(.owner-console-nav){margin:10px 0;padding:14px;border-radius:20px}body[data-page="owner"] #app .owner-console-nav{top:3px;margin:14px -2px;padding:7px;border-radius:15px}body[data-page="owner"] #app .owner-console-nav button{padding:9px 11px;min-height:40px;font-size:.84rem}body[data-page="owner"] #app .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}body[data-page="owner"] #app .owner-section{padding:14px;border-radius:17px}body[data-page="owner"] #app .owner-section form{padding:10px}}
+
+
+/* Game-room tap reliability: keep controls above decorative layers on touch screens. */
+body[data-page="games"] #app .game-room-shell,
+body[data-page="games"] #app .game-live-layout,
+body[data-page="games"] #app .game-board-column,
+body[data-page="games"] #app .game-live-sidebar,
+body[data-page="games"] #app .game-room-actions,
+body[data-page="games"] #app .game-actions,
+body[data-page="games"] #app .game-chat-compose {position:relative;isolation:isolate}
+body[data-page="games"] #app .game-room-shell button,
+body[data-page="games"] #app .game-room-shell input,
+body[data-page="games"] #app .game-room-shell select {position:relative;z-index:3;pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body[data-page="games"] #app .game-room-shell button:disabled {cursor:not-allowed;opacity:.48}
+body[data-page="games"] #app .game-room-shell::before,
+body[data-page="games"] #app .game-room-shell::after,
+body[data-page="games"] #app .game-table-stage::before,
+body[data-page="games"] #app .game-table-stage::after {pointer-events:none!important}
+body[data-page="games"] #app .game-room-actions {display:flex;gap:8px;flex-wrap:wrap}
+body[data-page="games"] #app .game-chat-compose {display:flex;gap:8px}
+body[data-page="games"] #app .game-chat-compose input {min-width:0;flex:1}
+body[data-page="games"] #app .game-chat-compose button {flex:0 0 auto}
+@media(max-width:680px){body[data-page="games"] #app .game-room-shell button{min-height:44px}body[data-page="games"] #app .game-chat-compose button{min-width:76px}}
