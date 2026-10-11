@@ -24,6 +24,9 @@ const gameRoute = read('api/src/routes/games.js');
 const gameSocket = read('api/src/socket/games.js');
 const apiIndex = read('api/src/index.js');
 const enhancements = read('web/public/enhancements.js');
+const bot = read('bot/src/index.js');
+const botRoutes = read('api/src/routes/bots.js');
+const uno = read('api/src/games/uno.js');
 
 assert.match(html, /logo\.svg\.JPG/, 'The original logo must remain referenced.');
 assert.match(html, /rebuild-polish\.css/, 'The additive responsive stylesheet must be loaded.');
@@ -40,6 +43,15 @@ assert.match(app, /المتصدرون والإحصائيات/, 'The unified lead
 assert.match(enhancements, /data\.siteProfile/, 'Member previews should include linked MLD profile data.');
 assert.ok(apiIndex.indexOf("app.use('/api/', (req, res, next)") < apiIndex.indexOf("app.use('/api/auth', authRoutes)"), 'Database readiness middleware must run before API routes.');
 assert.match(apiIndex, /req\.originalUrl/, 'Startup exemptions must use the original URL inside mounted middleware.');
+
+
+assert.match(bot, /allowedSlashNames = new Set\\(\\['ping', 'serverinfo', 'botinfo'\\]\\)/, 'Main bot slash commands must stay limited to ping, server info, and bot info.');
+assert.match(bot, /function buildUserBotSlashCommands/, 'User-created bots must expose a dedicated informational slash-command list.');
+assert.match(bot, /client\\.on\\(Events\\.MessageCreate,\\s*async message =>/, 'Prefix command handling must be registered for incoming Discord messages.');
+assert.match(botRoutes, /commands\\.slice\\(0,500\\)/, 'The bot dashboard must cap custom prefix commands at 500.');
+assert.match(botRoutes, /commandSettings/, 'The bot dashboard must persist per-command enable/disable and alias settings.');
+assert.match(uno, /function drawCard\\(state\\)/, 'UNO must recycle the discard pile when the draw pile runs out.');
+assert.match(uno, /card\\.value === 'wild4' && hand\\.some/, 'UNO must validate Wild Draw Four legality.');
 
 const jsFiles = [...walk('api/src'), ...walk('bot/src'), ...walk('web/public')].filter((p) => p.endsWith('.js'));
 assert.ok(jsFiles.length > 0, 'JavaScript source files should be discovered.');
