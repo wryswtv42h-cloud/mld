@@ -75,10 +75,10 @@ assert.ok(uno.includes("s.players.length === 2 ? 2 : 1"), 'UNO reverse must skip
 assert.ok(jackaroo.includes("case 'swap': {"), 'Jackaroo swap cards must have a real game effect.');
 assert.ok(jackaroo.includes('function drawCard(state)'), 'Jackaroo must handle an exhausted draw pile safely.');
 assert.ok(app.includes('اكتب اسم اللاعب الذي تريد تبديل موقعك معه'), 'The Jackaroo UI must let the player select a swap target.');
-assert.ok(gameSocket.includes("setInterval(async()=>{try{const {rows}=await query(\"DELETE FROM games WHERE last_activity < NOW() - INTERVAL '5 minutes'"), 'Idle game sessions should be cleaned up after five minutes without activity.');
+assert.ok(gameSocket.includes("SELECT id FROM games WHERE last_activity < NOW() - INTERVAL '5 minutes'") && gameSocket.includes("DELETE FROM games WHERE id=$1 AND last_activity < NOW() - INTERVAL '5 minutes'"), 'Idle game cleanup should re-check activity before deleting a session.');
 assert.ok(gameSocket.includes("socket.on('disconnect',async()=>"), 'Disconnected players should be marked offline or removed from waiting rooms.');
 assert.ok(gameSocket.includes('const sessionLocks=new Map()'), 'Concurrent game events must use per-session serialization.');
-assert.equal(gameSocket.split('withSessionLock(sessionId,async()=>').length-1, 5, 'Joining, starting, moving, leaving, and ending should be serialized per session.');
+assert.equal(gameSocket.split('withSessionLock(sessionId,async()=>').length-1, 6, 'Joining, starting, moving, leaving, ending, and bot turns should be serialized per session.');
 assert.ok(gameSocket.includes('last_activity=NOW()'), 'Joining, leaving, chatting and playing should refresh session activity.');
 assert.ok((await read('api/src/db.js')).includes('ALTER TABLE games ADD COLUMN IF NOT EXISTS last_activity timestamptz'), 'Existing game tables should migrate safely to activity tracking.');
 
