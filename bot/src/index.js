@@ -392,7 +392,26 @@ function installBotFeatures(client,bot){
       عددالاعضاء:'membercount',صورة:'avatar',بنر:'banner',دعوة:'invite',
       رصيد:'رصيد',فلوسي:'رصيد',مكافأة:'يومي',مكافاه:'يومي',تحويلفلوس:'تحويل',
       توب:'توب',العاب:'games',الألعاب:'games',حماية:'protection',حمايه:'protection',
-      روماتخاصة:'rooms',رومخاص:'rooms',شاتخاص:'rooms',تذكرة:'ticket',تقديم:'apply'
+      روماتخاصة:'rooms',رومخاص:'rooms',شاتخاص:'rooms',تذكرة:'ticket',تقديم:'apply',
+      اطردني:'kick',طردعضو:'kick',تقلع:'kick',اخراج:'kick',اخراجعضو:'kick',حظرعضو:'ban',باند:'ban',
+      الغالحظر:'unban',الغاءالحظر:'unban',مسحرسائل:'clear',احذف:'clear',حذف:'clear',نظف:'clear',
+      كتمعضو:'timeout',اسكتعضو:'timeout',ميوت:'timeout',فكالميوت:'untimeout',الغاءالكتم:'untimeout',
+      الغاءالاسكات:'untimeout',فكالتايم:'untimeout',تحذيرعضو:'warn',انذر:'warn',انذارعضو:'warn',
+      غيرالاسم:'nick',تغييرالاسم:'nick',تغييراللقب:'nick',اعطرتبة:'roleadd',اضافةرتبة:'roleadd',
+      ازالةرتبة:'roleremove',حذفرتبة:'roledelete',صنعرتبة:'rolecreate',انشاءرتبه:'rolecreate',
+      اقفلالشات:'lock',قفلروم:'lock',فتحالشات:'unlock',فتحالروم:'unlock',بطءالشات:'slowmode',
+      تغييرالبادئة:'setprefix',البادئة:'prefix',بريفكس:'prefix',بنق:'ping',بينق:'ping',
+      سيرفر:'serverinfo',معلوماتالسيرفر:'serverinfo',معلوماتالبوت:'botinfo',بوت:'botinfo',
+      كم_عضو:'membercount',عددالاعضاء:'membercount',عددالرتب:'roles',عددالقنوات:'channelcount',
+      صورةالعضو:'avatar',افاتار:'avatar',صوره:'avatar',صورةالسيرفر:'servericon',ايقونةالسيرفر:'servericon',
+      معلوماتالرتبة:'roleinfo',معلوماتالروم:'channelinfo',رابطدعوة:'invite',انشاءدعوة:'invite',
+      تصويت:'poll',اعلان:'announce',ارسال:'say',بطئ:'slowmode',نقلعضو:'move',
+      الرومات:'rooms',خاص:'rooms',شاتخاص:'rooms',انشاءرومخاص:'rooms',انشاءشاتخاص:'rooms',
+      العاب:'games',الألعاب:'games',العاب:'games',العابالسيرفر:'games',بنك:'bank',
+      رصيدي:'رصيد',فلوس:'رصيد',يومي:'يومي',مكافأتي:'يومي',تبرع:'تبرع',قرض:'قرض',
+      سداد:'سداد',استثمار:'استثمار',صندوق:'صندوق',تداول:'تداول',تحويل:'تحويل',
+      ستريك:'ستريك',زاجل:'زاجل',برودكاست:'broadcast',تذكرةجديدة:'ticket',افتح تذكرة:'ticket',
+      تقديماتي:'طلباتي',تقديموظيفة:'apply',مساعدة:'help',اوامر:'help',الأوامر:'help'
     };
     if(builtinArabicAliases[command])command=builtinArabicAliases[command];
     const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));
