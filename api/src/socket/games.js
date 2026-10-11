@@ -54,7 +54,7 @@ export function setupGameSocket(io,socket){
  socket.on('disconnect',async()=>{
   if(!socket.user?.id)return;
   try{
-   const {rows}=await query("SELECT id,status,players,spectators FROM games WHERE status IN ('waiting','playing') AND (players::jsonb @> $1::jsonb OR spectators::jsonb @> $1::jsonb)",[JSON.stringify([{userId:socket.user.id,socketId:socket.id}])]);
+   const {rows}=await query("SELECT id,status,players,spectators,state,type FROM games WHERE status IN ('waiting','playing') AND (players::jsonb @> $1::jsonb OR spectators::jsonb @> $1::jsonb)",[JSON.stringify([{userId:socket.user.id,socketId:socket.id}])]);
    for(const session of rows){
     let players=safeJson(session.players),spectators=safeJson(session.spectators);
     if(session.status==='playing')players=players.map(player=>String(player.userId||'')===String(socket.user.id)&&player.socketId===socket.id?{...player,connected:false}:player);
