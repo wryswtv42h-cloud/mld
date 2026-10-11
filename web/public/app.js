@@ -203,7 +203,7 @@ document.addEventListener("submit",async event=>{
 },true);
 
 const API=(window.MLD_API_URL||"").replace(/\/$/,"");
-const pages=[["home","الرئيسية"],["apply","التقديم"],["members","الأعضاء"],["roles","الرتب"],["top","الإحصائيات"],["leaders","المتصدرون"],["chat","الدردشة"],["pigeon","زاجل"],["groups","القروبات"],["games","الألعاب"],["cinema","السينما"],["jokes","النكت"],["stories","القصص"],["tickets","التذاكر"],["reviews","الآراء"],["bots","البوتات"],["profile","حسابي"]];
+const pages=[["home","الرئيسية"],["apply","التقديم"],["members","الأعضاء"],["roles","الرتب"],["top","المتصدرون والإحصائيات"],["chat","الدردشة"],["pigeon","زاجل"],["groups","القروبات"],["games","الألعاب"],["cinema","السينما"],["jokes","النكت"],["stories","القصص"],["tickets","التذاكر"],["reviews","الآراء"],["bots","البوتات"],["profile","حسابي"]];
 const protectedPages=new Set(["chat","pigeon","groups","games","tickets","apply","profile","bots"]);
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -490,6 +490,8 @@ function gameLobbyPage(){
 let authSnapshotAt=0,authRefreshPromise=null;async function refreshSessionUser(){if(!state.token||Date.now()-authSnapshotAt<15000)return;if(!authRefreshPromise){authRefreshPromise=api("/api/users/me",{timeoutMs:6000}).then(data=>{if(data?.user){state.user=data.user;store.set("mld_user",JSON.stringify(data.user));}authSnapshotAt=Date.now();return data;}).catch(()=>null).finally(()=>{authRefreshPromise=null;});}await authRefreshPromise;}
 let pageLocksSnapshot=null,pageLocksSnapshotAt=0,pageLocksRequest=null;async function getPageLocksSnapshot(){if(pageLocksSnapshot&&Date.now()-pageLocksSnapshotAt<30000)return pageLocksSnapshot;if(!pageLocksRequest){pageLocksRequest=api("/api/community/page-locks",{timeoutMs:6000}).then(data=>{pageLocksSnapshot=data;pageLocksSnapshotAt=Date.now();return data}).finally(()=>{pageLocksRequest=null;});}return pageLocksRequest;}
 async function buildPage(p){
+// Keep old links working, but render a single unified leaderboard/statistics page.
+if(p==="leaders")p="top";
 // Refresh the authoritative account before deciding whether a page is locked. Cached localStorage roles can be stale after owner promotion or login repair.
 if(state.token)await refreshSessionUser();
 const ownerView=state.user?.is_owner===true||["true","1","yes"].includes(String(state.user?.is_owner??"").toLowerCase())||String(state.user?.role||"").toLowerCase()==="owner";
@@ -504,7 +506,7 @@ if(p==="roles"){
  return box("الرتب","كل رتب سيرفر MLD — اضغط على أي رتبة لعرض أعضائها",'<div class="roleGrid">'+d.roles.map(r=>'<button type="button" class="roleCard" data-role="'+esc(r.id)+'" style="cursor:pointer;text-align:right;border-color:'+esc(/^#[0-9a-f]{6}$/i.test(r.color||'')?r.color:'#a86fdf')+'"><b>'+esc(r.name)+'</b><span>'+Number(r.membersCount||0).toLocaleString('ar-SA')+' عضو</span><div class="roleCapabilities">'+(r.permissions||[]).map(x=>'<small>'+esc(x)+'</small>').join('')+'</div><small>اضغط لعرض الأعضاء ←</small></button>').join('')+'</div><section id="roleMembersPanel" class="panel pagePanel" hidden></section>');
 }
 if(p==="leaders"){const d=await api("/api/public/top");const sections=[["الرسائل","messages"],["المنشنات","mentions"],["الصوت","voice"],["الانضمامات","joins"]];return box("المتصدرون","أفضل أعضاء المجتمع حسب النشاط",'<div class="cards">'+sections.map(([title,key])=>'<article class="panel card"><h3>'+title+'</h3>'+((d[key]||[]).map((m,i)=>'<div class="rank"><b>#'+(i+1)+'</b><img src="'+esc(m.avatar)+'"><span>'+esc(m.name)+'</span><strong>'+Number(m.stats?.messages||m.stats?.voiceMinutes||0).toLocaleString("ar-EG")+'</strong></div>').join("")||'<p class="muted">لا توجد بيانات كافية بعد.</p>')+'</article>').join("")+'</div>')}
-if(p==="top"){const d=await api("/api/public/top");return box("المتصدرون","إحصائيات نشاط المجتمع",'<div class="cards">'+["messages","mentions","voice","joins"].map(k=>'<article class="panel card"><h3>'+k+'</h3>'+((d[k]||[]).map((m,i)=>'<div class="rank"><b>#'+(i+1)+'</b><img src="'+esc(m.avatar)+'"><span>'+esc(m.name)+'</span></div>').join("")||'<p class="muted">لا توجد بيانات.</p>')+'</article>').join("")+'</div>')}
+if(p==="top"){const d=await api("/api/public/top");const groups=[["الرسائل","messages","messages"],["المنشنات المستلمة","mentions","mentionsReceived"],["دقائق الصوت","voice","voiceMinutes"],["دخول القنوات الصوتية","joins","voiceJoins"]];return box("المتصدرون والإحصائيات","لوحة واحدة لنشاط أعضاء مجتمع ملاذ",'<div class="cards">'+groups.map(([title,key,stat])=>'<article class="panel card leaderboard-card"><h3>'+title+'</h3>'+((d[key]||[]).map((m,i)=>'<button type="button" class="rank leaderboard-row" data-member="'+esc(m.id)+'"><b>#'+(i+1)+'</b><img src="'+esc(m.avatar||"logo.svg.JPG")+'" alt=""><span>'+esc(m.name||m.username||"عضو")+'</span><strong>'+Number(m.stats?.[stat]||0).toLocaleString("ar-SA")+'</strong></button>').join("")||'<p class="muted">لا توجد بيانات كافية بعد.</p>')+'</article>').join("")+'</div>')}
 if(p==="chat"){
 const roomId=state.activeRoom||"public";
 const [d,roomData]=await Promise.all([api("/api/community/chat?room_id="+encodeURIComponent(roomId)),api("/api/community/rooms")]);
