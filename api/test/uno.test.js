@@ -59,3 +59,16 @@ test('UNO ignores actions from the wrong player and does not mutate input', () =
   assert.equal(next.currentIndex, 0);
   assert.deepEqual(next.hands, before.hands);
 });
+
+
+test('UNO reverse acts like skip with two players', () => {
+  const before = state({
+    players: ['A', 'B'],
+    hands: { A: [{ color: 'red', value: 'reverse' }, { color: 'blue', value: '3' }], B: [{ color: 'blue', value: '2' }] },
+    deck: [{ color: 'green', value: '4' }],
+    currentColor: 'red'
+  });
+  const next = handleUnoAction(before, 'A', { type: 'play', card: { color: 'red', value: 'reverse' } });
+  assert.equal(next.direction, -1);
+  assert.equal(next.currentIndex, 0, 'the same player should take the next turn');
+});
