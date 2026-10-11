@@ -11,6 +11,7 @@ import { setupGames } from './systems/games.js';
 import { setupMusic } from './systems/music.js';
 import { setupAuditLogs, ensureAuditLogRooms } from './systems/audit-logs.js';
 import { setupPrivateRooms } from './systems/private-rooms.js';
+import { CATALOG_COMMAND_MAP, runCatalogCommand } from './commands/catalog.js';
 
 dotenv.config();
 
@@ -342,7 +343,7 @@ function installBotFeatures(client,bot){
     const words=String(config.blockedWords||'').split(/[\n,،]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
     const defaultProtectionPrefix=String(config.prefix||'!').slice(0,4)||'!';
     const protectionPrefixes=[defaultProtectionPrefix,...Object.values(config.prefixes||{}).map(value=>String(value||'').trim().slice(0,4)).filter(Boolean)];
-    const knownCommandNames=new Set(['help','ping','serverinfo','botinfo','server','servericon','membercount','members','channelcount','uptime','avatar','userinfo','roles','roll','random','coinflip','8ball','joke','id','banner','profile','myinv','topinv','user','invite','roleinfo','channelinfo','prefix','setprefix','command','warn','kick','ban','clear','slowmode','lock','unlock','timeout','untimeout','nick','roleadd','roleremove','unban','allbans','rolecreate','roledelete','move','moveme','mute','unmute','deafen','undeafen','disconnect','hide','show','renamechannel','settopic','broadcast','rooms','poll','announce','ticket','apply','close','say','embed','protection','antilink','antispam','blockedword','welcome','logs','رصيد','يومي','تحويل','قرض','سداد','استثمار','شغل','وقف','التالي','قائمة','روليت','مافيا','سالفة','بومب','حماية','حمايه','منعروابط','منعالروابط','منعالسبام','كلمةممنوعة','تذكرة','تقديم','قفل','فكحظر','حظر','طرد','مسح','انذار','تحذير','نقل','نقلني']);
+    const knownCommandNames=new Set(['help','ping','serverinfo','botinfo','server','servericon','membercount','members','channelcount','uptime','avatar','userinfo','roles','roll','random','coinflip','8ball','joke','id','banner','profile','myinv','topinv','user','invite','roleinfo','channelinfo','prefix','setprefix','command','warn','kick','ban','clear','slowmode','lock','unlock','timeout','untimeout','nick','roleadd','roleremove','unban','allbans','rolecreate','roledelete','move','moveme','mute','unmute','deafen','undeafen','disconnect','hide','show','renamechannel','settopic','broadcast','rooms','poll','announce','ticket','apply','close','say','embed','protection','antilink','antispam','blockedword','welcome','logs','رصيد','يومي','تحويل','قرض','سداد','استثمار','شغل','وقف','التالي','قائمة','روليت','مافيا','سالفة','بومب','حماية','حمايه','منعروابط','منعالروابط','منعالسبام','كلمةممنوعة','تذكرة','تقديم','قفل','فكحظر','حظر','طرد','مسح','انذار','تحذير','نقل','نقلني',...CATALOG_COMMAND_MAP.keys()]);
     const isCommandMessage=protectionPrefixes.some(value=>{if(!content.startsWith(value))return false;const first=String(content.slice(value.length).trim().split(/\\s+/)[0]||'').toLowerCase();const custom=(Array.isArray(config.commands)?config.commands:[]).some(item=>item&&item.enabled!==false&&(String(item.name||'').toLowerCase()===first||(Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===first))));const configured=Object.entries(config.commandSettings||{}).some(([name,item])=>String(name).toLowerCase()===first||(Array.isArray(item?.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===first)));return knownCommandNames.has(first)||custom||configured;});
     const autoMod=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true;
     if(autoMod&&!isCommandMessage){
@@ -431,6 +432,9 @@ function installBotFeatures(client,bot){
     if(phrase){command=customPhrase?customPhrase.name:configuredPhrase.key;args=commandText.slice(phrase.alias.length).trim().split(/\s+/).filter(Boolean);}
     const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));
     if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','id','معرف','banner','بنر','profile','ملفي','بروفايل','myinv','دعواتي','topinv','توبدعوات','user','مستخدم','unban','فكحظر','allbans','قائمةالمحظورين','rolecreate','انشاءرتبة','roledelete','حذفرتبة','move','moveme','rooms','الغرفالصوتية','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
+    const catalogEntry=CATALOG_COMMAND_MAP.get(command)||null;
+    const catalogCommandName=catalogEntry?command:null;
+    if(catalogEntry?.kind==='mod')command=catalogEntry.operation;
     const prefixCategory=(name)=>{
       const key=String(name||'').toLowerCase();
       // "تحويل" exists in both the game points system and the bank. Choose the
@@ -449,7 +453,7 @@ function installBotFeatures(client,bot){
     };
     prefix=prefixMap[prefixCategory(command)]||defaultPrefix;
     if(!command)return;
-    const commandPolicy=commandSettings[command];
+    const commandPolicy=commandSettings[catalogCommandName]||commandSettings[command];
     if(commandPolicy?.enabled===false)return message.reply('هذا الأمر معطل من لوحة التحكم.');
     const allowedCoreRoles=Array.isArray(commandPolicy?.allowedRoleIds)?commandPolicy.allowedRoleIds:[];
     if(allowedCoreRoles.length&&message.author.id!==message.guild.ownerId&&!allowedCoreRoles.some(roleId=>message.member.roles.cache.has(String(roleId))))return message.reply('ما عندك رتبة تسمح لك باستخدام هذا الأمر.');
@@ -458,11 +462,14 @@ function installBotFeatures(client,bot){
       announce:PermissionFlagsBits.ManageMessages,slowmode:PermissionFlagsBits.ManageChannels,lock:PermissionFlagsBits.ManageChannels,unlock:PermissionFlagsBits.ManageChannels,
       timeout:PermissionFlagsBits.ModerateMembers,untimeout:PermissionFlagsBits.ModerateMembers,warn:PermissionFlagsBits.ModerateMembers,
       nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,rolecreate:PermissionFlagsBits.ManageRoles,'انشاءرتبة':PermissionFlagsBits.ManageRoles,roledelete:PermissionFlagsBits.ManageRoles,'حذفرتبة':PermissionFlagsBits.ManageRoles,unban:PermissionFlagsBits.BanMembers,'فكحظر':PermissionFlagsBits.BanMembers,allbans:PermissionFlagsBits.BanMembers,'قائمةالمحظورين':PermissionFlagsBits.BanMembers,move:PermissionFlagsBits.MoveMembers,mute:PermissionFlagsBits.MuteMembers,unmute:PermissionFlagsBits.MuteMembers,deafen:PermissionFlagsBits.DeafenMembers,undeafen:PermissionFlagsBits.DeafenMembers,disconnect:PermissionFlagsBits.MoveMembers,hide:PermissionFlagsBits.ManageChannels,show:PermissionFlagsBits.ManageChannels,renamechannel:PermissionFlagsBits.ManageChannels,settopic:PermissionFlagsBits.ManageChannels,broadcast:PermissionFlagsBits.ManageGuild,protection:PermissionFlagsBits.ManageGuild,antilink:PermissionFlagsBits.ManageGuild,antispam:PermissionFlagsBits.ManageGuild,blockedword:PermissionFlagsBits.ManageGuild,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite,welcome:PermissionFlagsBits.ManageGuild,logs:PermissionFlagsBits.ManageGuild
-    }[command];
+    }[catalogEntry?.kind==='mod'?catalogEntry.operation:command];
     if(requiredPermission){
       if(!message.member.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_member_permission'});return message.reply('ما عندك صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
       const botMember=message.guild.members.me;
       if(!botMember?.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_bot_permission'});return message.reply('البوت نفسه يحتاج صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
+    }
+    if(catalogEntry&&catalogEntry.kind!=='mod'){
+      return runCatalogCommand({entry:catalogEntry,message,args,client,config,prefix,pool,writeRuntimeLog});
     }
     const saveProtectionSettings=async(next,action,details={})=>{if(!pool)throw new Error('قاعدة البيانات غير متاحة لحفظ إعدادات الحماية');await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);client.mldConfig=next;await writeRuntimeLog(client.mldBotId,message.author.id,action,{guildId:message.guild.id,...details});};
     if(command==='broadcast'){
