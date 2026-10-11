@@ -60,6 +60,7 @@ assert.ok(bot.includes('function buildUserBotSlashCommands'), 'User-created bots
 assert.match(botServerInfo, /setName\('serverinfo'\)/, 'The approved server information slash command must exist.');
 assert.match(botBotInfo, /setName\('botinfo'\)/, 'The approved bot information slash command must exist.');
 assert.ok(bot.includes('client.on(Events.MessageCreate, async message =>'), 'Prefix command handling must be registered for incoming Discord messages.');
+assert.ok(bot.includes('client.mldConfig?.commandSettings?.help?.enabled===false'), 'The help command toggle must also apply to no-prefix help.');
 assert.ok(botRoutes.includes('commands.slice(0,500)'), 'The bot dashboard must cap custom prefix commands at 500.');
 assert.ok(botRoutes.includes('commandSettings'), 'The bot dashboard must persist per-command enable/disable and alias settings.');
 assert.ok(uno.includes('function drawCard(state)'), 'UNO must recycle the discard pile when the draw pile runs out.');
