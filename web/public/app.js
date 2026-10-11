@@ -275,7 +275,7 @@ async function api(path,opt={}){
  try{
   const data=await request;
   if(cacheKey){
-   const stable=/^\/api\/(public\/|community\/settings\/|community\/owner\/stats|community\/owner\/announcement|community\/owner\/rooms|community\/owner\/bot-subscriptions|community\/audit|users(?:\?|$)|bots(?:\?|$))/.test(path);
+   const stable=/^\/api\/(public\/|community\/(?:settings\/|owner\/|audit(?:\?|$)|rooms(?:\?|$)|reviews(?:\?|$)|applications(?:\?|$)|tickets(?:\?|$)|groups(?:\/|\?|$)|cinema(?:\/|\?|$))|users(?:\?|$)|bots(?:\?|$))/.test(path);
    apiGetCache.set(cacheKey,{data,expires:Date.now()+(stable?12000:3500)});
   }
   return data;
