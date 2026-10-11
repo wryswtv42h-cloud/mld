@@ -39,8 +39,8 @@ router.post('/sessions',requireAuth,async(req,res)=>{
     const hostName=req.user.username;
     const players=[{name:hostName,userId:hostId,isBot:false,isHost:true}];
     const {rows}=await query(`INSERT INTO games(name,type,status,host_id,players,min_players,max_players,state,spectators)
-      VALUES($1,$2,'waiting',$3,$4::jsonb,$5,$6,NULL,'[]'::jsonb) RETURNING *`,
-      [req.body.name||('غرفة '+type),type,hostId,JSON.stringify(players),cfg.min,max]);
+      VALUES($1,$2,'waiting',$3,$4,$5,$6,NULL,$7) RETURNING *`,
+      [req.body.name||('غرفة '+type),type,hostId,JSON.stringify(players),cfg.min,max,JSON.stringify([])]);
     res.json({session:normalize(rows[0],req.user?.username||null)});
   }catch(e){console.error('games create',e);res.status(500).json({error:'تعذر إنشاء الجلسة'});}
 });
