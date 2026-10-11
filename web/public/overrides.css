@@ -907,3 +907,24 @@ body[data-page="games"] #app .game-chat-compose {display:flex;gap:8px}
 body[data-page="games"] #app .game-chat-compose input {min-width:0;flex:1}
 body[data-page="games"] #app .game-chat-compose button {flex:0 0 auto}
 @media(max-width:680px){body[data-page="games"] #app .game-room-shell button{min-height:44px}body[data-page="games"] #app .game-chat-compose button{min-width:76px}}
+
+
+/* MLD owner console refresh: clear hierarchy, compact cards, and reliable touch targets */
+.owner-console-nav{position:sticky;top:12px;display:flex;flex-wrap:nowrap;gap:9px;padding:12px;margin:0 0 22px;border:1px solid rgba(255,156,222,.2);border-radius:22px;background:linear-gradient(120deg,rgba(27,17,40,.97),rgba(42,22,57,.97));box-shadow:0 18px 48px rgba(0,0,0,.22);backdrop-filter:blur(18px);z-index:30}
+.owner-console-nav button{flex:0 0 auto;min-height:44px;padding:10px 16px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.045);color:#fff8ff;font-weight:800;transition:transform .16s ease,border-color .16s ease,background .16s ease}
+.owner-console-nav button:hover,.owner-console-nav button:focus-visible{transform:translateY(-1px);outline:2px solid rgba(255,156,222,.3);outline-offset:1px;border-color:#ff9cde;background:linear-gradient(135deg,rgba(255,156,222,.16),rgba(168,111,223,.15))}
+.owner-overview{padding:clamp(14px,2vw,24px);border:1px solid rgba(255,156,222,.16);border-radius:26px;background:radial-gradient(ellipse at top right,rgba(168,111,223,.13),transparent 48%),linear-gradient(135deg,rgba(28,18,41,.92),rgba(17,12,27,.96));box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.owner-overview .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
+.owner-overview .stat{min-height:106px;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:18px;border-radius:19px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.035)}
+.owner-overview .stat b{font-size:clamp(1.5rem,3vw,2.2rem);line-height:1.1;background:linear-gradient(90deg,#fff8ff,#ff9cde 55%,#c7a0ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.owner-overview .stat small{color:#d7c8e2;font-weight:700}
+.owner-section{scroll-margin-top:95px;padding:clamp(16px,2.5vw,28px);margin-top:18px;border:1px solid rgba(255,255,255,.095);border-radius:24px;background:linear-gradient(150deg,rgba(34,22,49,.96),rgba(20,14,31,.97));box-shadow:0 16px 44px rgba(0,0,0,.16);overflow:clip}
+.owner-section>h2{padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid rgba(255,156,222,.14);color:#fff8ff}
+.owner-section .owner-row,.owner-section .ticketRow{border-radius:16px;border-color:rgba(255,255,255,.09);background:rgba(255,255,255,.035);padding:14px}
+.owner-section .form,.owner-section form{gap:12px}
+.owner-section button,.owner-section a.btn{min-height:43px;border-radius:13px;font-weight:750;touch-action:manipulation}
+.owner-section input:not([type=checkbox]):not([type=radio]):not([type=color]),.owner-section textarea,.owner-section select{min-height:44px;border-radius:13px;background:#120c1c;border-color:rgba(255,255,255,.13)}
+.owner-section input:focus-visible,.owner-section textarea:focus-visible,.owner-section select:focus-visible{outline:2px solid rgba(255,156,222,.55);outline-offset:2px}
+.owner-section [data-owner-section],.owner-section [id^=owner-]{scroll-margin-top:100px}
+@media(max-width:700px){.owner-console-nav{top:4px;margin-inline:-4px;padding:8px;border-radius:16px;gap:7px}.owner-console-nav button{min-height:42px;padding:9px 12px;font-size:.86rem}.owner-overview{padding:12px;border-radius:20px}.owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.owner-overview .stat{min-height:86px;padding:13px;border-radius:15px}.owner-section{padding:15px;border-radius:19px;margin-top:12px}.owner-section .owner-row{align-items:stretch}.owner-section .row-actions{width:100%}.owner-section .row-actions button{flex:1 1 auto}}
+@media(prefers-reduced-motion:reduce){.owner-console-nav button{transition:none}}
