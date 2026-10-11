@@ -336,3 +336,23 @@ footer{width:min(1160px,calc(100% - 24px));margin:auto;padding:22px 0;border-top
 .about-emblem{filter:drop-shadow(0 8px 22px #a86fdf40)}
 @media(max-width:620px){.owner-console-nav{top:4px;margin:10px -2px;padding:8px;border-radius:14px}.owner-console-nav button{min-height:40px;padding:9px 12px;font-size:.85rem}.owner-section{scroll-margin-top:66px}.owner-row{align-items:stretch}.owner-row .row-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.owner-row .row-actions .btn{width:100%;white-space:normal}.game-create-heading{align-items:flex-start}.game-create-icon{flex-basis:44px;height:44px}.pagePanel{padding:16px}}
 @media(prefers-reduced-motion:reduce){.owner-console-nav button,.game-card-select{transition:none}}
+
+
+/* Reliable touch/click targets for every live game room control */
+.game-room-shell, .game-room-shell * { -webkit-tap-highlight-color: transparent; }
+.game-room-shell button, .game-room-shell input, .game-room-shell select, .game-room-shell textarea,
+.game-create-panel button, .game-create-panel input, .game-create-panel select {
+  pointer-events:auto; touch-action:manipulation; position:relative;
+}
+.game-room-shell button, .game-create-panel button { cursor:pointer; }
+.game-room-shell button:disabled { pointer-events:auto; cursor:not-allowed; }
+.game-room-shell .game-table-stage, .game-room-shell .game-table-board, .game-room-shell .game-actions,
+.game-room-shell .game-room-actions, .game-room-shell .game-chat-compose { position:relative; z-index:2; }
+.game-room-shell .game-seat, .game-room-shell .game-table-board * { user-select:none; }
+.game-room-shell .game-seat { z-index:1; }
+.game-room-shell .game-table-board button, .game-room-shell .game-actions button,
+.game-room-shell .game-room-actions button, .game-room-shell .game-chat-compose button { z-index:3; }
+.game-room-shell .game-chat-compose input { user-select:text; }
+.game-create-submit[aria-busy="true"] { opacity:.75; cursor:progress; }
+#gameCreateStatus[data-state="error"] { color:#ff8d9e; }
+#gameCreateStatus[data-state="success"] { color:#76e6b1; }
