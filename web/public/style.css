@@ -299,3 +299,40 @@ footer{width:min(1160px,calc(100% - 24px));margin:auto;padding:22px 0;border-top
 .question-manager h3{margin:0}.question-list{display:grid;gap:10px}.question-editor-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.question-editor-row input{min-width:0;width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}.question-add-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.question-add-form input{min-width:0;width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}.question-manager [data-question-save]{justify-self:start}.question-manager .btn{white-space:nowrap}@media(max-width:520px){.question-editor-row,.question-add-form{grid-template-columns:1fr}.question-editor-row .btn,.question-add-form .btn{width:100%}}
 
 .application-answers{margin-top:10px;padding:10px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}.application-answers summary{cursor:pointer;font-weight:700;color:var(--pink);padding:4px}.application-answer{padding:8px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.application-answer:last-child{border-bottom:0}.application-answer p{margin:5px 0 0;white-space:pre-wrap}
+
+
+/* MLD quality pass: calmer navigation, clearer owner/admin workspaces, responsive game creation */
+.owner-console-nav{position:sticky;top:10px;z-index:4;display:flex;gap:8px;overflow-x:auto;padding:10px;margin:16px 0;border:1px solid var(--line);border-radius:18px;background:rgba(23,16,32,.94);backdrop-filter:blur(16px);scrollbar-width:thin}
+.owner-console-nav button{flex:0 0 auto;min-height:42px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--text);font:inherit;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
+.owner-console-nav button:hover{transform:translateY(-1px);border-color:#ff9cde88}
+.owner-console-nav button.is-current{background:linear-gradient(135deg,#ff9cde28,#a86fdf30);border-color:#ff9cde;color:#fff}
+.owner-section{scroll-margin-top:82px;box-shadow:0 12px 32px #00000016}
+.owner-section>h2{display:flex;align-items:center;gap:9px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.owner-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;margin:10px 0;border:1px solid var(--line);border-radius:15px;background:linear-gradient(125deg,#ffffff06,transparent)}
+.owner-row>div:first-child{min-width:0;overflow-wrap:anywhere}
+.owner-row small{display:block;margin-top:5px;color:var(--muted);line-height:1.6}
+.owner-row .row-actions{display:flex;flex-wrap:wrap;gap:8px}
+.owner-account{display:flex;align-items:center;gap:12px}
+.owner-account img{width:42px;height:42px;border-radius:14px;object-fit:cover;border:1px solid #ff9cde55}
+.owner-console-nav button:focus-visible,.owner-row button:focus-visible,.game-create-submit:focus-visible{outline:2px solid #ff9cde;outline-offset:3px}
+.game-create-panel{overflow:hidden;position:relative;border:1px solid #ff9cde42;background:radial-gradient(ellipse at top right,#a86fdf20,transparent 45%),linear-gradient(135deg,var(--panel),var(--panel2));}
+.game-create-heading{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.game-create-heading h2{margin:5px 0;font-size:1.35rem}
+.game-create-icon{display:grid;place-items:center;flex:0 0 52px;height:52px;border-radius:17px;background:linear-gradient(135deg,#ff9cde35,#a86fdf48);font-size:1.7rem;color:#ff9cde}
+.game-session-form{display:grid;grid-template-columns:1fr;gap:10px;max-width:620px}
+.game-session-form label{font-weight:700;color:var(--text);margin-top:5px}
+.game-session-form input,.game-session-form select{width:100%;min-height:46px;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);font:inherit}
+.game-session-form input:focus,.game-session-form select:focus{outline:2px solid #ff9cde70;border-color:#ff9cde}
+.game-create-submit{min-height:48px;margin-top:4px}
+#gameCreateStatus[data-state="error"]{padding:10px 12px;border-radius:10px;background:#ff64731a;color:#ff9fa8}
+.game-create-error{border-color:#ff647366}
+.game-card-select{text-align:right;cursor:pointer;width:100%;color:inherit;font:inherit;transition:transform .18s,border-color .18s,background .18s}
+.game-card-select:hover,.game-card-select.is-selected{transform:translateY(-2px);border-color:#ff9cde;background:linear-gradient(145deg,#ff9cde12,#a86fdf18)}
+.game-card-select.is-selected .game-select-label{color:#ff9cde}
+.join-server-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.pulse-section{position:relative;isolation:isolate}
+.pulse-section:before{content:"";position:absolute;inset:8% -2% 0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 15% 30%,#a86fdf16,transparent 40%),radial-gradient(ellipse at 85% 60%,#ff9cde12,transparent 42%);filter:blur(10px)}
+.about-banner{overflow:hidden;position:relative;background:linear-gradient(125deg,#a86fdf14,#ff9cde0d),var(--panel)}
+.about-emblem{filter:drop-shadow(0 8px 22px #a86fdf40)}
+@media(max-width:620px){.owner-console-nav{top:4px;margin:10px -2px;padding:8px;border-radius:14px}.owner-console-nav button{min-height:40px;padding:9px 12px;font-size:.85rem}.owner-section{scroll-margin-top:66px}.owner-row{align-items:stretch}.owner-row .row-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.owner-row .row-actions .btn{width:100%;white-space:normal}.game-create-heading{align-items:flex-start}.game-create-icon{flex-basis:44px;height:44px}.pagePanel{padding:16px}}
+@media(prefers-reduced-motion:reduce){.owner-console-nav button,.game-card-select{transition:none}}
