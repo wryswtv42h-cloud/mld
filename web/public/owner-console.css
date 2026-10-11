@@ -136,3 +136,27 @@ body[data-page="owner"] .owner-overview[hidden] { display: none !important; }
 .ticket-thread .card{padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:17px;background:rgba(255,255,255,.025)}
 @media(max-width:760px){.owner-console-nav{top:62px;margin:12px -2px 17px;padding:9px;border-radius:16px}.owner-console-nav button{min-height:40px;padding:9px 12px;font-size:.86rem}.owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.owner-overview .stat:last-child{grid-column:1/-1}.owner-row{align-items:flex-start;flex-direction:column}.owner-row .row-actions{width:100%}.owner-row .row-actions .btn{flex:1 1 auto}.owner-section{scroll-margin-top:120px}.pagePanel:has(#ticketForm),.pagePanel:has(#ticketReplyForm),.pagePanel:has(#applicationForm){padding:17px;border-radius:19px}}
 @media(prefers-reduced-motion:reduce){.owner-console-nav button,.owner-row{transition:none!important;scroll-behavior:auto!important}}
+
+
+
+/* Owner console redesign v6 — compact navigation, clear hierarchy, mobile-first. */
+body[data-page="owner"] #app{max-width:1240px;margin-inline:auto;padding:clamp(12px,2.5vw,28px)}
+body[data-page="owner"] #app>.pagePanel{background:transparent;border:0;box-shadow:none;padding:0}
+body[data-page="owner"] .owner-console-nav{position:sticky;top:8px;z-index:20;display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-inline:contain;padding:10px;margin:0 0 18px;border:1px solid rgba(255,156,222,.22);border-radius:18px;background:rgba(19,12,30,.94);backdrop-filter:blur(14px);box-shadow:0 12px 32px #0003;scrollbar-width:thin}
+body[data-page="owner"] .owner-console-nav button{flex:0 0 auto;min-height:42px;padding:10px 15px;border:1px solid #ffffff12;border-radius:12px;background:#ffffff07;color:var(--text,#fff8ff);font-weight:750;transition:background .16s,border-color .16s}
+body[data-page="owner"] .owner-console-nav button:hover,body[data-page="owner"] .owner-console-nav button.is-current{background:linear-gradient(135deg,#ff9cde28,#a86fdf30);border-color:#ff9cde80;color:#fff}
+body[data-page="owner"] .owner-overview .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin:0 0 18px}
+body[data-page="owner"] .owner-overview .stat{position:relative;overflow:hidden;min-height:112px;padding:20px;border:1px solid #ff9cde22;border-radius:18px;background:linear-gradient(145deg,#251631,#171020);box-shadow:0 8px 24px #0002}
+body[data-page="owner"] .owner-overview .stat b{display:block;font-size:clamp(1.6rem,3vw,2.25rem);line-height:1.2;color:#ffb6e7;font-variant-numeric:tabular-nums}
+body[data-page="owner"] .owner-overview .stat small{display:block;margin-top:9px;color:#c9bbd2;font-size:.9rem}
+body[data-page="owner"] .owner-section{padding:clamp(15px,2vw,24px);margin:0 0 16px;border:1px solid #ffffff14;border-radius:22px;background:linear-gradient(145deg,rgba(37,24,52,.96),rgba(20,14,29,.98));box-shadow:0 14px 34px #0002;scroll-margin-top:90px}
+body[data-page="owner"] .owner-section[hidden],body[data-page="owner"] #owner-overview[hidden]{display:none!important}
+body[data-page="owner"] .owner-section>h2{display:flex;align-items:center;gap:10px;margin:0 0 16px;padding-bottom:13px;border-bottom:1px solid #ffffff12;font-size:clamp(1.1rem,2vw,1.4rem)}
+body[data-page="owner"] .owner-list{display:grid;gap:10px}
+body[data-page="owner"] .owner-row,body[data-page="owner"] .ticketRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid #ffffff12;border-radius:14px;background:#ffffff05}
+body[data-page="owner"] .owner-row small,body[data-page="owner"] .ticketRow span{display:block;margin-top:5px;color:var(--muted,#c9bbd2);overflow-wrap:anywhere}
+body[data-page="owner"] .owner-section .form{display:grid;gap:12px;margin-block:14px;padding:16px;border:1px solid #ffffff12;border-radius:16px;background:#0e0916a8}
+body[data-page="owner"] .owner-section input:not([type=checkbox]):not([type=color]),body[data-page="owner"] .owner-section select,body[data-page="owner"] .owner-section textarea{width:100%;min-width:0;border:1px solid #ffffff20;border-radius:12px;background:#100a19;color:#fff8ff;padding:12px 14px}
+body[data-page="owner"] .owner-section button,body[data-page="owner"] .owner-section a.btn{min-height:42px}
+body[data-page="owner"] .owner-console-nav button:focus-visible,body[data-page="owner"] .owner-section button:focus-visible{outline:2px solid #ff9cde;outline-offset:3px}
+@media(max-width:640px){body[data-page="owner"] #app{padding:10px}body[data-page="owner"] .owner-console-nav{top:4px;margin-inline:-2px;border-radius:14px}body[data-page="owner"] .owner-section{border-radius:17px;padding:14px}body[data-page="owner"] .owner-row,body[data-page="owner"] .ticketRow{align-items:stretch;flex-direction:column}body[data-page="owner"] .owner-row .row-actions{display:flex;flex-wrap:wrap;gap:8px}body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
