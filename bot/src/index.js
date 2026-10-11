@@ -380,6 +380,21 @@ function installBotFeatures(client,bot){
     const [raw,...args]=commandText.split(/\s+/);let command=String(raw||'').toLowerCase();
     const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===command));
     if(coreAlias)command=coreAlias[0];
+    // Built-in Arabic shortcuts work without requiring each server owner to configure them first.
+    const builtinArabicAliases={
+      تقلع:'kick',طرد:'kick',اطرد:'kick',حظر:'ban',بند:'ban',فكالحظر:'unban',فكحظر:'unban',
+      مسح:'clear',امسح:'clear',تنظيف:'clear',تنظيفالشات:'clear',اسكت:'timeout',اسكات:'timeout',
+      فكاسكات:'untimeout',فكالكتم:'untimeout',كتم:'timeout',لقب:'nick',غيرلقبه:'nick',
+      قفل:'lock',اقفل:'lock',فتح:'unlock',افتح:'unlock',بطيء:'slowmode',بطء:'slowmode',
+      تحذير:'warn',انذار:'warn',انذار:'warn',اضفرتبة:'roleadd',شيلرتبة:'roleremove',
+      احذفرتبة:'roledelete',انشئرتبة:'rolecreate',نقل:'move',نقلني:'moveme',
+      معلوماتالسيرفر:'serverinfo',معلوماتالبوت:'botinfo',مدةالتشغيل:'uptime',
+      عددالاعضاء:'membercount',صورة:'avatar',بنر:'banner',دعوة:'invite',
+      رصيد:'رصيد',فلوسي:'رصيد',مكافأة:'يومي',مكافاه:'يومي',تحويلفلوس:'تحويل',
+      توب:'توب',العاب:'games',الألعاب:'games',حماية:'protection',حمايه:'protection',
+      روماتخاصة:'rooms',رومخاص:'rooms',شاتخاص:'rooms',تذكرة:'ticket',تقديم:'apply'
+    };
+    if(builtinArabicAliases[command])command=builtinArabicAliases[command];
     const aliasMatch=(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).find(x=>x&&x.enabled!==false&&Array.isArray(x.aliases)&&x.aliases.some(a=>String(a).toLowerCase()===command));
     if(aliasMatch&&!['help','ping','server','serverinfo','servericon','roles','channelcount','roll','random','coinflip','eightball','joke','id','معرف','banner','بنر','profile','ملفي','بروفايل','myinv','دعواتي','topinv','توبدعوات','user','مستخدم','unban','فكحظر','allbans','قائمةالمحظورين','rolecreate','انشاءرتبة','roledelete','حذفرتبة','move','moveme','rooms','الغرفالصوتية','command','kick','ban','clear','say','announce','slowmode','lock','unlock','timeout','untimeout','warn','nick','roleadd','roleremove','userinfo','avatar','membercount','members','prefix','بادئة','setprefix','تغييرالبادئة','uptime','مدةالتشغيل','botinfo','معلوماتالبوت','joined','انضممت','boosts','التعزيزات','emojis','الايموجيات','إيموجيات','roleinfo','معلوماترتبة','channelinfo','معلوماتروم','عشوائي','invite','رابط','poll','ticket','تذكرة','قفل','close','إضافة','add','تقديم','apply','طلباتي'].includes(command))command=String(aliasMatch.name||command).toLowerCase();
     const prefixCategory=(name)=>{
