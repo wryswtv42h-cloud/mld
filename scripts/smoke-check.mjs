@@ -71,6 +71,7 @@ assert.ok(botRoutes.includes('commands.slice(0,500)'), 'The bot dashboard must c
 assert.ok(botRoutes.includes('commandSettings'), 'The bot dashboard must persist per-command enable/disable and alias settings.');
 assert.ok(uno.includes('function drawCard(state)'), 'UNO must recycle the discard pile when the draw pile runs out.');
 assert.ok(uno.includes("card.value === 'wild4' && hand.some"), 'UNO must validate Wild Draw Four legality.');
+assert.ok(uno.includes("s.players.length === 2 ? 2 : 1"), 'UNO reverse must skip the opponent in two-player games.');
 assert.ok(jackaroo.includes("case 'swap': {"), 'Jackaroo swap cards must have a real game effect.');
 assert.ok(jackaroo.includes('function drawCard(state)'), 'Jackaroo must handle an exhausted draw pile safely.');
 assert.ok(app.includes('اكتب اسم اللاعب الذي تريد تبديل موقعك معه'), 'The Jackaroo UI must let the player select a swap target.');
