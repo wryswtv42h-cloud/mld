@@ -42,7 +42,7 @@ assert.match(app, /await getPageLocksSnapshot\(\)/, 'Page locks must be fetched 
 assert.match(app, /authSnapshotToken===token/, 'Session refresh cache must be bound to the active login token.');
 assert.ok(app.includes('["8ball","سؤال وجواب"]'), 'The dashboard toggle must use the same 8ball command name as the handler.');
 assert.ok(app.includes('["servericon","أيقونة السيرفر"]'), 'The dashboard must expose toggles for implemented utility commands.');
-assert.ok(html.includes('app.js?v=20261011-command-pack4'), 'The browser cache key must change when app behavior changes.');
+assert.ok(html.includes('app.js?v=20261011-command-pack5'), 'The browser cache key must change when app behavior changes.');
 assert.match(app, /game-seat-avatar/, 'Game table seats must render player avatars.');
 assert.match(app, /data-member="'\+esc\(p\.discordId\)/, 'Human player names at the table should open member profiles.');
 assert.match(gameRoute, /discordId:req\.user\.discord_id\|\|null/, 'New game sessions should retain the Discord ID used by profile lookups.');
@@ -67,6 +67,7 @@ assert.ok(botMessageEvent.includes("const prefix = String(process.env.BOT_PREFIX
 assert.ok(bot.includes('client.mldConfig?.commandSettings?.help?.enabled===false'), 'The help command toggle must also apply to no-prefix help.');
 assert.ok(bot.includes("if(command==='blockedword')"), 'Blocked-word management must be implemented as a real prefix command.');
 assert.ok(bot.includes("if(command==='mute'||command==='unmute')") && bot.includes('target.voice.setMute(shouldMute,reason)'), 'Advertised voice mute/unmute commands must execute real moderation actions.');
+assert.ok(bot.includes("['deafen','undeafen','disconnect'].includes(command)") && bot.includes("if(command==='hide'||command==='show')") && bot.includes("if(command==='renamechannel')") && bot.includes("if(command==='settopic')"), 'Additional voice and channel moderation commands must have real handlers.');
 assert.ok(bot.includes("if(command==='welcome')") && bot.includes("if(command==='logs')") && bot.includes('welcomeEnabled===false'), 'Advertised welcome and log commands must persist settings and respect the disabled state.');
 assert.ok(bot.includes("if(['moderation','automod','system','allinone','welcome'].includes(type))"), 'Welcome-type bots must be able to run their own prefix welcome settings command.');
 assert.ok(bot.includes("const autoMod=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true"), 'Protection can be disabled explicitly even for automod bot types.');
@@ -74,6 +75,7 @@ assert.ok(bot.includes('const knownCommandNames=new Set('), 'Only recognized pre
 assert.ok(bot.includes("if(command==='antilink'||command==='antispam')"), 'Link and spam protection must be independently configurable.');
 assert.ok(app.includes('["blockedword","الكلمات الممنوعة"]'), 'The dashboard must expose the blocked-word command toggle.');
 assert.ok(app.includes('["welcome","الترحيب والمغادرة"]') && app.includes('["logs","سجل الإدارة"]') && app.includes('["mute","كتم صوتي"]') && app.includes('["unmute","فك الكتم الصوتي"]'), 'The dashboard must expose every newly implemented system and voice-moderation command toggle.');
+assert.ok(app.includes('["deafen","كتم سماعة عضو"]') && app.includes('["disconnect","فصل عضو صوتيًا"]') && app.includes('["hide","إخفاء القناة"]') && app.includes('["renamechannel","تغيير اسم القناة"]') && app.includes('["settopic","تغيير وصف القناة"]'), 'The dashboard must expose expanded voice and channel moderation controls.');
 assert.ok(app.includes('["برا السالفة","برا السالفة"]') && app.includes('["ترجمة","تحدي الترجمة"]') && app.includes('["عواصم","عواصم الدول"]') && app.includes('["المتجر","متجر النقاط"]'), 'The dashboard must expose the implemented Arabic game command toggles.');
 assert.ok(app.includes('["تبرع","التبرع بالنقاط"]') && app.includes('["صندوق","صندوق الاستثمار"]') && app.includes('["تداول","التداول"]') && app.includes('["إيقاف-مؤقت","إيقاف مؤقت"]') && app.includes('["صوت","مستوى الصوت"]'), 'The dashboard must expose all implemented bank and music controls.');
 assert.ok(botRoutes.includes('commands.slice(0,500)'), 'The bot dashboard must cap custom prefix commands at 500.');
