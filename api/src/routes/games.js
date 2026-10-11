@@ -42,7 +42,7 @@ router.post('/sessions',requireAuth,async(req,res)=>{
       VALUES($1,$2,'waiting',$3,$4,$5,$6,NULL,$7) RETURNING *`,
       [req.body.name||('غرفة '+type),type,hostId,JSON.stringify(players),cfg.min,max,JSON.stringify([])]);
     res.json({session:normalize(rows[0],req.user?.username||null)});
-  }catch(e){console.error('games create',e);res.status(500).json({error:'تعذر إنشاء الجلسة'});}
+  }catch(e){console.error('games create:',e?.code||'',e?.message||e);res.status(500).json({error:'تعذر إنشاء الجلسة. تم تسجيل سبب الخطأ، حاول مرة أخرى بعد تحديث الخدمة.'});}
 });
 
 router.get('/sessions/:id',optionalAuth,async(req,res)=>{
