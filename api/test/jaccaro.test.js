@@ -52,3 +52,50 @@ test('Jackaroo ignores actions from a player who does not own the turn', () => {
   const next = handleJaccaroAction(state, 'B', { type: 'play', cardIndex: 0 });
   assert.deepEqual(next, state);
 });
+
+
+test('Jackaroo swap card exchanges active positions with the chosen opponent', () => {
+  const state = {
+    game: 'jaccaro',
+    players: ['A', 'B', 'C'],
+    hands: { A: [{ type: 'swap' }], B: [{ type: 'move', value: 2 }], C: [{ type: 'move', value: 3 }] },
+    deck: [{ type: 'move', value: 4 }],
+    discard: [],
+    marbles: {
+      A: { home: 3, track: 5, safe: 0, finished: 0 },
+      B: { home: 3, track: 21, safe: 1, finished: 0 },
+      C: { home: 4, track: 0, safe: 0, finished: 0 }
+    },
+    currentIndex: 0,
+    finished: false,
+    winner: null,
+    log: []
+  };
+  const next = handleJaccaroAction(state, 'A', { type: 'play', cardIndex: 0, targetPlayer: 'B' });
+  assert.equal(next.marbles.A.track, 21);
+  assert.equal(next.marbles.B.track, 5);
+  assert.equal(next.marbles.A.safe, 1);
+  assert.equal(next.marbles.B.safe, 0);
+});
+
+test('Jackaroo rejects a swap without a valid active opponent and keeps the card', () => {
+  const state = {
+    game: 'jaccaro',
+    players: ['A', 'B'],
+    hands: { A: [{ type: 'swap' }], B: [{ type: 'move', value: 2 }] },
+    deck: [{ type: 'move', value: 4 }],
+    discard: [],
+    marbles: {
+      A: { home: 4, track: 0, safe: 0, finished: 0 },
+      B: { home: 4, track: 0, safe: 0, finished: 0 }
+    },
+    currentIndex: 0,
+    finished: false,
+    winner: null,
+    log: []
+  };
+  const next = handleJaccaroAction(state, 'A', { type: 'play', cardIndex: 0, targetPlayer: 'B' });
+  assert.equal(next.hands.A.length, 1);
+  assert.equal(next.discard.length, 0);
+  assert.equal(next.currentIndex, 0);
+});
