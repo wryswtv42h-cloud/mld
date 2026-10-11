@@ -107,6 +107,220 @@ router.get('/server', async (req, res) => {
     void touchVisit(req);
     const g = await getGuild();
     let ownerId = /^\d{17,20}$/.test(String(process.env.OWNER_DISCORD_ID || '')) ? String(process.env.OWNER_DISCORD_ID) : null;
+    if (!ownerId) {
+      try {
+        const owner = await query("SELECT discord_id FROM users WHERE is_owner=TRUE AND discord_id ~ '^[0-9]{17,20}
+    const memberCount = g.approximate_member_count ?? g.member_count ?? (cache.members.value.length||null);
+    res.json({
+      id: g.id,
+      name: g.name || 'MLD',
+      memberCount: memberCount == null ? null : Number(memberCount),
+      onlineCount: g.approximate_presence_count ?? null,
+      ownerName: 'فهد المطيري',
+      ownerUsername: 'w4px',
+      ownerId,
+      visits,
+      invite: ownerId ? `https://discord.com/users/${ownerId}` : null,
+      icon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=256` : '/logo.svg'
+    });
+  } catch (e) {
+    console.error('PUBLIC_SERVER_ERROR', e.message);
+    res.status(503).json({ error: 'تعذر جلب بيانات ديسكورد', reason: e.message, name: 'MLD', memberCount: null, onlineCount: null, visits });
+  }
+});
+
+router.get('/metrics',async(req,res)=>{
+  try{
+    const [users,messages,visitsRow]=await Promise.all([
+      query('SELECT COUNT(*)::int AS count FROM users'),
+      query('SELECT COUNT(*)::int AS count FROM messages'),
+      query("SELECT value FROM site_metrics WHERE key='visits' LIMIT 1")
+    ]);
+    res.set('Cache-Control','public, max-age=5, stale-while-revalidate=20').json({users:users.rows[0]?.count||0,messages:messages.rows[0]?.count||0,visits:Number(visitsRow.rows[0]?.value||visits)});
+  }catch(error){res.status(503).json({error:'تعذر جلب إحصائيات المجتمع'});}
+});
+
+router.get('/suggestions', async (req, res) => {
+  try {
+    const type = String(req.query.type || 'members');
+    const q = String(req.query.q || '').trim().toLowerCase();
+    if (type === 'servers') {
+      const g = await getGuild();
+      const haystack = String((g.name || '') + ' ' + (g.id || '')).toLowerCase();
+      const out = (!q || haystack.includes(q))
+        ? [{ id: g.id, name: g.name, icon: g.icon }]
+        : [];
+      return res.json({ suggestions: out });
+    }
+    const out=q?await searchMembers(q):(await getMembers()).slice(0,20).map(normalizeMember);
+    res.json({ suggestions: out });
+  } catch (e) {
+    res.status(503).json({ error: 'تعذر جلب الاقتراحات', suggestions: [] });
+  }
+});
+
+router.get('/members', async (req, res) => {
+  try {
+    const q=String(req.query.q||'').trim().toLowerCase();
+    if(q){const found=await searchMembers(q);return res.set('Cache-Control','public, max-age=5').json({members:found,total:found.length,hasMore:false});}
+    const all=(await getMembers()).map(normalizeMember),roles=await getRoles(),roleMap=new Map(roles.map(r=>[r.id,r]));
+    all.forEach(m=>{m.importantRoles=m.roles.map(id=>roleMap.get(id)).filter(Boolean).filter(r=>TOP_ROLE_IDS.has(String(r.id))).sort((a,b)=>(b.position||0)-(a.position||0)).slice(0,6).map(r=>({id:r.id,name:r.name,color:r.color}));});
+    const offset=Math.max(0,Math.floor(Number(req.query.offset)||0)),limit=Math.max(1,Math.min(200,Math.floor(Number(req.query.limit)||100)));
+    res.set('Cache-Control','public, max-age=5').json({members:all.slice(offset,offset+limit),total:all.length,offset,limit,hasMore:offset+limit<all.length});
+  }catch(e){console.error('public members:',e.message);res.status(503).json({error:'تعذر جلب الأعضاء',members:[],total:0,hasMore:false});}
+});
+
+const TOP_ROLE_IDS = new Set(['1530712642384040027','1521187079336362024','1531109479264026706','1548732297669255259','1548732341185155103','1548732606508703744']);
+const ROLE_CAPABILITIES = {
+  '1530712642384040027':['إدارة كاملة للموقع والسيرفر','إدارة الحسابات والإعدادات والسجلات'],
+  '1521187079336362024':['مساندة الأونر وإدارة المجتمع','متابعة الشات والغرف'],
+  '1531109479264026706':['إدارة المجتمع والمبادرات','متابعة القروبات والأنشطة'],
+  '1548732297669255259':['إشراف متقدم على الشات والتذاكر','تهدئة النزاعات ورفع الحالات للأونر'],
+  '1548732341185155103':['إشراف على الشات والتذاكر','حذف المحتوى المخالف'],
+  '1548732606508703744':['مساعدة الأعضاء ومراقبة الشات','رفع البلاغات للمشرفين']
+};
+
+router.get('/roles', async (req, res) => {
+  try {
+    const [roles,members]=await Promise.all([getRoles(),getMembers()]),counts=new Map();
+    for(const m of members)for(const id of (m.roles||[]))counts.set(id,(counts.get(id)||0)+1);
+    res.set('Cache-Control','public, max-age=5').json({roles:roles.filter(r=>r.id!==guildId()).sort((a,b)=>(b.position||0)-(a.position||0)).map(r=>({id:r.id,name:r.name,color:r.hexColor||'#a86fdf',position:r.position||0,membersCount:counts.get(r.id)||0,permissions:ROLE_CAPABILITIES[r.id]||[]}))});
+  }catch(e){console.error('public roles:',e.message);res.status(503).json({error:'تعذر جلب الرتب',roles:[]});}
+});
+router.get('/roles/:id/members', async (req,res)=>{
+  try{
+    const [roles,members]=await Promise.all([getRoles(),getMembers()]),role=roles.find(r=>r.id===req.params.id&&r.id!==guildId());
+    if(!role)return res.status(404).json({error:'الرتبة غير موجودة'});
+    const matching=members.filter(m=>(m.roles||[]).includes(role.id)),offset=Math.max(0,Math.floor(Number(req.query.offset)||0)),limit=Math.max(1,Math.min(200,Math.floor(Number(req.query.limit)||100)));
+    res.set('Cache-Control','public, max-age=5').json({role:{id:role.id,name:role.name,color:role.hexColor||'#a86fdf',membersCount:matching.length,permissions:ROLE_CAPABILITIES[role.id]||[]},members:matching.slice(offset,offset+limit).map(normalizeMember),total:matching.length,offset,limit,hasMore:offset+limit<matching.length});
+  }catch(e){console.error('role members:',e.message);res.status(503).json({error:'تعذر جلب أعضاء الرتبة'});}
+});
+
+router.post('/track', async (req, res) => {
+  try {
+    const auth = String(req.headers.authorization || '');
+    const expected = 'Bot ' + token();
+    if (!token() || auth !== expected) return res.status(401).json({ error: 'غير مصرح' });
+    const { discordId, type, minutes = 0 } = req.body || {};
+    if (!discordId || !type) return res.status(400).json({ error: 'بيانات التتبع ناقصة' });
+    const allowed = ['message','mention_sent','mention_received','voice_join','voice_minutes','join','leave'];
+    if (!allowed.includes(type)) return res.status(400).json({ error: 'نوع إحصائية غير معروف' });
+    const inc = type === 'voice_minutes' ? Math.max(0, Math.floor(Number(minutes) || 0)) : 1;
+    const field = {
+      message: 'messages',
+      mention_sent: 'mentions_sent',
+      mention_received: 'mentions_received',
+      voice_join: 'voice_joins',
+      voice_minutes: 'voice_minutes',
+      join: 'joins',
+      leave: 'leaves'
+    }[type];
+    await query(
+      `INSERT INTO discord_stats (discord_id, ${field}, last_message_at, last_voice_at)
+       VALUES ($1, $2, ${type === 'message' ? 'NOW()' : 'NULL'}, ${type.includes('voice') ? 'NOW()' : 'NULL'})
+       ON CONFLICT (discord_id) DO UPDATE SET
+         ${field} = discord_stats.${field} + EXCLUDED.${field},
+         last_message_at = CASE WHEN EXCLUDED.last_message_at IS NOT NULL THEN NOW() ELSE discord_stats.last_message_at END,
+         last_voice_at = CASE WHEN EXCLUDED.last_voice_at IS NOT NULL THEN NOW() ELSE discord_stats.last_voice_at END,
+         updated_at = NOW()`,
+      [String(discordId), inc]
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('discord stats track:', e);
+    res.status(500).json({ error: 'تعذر حفظ الإحصائية' });
+  }
+});
+
+async function getStatsMap(ids = []) {
+  if (!ids.length) return new Map();
+  const { rows } = await query(
+    `SELECT discord_id, messages, mentions_sent, mentions_received, voice_minutes, voice_joins, joins, leaves
+     FROM discord_stats WHERE discord_id = ANY($1::text[])`, [ids]
+  );
+  return new Map(rows.map(x => [String(x.discord_id), x]));
+}
+
+async function statsForMember(id) {
+  const { rows } = await query('SELECT * FROM discord_stats WHERE discord_id = $1', [String(id)]);
+  return rows[0] || { messages:0, mentions_sent:0, mentions_received:0, voice_minutes:0, voice_joins:0, joins:0, leaves:0 };
+}
+
+router.get('/top', async (req, res) => {
+  try {
+    const members = (await getMembers()).map(normalizeMember);
+    const stats = await getStatsMap(members.map(m => m.id));
+    const withStats = members.map(m => {
+      const s = stats.get(m.id) || {};
+      return { ...m, stats: {
+        messages: Number(s.messages || 0),
+        mentionsSent: Number(s.mentions_sent || 0),
+        mentionsReceived: Number(s.mentions_received || 0),
+        voiceMinutes: Number(s.voice_minutes || 0),
+        voiceJoins: Number(s.voice_joins || 0)
+      }};
+    });
+    const sort = k => [...withStats].sort((a,b) => (b.stats[k]||0)-(a.stats[k]||0)).filter(x => (x.stats[k]||0)>0).slice(0,10);
+    res.json({
+      messages: sort('messages'),
+      mentions: sort('mentionsReceived'),
+      voice: sort('voiceMinutes'),
+      joins: sort('voiceJoins')
+    });
+  } catch (e) {
+    console.error('top stats:', e);
+    res.status(503).json({ error:'تعذر جلب الإحصائيات', messages:[], mentions:[], voice:[], joins:[] });
+  }
+});
+
+router.get('/member/:id', async (req, res) => {
+  try {
+    const members = await getMembers();
+    const m = members.find(x => x.user.id === req.params.id);
+    if (!m) return res.status(404).json({ error: 'Member not found' });
+    const n = normalizeMember(m);
+    const ds = await statsForMember(req.params.id);
+    const linkedProfile = await query('SELECT username,avatar,bio,occupation,role,is_owner FROM users WHERE discord_id=$1 AND COALESCE(banned,FALSE)=FALSE ORDER BY is_owner DESC,created_at ASC LIMIT 1',[req.params.id]);
+    res.json({ ...n, siteProfile: linkedProfile.rows[0] || null, rank: 'عضو', stats: {
+      messages: Number(ds.messages || 0),
+      mentionsReceived: Number(ds.mentions_received || 0),
+      mentionsSent: Number(ds.mentions_sent || 0),
+      voiceMinutes: Number(ds.voice_minutes || 0),
+      voiceJoins: Number(ds.voice_joins || 0),
+      chatRounds: Number(ds.messages || 0)
+    }, permissions: [] });
+  } catch (e) {
+    res.status(503).json({ error: 'تعذر جلب العضو' });
+  }
+});
+
+router.post('/message', async (req, res) => {
+  try {
+    const { memberId, title, message } = req.body || {};
+    if (!memberId || !message) return res.status(400).json({ error: 'البيانات ناقصة' });
+    const members = await getMembers();
+    const m = members.find(x => x.user.id === String(memberId));
+    if (!m) return res.status(404).json({ error: 'العضو غير موجود' });
+    const t = token();
+    if (!t) return res.status(503).json({ error: 'بوت ديسكورد غير متصل' });
+    const dm = await fetch('https://discord.com/api/v10/users/@me/channels', { method:'POST', headers:{Authorization:'Bot '+t,'Content-Type':'application/json'}, body:JSON.stringify({recipient_id:String(memberId)}) });
+    if (!dm.ok) return res.status(502).json({ error: 'تعذر فتح الخاص مع العضو' });
+    const channel = await dm.json();
+    const sent = await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, { method:'POST', headers:{Authorization:'Bot '+t,'Content-Type':'application/json'}, body:JSON.stringify({embeds:[{title:title||'رسالة من إدارة MLD',description:String(message).slice(0,4000),color:0xff9cde,footer:{text:'MLD Community · فهد المطيري'}}]}) });
+    if (!sent.ok) return res.status(502).json({ error: 'تعذر إرسال الرسالة' });
+    res.json({ ok:true, message:'تم الإرسال بنجاح' });
+  } catch (e) {
+    res.status(500).json({ error: 'تعذر الإرسال' });
+  }
+});
+
+export default router;
+ ORDER BY created_at ASC LIMIT 1");
+        ownerId = owner.rows[0]?.discord_id || null;
+      } catch (ownerLookupError) {
+        console.warn('PUBLIC_OWNER_LOOKUP', ownerLookupError.message);
+      }
+    }
     const memberCount = g.approximate_member_count ?? g.member_count ?? (cache.members.value.length||null);
     res.json({
       id: g.id,
