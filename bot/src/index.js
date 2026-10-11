@@ -1124,7 +1124,8 @@ function setupStatsTracking(client) {
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages, GatewayIntentBits.GuildVoiceStates]
+    GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages, GatewayIntentBits.GuildVoiceStates],
+  partials: [Partials.Channel]
 });
 
 async function registerCommands() {
@@ -1176,9 +1177,81 @@ async function loadHandlers() {
   }
 }
 
+async function setupZajelReplies(client){
+  if(!pool)return;
+  client.on(Events.InteractionCreate,async interaction=>{
+    if(!interaction.isButton()||!String(interaction.customId||'').startsWith('mld:zajel_reply:'))return;
+    const messageId=String(interaction.customId).slice('mld:zajel_reply:'.length);
+    try{
+      const found=await pool.query(`SELECT sm.id,sm.recipient_id,u.discord_id AS sender_discord_id
+        FROM secret_messages sm JOIN users u ON u.id::text=sm.sender_id::text WHERE sm.id=$1 LIMIT 1`,[messageId]);
+      const row=found.rows[0];
+      if(!row)return interaction.reply({content:'تعذر العثور على الزاجل الأصلي.',ephemeral:true});
+      if(String(row.recipient_id)!==String(interaction.user.id))return interaction.reply({content:'زر الرد مخصص لمستلم الزاجل فقط.',ephemeral:true});
+      if(!row.sender_discord_id)return interaction.reply({content:'تعذر الرد لأن مرسل الزاجل لم يربط حساب Discord بحسابه.',ephemeral:true});
+      const already=await pool.query('SELECT 1 FROM pigeon_replies WHERE message_id=$1 LIMIT 1',[messageId]);
+      if(already.rows.length){
+        await interaction.message.edit({components:[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(interaction.customId).setLabel('تم استخدام الرد').setStyle(ButtonStyle.Secondary).setDisabled(true))]}).catch(()=>{});
+        return interaction.reply({content:'تم استخدام زر الرد لهذا الزاجل مسبقًا.',ephemeral:true});
+      }
+      const created=await pool.query(`INSERT INTO pigeon_reply_sessions(message_id,recipient_discord_id,sender_discord_id,status,expires_at)
+        VALUES($1,$2,$3,'pending',NOW()+INTERVAL '30 minutes') ON CONFLICT(message_id) DO NOTHING RETURNING message_id`,
+        [messageId,String(interaction.user.id),String(row.sender_discord_id)]);
+      if(!created.rows.length){
+        const session=await pool.query('SELECT status,expires_at FROM pigeon_reply_sessions WHERE message_id=$1',[messageId]);
+        const current=session.rows[0];
+        if(current?.status==='pending'&&new Date(current.expires_at).getTime()>Date.now()){
+          await interaction.message.edit({components:[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(interaction.customId).setLabel('بانتظار ردك بالخاص').setStyle(ButtonStyle.Secondary).setDisabled(true))]}).catch(()=>{});
+          return interaction.reply({content:'أرسل ردك برسالة خاصة للبوت خلال 30 دقيقة. يسمح برد واحد فقط.',ephemeral:true});
+        }
+        return interaction.reply({content:'انتهت مهلة الرد أو تم استخدام الزر من قبل.',ephemeral:true});
+      }
+      await interaction.message.edit({components:[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(interaction.customId).setLabel('بانتظار ردك بالخاص').setStyle(ButtonStyle.Secondary).setDisabled(true))]}).catch(()=>{});
+      await interaction.reply({content:'تم تفعيل الرد. أرسل الآن رسالتك الخاصة إلى البوت خلال 30 دقيقة؛ سيصل رد واحد فقط إلى مرسل الزاجل الأصلي بعنوان «زاجل مردود».',ephemeral:true});
+    }catch(error){
+      console.error('Zajel reply button:',error.message);
+      if(!interaction.replied&&!interaction.deferred)await interaction.reply({content:'تعذر تفعيل الرد الآن، حاول مرة أخرى لاحقًا.',ephemeral:true}).catch(()=>{});
+    }
+  });
+  client.on(Events.MessageCreate,async message=>{
+    if(message.author?.bot||message.guild)return;
+    const text=String(message.content||'').trim();
+    const attachmentText=[...(message.attachments?.values?.()||[])].map(item=>item.url).join('\n');
+    const replyContent=(text||attachmentText).slice(0,2000);
+    if(!replyContent)return;
+    try{
+      const candidate=await pool.query(`SELECT message_id FROM pigeon_reply_sessions
+        WHERE recipient_discord_id=$1 AND status='pending' AND expires_at>NOW()
+        ORDER BY created_at DESC LIMIT 1`,[String(message.author.id)]);
+      const messageId=candidate.rows[0]?.message_id;
+      if(!messageId)return;
+      const claimed=await pool.query(`UPDATE pigeon_reply_sessions SET status='processing',updated_at=NOW()
+        WHERE message_id=$1 AND recipient_discord_id=$2 AND status='pending' AND expires_at>NOW()
+        RETURNING message_id,sender_discord_id`,[messageId,String(message.author.id)]);
+      const session=claimed.rows[0];
+      if(!session)return;
+      try{
+        const recipient=await client.users.fetch(String(session.sender_discord_id));
+        const embed=new EmbedBuilder().setColor(0xff9cde).setTitle('📩 زاجل مردود')
+          .setDescription('**الرد من:** <@'+String(message.author.id)+'>'+'\n\n'+replyContent.slice(0,3500))
+          .setFooter({text:'MLD · Community · رد على الزاجل الأصلي'}).setTimestamp();
+        await recipient.send({embeds:[embed],allowedMentions:{parse:[]}});
+        await pool.query('INSERT INTO pigeon_replies(message_id,reply_content,replied_by_discord_id) VALUES($1,$2,$3)',[session.message_id,replyContent,String(message.author.id)]);
+        await pool.query(`UPDATE pigeon_reply_sessions SET status='replied',updated_at=NOW() WHERE message_id=$1`,[session.message_id]);
+        await message.reply('✅ تم إرسال ردك إلى مرسل الزاجل الأصلي. لا يمكن إرسال رد ثانٍ على نفس الزاجل.').catch(()=>{});
+      }catch(error){
+        await pool.query(`UPDATE pigeon_reply_sessions SET status='pending',updated_at=NOW() WHERE message_id=$1 AND status='processing'`,[session.message_id]).catch(()=>{});
+        console.error('Zajel reply delivery:',error.message);
+        await message.reply('تعذر إرسال الرد إلى الخاص. تأكد أن مرسل الزاجل يستقبل رسائل الخاص ثم أعد إرسال ردك.').catch(()=>{});
+      }
+    }catch(error){console.error('Zajel reply handler:',error.message);}
+  });
+}
+
 async function start() {
   try {
     setupStatsTracking(client);
+    setupZajelReplies(client);
     if(pool) await ensureBankTable(pool);
     await loadHandlers();
     client.once(Events.ClientReady, async () => await registerCommands());
