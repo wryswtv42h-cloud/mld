@@ -1054,3 +1054,65 @@ body[data-page="owner"] .owner-console-nav button:disabled { opacity:.5; cursor:
   body[data-page="owner"] .row-actions { width:100%; }
   body[data-page="owner"] .row-actions .btn { flex:1 1 auto; }
 }
+
+
+/* MLD UI refresh: consistent controls and lighter motion for faster navigation. */
+:root { color-scheme:dark; --mld-pink:#ff9cde; --mld-purple:#a86fdf; }
+html { scroll-padding-top:88px; }
+body { text-rendering:optimizeLegibility; }
+button, a, input, select, textarea { -webkit-tap-highlight-color:transparent; }
+button, .btn, a.btn { touch-action:manipulation; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:2px solid var(--mld-pink); outline-offset:3px; }
+button:disabled, .btn:disabled { cursor:not-allowed!important; opacity:.52; transform:none!important; }
+#app .pagePanel { isolation:isolate; }
+#app .pagePanel > h1 { letter-spacing:-.025em; }
+#app .sectionTitle { letter-spacing:-.02em; }
+#app .panel:not(.hero-main):not(.server-spotlight) { border-color:rgba(255,255,255,.105); }
+#app .btn, #app button.btn, #app .primary {
+  min-height:42px; border-radius:13px; font-weight:750;
+  transition:background-color .15s,border-color .15s,filter .15s;
+}
+#app .btn:hover, #app button.btn:hover { filter:brightness(1.08); }
+#app .form, #app form:not(.game-session-form):not(.game-chat-compose) { gap:12px; }
+#app input:not([type=checkbox]):not([type=radio]):not([type=color]),
+#app select, #app textarea { max-width:100%; min-width:0; }
+#app input:focus-visible, #app select:focus-visible, #app textarea:focus-visible { outline:2px solid #ff9cde; outline-offset:2px; }
+#sidebar, #shade { will-change:transform,opacity; }
+#sidebar { overscroll-behavior:contain; }
+#app .game-create-panel, #app .game-sessions-panel { border-radius:22px; overflow:hidden; }
+#app .game-session-form { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; }
+#app .game-session-form label { color:#eadcf3; font-weight:750; }
+#app .game-session-form input, #app .game-session-form select {
+  width:100%; min-height:46px; border-radius:13px; border:1px solid #ffffff20; background:#100b1c; color:#fff7ff; padding:11px 13px;
+}
+#app .game-create-submit { width:100%; min-height:48px; margin-top:5px; }
+#app .game-create-panel.game-create-error { border-color:#ff6b7d90; }
+#app #gameCreateStatus[data-state=error] { color:#ff9aa9; }
+#app #gameCreateStatus[data-state=success] { color:#7ee8b2; }
+#app .game-grid { align-items:stretch; }
+#app .game-card-select { position:relative; text-align:right; cursor:pointer; touch-action:manipulation; }
+#app .game-card-select.is-selected { border-color:#ff9cde; box-shadow:0 0 0 1px #ff9cde55,0 14px 34px #ff9cde12; }
+#app .game-sessions { display:grid; gap:10px; }
+#app .session-card { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; padding:16px; }
+#app .session-card > div { display:grid; gap:7px; min-width:0; }
+#app .session-card small { color:#cbbdd6; line-height:1.7; }
+#app .game-arena, #app #gameArena { scroll-margin-top:90px; }
+#app .game-table { min-width:0; }
+#app .game-playing-card, #app .ludo-token { touch-action:manipulation; }
+#app .game-chat-compose { display:flex; align-items:center; gap:8px; }
+#app .game-chat-compose input { min-width:0; flex:1; }
+#app .game-chat-compose button { flex:0 0 auto; }
+#app .ticketRow, #app .application-row, #app .feedback-row { overflow-wrap:anywhere; }
+@media(max-width:680px) {
+  #app { overflow-wrap:anywhere; }
+  #app .game-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  #app .game-card-select { padding:13px; }
+  #app .game-session-form { gap:9px; }
+  #app .game-arena, #app #gameArena { scroll-margin-top:78px; }
+  #app .session-card { align-items:stretch; }
+  #app .session-card > button { width:100%; }
+  #app .game-chat-compose { align-items:stretch; }
+}
+@media(prefers-reduced-motion:reduce) {
+  *,*::before,*::after { scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; }
+}
