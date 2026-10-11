@@ -57,6 +57,30 @@ document.addEventListener("click",event=>{
  }catch(error){console.error("MLD game control failed",error);toast(error?.message||"تعذر تنفيذ الحركة، حاول مرة أخرى.");}
 },true);
 
+// Room controls that were previously rendered without a working submit/click binding.
+document.addEventListener("click",async event=>{
+ const button=event.target instanceof Element?event.target.closest("[data-game-refresh]"):null;
+ if(!button)return;
+ event.preventDefault();event.stopImmediatePropagation();
+ if(button.dataset.busy==="1")return;
+ button.dataset.busy="1";const original=button.textContent;button.disabled=true;button.textContent="جارٍ التحديث…";
+ try{await loadGameSessions();}catch(error){toast(error?.message||"تعذر تحديث غرف الألعاب");}
+ finally{button.disabled=false;button.textContent=original;button.dataset.busy="0";}
+},true);
+document.addEventListener("submit",event=>{
+ const form=event.target;
+ if(!(form instanceof HTMLFormElement)||form.id!=="gameChatForm")return;
+ event.preventDefault();event.stopImmediatePropagation();
+ const input=form.elements.namedItem("message"),message=String(input?.value||"").trim();
+ if(!message)return;
+ const sessionId=gameSessionId||currentGamePayload?.sessionId;
+ if(!sessionId){toast("افتح غرفة اللعبة أولًا.");return;}
+ if(!state.user){openLogin();return;}
+ const sent=emitGameCommand("game:chat",{sessionId,message:message.slice(0,500)});
+ if(sent&&input)input.value="";
+ else if(input){input.value="";toast("جارٍ إرسال الرسالة عند اتصال الطاولة…");}
+},true);
+
 // Prevent action buttons from accidentally submitting forms on mobile.
 // Reliable mobile-safe game creation: handle the tap directly, not only the native submit event.
 document.addEventListener("click",event=>{
