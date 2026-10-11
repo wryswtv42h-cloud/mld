@@ -34,10 +34,18 @@ export function setupBank(client, pool) {
     const rawCommand=String(raw||'').toLowerCase(),commandSettings=cfg.commandSettings&&typeof cfg.commandSettings==='object'?cfg.commandSettings:{};
     const coreAlias=Object.entries(commandSettings).find(([key,item])=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===rawCommand));
     if(!hasPrefix&&!(cfg.shortcutsEnabled===true&&coreAlias))return;
-    const cmd=String(coreAlias?.[0]||rawCommand).toLowerCase();
-    if(commandSettings[cmd]?.enabled===false)return message.reply('هذا الأمر معطّل من لوحة التحكم.');
-    const aliases = new Set(['رصيد','فلوس','يومي','تحويل','قرض','سداد','تبرع','استثمار','صندوق','تداول']);
-    if (!aliases.has(cmd) && !aliases.has(rawCommand)) return;
+    const requestedCommand=String(coreAlias?.[0]||rawCommand).toLowerCase();
+    const commandAliases={
+      'راتب':'يومي','راتبي':'يومي','مكافأة':'يومي','مكافاه':'يومي','مكافأتي':'يومي',
+      'بخشيش':'بخشيش','حظ':'حظ','روليت':'روليت','روليت بنك':'روليت','فواكه':'فواكه',
+      'لعبة':'لعبة','لعبة عشوائية':'لعبة','نرد':'نرد','قمار':'قمار','رهان':'رهان','حرامية':'حرامية',
+      'رصيدي':'رصيد','فلوسي':'رصيد','فلوس':'رصيد','بنك':'رصيد','رصيد':'رصيد',
+      'تحويل':'تحويل','تبرع':'تبرع','قرض':'قرض','سداد':'سداد','استثمار':'استثمار','صندوق':'صندوق','تداول':'تداول'
+    };
+    const cmd=commandAliases[requestedCommand]||commandAliases[rawCommand]||requestedCommand;
+    if(commandSettings[requestedCommand]?.enabled===false||commandSettings[cmd]?.enabled===false)return message.reply('هذا الأمر معطّل من لوحة التحكم.');
+    const aliases = new Set(['رصيد','فلوس','يومي','راتب','راتبي','مكافأة','مكافاه','مكافأتي','بخشيش','حظ','روليت','روليت بنك','فواكه','لعبة','لعبة عشوائية','نرد','قمار','رهان','حرامية','تحويل','قرض','سداد','تبرع','استثمار','صندوق','تداول']);
+    if (!aliases.has(cmd) && !aliases.has(requestedCommand) && !aliases.has(rawCommand)) return;
     const guildId = message.guild.id, userId = message.author.id, botId = String(client.mldBotId || client.user.id);
     const start = Math.max(0, Math.min(100000000, integer(cfg.startingBalance, 1000)));
     const daily = Math.max(0, Math.min(100000000, integer(cfg.dailyReward, 100)));
@@ -73,6 +81,34 @@ export function setupBank(client, pool) {
           await clientDb.query('COMMIT');
           return message.reply('🎁 استلمت مكافأتك اليومية: **' + money(daily) + '** عملة.');
         } catch (e) { await clientDb.query('ROLLBACK').catch(()=>{}); throw e; } finally { clientDb.release(); }
+      }
+      if (['بخشيش','حظ','روليت','فواكه','لعبة','نرد','قمار','رهان','حرامية'].includes(cmd)) {
+        const stake = amount > 0 ? Math.min(amount, 10000000) : 100;
+        const db = await pool.connect();
+        try {
+          await db.query('BEGIN');
+          const row = await db.query('SELECT balance FROM mld_bot_bank WHERE bot_id=$1 AND guild_id=$2 AND user_id=$3 FOR UPDATE',[botId,guildId,userId]);
+          const balance = Number(row.rows[0]?.balance || 0);
+          if (cmd === 'بخشيش') {
+            const reward = 10 + Math.floor(Math.random()*91);
+            await db.query('UPDATE mld_bot_bank SET balance=balance+$1,updated_at=NOW() WHERE bot_id=$2 AND guild_id=$3 AND user_id=$4',[reward,botId,guildId,userId]);
+            await db.query('COMMIT');
+            return message.reply('🪙 جاك بخشيش **'+money(reward)+'** عملة!');
+          }
+          if (cmd === 'حظ') {
+            const reward = Math.floor(Math.random()*201);
+            await db.query('UPDATE mld_bot_bank SET balance=balance+$1,updated_at=NOW() WHERE bot_id=$2 AND guild_id=$3 AND user_id=$4',[reward,botId,guildId,userId]);
+            await db.query('COMMIT');
+            return message.reply('🍀 الحظ ابتسم لك وربحت **'+money(reward)+'** عملة.');
+          }
+          if (balance < stake) { await db.query('ROLLBACK'); return message.reply('رصيدك ما يكفي. رصيدك **'+money(balance)+'** والرهان **'+money(stake)+'**.'); }
+          const won = Math.random() < (cmd==='حرامية'?0.38:cmd==='قمار'||cmd==='رهان'?0.48:0.5);
+          const payout = won ? stake * (cmd==='روليت'?3:cmd==='فواكه'?2:cmd==='لعبة'?2:cmd==='نرد'?2:cmd==='حرامية'?2:2) : 0;
+          await db.query('UPDATE mld_bot_bank SET balance=balance-$1+$2,updated_at=NOW() WHERE bot_id=$3 AND guild_id=$4 AND user_id=$5',[stake,payout,botId,guildId,userId]);
+          await db.query('COMMIT');
+          const gameName={'روليت':'🎡 روليت البنك','فواكه':'🍒 فواكه الحظ','لعبة':'🎮 اللعبة العشوائية','نرد':'🎲 النرد','قمار':'🎰 القمار','رهان':'⚖️ الرهان','حرامية':'🦹 محاولة السرقة'}[cmd]||'🎲 لعبة البنك';
+          return message.reply(gameName+'\n'+(won?'🎉 فزت وربحت صافي **'+money(payout-stake)+'** عملة.':'💸 خسرت **'+money(stake)+'** عملة.')+'\nالرهان: '+money(stake)+' · '+(won?'المبلغ المصروف لك: '+money(payout):'لم يُصرف لك ربح')+'.');
+        } catch(e) { await db.query('ROLLBACK').catch(()=>{}); throw e; } finally { db.release(); }
       }
       if (cmd === 'تحويل' || cmd === 'تبرع') {
         const target = message.mentions.users.first();
