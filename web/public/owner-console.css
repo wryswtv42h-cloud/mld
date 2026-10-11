@@ -263,3 +263,114 @@ body[data-page="owner"] .owner-section :is(button,a,input,select,textarea){touch
  body[data-page="owner"] .owner-row .row-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
  body[data-page="owner"] .owner-row .row-actions .btn{width:100%;min-width:0}
 }
+
+
+/* MLD owner console refresh — October 2026 */
+body[data-page="owner"] #app>.pagePanel,
+body[data-page="owner"] #app>.panel,
+body[data-page="owner"] #app>.box {
+  width:min(1480px,calc(100% - 28px));margin:20px auto 42px;
+  border:1px solid rgba(255,156,222,.16);
+  background:radial-gradient(ellipse at 95% 0%,rgba(168,111,223,.16),transparent 35%),linear-gradient(145deg,rgba(25,15,35,.98),rgba(12,8,20,.98));
+  box-shadow:0 22px 70px rgba(0,0,0,.28);overflow:visible
+}
+body[data-page="owner"] .owner-console-nav {
+  display:flex;gap:8px;align-items:center;position:sticky;z-index:15;top:64px;
+  padding:12px;margin:18px 0 22px;border:1px solid rgba(255,156,222,.16);
+  border-radius:18px;background:rgba(15,9,23,.94);backdrop-filter:blur(16px);
+  box-shadow:0 12px 30px rgba(0,0,0,.2);overflow-x:auto;scrollbar-width:thin
+}
+body[data-page="owner"] .owner-console-nav button {
+  flex:0 0 auto;min-height:42px;padding:10px 15px;border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;color:#eadcf4;background:rgba(255,255,255,.035);
+  font-weight:750;transition:background .16s,border-color .16s,transform .16s
+}
+body[data-page="owner"] .owner-console-nav button:hover,
+body[data-page="owner"] .owner-console-nav button:focus-visible {
+  outline:none;color:#211026;background:linear-gradient(120deg,#ffb4e7,#c8a8ff);
+  border-color:transparent;transform:translateY(-1px)
+}
+body[data-page="owner"] .owner-overview {margin:0 0 22px}
+body[data-page="owner"] .owner-overview .stats {
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px
+}
+body[data-page="owner"] .owner-overview .stat {
+  position:relative;min-height:112px;padding:20px;border:1px solid rgba(255,156,222,.16);
+  border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018));
+  overflow:hidden
+}
+body[data-page="owner"] .owner-overview .stat:after {
+  content:"";position:absolute;inset:auto -18px -34px auto;width:92px;height:92px;border-radius:50%;
+  background:rgba(168,111,223,.12);filter:blur(2px);pointer-events:none
+}
+body[data-page="owner"] .owner-overview .stat>b {
+  display:block;font-size:clamp(25px,3vw,36px);line-height:1.15;font-weight:900;
+  background:linear-gradient(110deg,#ffb2e6,#c4a5ff);-webkit-background-clip:text;background-clip:text;color:transparent
+}
+body[data-page="owner"] .owner-overview .stat>small {display:block;margin-top:9px;color:#c9bad5;font-weight:700}
+body[data-page="owner"] .owner-section {
+  margin:0 0 18px;padding:clamp(16px,2.3vw,26px);border:1px solid rgba(255,255,255,.085);
+  border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  scroll-margin-top:130px
+}
+body[data-page="owner"] .owner-section>h2 {
+  display:flex;align-items:center;gap:10px;margin:0 0 18px;padding-bottom:14px;
+  border-bottom:1px solid rgba(255,156,222,.14);font-size:clamp(18px,2vw,23px);font-weight:900
+}
+body[data-page="owner"] .owner-section .form {
+  display:grid;gap:12px;padding:18px;border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;background:rgba(5,3,10,.2)
+}
+body[data-page="owner"] .owner-section :is(input:not([type=checkbox]):not([type=color]),textarea,select) {
+  width:100%;min-width:0;min-height:46px;padding:12px 14px;border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;background:#100a19;color:#fff8ff;font:inherit
+}
+body[data-page="owner"] .owner-section textarea {min-height:110px;resize:vertical}
+body[data-page="owner"] .owner-section :is(input,textarea,select):focus-visible {
+  outline:2px solid rgba(255,156,222,.7);outline-offset:2px
+}
+body[data-page="owner"] .owner-section :is(button,a,.btn) {touch-action:manipulation}
+body[data-page="owner"] .owner-section .btn {min-height:42px;font-weight:800}
+body[data-page="owner"] .owner-section .btn.primary {
+  color:#24122a;background:linear-gradient(115deg,#ffb4e7,#c4a5ff);
+  border:0;box-shadow:0 8px 22px rgba(255,156,222,.12)
+}
+body[data-page="owner"] .owner-row,
+body[data-page="owner"] .ticketRow {
+  border:1px solid rgba(255,255,255,.075);border-radius:15px;background:rgba(255,255,255,.025);
+  transition:border-color .15s,background .15s
+}
+body[data-page="owner"] .owner-row:hover,
+body[data-page="owner"] .ticketRow:hover {border-color:rgba(255,156,222,.23);background:rgba(255,156,222,.035)}
+body[data-page="owner"] .owner-inbox-grid {gap:16px}
+body[data-page="owner"] .owner-inbox-people {border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:8px}
+body[data-page="owner"] .owner-section [hidden],body[data-page="owner"] .owner-overview[hidden] {display:none!important}
+body[data-page="owner"] :is(button,a,input,select,textarea) { -webkit-tap-highlight-color:transparent }
+.game-create-panel {border:1px solid rgba(255,156,222,.2)!important;background:radial-gradient(ellipse at 100% 0%,rgba(168,111,223,.15),transparent 45%),linear-gradient(145deg,rgba(27,16,37,.98),rgba(12,8,20,.98))!important}
+.game-session-form {display:grid;gap:10px}
+.game-session-form label {margin-top:6px;font-weight:800;color:#f0dff7}
+.game-session-form :is(select,input) {width:100%;min-height:48px;padding:12px 14px;border:1px solid rgba(255,156,222,.2);border-radius:13px;background:#100a19;color:#fff8ff;font:inherit}
+.game-session-form :is(select,input):focus-visible {outline:2px solid #ff9cde;outline-offset:2px}
+.game-create-submit {min-height:50px;font-weight:900;touch-action:manipulation}
+#gameCreateStatus[data-state="error"] {padding:10px 12px;border-radius:12px;background:rgba(255,85,120,.1);color:#ff9fb5}
+#gameCreateStatus[data-state="success"] {padding:10px 12px;border-radius:12px;background:rgba(100,230,170,.1);color:#a9f4cb}
+.game-card-select {cursor:pointer;touch-action:manipulation}
+.game-card-select.is-selected {border-color:#ff9cde!important;box-shadow:0 0 0 2px rgba(255,156,222,.18),0 12px 30px rgba(0,0,0,.18)}
+@media(max-width:900px) {
+ body[data-page="owner"] .owner-overview .stats {grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:620px) {
+ body[data-page="owner"] #app>.pagePanel,body[data-page="owner"] #app>.panel {width:calc(100% - 14px);margin:10px auto 28px;padding:12px}
+ body[data-page="owner"] .owner-console-nav {top:58px;margin:10px 0 15px;padding:7px;border-radius:14px}
+ body[data-page="owner"] .owner-console-nav button {min-height:39px;padding:8px 11px;font-size:12px}
+ body[data-page="owner"] .owner-overview .stats {grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ body[data-page="owner"] .owner-overview .stat {min-height:88px;padding:13px;border-radius:15px}
+ body[data-page="owner"] .owner-section {padding:13px;margin-bottom:12px;border-radius:16px;scroll-margin-top:115px}
+ body[data-page="owner"] .owner-section .form {padding:12px}
+ body[data-page="owner"] .owner-row {align-items:stretch;flex-direction:column}
+ body[data-page="owner"] .owner-row .row-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ body[data-page="owner"] .owner-row .row-actions .btn {width:100%;min-width:0}
+}
+@media(prefers-reduced-motion:reduce) {
+ body[data-page="owner"] *, .game-card-select, .game-create-submit {scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
