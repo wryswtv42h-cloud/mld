@@ -1187,13 +1187,13 @@ async function setupZajelReplies(client){
       const found=await pool.query(`SELECT sm.id,sm.recipient_id,u.discord_id AS sender_discord_id
         FROM secret_messages sm JOIN users u ON u.id::text=sm.sender_id::text WHERE sm.id=$1 LIMIT 1`,[messageId]);
       const row=found.rows[0];
-      if(!row)return interaction.editReply({content:'تعذر العثور على الزاجل الأصلي.',ephemeral:true});
-      if(String(row.recipient_id)!==String(interaction.user.id))return interaction.editReply({content:'زر الرد مخصص لمستلم الزاجل فقط.',ephemeral:true});
-      if(!row.sender_discord_id)return interaction.editReply({content:'تعذر الرد لأن مرسل الزاجل لم يربط حساب Discord بحسابه.',ephemeral:true});
+      if(!row)return interaction.editReply({content:'تعذر العثور على الزاجل الأصلي.'});
+      if(String(row.recipient_id)!==String(interaction.user.id))return interaction.editReply({content:'زر الرد مخصص لمستلم الزاجل فقط.'});
+      if(!row.sender_discord_id)return interaction.editReply({content:'تعذر الرد لأن مرسل الزاجل لم يربط حساب Discord بحسابه.'});
       const already=await pool.query('SELECT 1 FROM pigeon_replies WHERE message_id=$1 LIMIT 1',[messageId]);
       if(already.rows.length){
         await interaction.message.edit({components:[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(interaction.customId).setLabel('تم استخدام الرد').setStyle(ButtonStyle.Secondary).setDisabled(true))]}).catch(()=>{});
-        return interaction.editReply({content:'تم استخدام زر الرد لهذا الزاجل مسبقًا.',ephemeral:true});
+        return interaction.editReply({content:'تم استخدام زر الرد لهذا الزاجل مسبقًا.'});
       }
       const created=await pool.query(`INSERT INTO pigeon_reply_sessions(message_id,recipient_discord_id,sender_discord_id,status,expires_at)
         VALUES($1,$2,$3,'pending',NOW()+INTERVAL '30 minutes') ON CONFLICT(message_id) DO NOTHING RETURNING message_id`,
@@ -1203,9 +1203,9 @@ async function setupZajelReplies(client){
         const current=session.rows[0];
         if(current?.status==='pending'&&new Date(current.expires_at).getTime()>Date.now()){
           await interaction.message.edit({components:[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(interaction.customId).setLabel('بانتظار ردك بالخاص').setStyle(ButtonStyle.Secondary).setDisabled(true))]}).catch(()=>{});
-          return interaction.editReply({content:'أرسل ردك برسالة خاصة للبوت خلال 30 دقيقة. يسمح برد واحد فقط.',ephemeral:true});
+          return interaction.editReply({content:'أرسل ردك برسالة خاصة للبوت خلال 30 دقيقة. يسمح برد واحد فقط.'});
         }
-        return interaction.editReply({content:'انتهت مهلة الرد أو تم استخدام الزر من قبل.',ephemeral:true});
+        return interaction.editReply({content:'انتهت مهلة الرد أو تم استخدام الزر من قبل.'});
       }
       await interaction.message.edit({components:[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(interaction.customId).setLabel('بانتظار ردك بالخاص').setStyle(ButtonStyle.Secondary).setDisabled(true))]}).catch(()=>{});
       await interaction.editReply({content:'تم تفعيل الرد. أرسل الآن رسالتك الخاصة إلى البوت خلال 30 دقيقة؛ سيصل رد واحد فقط إلى مرسل الزاجل الأصلي بعنوان «زاجل مردود».'});
