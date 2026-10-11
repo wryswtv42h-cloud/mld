@@ -234,3 +234,18 @@ input:focus,textarea:focus,select:focus{outline:2px solid rgba(255,156,222,.65);
 #dashboardTabs .tab{touch-action:manipulation}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #ff9cde;outline-offset:3px}
 @media(max-width:620px){.dashboard-bot-picker{grid-template-columns:1fr}}
+
+/* Categorized per-game art editor */
+.games-catalog{display:grid;gap:22px;margin-top:16px}
+.game-group{display:grid;gap:12px}
+.game-group>header h4{margin:0 0 5px;font-size:1.05rem}
+.game-group>header p{margin:0;color:var(--muted);font-size:.88rem}
+.game-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px}
+.game-config-card{min-width:0;padding:12px;border:1px solid var(--line);border-radius:17px;background:rgba(255,255,255,.025);display:grid;gap:10px}
+.game-card-art{height:108px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(255,156,222,.2),rgba(168,111,223,.2)),url('/logo.svg.JPG') center/cover;display:flex;align-items:flex-end;padding:10px;background-position:center;background-size:cover;overflow:hidden}
+.game-card-art span{background:rgba(15,9,22,.82);color:#fff8ff;border:1px solid rgba(255,255,255,.15);border-radius:9px;padding:5px 10px;font-weight:800;backdrop-filter:blur(8px)}
+.game-config-card .game-switch{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.game-image-field{display:grid;gap:6px;font-size:.88rem}
+.game-image-field input{min-width:0;width:100%;box-sizing:border-box}
+.game-image-field small{color:var(--muted);line-height:1.5}
+@media(max-width:520px){.game-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.game-config-card{padding:8px}.game-card-art{height:90px}}
