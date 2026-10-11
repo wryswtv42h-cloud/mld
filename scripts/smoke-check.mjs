@@ -25,7 +25,7 @@ const gameSocket = read('api/src/socket/games.js');
 
 assert.match(html, /logo\.svg\.JPG/, 'The original logo must remain referenced.');
 assert.match(html, /rebuild-polish\.css/, 'The additive responsive stylesheet must be loaded.');
-assert.match(app, /state\.user\?\.is_owner\s*\|\|\s*String\(state\.user\?\.role\?\|\|""\)\.toLowerCase\(\)==="owner"/, 'Owner role must bypass page maintenance locks.');
+assert.match(app, /const ownerView=[^\\n]*role[^\\n]*owner/, 'Owner role must bypass page maintenance locks.');
 assert.match(app, /await getPageLocksSnapshot\(\)/, 'Page locks must be fetched before visitor pages render.');
 assert.match(app, /game-seat-avatar/, 'Game table seats must render player avatars.');
 assert.match(app, /data-member=\"\'+esc\(p\.userId\)/, 'Human player names at the table should open member profiles.');
