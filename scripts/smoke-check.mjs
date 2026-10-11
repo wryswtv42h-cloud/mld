@@ -70,7 +70,7 @@ assert.ok(bot.includes("if(command==='mute'||command==='unmute')") && bot.includ
 assert.ok(bot.includes("['deafen','undeafen','disconnect'].includes(command)") && bot.includes("if(command==='hide'||command==='show')") && bot.includes("if(command==='renamechannel')") && bot.includes("if(command==='settopic')"), 'Additional voice and channel moderation commands must have real handlers.');
 assert.ok(bot.includes("if(command==='welcome')") && bot.includes("if(command==='logs')") && bot.includes('welcomeEnabled===false'), 'Advertised welcome and log commands must persist settings and respect the disabled state.');
 assert.ok(bot.includes("if(command==='broadcast')") && bot.includes("'bot.broadcast_sent'"), 'Broadcast must post to an explicitly selected channel and record the action.');
-assert.ok(bot.includes("if(['moderation','automod','system','allinone','welcome'].includes(type))"), 'Welcome-type bots must be able to run their own prefix welcome settings command.');
+assert.ok(bot.includes("if(['moderation','automod','system','allinone','welcome','broadcast'].includes(type))"), 'Welcome-type bots must be able to run their own prefix welcome settings command.');
 assert.ok(bot.includes("const autoMod=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true"), 'Protection can be disabled explicitly even for automod bot types.');
 assert.ok(bot.includes('const knownCommandNames=new Set('), 'Only recognized prefix commands should bypass automatic link filtering.');
 assert.ok(bot.includes("if(command==='antilink'||command==='antispam')"), 'Link and spam protection must be independently configurable.');
