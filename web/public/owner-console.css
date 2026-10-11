@@ -160,3 +160,7 @@ body[data-page="owner"] .owner-section input:not([type=checkbox]):not([type=colo
 body[data-page="owner"] .owner-section button,body[data-page="owner"] .owner-section a.btn{min-height:42px}
 body[data-page="owner"] .owner-console-nav button:focus-visible,body[data-page="owner"] .owner-section button:focus-visible{outline:2px solid #ff9cde;outline-offset:3px}
 @media(max-width:640px){body[data-page="owner"] #app{padding:10px}body[data-page="owner"] .owner-console-nav{top:4px;margin-inline:-2px;border-radius:14px}body[data-page="owner"] .owner-section{border-radius:17px;padding:14px}body[data-page="owner"] .owner-row,body[data-page="owner"] .ticketRow{align-items:stretch;flex-direction:column}body[data-page="owner"] .owner-row .row-actions{display:flex;flex-wrap:wrap;gap:8px}body[data-page="owner"] .owner-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+body[data-page="owner"] .owner-console-nav{scrollbar-color:#a86fdf55 transparent}
+body[data-page="owner"] .owner-section a:not(.btn){color:#ffb6e7;text-underline-offset:3px}
+body[data-page="owner"] .owner-section .empty{padding:18px;border:1px dashed #ffffff22;border-radius:14px;text-align:center;color:var(--muted,#c9bbd2)}
