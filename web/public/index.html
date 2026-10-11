@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#171020"><title>MLD · Community</title>
-<link rel="icon" href="logo.svg.JPG"><link rel="stylesheet" href="style.css?v=20261010-bot-add-click7"><link rel="stylesheet" href="overrides.css?v=20261011-creator-support2">
+<link rel="icon" href="logo.svg.JPG"><link rel="stylesheet" href="style.css?v=20261010-bot-add-click7"><link rel="stylesheet" href="overrides.css?v=20261011-sidebar-social1">
 </head>
 <body>
 <header class="topbar">
@@ -19,9 +19,9 @@
 <div id="shade"></div>
 <aside id="sidebar" aria-hidden="true"></aside>
 <main id="app"></main>
-<footer><div class="footBrand"><img src="logo.svg.JPG" alt=""><span><b>MLD · Community</b><small>مجتمع ملاذ</small></span></div><nav><a href="https://www.tiktok.com/@jj51" target="_blank" rel="noopener">TikTok</a><a href="https://www.instagram.com/li5uxi" target="_blank" rel="noopener">Instagram</a></nav></footer>
+<footer><div class="footBrand"><img src="logo.svg.JPG" alt=""><span><b>MLD · Community</b><small>مجتمع ملاذ</small></span></div></footer>
 <div id="modal"></div><div id="toast" role="status"></div>
-<div id="mldCreatorLinks" class="mld-creator-links"><span>حسابات المنشئ: فهد المطيري</span><a href="https://www.tiktok.com/@jj51" target="_blank" rel="noopener">TikTok</a><a href="https://www.instagram.com/li5uxi" target="_blank" rel="noopener">Instagram</a><span>Discord: w4px</span></div><a id="mldDiscordSupport" class="mld-discord-support" href="https://discord.gg/imld" target="_blank" rel="noopener" aria-label="الدعم عبر Discord">◉ <b>الدعم عبر Discord</b></a>
+<a id="mldDiscordSupport" class="mld-discord-support" href="https://discord.gg/imld" target="_blank" rel="noopener" aria-label="الدعم عبر Discord">◉ <b>الدعم عبر Discord</b></a>
 <script>
 (()=>{const link=document.getElementById('mldDiscordSupport');if(!link)return;const base=String(window.MLD_API_URL||'');const root=base.endsWith('/')?base.slice(0,-1):base;fetch(root+'/api/public/server',{headers:{Accept:'application/json'},cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>{if(!data||!data.invite)return;try{const target=new URL(data.invite);const id=target.pathname.split('/').filter(Boolean).pop()||'';if(target.hostname==='discord.com'&&target.pathname.startsWith('/users/')&&/^\d{17,20}$/.test(id)){link.href=target.href;link.setAttribute('aria-label','التواصل المباشر مع فهد المطيري عبر Discord');const label=link.querySelector('b');if(label)label.textContent='تواصل مع المطوّر';}}catch{}}).catch(()=>{});})();
 </script>
