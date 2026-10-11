@@ -360,6 +360,32 @@ function openLogin(){const auth='<div class="dialog"><div class="dialogHead"><h2
 function logout(){state.token="";state.user=null;save();state.page="home";renderHeader();render();toast("تم تسجيل الخروج")}
 async function consumeLoginTicket(){const match=window.location.hash.match(/(?:^#|&)login_ticket=([^&]+)/);if(!match)return;let ticket;try{ticket=decodeURIComponent(match[1])}catch{return}history.replaceState(null,'',window.location.pathname+window.location.search);try{const d=await api('/api/auth/bot/exchange-ticket',{method:'POST',body:JSON.stringify({ticket})});state.token=d.token;state.user=d.user;save();renderHeader();render();toast('تم تسجيل الدخول عبر بوت MLD')}catch(error){toast(error.message||'تعذر استهلاك رابط الدخول')}}
 document.addEventListener("click",e=>{const jump=e.target.closest("[data-owner-jump]");if(!jump)return;const key=jump.dataset.ownerJump;const target=document.getElementById(key==="overview"?"owner-overview":"owner-"+key);if(target)target.scrollIntoView({behavior:"smooth",block:"start"});});
+// Intercept game creation in capture phase to prevent mobile form/page jumps.\ndocument.addEventListener("click",async event=>{
+ const button=event.target instanceof Element?event.target.closest("[data-game-create]"):null;
+ if(!button)return;
+ event.preventDefault();
+ event.stopImmediatePropagation();
+ if(!state.user){openLogin();return}
+ if(button.dataset.busy==="1")return;
+ button.dataset.busy="1";
+ const original=button.textContent;
+ button.disabled=true;
+ button.textContent="جارٍ إنشاء الغرفة…";
+ try{
+  const type=button.dataset.gameCreate;
+  gameChatMessages=[];
+  const result=await api("/api/games/sessions",{method:"POST",body:JSON.stringify({game_type:type,name:"غرفة "+gameLabel(type)})});
+  if(!result?.session?.id)throw new Error("الخادم لم يُرجع معرّف الغرفة");
+  gameSessionId=result.session.id;
+  gameSocketConnect();
+  joinGameSocket(gameSessionId,false);
+  renderGameArena({sessionId:gameSessionId,players:result.session.players||[],spectators:[],status:result.session.status,gameType:type,state:result.session.state});
+  toast("تم إنشاء الغرفة");
+  $("#gameArena")?.scrollIntoView({behavior:"smooth",block:"start"});
+  loadGameSessions();
+ }catch(error){toast(error.message||"تعذر إنشاء الغرفة",true)}
+ finally{if(button.isConnected){button.disabled=false;button.dataset.busy="0";button.textContent=original}}
+},true);
 document.addEventListener("click",async e=>{
 // Keep taps on editable controls out of delegated navigation/action handling.
 if(e.target instanceof Element && e.target.closest("input,textarea,select,option,[contenteditable=\"true\"]"))return;
