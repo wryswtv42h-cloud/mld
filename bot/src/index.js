@@ -365,8 +365,10 @@ function installBotFeatures(client,bot){
     const shortcutWord=String(commandSource.split(/\s+/)[0]||'').toLowerCase();
     const shortcutsEnabled=client.mldConfig?.shortcutsEnabled===true;
     const commandSettings=client.mldConfig?.commandSettings&&typeof client.mldConfig.commandSettings==='object'?client.mldConfig.commandSettings:{};
-    const configuredShortcut=Object.values(commandSettings).some(item=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===shortcutWord));
-    const isCustomShortcut=shortcutsEnabled&&(configuredShortcut||(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).some(item=>item&&item.enabled!==false&&(String(item.name||'').toLowerCase()===shortcutWord||(Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===shortcutWord)))));
+    const shortcutText=String(commandSource||'').trim().toLowerCase();
+    const matchesShortcut=alias=>{const value=String(alias||'').trim().toLowerCase();return !!value&&(shortcutText===value||shortcutText.startsWith(value+' '));};
+    const configuredShortcut=Object.values(commandSettings).some(item=>item&&item.enabled!==false&&Array.isArray(item.aliases)&&item.aliases.some(matchesShortcut));
+    const isCustomShortcut=shortcutsEnabled&&(configuredShortcut||(Array.isArray(client.mldConfig?.commands)?client.mldConfig.commands:[]).some(item=>item&&item.enabled!==false&&(String(item.name||'').toLowerCase()===shortcutWord||(Array.isArray(item.aliases)&&item.aliases.some(matchesShortcut)))));
     // If Discord's privileged Message Content Intent is disabled, ordinary message
     // content arrives empty. A direct mention is still detectable, so explain the fix.
     if(!commandSource.trim()&&(message.mentions?.users?.has(client.user.id)||message.mentions.has(client.user))){
