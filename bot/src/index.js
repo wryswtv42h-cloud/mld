@@ -1,0 +1,18 @@
+import 'dotenv/config';
+import {Client,GatewayIntentBits,Events,ActivityType,PermissionFlagsBits} from 'discord.js';
+const token=process.env.DISCORD_TOKEN||process.env.DISCORD_BOT_TOKEN,prefix=process.env.BOT_PREFIX||'!',ownerId=process.env.OWNER_DISCORD_ID||'';
+const client=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildModeration]});
+client.once(Events.ClientReady,c=>{console.log('MLD Bot online as '+c.user.tag);c.user.setActivity(process.env.BOT_ACTIVITY||'MLD | فهد المطيري',{type:ActivityType.Watching})});
+client.on(Events.MessageCreate,async m=>{if(m.author.bot||!m.guild||!m.content.startsWith(prefix))return;const [raw,...args]=m.content.slice(prefix.length).trim().split(/\s+/),cmd=(raw||'').toLowerCase(),owner=!!ownerId&&m.author.id===ownerId,mod=owner||m.member.permissions.has(PermissionFlagsBits.ModerateMembers);try{
+if(['help','اوامر','مساعدة'].includes(cmd))return m.reply('**MLD · ملاذ**\n'+['help — قائمة الأوامر','ping — الاستجابة','server — معلومات السيرفر','user @عضو — معلومات عضو','avatar @عضو — الصورة','clear 1-100 — حذف رسائل (إشراف)','timeout @عضو دقائق [سبب] — إسكات','untimeout @عضو — فك الإسكات','announce نص — إعلان (مالك)'].map(x=>prefix+x).join('\n'));
+if(cmd==='ping')return m.reply('🏓 Pong · '+client.ws.ping+'ms');
+if(['server','السيرفر','سيرفر'].includes(cmd))return m.reply('**'+m.guild.name+'**\nالأعضاء: '+m.guild.memberCount+'\nID: '+m.guild.id);
+if(['user','عضو'].includes(cmd)){const u=m.mentions.members.first()||m.member;return m.reply('**'+u.user.tag+'**\nID: '+u.id+'\nانضم: '+(u.joinedAt?.toLocaleDateString('ar')||'غير معروف'))}
+if(['avatar','صورة'].includes(cmd)){const u=m.mentions.users.first()||m.author;return m.reply(u.displayAvatarURL({size:1024}))}
+if(['clear','مسح'].includes(cmd)){if(!m.member.permissions.has(PermissionFlagsBits.ManageMessages))return m.reply('❌ تحتاج Manage Messages');const n=Number(args[0]);if(!Number.isInteger(n)||n<1||n>100)return m.reply('استخدم '+prefix+'clear 1-100');const r=await m.channel.bulkDelete(n,true);return m.reply('🧹 تم حذف '+r.size+' رسالة')}
+if(['timeout','اسكات'].includes(cmd)){if(!mod)return m.reply('❌ تحتاج صلاحية إشراف');const u=m.mentions.members.first(),n=Number(args[1]);if(!u||!Number.isInteger(n)||n<1||n>40320)return m.reply('استخدم '+prefix+'timeout @عضو 10 [سبب]');if(!u.moderatable)return m.reply('لا أستطيع تعديل رتبة هذا العضو');await u.timeout(n*60000,args.slice(2).join(' ')||'إجراء إشرافي');return m.reply('🔇 تم إسكات '+u.user.tag+' لمدة '+n+' دقيقة')}
+if(['untimeout','فك_اسكات'].includes(cmd)){if(!mod)return m.reply('❌ تحتاج صلاحية إشراف');const u=m.mentions.members.first();if(!u)return m.reply('حدد العضو');await u.timeout(null,'فك الإسكات');return m.reply('🔊 تم فك الإسكات عن '+u.user.tag)}
+if(['announce','اعلان'].includes(cmd)){if(!owner)return m.reply('هذا الأمر للمالك فقط');const t=args.join(' ');if(!t)return m.reply('اكتب نص الإعلان');return m.channel.send({content:'📢 **إعلان MLD**\n'+t,allowedMentions:{parse:[]}})}
+}catch(e){console.error('command failed',cmd,e);m.reply('تعذر تنفيذ الأمر؛ تحقق من صلاحياتي.').catch(()=>{})}});
+client.on(Events.GuildMemberAdd,async m=>{if(!process.env.WELCOME_CHANNEL_ID)return;try{const c=await m.guild.channels.fetch(process.env.WELCOME_CHANNEL_ID);await c?.send('يا هلا '+m+' في **'+m.guild.name+'** 🌸')}catch(e){console.error('welcome error',e.message)}});
+if(!token)console.error('DISCORD_TOKEN is missing');else client.login(token).catch(e=>{console.error('Discord login failed:',e.message);process.exitCode=1});
