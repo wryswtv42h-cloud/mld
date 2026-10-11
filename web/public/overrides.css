@@ -1116,3 +1116,28 @@ button:disabled, .btn:disabled { cursor:not-allowed!important; opacity:.52; tran
 @media(prefers-reduced-motion:reduce) {
   *,*::before,*::after { scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; }
 }
+
+
+/* MLD NEON REBUILD 2026-10-11 */
+:root{--bg:#050713;--panel:#090e20;--panel2:#10142d;--line:#3b3f88;--text:#f8f7ff;--muted:#aeb6dc;--pink:#ff49df;--purple:#8c39ff;--blue:#18cfff;--green:#35f5bc}
+html{background:#050713;color-scheme:dark}
+body{background:radial-gradient(ellipse at 48% -10%,#32105c 0,transparent 36%),radial-gradient(ellipse at 95% 35%,#071f4b 0,transparent 33%),linear-gradient(145deg,#03050d,#08091a 58%,#060b18);color:var(--text)}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.22;background-image:linear-gradient(#393d7a22 1px,transparent 1px),linear-gradient(90deg,#393d7a22 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(to bottom,#000,transparent 82%)}
+.topbar{background:#050713df!important;border-bottom:1px solid #5540a966!important;box-shadow:0 8px 35px #0008,0 1px #19d9ff12;backdrop-filter:blur(20px)}
+.brand img,.footBrand img{filter:drop-shadow(0 0 12px #bd4cff99)}
+#sidebar{background:linear-gradient(180deg,#080b1bfa,#050713fa)!important;border-color:#39377b!important;box-shadow:18px 0 60px #0008}
+#app{max-width:1600px;margin-inline:auto}
+#app .panel,#app .card,#app .section,#app .stat-card,#app .member-card,#app .game-card-select,#app .session-card,#app .bot-card,#app .feature-card{background:linear-gradient(145deg,#10142bed,#080b18f5)!important;border-color:#42418a!important;box-shadow:0 12px 32px #0005,inset 0 1px #ffffff08;backdrop-filter:blur(14px);border-radius:18px}
+#app .panel:hover,#app .card:hover,#app .game-card-select:hover,#app .bot-card:hover{border-color:#a34dff!important;box-shadow:0 12px 35px #812dff1c,0 0 0 1px #6e3bff24;transform:translateY(-1px)}
+#app button.primary,#app .primary,#app button.btn-primary,#app .game-create-submit{background:linear-gradient(105deg,#6b21e8,#a629ff 55%,#ec36d4)!important;color:#fff!important;border:1px solid #dc79ff!important;box-shadow:0 5px 22px #a02aff35;font-weight:800}
+#app button,#sidebar button,.topbar button{transition:filter .16s,border-color .16s,transform .16s,box-shadow .16s}
+#app button:focus-visible,#sidebar button:focus-visible,.topbar button:focus-visible,a:focus-visible{outline:2px solid #26d9ff;outline-offset:3px}
+#app input,#app select,#app textarea{background:#060a18!important;border-color:#383b73!important;color:#f9f7ff!important;border-radius:12px}
+#app input:focus,#app select:focus,#app textarea:focus{border-color:#ba4dff!important;box-shadow:0 0 0 3px #a32bff20!important}
+#announcement{background:linear-gradient(90deg,#321057,#111b47,#321057);border-bottom:1px solid #8a45ff55}
+footer{border-top:1px solid #3b367766;background:#050713a8}
+#toast{backdrop-filter:blur(15px)}
+.mld-discord-support{border:1px solid #3d70ff!important;background:linear-gradient(110deg,#263cff,#692dff)!important;box-shadow:0 0 26px #3d4cff55}
+@media(min-width:1100px){#app{padding-inline:clamp(22px,3vw,52px)}}
+@media(max-width:680px){.topbar{gap:8px}.search-shell{max-width:44vw}#app .panel,#app .card{border-radius:15px}}
+@media(prefers-reduced-motion:reduce){#app .panel:hover,#app .card:hover,#app .game-card-select:hover{transform:none}}
