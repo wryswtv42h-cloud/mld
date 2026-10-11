@@ -341,7 +341,7 @@ function installBotFeatures(client,bot){
     const words=String(config.blockedWords||'').split(/[\n,،]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
     const defaultProtectionPrefix=String(config.prefix||'!').slice(0,4)||'!';
     const protectionPrefixes=[defaultProtectionPrefix,...Object.values(config.prefixes||{}).map(value=>String(value||'').trim().slice(0,4)).filter(Boolean)];
-    const knownCommandNames=new Set(['help','ping','serverinfo','botinfo','server','servericon','membercount','members','channelcount','uptime','avatar','userinfo','roles','roll','random','coinflip','8ball','joke','id','banner','profile','myinv','topinv','user','invite','roleinfo','channelinfo','prefix','setprefix','command','warn','kick','ban','clear','slowmode','lock','unlock','timeout','untimeout','nick','roleadd','roleremove','unban','allbans','rolecreate','roledelete','move','moveme','mute','unmute','rooms','poll','announce','ticket','apply','close','say','embed','protection','antilink','antispam','blockedword','رصيد','يومي','تحويل','قرض','سداد','استثمار','شغل','وقف','التالي','قائمة','روليت','مافيا','سالفة','بومب','حماية','حمايه','منعروابط','منعالروابط','منعالسبام','كلمةممنوعة','تذكرة','تقديم','قفل','فكحظر','حظر','طرد','مسح','انذار','تحذير','نقل','نقلني']);
+    const knownCommandNames=new Set(['help','ping','serverinfo','botinfo','server','servericon','membercount','members','channelcount','uptime','avatar','userinfo','roles','roll','random','coinflip','8ball','joke','id','banner','profile','myinv','topinv','user','invite','roleinfo','channelinfo','prefix','setprefix','command','warn','kick','ban','clear','slowmode','lock','unlock','timeout','untimeout','nick','roleadd','roleremove','unban','allbans','rolecreate','roledelete','move','moveme','mute','unmute','rooms','poll','announce','ticket','apply','close','say','embed','protection','antilink','antispam','blockedword','welcome','logs','رصيد','يومي','تحويل','قرض','سداد','استثمار','شغل','وقف','التالي','قائمة','روليت','مافيا','سالفة','بومب','حماية','حمايه','منعروابط','منعالروابط','منعالسبام','كلمةممنوعة','تذكرة','تقديم','قفل','فكحظر','حظر','طرد','مسح','انذار','تحذير','نقل','نقلني']);
     const isCommandMessage=protectionPrefixes.some(value=>{if(!content.startsWith(value))return false;const first=String(content.slice(value.length).trim().split(/\\s+/)[0]||'').toLowerCase();const custom=(Array.isArray(config.commands)?config.commands:[]).some(item=>item&&item.enabled!==false&&(String(item.name||'').toLowerCase()===first||(Array.isArray(item.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===first))));const configured=Object.entries(config.commandSettings||{}).some(([name,item])=>String(name).toLowerCase()===first||(Array.isArray(item?.aliases)&&item.aliases.some(alias=>String(alias).toLowerCase()===first)));return knownCommandNames.has(first)||custom||configured;});
     const autoMod=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true;
     if(autoMod&&!isCommandMessage){
@@ -456,7 +456,7 @@ function installBotFeatures(client,bot){
       kick:PermissionFlagsBits.KickMembers,ban:PermissionFlagsBits.BanMembers,clear:PermissionFlagsBits.ManageMessages,say:PermissionFlagsBits.ManageMessages,
       announce:PermissionFlagsBits.ManageMessages,slowmode:PermissionFlagsBits.ManageChannels,lock:PermissionFlagsBits.ManageChannels,unlock:PermissionFlagsBits.ManageChannels,
       timeout:PermissionFlagsBits.ModerateMembers,untimeout:PermissionFlagsBits.ModerateMembers,warn:PermissionFlagsBits.ModerateMembers,
-      nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,rolecreate:PermissionFlagsBits.ManageRoles,'انشاءرتبة':PermissionFlagsBits.ManageRoles,roledelete:PermissionFlagsBits.ManageRoles,'حذفرتبة':PermissionFlagsBits.ManageRoles,unban:PermissionFlagsBits.BanMembers,'فكحظر':PermissionFlagsBits.BanMembers,allbans:PermissionFlagsBits.BanMembers,'قائمةالمحظورين':PermissionFlagsBits.BanMembers,move:PermissionFlagsBits.MoveMembers,mute:PermissionFlagsBits.MuteMembers,unmute:PermissionFlagsBits.MuteMembers,protection:PermissionFlagsBits.ManageGuild,antilink:PermissionFlagsBits.ManageGuild,antispam:PermissionFlagsBits.ManageGuild,blockedword:PermissionFlagsBits.ManageGuild,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite
+      nick:PermissionFlagsBits.ManageNicknames,roleadd:PermissionFlagsBits.ManageRoles,roleremove:PermissionFlagsBits.ManageRoles,rolecreate:PermissionFlagsBits.ManageRoles,'انشاءرتبة':PermissionFlagsBits.ManageRoles,roledelete:PermissionFlagsBits.ManageRoles,'حذفرتبة':PermissionFlagsBits.ManageRoles,unban:PermissionFlagsBits.BanMembers,'فكحظر':PermissionFlagsBits.BanMembers,allbans:PermissionFlagsBits.BanMembers,'قائمةالمحظورين':PermissionFlagsBits.BanMembers,move:PermissionFlagsBits.MoveMembers,mute:PermissionFlagsBits.MuteMembers,unmute:PermissionFlagsBits.MuteMembers,protection:PermissionFlagsBits.ManageGuild,antilink:PermissionFlagsBits.ManageGuild,antispam:PermissionFlagsBits.ManageGuild,blockedword:PermissionFlagsBits.ManageGuild,command:PermissionFlagsBits.ManageGuild,setprefix:PermissionFlagsBits.ManageGuild,'تغييرالبادئة':PermissionFlagsBits.ManageGuild,invite:PermissionFlagsBits.CreateInstantInvite,'رابط':PermissionFlagsBits.CreateInstantInvite,welcome:PermissionFlagsBits.ManageGuild,logs:PermissionFlagsBits.ManageGuild
     }[command];
     if(requiredPermission){
       if(!message.member.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_member_permission'});return message.reply('ما عندك صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
@@ -464,6 +464,46 @@ function installBotFeatures(client,bot){
       if(!botMember?.permissions.has(requiredPermission)){await writeRuntimeLog(client.mldBotId,message.author.id,'bot.command_denied',{command,guildId:message.guild.id,channelId:message.channel.id,reason:'missing_bot_permission'});return message.reply('البوت نفسه يحتاج صلاحية Discord المطلوبة لتنفيذ هذا الأمر.');}
     }
     const saveProtectionSettings=async(next,action,details={})=>{if(!pool)throw new Error('قاعدة البيانات غير متاحة لحفظ إعدادات الحماية');await pool.query('UPDATE bots SET settings=$1::jsonb WHERE id=$2',[JSON.stringify(next),String(client.mldBotId)]);client.mldConfig=next;await writeRuntimeLog(client.mldBotId,message.author.id,action,{guildId:message.guild.id,...details});};
+    if(command==='welcome'){
+      const action=String(args[0]||'status').toLowerCase(),channel=message.mentions.channels.first()||null;
+      if(!['on','off','status','channel','message','leavechannel','leavemessage','leaveon','leaveoff'].includes(action))return message.reply('استخدم: '+prefix+'welcome status/on/off أو welcome channel #روم أو welcome message نص أو welcome leavechannel #روم أو welcome leavemessage نص');
+      if(action==='status'||!action)return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('👋 إعدادات الترحيب والمغادرة').addFields(
+        {name:'الترحيب',value:config.welcomeEnabled===false?'معطل':'مفعل',inline:true},
+        {name:'روم الترحيب',value:config.welcomeChannelId?'<#'+String(config.welcomeChannelId)+'>':'غير محدد',inline:true},
+        {name:'رسالة الترحيب',value:String(config.welcomeMessage||'ياهلا {user} في {server}!').slice(0,900),inline:false},
+        {name:'روم المغادرة',value:config.leaveChannelId?'<#'+String(config.leaveChannelId)+'>':'غير محدد',inline:true},
+        {name:'رسالة المغادرة',value:String(config.leaveMessage||'{user} غادر السيرفر.').slice(0,900),inline:false}
+      )],allowedMentions:{parse:[]}});
+      const next={...config};
+      if(action==='on')next.welcomeEnabled=true;
+      else if(action==='off')next.welcomeEnabled=false;
+      else if(action==='leaveon')next.leaveEnabled=true;
+      else if(action==='leaveoff')next.leaveEnabled=false;
+      else if(action==='channel'||action==='leavechannel'){
+        const chosen=channel||message.guild.channels.cache.get(String(args[1]||'').replace(/[<#>]/g,''))||null;
+        if(!chosen?.isTextBased())return message.reply('حدد رومًا نصيًا صحيحًا، مثل: '+prefix+'welcome channel #الترحيب');
+        next[action==='channel'?'welcomeChannelId':'leaveChannelId']=chosen.id;
+        if(action==='channel'&&next.welcomeEnabled===undefined)next.welcomeEnabled=true;
+        if(action==='leavechannel'&&next.leaveEnabled===undefined)next.leaveEnabled=true;
+      }else if(action==='message'||action==='leavemessage'){
+        const value=args.slice(1).join(' ').trim();
+        if(!value)return message.reply('اكتب نص الرسالة بعد الأمر. المتغيرات: {user} و{server} و{memberCount}');
+        next[action==='message'?'welcomeMessage':'leaveMessage']=value.slice(0,1800);
+      }
+      try{await saveProtectionSettings(next,'bot.welcome_settings',{action});return message.reply('✅ تم حفظ إعدادات الترحيب والمغادرة.');}catch(error){return message.reply(error.message||'تعذر حفظ إعدادات الترحيب.');}
+    }
+    if(command==='logs'){
+      const action=String(args[0]||'status').toLowerCase(),channel=message.mentions.channels.first()||null;
+      if(action==='status'||!action)return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('📋 إعدادات سجل الإدارة').setDescription(config.modLogChannelId?'روم السجل الحالي: <#'+String(config.modLogChannelId)+'>':'لم يتم تحديد روم سجل الإدارة بعد.').addFields({name:'الاستخدام',value:prefix+'logs #روم أو '+prefix+'logs off'}).setTimestamp()],allowedMentions:{parse:[]}});
+      const next={...config};
+      if(['off','disable','إيقاف','تعطيل'].includes(action))next.modLogChannelId=null;
+      else{
+        const chosen=channel||message.guild.channels.cache.get(String(action).replace(/[<#>]/g,''))||null;
+        if(!chosen?.isTextBased())return message.reply('حدد رومًا نصيًا صحيحًا: '+prefix+'logs #روم، أو '+prefix+'logs off');
+        next.modLogChannelId=chosen.id;
+      }
+      try{await saveProtectionSettings(next,'bot.mod_log_settings',{channelId:next.modLogChannelId||null});return message.reply(next.modLogChannelId?'✅ تم تعيين روم سجل الإدارة إلى <#'+next.modLogChannelId+'>.':'تم إيقاف سجل الإدارة.');}catch(error){return message.reply(error.message||'تعذر حفظ إعدادات السجل.');}
+    }
     if(command==='protection'){
       const mode=String(args[0]||'').toLowerCase();
       if(!mode){const enabled=config.automodEnabled===undefined?type==='automod':config.automodEnabled===true;return message.reply({embeds:[new EmbedBuilder().setColor(0xff9cde).setTitle('🛡️ حالة الحماية').addFields({name:'الحماية التلقائية',value:enabled?'مفعلة':'معطلة',inline:true},{name:'منع الروابط',value:(config.antiLinksEnabled===undefined?enabled:!!config.antiLinksEnabled)?'مفعل':'معطل',inline:true},{name:'مكافحة السبام',value:(config.antiSpamEnabled===undefined?enabled:!!config.antiSpamEnabled)?'مفعلة':'معطلة',inline:true},{name:'الكلمات الممنوعة',value:String(words.length),inline:true})],allowedMentions:{parse:[]}});}
@@ -984,7 +1024,7 @@ function installBotFeatures(client,bot){
   if(['welcome','general','custom','system','support','allinone'].includes(client.mldType)){
     client.on(Events.GuildMemberAdd,async member=>{
       const cfg=client.mldConfig||{},channelId=String(cfg.welcomeChannelId||'');
-      if(!channelId)return;
+      if(cfg.welcomeEnabled===false||!channelId)return;
       const channel=member.guild.channels.cache.get(channelId);
       if(!channel?.isTextBased())return;
       const message=String(cfg.welcomeMessage||'ياهلا {user} في {server}!').replaceAll('{user}',member.toString()).replaceAll('{server}',member.guild.name).replaceAll('{memberCount}',String(member.guild.memberCount));
@@ -992,7 +1032,7 @@ function installBotFeatures(client,bot){
     });
     client.on(Events.GuildMemberRemove,async member=>{
       const cfg=client.mldConfig||{},channelId=String(cfg.leaveChannelId||'');
-      if(!channelId)return;
+      if(cfg.leaveEnabled===false||!channelId)return;
       const channel=member.guild.channels.cache.get(channelId);
       if(!channel?.isTextBased())return;
       const message=String(cfg.leaveMessage||'{user} غادر السيرفر.').replaceAll('{user}',member.user?.username||'عضو').replaceAll('{server}',member.guild.name).replaceAll('{memberCount}',String(member.guild.memberCount));
