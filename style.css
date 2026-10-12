@@ -82,3 +82,32 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 .mafia-role{display:inline-flex;padding:8px 14px;border-radius:999px;background:linear-gradient(120deg,#a86fdf33,#ff9cde33);border:1px solid #ff9cde55;font-weight:800}.mafia-player-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:14px 0}.mafia-player{display:flex;flex-direction:column;gap:4px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}.mafia-player span{font-size:12px;color:var(--muted)}.mafia-player.eliminated{opacity:.48;text-decoration:line-through}
 .monopoly-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:16px 0}.monopoly-tile{min-height:76px;display:flex;flex-direction:column;justify-content:center;gap:4px;text-align:center;padding:7px 4px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:12px}.monopoly-tile b{font-size:12px}.monopoly-tile span,.monopoly-tile small{color:var(--muted);font-size:10px}.monopoly-tile.property{border-top:3px solid var(--purple)}.monopoly-tile.chance{border-top:3px solid var(--pink)}.monopoly-tile.tax{border-top:3px solid #d7a65c}.monopoly-pawns{font-size:10px;color:var(--pink);font-weight:800;overflow-wrap:anywhere}@media(max-width:560px){.monopoly-grid{gap:4px}.monopoly-tile{min-height:64px;padding:4px 2px}.monopoly-tile b{font-size:10px}}
 .member-profile-dialog{width:min(440px,calc(100% - 28px));border:1px solid #ff9cde55;border-radius:24px;background:var(--panel);color:var(--text);padding:24px;box-shadow:0 24px 90px #0008}.member-profile-dialog::backdrop{background:#05030bd9;backdrop-filter:blur(8px)}.member-profile-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.member-profile-head>div{font-weight:900}.member-profile-head small{color:var(--muted)}.member-profile-dialog .btn{margin-top:12px;width:100%}
+
+/* MLD motion system: polished, restrained, and reduced-motion friendly */
+:root{scroll-behavior:smooth}
+@keyframes mld-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes mld-glow{0%,100%{filter:drop-shadow(0 0 10px #ff9cde18)}50%{filter:drop-shadow(0 0 25px #a86fdf45)}}
+@keyframes mld-orbit{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes mld-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes mld-pulse{0%,100%{box-shadow:0 0 0 0 #ff9cde00}50%{box-shadow:0 0 0 7px #ff9cde0b}}
+.hero .copy{animation:mld-rise .75s cubic-bezier(.2,.7,.2,1) both}
+.hero .art{animation:mld-rise .9s .12s cubic-bezier(.2,.7,.2,1) both}
+.hero .logo-frame{animation:mld-glow 5s ease-in-out infinite}
+.hero .orbit.o1{animation:mld-orbit 32s linear infinite}
+.hero .orbit.o2{animation:mld-orbit 24s linear infinite reverse}
+.hero .float.f1{animation:mld-float 5.5s ease-in-out infinite}
+.hero .float.f2{animation:mld-float 6.2s .5s ease-in-out infinite}
+.stat,.feature,.community-card,.preview-card,.drawer-links button{transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease,background .24s ease}
+.feature:hover,.preview-card:hover,.community-card:hover{transform:translateY(-5px);border-color:#ff9cde55;box-shadow:0 18px 45px #00000020}
+.stat:hover{transform:translateY(-3px)}
+.btn,.icon,.hamburger,.auth-tab{transition:transform .18s ease,filter .18s ease,background .18s ease,border-color .18s ease}
+.btn:hover,.icon:hover,.hamburger:hover{filter:brightness(1.12);transform:translateY(-2px)}
+.btn:active,.icon:active,.hamburger:active{transform:translateY(0) scale(.98)}
+.online i{animation:mld-pulse 2.4s ease-in-out infinite}
+.preview-cards{animation:mld-rise .35s ease both}
+.preview-card{overflow-wrap:anywhere}
+.drawer-links button:hover{transform:translateX(-3px);border-color:#ff9cde55}
+.auth-dialog[open]{animation:mld-rise .24s ease both}
+.announcement{backdrop-filter:blur(14px)}
+:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
