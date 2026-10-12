@@ -1,3 +1,4 @@
+// Build marker: keep bot service redeploying on bot source changes.
 import 'dotenv/config';
 import {createServer} from 'node:http';
 import {Client,GatewayIntentBits,Events,ActivityType,PermissionFlagsBits} from 'discord.js';
