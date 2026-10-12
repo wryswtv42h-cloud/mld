@@ -111,3 +111,5 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 .announcement{backdrop-filter:blur(14px)}
 :focus-visible{outline:2px solid var(--pink);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+.jackaroo-board .uno-card{min-width:58px}.jackaroo-board .uno-card.selected{outline:3px solid var(--pink);transform:translateY(-8px);box-shadow:0 8px 24px #ff9cde33}.jackaroo-board .uno-card.red{color:#ff779e}.jackaroo-board .uno-card.blue{color:#b88aff}.jackaroo-board .ludo-token:disabled{opacity:.28;cursor:not-allowed}
