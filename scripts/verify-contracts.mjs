@@ -35,7 +35,7 @@ assert.match(api, /INTERVAL '5 minutes'/, 'Abandoned game sessions must be clean
 assert.match(api, /X-Content-Type-Options/, 'Security response headers must be enabled');
 assert.match(bot, /syncingManagedBots/, 'Managed bot sync must prevent overlapping runs');
 assert.match(bot, /max:3/, 'The managed bot database pool must be bounded');
-const commandCount = new Set([...bot.matchAll(/case\\s+['"]([^'"]+)['"]\\s*:/g)].map((m) => m[1])).size;
+const commandCount = new Set([...bot.matchAll(/case\s+['"]([^'"]+)['"]\s*:/g)].map((m) => m[1])).size;
 assert.ok(commandCount >= 200, `Expected at least 200 distinct command cases; found ${commandCount}`);
 
 console.log(`MLD source contract checks passed. Pages, logo, brand palette, API modules, security controls and ${commandCount} command cases verified.`);
