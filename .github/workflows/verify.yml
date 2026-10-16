@@ -23,3 +23,5 @@ jobs:
         run: node --check bot/src/index.js
       - name: Check static server
         run: node --check server.js
+      - name: Verify source contracts
+        run: node scripts/verify-contracts.mjs
