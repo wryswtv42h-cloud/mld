@@ -25,7 +25,7 @@ owner:['♛','OWNER / COMMAND CENTER','لوحة المالك','مركز قياد
 addbot:['＋','MLD / BOT STUDIO','إضافة بوت','تحقق من بوت Discord واربطه بسيرفرك بأمان.']
 };
 const closeMenu=()=>{overlay?.classList.remove('open');overlay?.setAttribute('aria-hidden','true');document.body.style.overflow='';menu?.setAttribute('aria-expanded','false')};
-const openMenu=()=>{overlay?.classList.add('open');overlay?.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';menu?.setAttribute('aria-expanded','true');overlay?.querySelector('[data-pages-close]')?.focus?.()};
+const openMenu=()=>{overlay?.classList.add('open');overlay?.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';menu?.setAttribute('aria-expanded','true');overlay?.querySelector('.drawer-close')?.focus?.()};
 menu?.addEventListener('click',openMenu);$('#openPages')?.addEventListener('click',openMenu);
 overlay?.querySelectorAll('[data-pages-close]').forEach(b=>b.addEventListener('click',closeMenu));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();if(dialog?.open)dialog.close()}});
