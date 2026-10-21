@@ -52,7 +52,7 @@ client.on(Events.InteractionCreate,async interaction=>{
   const role=await roleRes.json();
   if(owner&&!members.some(m=>String(m.id)===String(owner.id)))members.unshift({id:String(owner.id),username:owner.username,discordId:owner.discord_id,owner:true});
   for(const member of members){if(!member.discordId)continue;const response=await fetch('https://discord.com/api/v10/guilds/'+guildId+'/members/'+member.discordId+'/roles/'+role.id,{method:'PUT',headers:discordHeaders});if(!response.ok)console.error('Could not assign group role',member.discordId,response.status)}
-  await pool.query("UPDATE groups_table SET status='active',members=$1::jsonb,discord_role_id=$2,activated_at=NOW() WHERE id=$3 AND status='activating'",[JSON.stringify(members),role.id,groupId]);
+  await pool.query("UPDATE groups_table SET status='active',members=$1::jsonb,discord_role_id=$2,activated_at=NOW(),score=COALESCE(score,0)+500 WHERE id=$3 AND status='activating'",[JSON.stringify(members),role.id,groupId]);
   for(const member of members){if(!member.discordId||member.discordId===discordId)continue;await sendDM(member.discordId,'اكتملت الموافقات! قروب '+group.name+' صار فعّالًا، وتم منحك رتبة القروب في Discord.')}
  }catch(error){
   console.error('Group invitation interaction failed:',error.message);
