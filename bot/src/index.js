@@ -167,4 +167,55 @@ if(await handleExtendedCommands(m,client,prefix,ownerDiscordId,{owner,mod,manage
 let syncingManagedBots=false;async function syncManagedBots(){if(syncingManagedBots||!botPool||!process.env.BOT_TOKEN_ENCRYPTION_KEY)return;syncingManagedBots=true;try{const result=await botPool.query("SELECT b.id,b.name,b.encrypted_token,b.settings,u.discord_id FROM bots b LEFT JOIN users u ON u.id=b.user_id WHERE b.active=true AND b.locked=false AND b.encrypted_token IS NOT NULL");const desired=new Map(result.rows.map(row=>[String(row.id),row]));for(const [id,entry] of runningBots)if(!desired.has(id)||desired.get(id).encrypted_token!==entry.encrypted||JSON.stringify(desired.get(id).settings||{})!==entry.settingsFingerprint)stopManagedBot(id);for(const [id,row] of desired){if(runningBots.has(id))continue;let tokenValue;try{tokenValue=decryptStoredToken(row.encrypted_token)}catch(e){console.error('Cannot decrypt managed bot',id,e.message);runningBots.set(id,{encrypted:row.encrypted_token,settingsFingerprint:JSON.stringify(row.settings||{}),client:null,failed:true});continue}const client=makeManagedBot(row,tokenValue),entry={encrypted:row.encrypted_token,settingsFingerprint:JSON.stringify(row.settings||{}),client,failed:false};runningBots.set(id,entry);client.login(tokenValue).catch(e=>{console.error('Managed bot login failed',id,e.message);if(botPool)botPool.query("UPDATE bots SET runtime_status='error',last_error=$1 WHERE id=$2",[String(e.message||'Login failed').slice(0,500),id]).catch(err=>console.error('Bot status update failed:',err.message));try{client.destroy()}catch{}const current=runningBots.get(id);if(current===entry)runningBots.set(id,{...entry,client:null,failed:true})})}}catch(e){console.error('Managed bot registry sync failed:',e.message)}finally{syncingManagedBots=false}}
 syncManagedBots();setInterval(syncManagedBots,15000).unref?.();
 
+
+/* Group-bot invitation buttons: every invitee must accept before the group activates. */
+client.on(Events.InteractionCreate,async interaction=>{
+  const customId=String(interaction.customId||'');
+  const match=/^group-invite-(accept|reject):(\d+)$/.exec(customId);
+  if(!match||!interaction.isButton())return;
+  const groupId=match[2],decision=match[1]==='accept'?'accepted':'rejected',discordId=String(interaction.user.id);
+  try{
+    if(!botPool)throw Error('Database is not configured');
+    const found=await botPool.query('SELECT id,name,status,owner_id,members,invitations,color FROM groups_table WHERE id=$1',[groupId]);
+    const group=found.rows[0];
+    if(!group) {await interaction.reply({content:'هذا القروب لم يعد موجودًا.',ephemeral:true});return}
+    const invites=Array.isArray(group.invitations)?group.invitations:[];
+    const invite=invites.find(item=>String(item.discordId)===discordId);
+    if(!invite){await interaction.reply({content:'هذه الدعوة ليست موجهة لحسابك.',ephemeral:true});return}
+    if(invite.status!=='pending'){await interaction.reply({content:'تم تسجيل ردك مسبقًا: '+invite.status,ephemeral:true});return}
+    invite.status=decision;invite.respondedAt=new Date().toISOString();
+    const rejected=invites.some(item=>item.status==='rejected');
+    if(rejected){
+      await botPool.query("UPDATE groups_table SET invitations=$1::jsonb,status='rejected' WHERE id=$2",[JSON.stringify(invites),groupId]);
+      await interaction.update({content:'تم تسجيل رفضك للدعوة. لن يتم تفعيل هذا الطلب.',embeds:[],components:[]});
+      const owner=await botPool.query('SELECT discord_id FROM users WHERE id=$1',[group.owner_id]);
+      if(owner.rows[0]?.discord_id){try{const dm=await fetch('https://discord.com/api/v10/users/@me/channels',{method:'POST',headers:{Authorization:'Bot '+token,'Content-Type':'application/json'},body:JSON.stringify({recipient_id:owner.rows[0].discord_id})});if(dm.ok){const channel=await dm.json();await fetch('https://discord.com/api/v10/channels/'+channel.id+'/messages',{method:'POST',headers:{Authorization:'Bot '+token,'Content-Type':'application/json'},body:JSON.stringify({content:'تم رفض دعوة أحد الأشخاص لقروب '+group.name+'. أنشئ طلبًا جديدًا بعد الاتفاق مع أعضاء آخرين.'})})}}catch{}}
+      return;
+    }
+    const allAccepted=invites.every(item=>item.status==='accepted');
+    let members=Array.isArray(group.members)?group.members:[];
+    if(decision==='accepted'){
+      const user=await botPool.query('SELECT id,username,discord_id FROM users WHERE discord_id=$1',[discordId]);
+      if(user.rows[0]&&!members.some(m=>String(m.id)===String(user.rows[0].id)))members.push({id:String(user.rows[0].id),username:user.rows[0].username,discordId,owner:false});
+    }
+    if(!allAccepted){
+      await botPool.query('UPDATE groups_table SET invitations=$1::jsonb,members=$2::jsonb WHERE id=$3',[JSON.stringify(invites),JSON.stringify(members),groupId]);
+      await interaction.update({content:decision==='accepted'?'تم تسجيل موافقتك! ينتظر القروب موافقة بقية المدعوين.':'تم تسجيل ردك.',embeds:[],components:[]});
+      return;
+    }
+    const guildId=process.env.DISCORD_GUILD_ID;
+    if(!guildId)throw Error('DISCORD_GUILD_ID is missing');
+    let roleId=null;
+    const color=/^#[0-9a-f]{6}$/i.test(group.color||'')?parseInt(group.color.slice(1),16):11962623;
+    const roleRes=await fetch('https://discord.com/api/v10/guilds/'+guildId+'/roles',{method:'POST',headers:{Authorization:'Bot '+token,'Content-Type':'application/json'},body:JSON.stringify({name:String(group.name).slice(0,100),color,hoist:true,mentionable:false,permissions:'0'})});
+    if(!roleRes.ok)throw Error('Could not create Discord group role: '+roleRes.status);
+    const role=await roleRes.json();roleId=role.id;
+    const owner=await botPool.query('SELECT id,username,discord_id FROM users WHERE id=$1',[group.owner_id]);
+    if(owner.rows[0]&&!members.some(m=>String(m.id)===String(owner.rows[0].id)))members.unshift({id:String(owner.rows[0].id),username:owner.rows[0].username,discordId:owner.rows[0].discord_id,owner:true});
+    for(const member of members){if(!member.discordId)continue;const res=await fetch('https://discord.com/api/v10/guilds/'+guildId+'/members/'+member.discordId+'/roles/'+roleId,{method:'PUT',headers:{Authorization:'Bot '+token}});if(!res.ok)console.error('Could not assign group role to',member.discordId,res.status)}
+    await botPool.query("UPDATE groups_table SET status='active',members=$1::jsonb,invitations=$2::jsonb,discord_role_id=$3,activated_at=NOW() WHERE id=$4",[JSON.stringify(members),JSON.stringify(invites),roleId,groupId]);
+    await interaction.update({content:'تم قبولك! اكتملت الموافقات الخمس، والقروب '+group.name+' صار فعّالًا 🎉',embeds:[],components:[]});
+    for(const member of members){if(!member.discordId||member.discordId===discordId)continue;try{const dm=await fetch('https://discord.com/api/v10/users/@me/channels',{method:'POST',headers:{Authorization:'Bot '+token,'Content-Type':'application/json'},body:JSON.stringify({recipient_id:member.discordId})});if(dm.ok){const channel=await dm.json();await fetch('https://discord.com/api/v10/channels/'+channel.id+'/messages',{method:'POST',headers:{Authorization:'Bot '+token,'Content-Type':'application/json'},body:JSON.stringify({content:'اكتملت الموافقات! قروب '+group.name+' أصبح فعّالًا، وتم منحك رتبة القروب.'})})}}catch{}}
+  }catch(error){console.error('Group invitation interaction failed:',error.message);try{if(interaction.deferred||interaction.replied)await interaction.followUp({content:'تعذر إكمال الدعوة بسبب خطأ في الخدمة. حاول لاحقًا.',ephemeral:true});else await interaction.reply({content:'تعذر إكمال الدعوة بسبب خطأ في الخدمة. حاول لاحقًا.',ephemeral:true})}catch{}}
+});
 if(!token)console.error('DISCORD_TOKEN is missing');else client.login(token).catch(e=>{console.error('Discord login failed:',e.message);process.exitCode=1});
