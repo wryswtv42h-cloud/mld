@@ -1,0 +1,76 @@
+/* MLD Luxury Experience — progressive visual layer */
+:root{
+ --bg:#08060d;--panel:#100c17;--panel2:#171020;--pink:#ff9cde;--purple:#a86fdf;
+ --text:#fff8ff;--muted:#b9aabd;--line:#ffffff16;--radius:26px;
+ --lux-shadow:0 28px 90px #0008;--lux-glow:0 0 60px #a86fdf18;
+}
+html{scroll-behavior:smooth;scroll-padding-top:110px}
+body{background:var(--bg);color:var(--text);letter-spacing:.005em}
+body:before{z-index:-2;background:
+ radial-gradient(ellipse at 78% 0%,#a86fdf20,transparent 34%),
+ radial-gradient(ellipse at 12% 28%,#ff9cde12,transparent 28%),
+ radial-gradient(ellipse at 70% 80%,#58307812,transparent 38%)}
+::selection{background:#ff9cde55;color:#fff}
+.topbar{height:82px;background:#08060de8;border-bottom-color:#ff9cde12;box-shadow:0 10px 40px #0002}
+.brand img{border-radius:15px;filter:drop-shadow(0 0 18px #ff9cde30)}
+.brand b i{color:var(--pink)}
+.desktop-nav a{position:relative;padding-block:9px;transition:color .22s ease}
+.desktop-nav a:after{content:"";position:absolute;right:0;bottom:0;width:0;height:2px;border-radius:3px;background:linear-gradient(90deg,var(--pink),var(--purple));transition:width .24s ease}
+.desktop-nav a:hover:after,.desktop-nav a:focus-visible:after{width:100%}
+.btn{border-radius:15px;transition:transform .22s ease,box-shadow .22s ease,background .22s ease,border-color .22s ease}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:linear-gradient(120deg,#ff9cde,#d69be9 54%,#a86fdf);color:#1a0c20;box-shadow:0 12px 34px #a86fdf2b;font-weight:800}
+.btn-primary:hover{box-shadow:0 16px 42px #ff9cde35}
+.btn-outline,.btn-quiet{border-color:#ffffff20;background:#ffffff07}
+.btn-outline:hover,.btn-quiet:hover{border-color:#ff9cde55;background:#ff9cde0b}
+.hero{padding-top:clamp(56px,8vw,110px);padding-bottom:clamp(56px,8vw,105px);gap:40px}
+.hero-copy{animation:lux-rise .7s both}
+.hero h1{letter-spacing:-.045em;line-height:1.16}
+.hero h1 span{background:linear-gradient(100deg,#ffb8e8,#a86fdf);-webkit-background-clip:text;background-clip:text;color:transparent}
+.eyebrow{border:1px solid #ff9cde20;background:#ff9cde08;border-radius:999px;padding:8px 14px;width:fit-content}
+.live-dot{box-shadow:0 0 0 5px #ff9cde12}
+.hero-art{isolation:isolate}
+.hero-logo{border:1px solid #ffffff22;box-shadow:0 30px 100px #0008,0 0 90px #a86fdf18;background:linear-gradient(145deg,#ffffff10,#ffffff02);backdrop-filter:blur(18px)}
+.hero-logo img{filter:drop-shadow(0 12px 28px #ff9cde25)}
+.orbit{border-color:#ff9cde18}
+.float-card{border:1px solid #ffffff1c;background:linear-gradient(140deg,#1b1227eF,#100b17eF);box-shadow:var(--lux-shadow);backdrop-filter:blur(20px);border-radius:18px}
+.float-icon{background:#a86fdf20;color:#d8b4ff;border-radius:12px}
+section:not(.hero){scroll-margin-top:105px}
+.section-head{margin-bottom:28px}
+.section-head h2,.section-title{letter-spacing:-.025em}
+.section-head h2 span,.section-head p strong{color:var(--pink)}
+.card,.game-card,.feature-card,.stat-card,.group-card,.leader-card,.member-card,.cinema-card,.panel-card,.review-card,.role-card{
+ border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#ffffff08,#ffffff02);
+ box-shadow:0 12px 36px #0002;transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease;
+}
+.card:hover,.game-card:hover,.feature-card:hover,.group-card:hover,.cinema-card:hover,.review-card:hover{
+ transform:translateY(-4px);border-color:#ff9cde3b;box-shadow:0 20px 54px #0004,var(--lux-glow)
+}
+input,textarea,select{background:#0d0913!important;border:1px solid #ffffff1c!important;border-radius:14px!important;color:var(--text)!important}
+input:focus,textarea:focus,select:focus{border-color:#ff9cde88!important;box-shadow:0 0 0 4px #ff9cde12!important}
+dialog,.modal{border:1px solid #ffffff20!important;border-radius:24px!important;background:#100b17!important;color:var(--text);box-shadow:0 30px 100px #000b}
+dialog::backdrop{background:#05030ab8;backdrop-filter:blur(8px)}
+.icon-btn{border:1px solid #ffffff18;background:#ffffff06;border-radius:14px;transition:.2s}
+.icon-btn:hover{border-color:#ff9cde55;background:#ff9cde0d}
+footer{border-top-color:#ffffff12}
+a,button{-webkit-tap-highlight-color:transparent}
+button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+:focus-visible{outline-color:var(--pink)!important}
+.toast,.notice{backdrop-filter:blur(18px);border:1px solid #ffffff20;box-shadow:var(--lux-shadow)}
+@keyframes lux-rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes lux-glow{0%,100%{opacity:.55}50%{opacity:1}}
+@media (min-width:1200px){.wrap{width:min(1220px,calc(100% - 72px))}.hero{min-height:620px}.hero-copy{max-width:590px}}
+@media (max-width:760px){
+ .topbar{height:70px;padding-inline:16px}
+ .brand{min-width:0;gap:8px}.brand img{width:39px;height:39px}.brand b{font-size:16px}.brand small{font-size:8px}
+ .wrap{width:calc(100% - 32px)}
+ .hero{padding-top:44px;padding-bottom:54px;gap:28px}
+ .hero h1{font-size:clamp(36px,10vw,52px)}
+ .hero-art{transform:scale(.92);transform-origin:top center;margin-bottom:-10px}
+ .float-card{max-width:190px;padding:11px}
+ .btn{min-height:44px}
+ .section-head{gap:12px}
+}
+@media (prefers-reduced-motion:reduce){
+ *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
